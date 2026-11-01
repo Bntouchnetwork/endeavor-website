@@ -24,6 +24,7 @@
       var esc = ctx.esc, sb = ctx.sb, CFG = ctx.CFG;
       var items = [], history = [], selected = null, tool = null, pages = [], fileBytes = null, fileName = '', pdfDoc = null;
       var sources = [], order = [], registry = {}, seq = 0;
+      var envId = crypto.randomUUID(), ENV_LABEL = 'Endeavor Envelope ID: ' + envId.toUpperCase();
 
       view.innerHTML =
         '<div class="console__head"><div><h1>Novo documento para assinatura</h1><p class="portal-muted">Suba o PDF, arraste os campos para o documento e envie. Tudo acontece aqui no console.</p></div>' +
@@ -147,7 +148,9 @@
           var wrap = document.createElement('div'); wrap.className = 'pdfpage'; wrap.style.aspectRatio = e.w + ' / ' + e.h; wrap.dataset.page = String(i);
           wrap.setAttribute('aria-label', 'Página ' + (i + 1));
           var layer = document.createElement('div'); layer.className = 'pdfpage__layer';
-          wrap.appendChild(e.canvas); wrap.appendChild(layer);
+          var idl = document.createElement('span'); idl.className = 'pdfpage__envid'; idl.textContent = ENV_LABEL; idl.setAttribute('aria-hidden', 'true');
+          idl.style.fontSize = (7 / e.w * 100) + 'cqw'; idl.style.left = (18 / e.w * 100) + '%'; idl.style.top = ((14 - 6.6) / e.h * 100) + '%';
+          wrap.appendChild(e.canvas); wrap.appendChild(idl); wrap.appendChild(layer);
           pagesEl.appendChild(bar); pagesEl.appendChild(wrap);
           var pobj = { el: wrap, layer: layer, index: i, width: e.w, height: e.h };
           pages.push(pobj); wirePage(pobj);
@@ -437,8 +440,6 @@
       }
       async function bake() {
         var edits = items.filter(function (i) { return i.kind !== 'field'; });
-        var identity = sources.length === 1 && order.length === sources[0].doc.numPages && order.every(function (e, i) { return e.s === 0 && e.p === i; });
-        if (!edits.length && identity) return fileBytes;
         var L = window.PDFLib;
         var doc = await L.PDFDocument.create();
         for (var oi = 0; oi < order.length; oi++) {
@@ -463,6 +464,7 @@
             lines.forEach(function (ln, n) { page.drawText(ln, { x: x + 2, y: top - i.size - n * lh + 1, size: i.size, font: font, color: L.rgb(0, 0, 0) }); });
           }
         });
+        pg.forEach(function (page) { var b = page.getCropBox(); page.drawText(ENV_LABEL, { x: b.x + 18, y: b.y + b.height - 14, size: 7, font: font, color: L.rgb(0.35, 0.35, 0.4) }); });
         return new Uint8Array(await doc.save());
       }
 
@@ -487,7 +489,7 @@
           var fields = items.filter(function (i) { return i.kind === 'field'; }).map(function (i) {
             return { id: i.id, type: i.tool, page: i.page, x: +i.x.toFixed(5), y: +i.y.toFixed(5), w: +i.w.toFixed(5), h: +i.h.toFixed(5), required: i.tool === 'date' || i.tool === 'name' || i.tool === 'email' ? true : !!i.required };
           });
-          var ins = await sb.from('envelopes').insert({ title: title, signer_name: name, signer_email: email, message: $('#ev-msg').value.trim() || null,
+          var ins = await sb.from('envelopes').insert({ id: envId, id_stamped: true, title: title, signer_name: name, signer_email: email, message: $('#ev-msg').value.trim() || null,
             lead_id: $('#ev-lead').value || null, document_path: path, document_sha256: hash, fields: fields,
             token_expires_at: new Date(Date.now() + days * 864e5).toISOString() }).select('*').single();
           if (ins.error) throw ins.error;

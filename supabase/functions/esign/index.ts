@@ -2,7 +2,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
-import { safe, wrap, cleanFields, validateValues, stampFields } from "./stamp.mjs";
+import { safe, wrap, cleanFields, validateValues, stampFields, stampEnvelopeId } from "./stamp.mjs";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -132,9 +132,13 @@ Deno.serve(async (req) => {
         last.drawText(safe(stamp + " | Envelope " + env.id.slice(0, 8)), { x: x + 8, y: y + 8, size: 6.5, font, color: rgb(0.3, 0.3, 0.3) });
       }
 
+      // envelope ID on every document page (documents prepared in the editor already carry it)
+      if (!env.id_stamped) stampEnvelopeId(pdf, { font, rgb, id: env.id });
+
       // certificate of completion
       const { data: evs } = await admin.from("envelope_events").select("at,event,ip,user_agent").eq("envelope_id", env.id).order("at");
       const cert = pdf.addPage([612, 792]);
+      stampEnvelopeId(pdf, { font, rgb, id: env.id, pages: [cert] });
       let cy = 740;
       const line = (t: string, size = 9.5, f = font, color = rgb(0.15, 0.15, 0.15), indent = 0) => {
         for (const l of wrap(safe(t), f, size, 540 - indent)) {

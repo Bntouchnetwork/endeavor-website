@@ -495,7 +495,7 @@
         view.classList.remove('is-editor');
         view.innerHTML = '<div class="console__head"><h1>Documento enviado</h1></div><section class="portal-card esx-done">' +
           '<p class="portal-alert portal-alert--ok">' + (mailed ? 'O link de assinatura foi enviado para <strong>' + esc(e.signer_email) + '</strong> e uma cópia foi para ' + esc(CFG.adminEmail) + '.' : 'Documento criado. Copie o link abaixo e envie ao signatário.') + '</p>' +
-          '<dl class="kv"><dt>Documento</dt><dd>' + esc(e.title) + '</dd><dt>Signatário</dt><dd>' + esc(e.signer_name) + ' · ' + esc(e.signer_email) + '</dd><dt>Campos</dt><dd>' + (e.fields || []).length + '</dd><dt>Expira</dt><dd>' + esc(fmtDT(e.token_expires_at)) + '</dd></dl>' +
+          '<dl class="kv"><dt>ID do envelope</dt><dd class="mono">' + esc(String(e.id).toUpperCase()) + '</dd><dt>Documento</dt><dd>' + esc(e.title) + '</dd><dt>Signatário</dt><dd>' + esc(e.signer_name) + ' · ' + esc(e.signer_email) + '</dd><dt>Campos</dt><dd>' + (e.fields || []).length + '</dd><dt>Expira</dt><dd>' + esc(fmtDT(e.token_expires_at)) + '</dd></dl>' +
           '<div class="field"><label for="ev-link">Link de assinatura</label><input id="ev-link" readonly value="' + esc(signLink(e)) + '"></div>' +
           '<div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ev-copy">Copiar link</button>' +
           (mailed ? '' : '<button class="btn btn--ghost" type="button" id="ev-mail">Enviar por e-mail</button>') +
@@ -570,7 +570,7 @@
     var EV = { created: 'Criado', sent: 'Enviado', emailed: 'E-mail enviado ao signatário', viewed: 'Visualizado', consented: 'Consentiu com registros eletrônicos', signed: 'Assinado', completed: 'Concluído (PDF final gerado)', voided: 'Anulado', downloaded: 'Baixado', link_copied: 'Link copiado' };
     var open = e.status === 'sent' || e.status === 'viewed';
     var o = openOverlay('<div class="drawer__head"><div><h2 class="portal-h2" style="margin:0">' + esc(e.title) + '</h2><p>' + badge(e.status) + '</p></div><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
-      '<dl class="kv"><dt>Signatário</dt><dd>' + esc(e.signer_name) + '<br>' + esc(e.signer_email) + '</dd><dt>Criado</dt><dd>' + esc(fmtDT(e.created_at)) + ' por ' + esc(e.created_by || '') + '</dd>' +
+      '<dl class="kv"><dt>ID do envelope</dt><dd class="mono">' + esc(String(e.id).toUpperCase()) + '</dd><dt>Signatário</dt><dd>' + esc(e.signer_name) + '<br>' + esc(e.signer_email) + '</dd><dt>Criado</dt><dd>' + esc(fmtDT(e.created_at)) + ' por ' + esc(e.created_by || '') + '</dd>' +
       '<dt>Campos</dt><dd>' + ((e.fields || []).length || 'Bloco de assinatura padrão') + '</dd>' +
       '<dt>Expira</dt><dd>' + esc(fmtDT(e.token_expires_at)) + '</dd>' + (e.signed_at ? '<dt>Assinado</dt><dd>' + esc(fmtDT(e.signed_at)) + ' · IP ' + esc(e.signer_ip) + '</dd><dt>Nome adotado</dt><dd>' + esc(e.signature_name) + '</dd>' : '') +
       '<dt>SHA-256 original</dt><dd class="mono">' + esc(e.document_sha256) + '</dd>' + (e.signed_document_sha256 ? '<dt>SHA-256 assinado</dt><dd class="mono">' + esc(e.signed_document_sha256) + '</dd>' : '') + '</dl>' +

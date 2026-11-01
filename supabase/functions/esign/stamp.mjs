@@ -76,3 +76,12 @@ export async function stampFields(pdf, { rgb, font, bold, fields, values, sigImg
     }
   }
 }
+
+// "Endeavor Envelope ID" line at the top-left of every page (like other e-signature platforms).
+export function stampEnvelopeId(pdf, { font, rgb, id, pages }) {
+  const label = "Endeavor Envelope ID: " + String(id).toUpperCase();
+  for (const page of pages || pdf.getPages()) {
+    const b = page.getCropBox();
+    page.drawText(label, { x: b.x + 18, y: b.y + b.height - 14, size: 7, font, color: rgb(0.35, 0.35, 0.4) });
+  }
+}

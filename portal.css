@@ -373,3 +373,5 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   .is-editor .esx__drop { min-height: calc(100% - .5rem); }
 }
 @media (min-width: 1100px) and (max-width: 1299.98px) { .is-editor .esx { grid-template-columns: 11rem minmax(0, 1fr) 16rem; } }
+.pdfpage { container-type: inline-size; }
+.pdfpage__envid { position: absolute; color: #5a5a66; font-family: Helvetica, Arial, sans-serif; line-height: 1; white-space: nowrap; pointer-events: none; user-select: none; }
