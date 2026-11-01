@@ -261,3 +261,90 @@ dl.kv dd { margin: 0; overflow-wrap: anywhere; color: var(--ink); }
 .esx-item__text:empty::before { content: attr(data-ph); color: #8a7bb0; }
 .portal [hidden] { display: none !important; }
 @media (max-width: 1199.98px) { .esx { display: flex; flex-direction: column; align-items: stretch; } }
+
+/* =====================================================================
+   App shell: fixed top bar + fixed sidebar; only the content area scrolls.
+   Used by the admin console and the client portal.
+   ===================================================================== */
+body.app-shell { height: 100vh; height: 100dvh; overflow: hidden; background: #f5f7fa; }
+body.app-shell .portal-top { position: fixed; inset: 0 0 auto 0; height: 4rem; box-shadow: 0 1px 0 var(--line); border-bottom: 0; }
+body.app-shell .portal-top__inner { height: 4rem; min-height: 0; }
+.nav-toggle { display: none; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border: 1px solid var(--line); border-radius: var(--radius); background: var(--white); color: var(--navy-900); cursor: pointer; }
+.nav-toggle svg { width: 1.3rem; height: 1.3rem; }
+.portal-top__left { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+body.app-shell .console { position: fixed; top: 4rem; left: 0; right: 0; bottom: 0; min-height: 0; display: grid; grid-template-columns: 16rem minmax(0, 1fr); }
+body.app-shell .console__nav { overflow-y: auto; padding: 1.25rem .85rem; display: flex; flex-direction: column; gap: .25rem; border-right: 1px solid rgb(255 255 255 / .04); }
+body.app-shell .console__nav ul { flex-direction: column; flex-wrap: nowrap; gap: .15rem; }
+body.app-shell .console__nav-title { display: block; }
+body.app-shell .console__nav a { min-height: 2.6rem; font-size: .92rem; border-radius: 8px; }
+body.app-shell .console__nav a[aria-current="page"] { background: rgb(255 255 255 / .09); box-shadow: inset 3px 0 0 var(--gold); }
+.console__nav-foot { margin-top: auto; padding: 1rem .85rem .25rem; font-size: .75rem; color: var(--on-dark-muted); border-top: 1px solid rgb(255 255 255 / .08); }
+body.app-shell .console__content { overflow-y: auto; overscroll-behavior: contain; padding: clamp(1.25rem, 1rem + 1.5vw, 2.5rem) clamp(1rem, 2.5vw, 2.75rem) 4rem; scroll-padding-top: 1rem; }
+body.app-shell .console__content > * { max-width: 88rem; margin-inline: auto; }
+body.app-shell .links-panel { top: 0; }
+.nav-backdrop { display: none; }
+@media (max-width: 959.98px) {
+  .nav-toggle { display: inline-flex; }
+  body.app-shell .console { grid-template-columns: minmax(0, 1fr); }
+  body.app-shell .console__nav { position: fixed; top: 4rem; bottom: 0; left: 0; width: min(17rem, 82vw); z-index: 60; transform: translateX(-102%); transition: transform .22s ease, visibility .22s; visibility: hidden; }
+  body.app-shell .console.nav-open .console__nav { box-shadow: 10px 0 30px rgb(0 0 0 / .25); visibility: visible; }
+  body.app-shell .console.nav-open .console__nav { transform: none; }
+  body.app-shell .console.nav-open .nav-backdrop { display: block; position: fixed; inset: 4rem 0 0 0; background: rgb(7 22 43 / .4); z-index: 55; }
+  body.app-shell .portal-top__right #topbar-email { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { body.app-shell .console__nav { transition: none; } }
+
+/* Cleaner surfaces */
+body.app-shell .portal-card { border-color: #e6e9ef; border-radius: 14px; box-shadow: 0 1px 2px rgb(16 24 40 / .04); }
+body.app-shell .kpi { border-color: #e6e9ef; border-radius: 14px; box-shadow: 0 1px 2px rgb(16 24 40 / .04); }
+body.app-shell .table-wrap { border-color: #e6e9ef; border-radius: 14px; }
+body.app-shell .console__head { margin-bottom: 1.5rem; }
+body.app-shell .console__head h1 { font-size: clamp(1.6rem, 1.3rem + 1vw, 2.1rem); letter-spacing: -.01em; }
+body.app-shell .portal-h2 { font-size: 1.2rem; }
+
+/* Tabs bar used in detail pages */
+.subtabs { display: flex; gap: .25rem; border-bottom: 1px solid #e3e7ee; margin-bottom: 1.25rem; overflow-x: auto; scrollbar-width: thin; }
+.subtabs a { padding: .7rem .95rem; text-decoration: none; color: var(--muted); font-weight: 600; font-size: .92rem; border-bottom: 2.5px solid transparent; white-space: nowrap; }
+.subtabs a[aria-current="page"] { color: var(--navy-900); border-bottom-color: var(--gold); }
+.crumbs { font-size: .85rem; margin-bottom: .35rem; }
+.crumbs a { color: var(--muted); }
+.cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
+.co-card { display: block; text-decoration: none; color: inherit; background: var(--white); border: 1px solid #e6e9ef; border-radius: 14px; padding: 1.2rem 1.25rem; transition: border-color .15s, box-shadow .15s; }
+a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 31 58 / .08); }
+.co-card h3 { font-size: 1.05rem; margin: 0 0 .25rem; color: var(--navy-900); }
+.co-card .meta { font-size: .85rem; color: var(--muted); }
+.co-card .row { display: flex; justify-content: space-between; gap: .5rem; margin-top: .75rem; font-size: .85rem; }
+.pill { display: inline-flex; align-items: center; padding: .1rem .55rem; border-radius: 999px; font-size: .74rem; font-weight: 600; background: #eef2f7; color: #334155; white-space: nowrap; }
+.pill--formation { background: #eaf1fb; color: #1d4e89; }
+.pill--tax_return { background: #fbf3e2; color: #7a5a12; }
+.pill--report { background: #e9f6ee; color: #1e6b3a; }
+.pill--uploaded { background: #f1ecfa; color: #5b3f8c; }
+.pill--overdue { background: #fbecea; color: #8a2a20; }
+.pill--soon { background: #fbf3e2; color: #7a5a12; }
+.pill--done { background: #e9f6ee; color: #1e6b3a; }
+.doclist { list-style: none; margin: 0; padding: 0; }
+.doclist li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: .85rem; align-items: center; padding: .8rem 0; border-bottom: 1px solid #eef1f5; }
+.doclist li:last-child { border-bottom: 0; }
+.doclist .ficon { width: 2.4rem; height: 2.4rem; border-radius: 10px; display: grid; place-items: center; background: #eef2f7; color: var(--navy-900); font-size: .7rem; font-weight: 800; }
+.doclist .dname { font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.doclist .dmeta { font-size: .82rem; color: var(--muted); }
+.deadline { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr) auto; gap: .9rem; align-items: center; padding: .75rem 0; border-bottom: 1px solid #eef1f5; }
+.deadline:last-child { border-bottom: 0; }
+.deadline__date { text-align: center; border-radius: 10px; background: #f3f5f9; padding: .35rem 0; line-height: 1.1; }
+.deadline__date b { display: block; font-size: 1.25rem; color: var(--navy-900); }
+.deadline__date span { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--muted); }
+.empty-state strong { display: block; color: var(--ink); margin-bottom: .35rem; font-size: 1.05rem; }
+.upload-zone { display: flex; flex-direction: column; align-items: center; gap: .35rem; padding: 1.5rem; border: 2px dashed #b8c1cf; border-radius: 14px; background: #fafbfd; text-align: center; cursor: pointer; }
+.upload-zone:hover, .upload-zone.is-over { border-color: var(--navy-900); background: #f3f6fb; }
+.upload-zone:focus-within { outline: 3px solid var(--focus, #2563eb); outline-offset: 2px; }
+.qbo-badge { display: inline-flex; align-items: center; gap: .45rem; font-weight: 700; color: #2ca01c; }
+.qbo-badge::before { content: ""; width: .6rem; height: .6rem; border-radius: 50%; background: #2ca01c; }
+.choice { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+.choice a { display: flex; flex-direction: column; gap: .4rem; padding: 1.5rem; border: 1.5px solid #e3e7ee; border-radius: 16px; background: var(--white); text-decoration: none; color: var(--ink); transition: border-color .15s, box-shadow .15s; }
+.choice a:hover, .choice a:focus-visible { border-color: var(--navy-900); box-shadow: 0 8px 24px rgb(11 31 58 / .1); }
+.choice .choice__ico { width: 3rem; height: 3rem; border-radius: 12px; display: grid; place-items: center; background: var(--navy-900); color: var(--gold); margin-bottom: .4rem; }
+.choice .choice__ico svg { width: 1.5rem; height: 1.5rem; }
+.choice strong { font-size: 1.15rem; color: var(--navy-900); }
+.choice span { color: var(--muted); font-size: .92rem; }
+.portal-btn-row select, .subtabs + * select.inline { min-height: 2.25rem; border: 1px solid #c9ced8; border-radius: 8px; padding: 0 .5rem; background: #fff; font: inherit; font-size: .88rem; }

@@ -166,16 +166,23 @@
 
   /* ---------- console shell ---------- */
   var NAV = [
-    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'],
+    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['clientes', 'Clientes', 'i-brief'], ['agenda', 'Agenda', 'i-cal'],
     ['assinaturas', 'Assinaturas', 'i-pen'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
     $('#topbar-user').hidden = false;
-    app.innerHTML = '<div class="console"><nav class="console__nav" aria-label="Console"><div class="console__nav-title">Endeavor Console</div><ul>' +
+    document.body.classList.add('app-shell');
+    app.innerHTML = '<div class="console" id="console"><nav class="console__nav" id="console-nav" aria-label="Console"><div class="console__nav-title">Endeavor Console</div><ul>' +
       NAV.map(function (n) { return '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + n[1] + '</a></li>'; }).join('') +
-      '</ul></nav><main class="console__content" id="view" tabindex="-1"></main></div>' +
+      '</ul><div class="console__nav-foot">Endeavor Business Solutions<br>Acesso restrito</div></nav><div class="nav-backdrop" id="nav-backdrop"></div><main class="console__content" id="view" tabindex="-1"></main></div>' +
       '<div class="overlay" id="overlay" hidden></div>';
-    window.addEventListener('hashchange', route);
+    var tgl = $('#nav-toggle'), con = $('#console');
+    tgl.hidden = false;
+    function setNav(open) { con.classList.toggle('nav-open', open); tgl.setAttribute('aria-expanded', String(open)); tgl.setAttribute('aria-label', open ? 'Fechar menu' : 'Abrir menu'); }
+    tgl.onclick = function () { setNav(!con.classList.contains('nav-open')); if (con.classList.contains('nav-open')) { var a = $('.console__nav a'); if (a) a.focus(); } };
+    $('#nav-backdrop').onclick = function () { setNav(false); };
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && con.classList.contains('nav-open')) { setNav(false); tgl.focus(); } });
+    window.addEventListener('hashchange', function () { setNav(false); route(); });
     loadSettings().then(route);
   }
   async function loadSettings() { var r = await sb.from('booking_settings').select('*').eq('id', 1).single(); if (!r.error) state.settings = r.data; }
@@ -184,8 +191,8 @@
     var v = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('?')[0];
     if (!NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    var view = $('#view'); view.innerHTML = '<p class="portal-muted">Carregando…</p>';
-    ({ dashboard: viewDashboard, crm: viewCrm, agenda: viewAgenda, assinaturas: viewEnvelopes, config: viewConfig })[v](view).catch(function (e) {
+    var view = $('#view'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
+    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, config: viewConfig })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
   }
@@ -240,6 +247,7 @@
       '<aside class="links-panel portal-card" aria-label="Links rápidos"><h2 class="portal-h2">Links rápidos</h2><ul>' +
         '<li><a href="#/assinaturas?novo=1"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Enviar documento para assinatura</a></li>' +
         '<li><a href="#/crm?novo=1"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Adicionar lead</a></li>' +
+        '<li><a href="#/clientes?novo=1"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>Novo cliente no portal</a></li>' +
         '<li><button type="button" id="ql-copy"><svg class="icon" aria-hidden="true"><use href="#i-link"/></svg>Copiar link de agendamento</button></li>' +
         '<li><a href="schedule.html" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-cal"/></svg>Página pública de agendamento</a></li>' +
         '<li><a href="#/agenda?tab=disp"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>Definir dias e horários</a></li>' +
@@ -351,7 +359,7 @@
     var html = '', lastDay = '';
     rows.forEach(function (b) {
       var d = fmtDay(b.starts_at);
-      if (d !== lastDay) { html += (lastDay ? '</ul></section>' : '') + '<section class="portal-card"><h2 class="portal-h2" style="text-transform:capitalize">' + esc(d) + '</h2><ul class="list">'; lastDay = d; }
+      if (d !== lastDay) { html += (lastDay ? '</ul></section>' : '') + '<section class="portal-card"><h2 class="portal-h2">' + esc(d.charAt(0).toUpperCase() + d.slice(1)) + '</h2><ul class="list">'; lastDay = d; }
       html += '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at, { dateStyle: undefined })) + ' – ' + esc(fmtDT(b.ends_at, { dateStyle: undefined })) + ' · ' + esc(b.name) + '</strong>' +
         '<span>' + esc(MEET_PT[b.meeting_type]) + ' · ' + esc(b.email) + (b.phone ? ' · ' + esc(b.phone) : '') + ' · ' + esc(b.topic || '') + (b.language ? ' · ' + esc(b.language) : '') + '</span>' +
         (b.notes ? '<span>“' + esc(b.notes) + '”</span>' : '') + '</div><div class="portal-btn-row">' + badge(b.status) +
@@ -488,11 +496,47 @@
           (mailed ? '' : '<button class="btn btn--ghost" type="button" id="ev-mail">Enviar por e-mail</button>') +
           '<button class="btn btn--ghost" type="button" id="ev-view">Ver documento</button><a class="btn btn--ghost" href="#/assinaturas?novo=1">Novo documento</a><a class="btn btn--ghost" href="#/assinaturas">Ver lista</a></div>' +
           '<div class="portal-alert" id="ev-out" role="status"></div></section>';
-        $('#ev-copy').onclick = function (b) { copy(signLink(e), b.currentTarget); sb.from('envelope_events').insert({ envelope_id: e.id, event: 'link_copied' }); };
+        $('#ev-copy').onclick = function (b) { copy(signLink(e), b.currentTarget); sb.from('envelope_events').insert({ envelope_id: e.id, event: 'link_copied' }).then(function () {}); };
         $('#ev-view').onclick = function () { viewPdf(e.document_path, e.title, e); };
         if ($('#ev-mail')) $('#ev-mail').onclick = async function (b) { var ok = await emailSigner(e); msg($('#ev-out'), ok ? 'E-mail enviado.' : 'Não foi possível enviar o e-mail agora. Copie o link e envie manualmente.', ok ? 'ok' : 'error'); };
       }
     });
+  }
+
+  function clientsCtx() {
+    return { sb: sb, CFG: CFG, esc: esc, q: q, msg: msg, errText: errText, fmtDT: fmtDT, openOverlay: openOverlay, closeOverlay: closeOverlay,
+      copy: copy, download: download, viewFile: viewFile, sha256Hex: sha256Hex, siteUrl: siteUrl, route: route };
+  }
+  async function viewClients(view) {
+    if (!window.AdminClients) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de clientes não carregou. Recarregue a página.</div>'; return; }
+    var id = (location.hash.match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
+    return id ? AdminClients.detail(view, clientsCtx(), id) : AdminClients.list(view, clientsCtx());
+  }
+
+  /* Generic in-console file viewer for any private bucket: PDFs and images render inline, other types download. */
+  async function viewFile(bucket, path, title, opts) {
+    opts = opts || {};
+    var isImg = /\.(png|jpe?g|webp|gif)$/i.test(path), isPdf = /\.pdf$/i.test(path) || opts.mime === 'application/pdf';
+    var o = openOverlay('<div class="viewer"><div class="viewer__bar"><strong>' + esc(title) + '</strong><div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="vw-print"' + (isPdf ? '' : ' hidden') + '>Imprimir</button><button class="btn btn--ghost btn--xs" type="button" id="vw-dl">Baixar</button><button class="close-x" type="button" aria-label="Fechar">×</button></div></div>' +
+      '<div class="viewer__pages" id="vw-pages"><p class="portal-muted">Carregando…</p></div></div>', true);
+    o.querySelector('.modal').classList.add('modal--wide');
+    var r = await sb.storage.from(bucket).createSignedUrl(path, 600);
+    if (r.error) { $('#vw-pages').innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(r.error)) + '</div>'; return; }
+    var blob = null;
+    try {
+      blob = await (await fetch(r.data.signedUrl)).blob();
+      if (isPdf) { var doc = await EPdf.open(new Uint8Array(await blob.arrayBuffer())); await EPdf.render(doc, $('#vw-pages'), { maxWidth: 900, pageLabel: 'Página' }); }
+      else if (isImg) { $('#vw-pages').innerHTML = '<img alt="' + esc(title) + '" style="max-width:100%;display:block;margin:0 auto;background:#fff" src="' + URL.createObjectURL(blob) + '">'; }
+      else $('#vw-pages').innerHTML = '<div class="empty-state"><strong>Pré-visualização indisponível para este tipo de arquivo.</strong>Use o botão Baixar.</div>';
+    } catch (err) { $('#vw-pages').innerHTML = '<div class="portal-alert portal-alert--error">Não foi possível exibir o arquivo.</div>'; }
+    var name = (title.replace(/[\\/:*?"<>|]+/g, '-') + (path.match(/\.[a-z0-9]+$/i) || [''])[0]);
+    $('#vw-dl').onclick = function () { if (blob) download(name, blob); if (opts.onDownload) opts.onDownload(); };
+    $('#vw-print').onclick = function () {
+      if (!blob) return;
+      var f = document.createElement('iframe'); f.style.cssText = 'position:fixed;width:0;height:0;border:0;right:0;bottom:0';
+      f.src = URL.createObjectURL(blob); document.body.appendChild(f);
+      f.onload = function () { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { download(name, blob); } setTimeout(function () { f.remove(); }, 60000); };
+    };
   }
 
   /* In-console PDF viewer with download (no new tabs). */
@@ -511,7 +555,7 @@
     $('#vw-dl').onclick = function () {
       if (!bytes) return;
       download(title.replace(/[\\/:*?"<>|]+/g, '-') + '.pdf', new Blob([bytes], { type: 'application/pdf' }));
-      if (e) sb.from('envelope_events').insert({ envelope_id: e.id, event: 'downloaded', details: { file: path.split('/')[0] } });
+      if (e) sb.from('envelope_events').insert({ envelope_id: e.id, event: 'downloaded', details: { file: path.split('/')[0] } }).then(function () {});
     };
   }
 
@@ -535,7 +579,7 @@
       '<h3 style="margin-top:1.25rem">Trilha de auditoria</h3><ul class="timeline">' + evs.map(function (x) {
         return '<li><strong>' + esc(EV[x.event] || x.event) + '</strong> · ' + esc(fmtDT(x.at, { timeStyle: 'medium' })) + (x.ip ? '<br><span class="portal-muted">IP ' + esc(x.ip) + ' · ' + esc(String(x.user_agent || '').slice(0, 90)) + '</span>' : '') + '</li>';
       }).join('') + '</ul>');
-    if ($('#e-copy', o)) $('#e-copy', o).onclick = function (b) { copy(signLink(e), b.currentTarget); sb.from('envelope_events').insert({ envelope_id: e.id, event: 'link_copied' }); };
+    if ($('#e-copy', o)) $('#e-copy', o).onclick = function (b) { copy(signLink(e), b.currentTarget); sb.from('envelope_events').insert({ envelope_id: e.id, event: 'link_copied' }).then(function () {}); };
     if ($('#e-mail', o)) $('#e-mail', o).onclick = async function () { var ok = await emailSigner(e); msg($('#e-msg'), ok ? 'E-mail reenviado para ' + e.signer_email + '.' : 'Não foi possível enviar agora. Use "Copiar link".', ok ? 'ok' : 'error'); };
     $('#e-orig', o).onclick = function () { viewPdf(e.document_path, e.title + ' - original', e); };
     if ($('#e-signed', o)) $('#e-signed', o).onclick = function () { viewPdf(e.signed_document_path, e.title + ' - assinado', e); };
