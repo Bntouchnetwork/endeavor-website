@@ -348,3 +348,5 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
 .choice strong { font-size: 1.15rem; color: var(--navy-900); }
 .choice span { color: var(--muted); font-size: .92rem; }
 .portal-btn-row select, .subtabs + * select.inline { min-height: 2.25rem; border: 1px solid #c9ced8; border-radius: 8px; padding: 0 .5rem; background: #fff; font: inherit; font-size: .88rem; }
+.mfa-steps { margin: .75rem 0 1rem; padding-left: 1.3rem; display: grid; gap: .55rem; font-size: .93rem; color: var(--ink); }
+.mfa-steps li::marker { font-weight: 700; color: var(--navy-900); }

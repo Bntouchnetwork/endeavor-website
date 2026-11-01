@@ -36,18 +36,15 @@
     return out;
   }
 
-  function inviteText(lang, name, clientName, link, role) {
-    var who = role === 'owner' ? '' : ' (' + clientName + ')';
-    if (lang === 'en') return 'Hello ' + name + ', Endeavor Business Solutions created your access to the client portal' + who + '. Open ' + link + ', choose "First access" with this email address, create your password and confirm your email. For security, you will also set up two-step verification with an authenticator app. Questions: support@endeavorbiz.com · +1 (407) 436-9567';
-    if (lang === 'es') return 'Hola ' + name + ', Endeavor Business Solutions creó su acceso al portal del cliente' + who + '. Abra ' + link + ', elija "Primer acceso" con este correo, cree su contraseña y confirme su correo. Por seguridad, también configurará la verificación en dos pasos con una app autenticadora. Dudas: support@endeavorbiz.com · +1 (407) 436-9567';
-    return 'Olá ' + name + ', a Endeavor Business Solutions criou o seu acesso ao portal do cliente' + who + '. Abra ' + link + ', escolha "Primeiro acesso" com este e-mail, crie sua senha e confirme o e-mail. Por segurança, você também vai ativar a verificação em duas etapas com um app autenticador. Dúvidas: support@endeavorbiz.com · +1 (407) 436-9567';
+  function inviteText(lang, name, clientName, link, role, email) {
+    return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName });
   }
   async function sendInvite(ctx, o) {
     var link = ctx.siteUrl('client.html') + '?lang=' + (o.lang || 'pt');
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao portal do cliente: ' + o.name + ' (' + o.clientName + ')', _template: 'table', _captcha: 'false',
-          name: o.name, email: o.email, cliente: o.clientName, perfil: o.role, link: link, _autoresponse: inviteText(o.lang, o.name, o.clientName, link, o.role) }) });
+          name: o.name, email: o.email, cliente: o.clientName, perfil: o.role, link: link, _autoresponse: inviteText(o.lang, o.name, o.clientName, link, o.role, o.email) }) });
       var j = await r.json().catch(function () { return {}; });
       return r.ok && String(j.success) !== 'false';
     } catch (e) { return false; }

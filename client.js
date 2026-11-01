@@ -8,6 +8,7 @@
   /* ---------------- i18n ---------------- */
   var D = {
     en: {
+      enrollS1: 'Install the free <strong>Google Authenticator</strong> app on your phone (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). The icon is a colorful asterisk.', enrollS2: 'In the app, tap <strong>+</strong> and choose <strong>Scan a QR code</strong>. Point the camera at the code below.', enrollS3: 'Type the 6-digit code the app shows (it changes every 30 seconds) and click <strong>Activate and continue</strong>.', mfaHint: 'Open Google Authenticator and use the code shown under <strong>Endeavor Business Solutions</strong>. Lost your phone? Write to support@endeavorbiz.com and we will reset your verification.',
       loading: 'Loading…', signOut: 'Sign out', menu: 'Menu', closeMenu: 'Close menu',
       portal: 'Client Portal', loginTitle: 'Client portal', loginLead: 'Access your companies, documents and deadlines.', email: 'Email', password: 'Password',
       signIn: 'Sign in', firstAccess: 'First access: create password', forgot: 'Forgot password', newPass: 'New password (12+ characters)', savePass: 'Save password',
@@ -48,6 +49,7 @@
       switchClient: 'Account', privacyNote: 'Access to every file is recorded for your security.', generic: 'Something went wrong. Please try again.'
     },
     pt: {
+      enrollS1: 'Instale no celular o app gratuito <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). O ícone é um asterisco colorido.', enrollS2: 'No app, toque no <strong>+</strong> e escolha <strong>Ler código QR</strong>. Aponte a câmera para o código abaixo.', enrollS3: 'Digite o código de 6 dígitos que aparece no app (ele muda a cada 30 segundos) e clique em <strong>Ativar e continuar</strong>.', mfaHint: 'Abra o Google Authenticator e use o código que aparece em <strong>Endeavor Business Solutions</strong>. Perdeu o celular? Escreva para support@endeavorbiz.com que a Endeavor reseta a sua verificação.',
       loading: 'Carregando…', signOut: 'Sair', menu: 'Menu', closeMenu: 'Fechar menu',
       portal: 'Portal do Cliente', loginTitle: 'Portal do cliente', loginLead: 'Acesse suas empresas, documentos e prazos.', email: 'E-mail', password: 'Senha',
       signIn: 'Entrar', firstAccess: 'Primeiro acesso: criar senha', forgot: 'Esqueci a senha', newPass: 'Nova senha (mín. 12 caracteres)', savePass: 'Salvar senha',
@@ -88,6 +90,7 @@
       switchClient: 'Conta', privacyNote: 'O acesso a cada arquivo é registrado para a sua segurança.', generic: 'Algo deu errado. Tente de novo.'
     },
     es: {
+      enrollS1: 'Instale en su celular la app gratuita <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). El ícono es un asterisco de colores.', enrollS2: 'En la app, toque <strong>+</strong> y elija <strong>Escanear un código QR</strong>. Apunte la cámara al código de abajo.', enrollS3: 'Escriba el código de 6 dígitos que muestra la app (cambia cada 30 segundos) y haga clic en <strong>Activar y continuar</strong>.', mfaHint: 'Abra Google Authenticator y use el código que aparece en <strong>Endeavor Business Solutions</strong>. ¿Perdió su celular? Escriba a support@endeavorbiz.com y Endeavor restablecerá su verificación.',
       loading: 'Cargando…', signOut: 'Salir', menu: 'Menú', closeMenu: 'Cerrar menú',
       portal: 'Portal del Cliente', loginTitle: 'Portal del cliente', loginLead: 'Acceda a sus empresas, documentos y plazos.', email: 'Correo', password: 'Contraseña',
       signIn: 'Ingresar', firstAccess: 'Primer acceso: crear contraseña', forgot: 'Olvidé mi contraseña', newPass: 'Nueva contraseña (mín. 12 caracteres)', savePass: 'Guardar contraseña',
@@ -247,16 +250,17 @@
     var f = (await sb.auth.mfa.listFactors()).data || { totp: [], all: [] };
     var ok = (f.totp || []).filter(function (x) { return x.status === 'verified'; });
     if (ok.length) {
-      authShell('<h1 class="portal-h1">' + t('mfaTitle') + '</h1><p class="portal-muted">' + t('mfaLead') + '</p><form class="portal-form" id="f-mfa"><div class="field"><label for="mfa-code">' + t('code') + '</label><input id="mfa-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>' +
+      authShell('<h1 class="portal-h1">' + t('mfaTitle') + '</h1><p class="portal-muted">' + t('mfaLead') + '</p><p class="portal-muted" style="font-size:.88rem">' + t('mfaHint') + '</p><form class="portal-form" id="f-mfa"><div class="field"><label for="mfa-code">' + t('code') + '</label><input id="mfa-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>' +
         '<div class="portal-alert" id="mfa-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">' + t('verify') + '</button></form>');
       $('#mfa-code').focus();
       $('#f-mfa').onsubmit = async function (e) { e.preventDefault(); var r = await sb.auth.mfa.challengeAndVerify({ factorId: ok[0].id, code: $('#mfa-code').value.trim() }); if (r.error) return msg($('#mfa-msg'), errText(r.error), 'error'); boot(); };
       return;
     }
     for (var i = 0; i < (f.all || []).length; i++) if (f.all[i].status !== 'verified') await sb.auth.mfa.unenroll({ factorId: f.all[i].id });
-    var en = await sb.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Endeavor Portal ' + new Date().toISOString().slice(0, 10) });
+    var en = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Endeavor Business Solutions', friendlyName: 'Endeavor Portal ' + new Date().toISOString().slice(0, 10) });
     if (en.error) return authShell('<div class="portal-alert portal-alert--error">' + esc(errText(en.error)) + '</div>');
-    authShell('<h1 class="portal-h1">' + t('enrollTitle') + '</h1><p class="portal-muted">' + t('enrollLead') + '</p><div class="auth__qr"><img alt="QR code" src="' + esc(en.data.totp.qr_code) + '"></div>' +
+    authShell('<h1 class="portal-h1">' + t('enrollTitle') + '</h1><p class="portal-muted">' + t('enrollLead').split('. ')[0] + '.</p>' +
+      '<ol class="mfa-steps"><li>' + t('enrollS1').replace('{ios}', EndeavorInvite.IOS).replace('{and}', EndeavorInvite.AND) + '</li><li>' + t('enrollS2') + '</li><li>' + t('enrollS3') + '</li></ol><div class="auth__qr"><img alt="QR code" src="' + esc(en.data.totp.qr_code) + '"></div>' +
       '<p class="portal-muted">' + t('noCamera') + ' <span class="mono">' + esc(en.data.totp.secret) + '</span></p><form class="portal-form" id="f-en"><div class="field"><label for="en-code">' + t('code') + '</label><input id="en-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>' +
       '<div class="portal-alert" id="en-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">' + t('activate') + '</button></form>');
     $('#f-en').onsubmit = async function (e) { e.preventDefault(); var r = await sb.auth.mfa.challengeAndVerify({ factorId: en.data.id, code: $('#en-code').value.trim() }); if (r.error) return msg($('#en-msg'), errText(r.error), 'error'); boot(); };
@@ -558,9 +562,7 @@
   }
   async function sendInvite(email, name) {
     var link = siteUrl('client.html') + '?lang=' + L;
-    var txt = { en: 'Hello ' + name + ', ' + S.client.name + ' invited you to the Endeavor Business Solutions client portal. Open ' + link + ', choose "First access" with this email, create your password and confirm your email. You will also set up two-step verification. Questions: support@endeavorbiz.com',
-      pt: 'Olá ' + name + ', ' + S.client.name + ' convidou você para o portal do cliente da Endeavor Business Solutions. Abra ' + link + ', escolha "Primeiro acesso" com este e-mail, crie sua senha e confirme o e-mail. Você também vai ativar a verificação em duas etapas. Dúvidas: support@endeavorbiz.com',
-      es: 'Hola ' + name + ', ' + S.client.name + ' lo invitó al portal del cliente de Endeavor Business Solutions. Abra ' + link + ', elija "Primer acceso" con este correo, cree su contraseña y confirme su correo. También configurará la verificación en dos pasos. Dudas: support@endeavorbiz.com' }[L];
+    var txt = window.EndeavorInvite.text(L, { name: name, email: email, link: link, invitedBy: S.client.name });
     try { await fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ _subject: 'Collaborator invited: ' + name + ' (' + S.client.name + ')', _template: 'table', _captcha: 'false', name: name, email: email, client: S.client.name, invited_by: S.user.email, _autoresponse: txt }) }); } catch (e) { /* best effort */ }
   }
   function inviteForm() {
