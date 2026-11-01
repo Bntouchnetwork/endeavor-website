@@ -350,3 +350,26 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
 .portal-btn-row select, .subtabs + * select.inline { min-height: 2.25rem; border: 1px solid #c9ced8; border-radius: 8px; padding: 0 .5rem; background: #fff; font: inherit; font-size: .88rem; }
 .mfa-steps { margin: .75rem 0 1rem; padding-left: 1.3rem; display: grid; gap: .55rem; font-size: .93rem; color: var(--ink); }
 .mfa-steps li::marker { font-weight: 700; color: var(--navy-900); }
+
+/* ---------- Signature editor: fixed side panels, only the document scrolls (desktop) ---------- */
+.esx-pagebar { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; max-width: 860px; margin: 0 auto .45rem; font-size: .8rem; font-weight: 600; color: #475569; }
+.esx-pagebar__btns { display: inline-flex; gap: .3rem; flex-wrap: wrap; }
+.esx-pagebar button { min-height: 2rem; min-width: 2rem; padding: 0 .55rem; border: 1px solid #cfd6e1; border-radius: 7px; background: #fff; color: var(--navy-900); font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
+.esx-pagebar button:hover:not(:disabled) { border-color: var(--navy-900); }
+.esx-pagebar button:disabled { opacity: .4; cursor: not-allowed; }
+.esx-pagebar button.is-danger { color: var(--error); border-color: #e7b4ae; }
+@media (min-width: 1100px) {
+  body.app-shell .console__content.is-editor { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 1rem; }
+  body.app-shell .console__content.is-editor > * { max-width: none; width: 100%; }
+  body.app-shell .console__content.is-editor > .console__head { flex: none; margin-bottom: 1rem; }
+  .is-editor .esx { display: grid; flex: 1; min-height: 0; grid-template-columns: 12.5rem minmax(0, 1fr) 18rem; align-items: stretch; }
+  .is-editor .esx__tools { position: static; height: 100%; max-height: none; overflow-y: auto; box-shadow: none; display: block; padding: .9rem; }
+  .is-editor .esx__tools .esx__h { display: block; }
+  .is-editor .esx__toolgrid { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .is-editor .esx__tool { width: 100%; white-space: normal; font-size: .86rem; }
+  .is-editor .esx__hint { display: block; }
+  .is-editor .esx__stage { height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .is-editor .esx__side { position: static; height: 100%; overflow-y: auto; padding-right: 2px; }
+  .is-editor .esx__drop { min-height: calc(100% - .5rem); }
+}
+@media (min-width: 1100px) and (max-width: 1299.98px) { .is-editor .esx { grid-template-columns: 11rem minmax(0, 1fr) 16rem; } }

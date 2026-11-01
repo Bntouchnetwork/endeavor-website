@@ -194,7 +194,7 @@
     var v = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('?')[0];
     if (!NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    var view = $('#view'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
+    var view = $('#view'); view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
     ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, config: viewConfig })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
@@ -485,12 +485,14 @@
     if (!window.EPdf || !window.pdfjsLib || !window.PDFLib || !window.EndeavorEditor) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">Não foi possível carregar o editor de PDF. Verifique a conexão e recarregue a página.</div>'; return;
     }
+    view.classList.add('is-editor');
     EndeavorEditor.mount(view, {
       sb: sb, CFG: CFG, esc: esc, msg: msg, errText: errText, sha256Hex: sha256Hex, leads: leads, preLeadId: pre,
       preLead: leads.find(function (l) { return l.id === pre; }), emailSigner: emailSigner,
       onCancel: function () { location.hash = '#/assinaturas'; },
       onDone: function (e, mailed) {
         history.replaceState(null, '', '#/assinaturas');
+        view.classList.remove('is-editor');
         view.innerHTML = '<div class="console__head"><h1>Documento enviado</h1></div><section class="portal-card esx-done">' +
           '<p class="portal-alert portal-alert--ok">' + (mailed ? 'O link de assinatura foi enviado para <strong>' + esc(e.signer_email) + '</strong> e uma cópia foi para ' + esc(CFG.adminEmail) + '.' : 'Documento criado. Copie o link abaixo e envie ao signatário.') + '</p>' +
           '<dl class="kv"><dt>Documento</dt><dd>' + esc(e.title) + '</dd><dt>Signatário</dt><dd>' + esc(e.signer_name) + ' · ' + esc(e.signer_email) + '</dd><dt>Campos</dt><dd>' + (e.fields || []).length + '</dd><dt>Expira</dt><dd>' + esc(fmtDT(e.token_expires_at)) + '</dd></dl>' +

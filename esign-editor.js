@@ -23,6 +23,7 @@
     mount: function (view, ctx) {
       var esc = ctx.esc, sb = ctx.sb, CFG = ctx.CFG;
       var items = [], history = [], selected = null, tool = null, pages = [], fileBytes = null, fileName = '', pdfDoc = null;
+      var sources = [], order = [], registry = {}, seq = 0;
 
       view.innerHTML =
         '<div class="console__head"><div><h1>Novo documento para assinatura</h1><p class="portal-muted">Suba o PDF, arraste os campos para o documento e envie. Tudo acontece aqui no console.</p></div>' +
@@ -31,6 +32,11 @@
           '<aside class="esx__tools" aria-label="Ferramentas">' +
             '<h2 class="esx__h">Campos do signatário</h2><div class="esx__toolgrid">' + FIELD_ORDER.map(toolBtn).join('') + '</div>' +
             '<h2 class="esx__h">Editar documento</h2><div class="esx__toolgrid">' + EDIT_ORDER.map(toolBtn).join('') + '</div>' +
+            '<h2 class="esx__h">Páginas</h2><div class="esx__toolgrid">' +
+              '<button type="button" class="esx__tool" id="esx-addpage"><span class="esx__ico" aria-hidden="true">＋</span>Adicionar página em branco</button>' +
+              '<button type="button" class="esx__tool" id="esx-addpdf"><span class="esx__ico" aria-hidden="true">⧉</span>Inserir páginas de outro PDF</button>' +
+              '<input type="file" id="esx-pdf2" accept="application/pdf" class="sr-only" tabindex="-1" aria-hidden="true">' +
+            '</div>' +
             '<h2 class="esx__h">Ações</h2><div class="esx__toolgrid">' +
               '<button type="button" class="esx__tool" id="esx-undo" disabled><span class="esx__ico" aria-hidden="true">↶</span>Desfazer</button>' +
               '<button type="button" class="esx__tool" id="esx-del" disabled><span class="esx__ico" aria-hidden="true">🗑</span>Remover selecionado</button>' +
@@ -91,13 +97,12 @@
           fileBytes = new Uint8Array(await file.arrayBuffer());
           fileName = file.name;
           pdfDoc = await EPdf.open(fileBytes);
-          items = []; history = []; selected = null;
-          drop.hidden = true; $('#esx-filebar').hidden = false; $('#esx-fname').textContent = file.name + ' · ' + pdfDoc.numPages + (pdfDoc.numPages > 1 ? ' páginas' : ' página');
+          items = []; history = []; selected = null; sources = []; order = []; registry = {};
+          await addSource(fileBytes, pdfDoc, file.name, order.length);
+          drop.hidden = true; $('#esx-filebar').hidden = false;
           if (!$('#ev-title').value) $('#ev-title').value = file.name.replace(/\.pdf$/i, '').replace(/[_-]+/g, ' ');
-          pages = await EPdf.render(pdfDoc, pagesEl, { maxWidth: 860, pageLabel: 'Página' });
-          pages.forEach(wirePage);
+          await renderAll();
           ctx.msg(m, '', 'info');
-          redraw();
         } catch (e) { ctx.msg(m, 'Não foi possível abrir este PDF. Ele pode estar protegido por senha ou corrompido.', 'error'); console.error(e); }
       }
       $('#esx-file').onchange = function (e) { loadFile(e.target.files[0]); };
@@ -105,6 +110,94 @@
       ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add('is-over'); }); });
       ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove('is-over'); }); });
       drop.addEventListener('drop', function (e) { var f = e.dataTransfer && e.dataTransfer.files[0]; if (f) loadFile(f); });
+
+      /* ---------- pages: add, delete, reorder ---------- */
+      function newEntry(o) { o.id = 'p' + (++seq); registry[o.id] = o; return o; }
+      async function addSource(bytes, doc, name, at) {
+        sources.push({ bytes: bytes, doc: doc, name: name, lib: null });
+        var s = sources.length - 1, add = [];
+        for (var i = 1; i <= doc.numPages; i++) {
+          var vp = (await doc.getPage(i)).getViewport({ scale: 1 });
+          add.push(newEntry({ s: s, p: i - 1, w: vp.width, h: vp.height }));
+        }
+        items.forEach(function (it) { if (it.page >= at) it.page += add.length; });
+        Array.prototype.splice.apply(order, [at, 0].concat(add));
+      }
+      async function renderAll(scrollTo) {
+        var keepScroll = stage.scrollTop;
+        pagesEl.innerHTML = ''; pages = [];
+        var avail = Math.max(260, Math.min(860, pagesEl.clientWidth || 860)), dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+        for (var i = 0; i < order.length; i++) {
+          var e = order[i];
+          if (!e.canvas) {
+            e.canvas = document.createElement('canvas'); e.canvas.setAttribute('aria-hidden', 'true');
+            if (e.s < 0) { e.canvas.width = Math.round(e.w * 1.5); e.canvas.height = Math.round(e.h * 1.5); var g = e.canvas.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, e.canvas.width, e.canvas.height); }
+            else {
+              var pg = await sources[e.s].doc.getPage(e.p + 1), vp = pg.getViewport({ scale: avail / e.w * dpr });
+              e.canvas.width = Math.floor(vp.width); e.canvas.height = Math.floor(vp.height);
+              await pg.render({ canvasContext: e.canvas.getContext('2d'), viewport: vp }).promise;
+            }
+          }
+          var bar = document.createElement('div'); bar.className = 'esx-pagebar';
+          bar.innerHTML = '<span>Página ' + (i + 1) + ' de ' + order.length + (e.s < 0 ? ' · em branco' : sources.length > 1 ? ' · ' + esc(sources[e.s].name) : '') + '</span><span class="esx-pagebar__btns">' +
+            '<button type="button" data-pa="up" data-i="' + i + '"' + (i === 0 ? ' disabled' : '') + ' aria-label="Mover a página ' + (i + 1) + ' para cima" title="Mover para cima">↑</button>' +
+            '<button type="button" data-pa="down" data-i="' + i + '"' + (i === order.length - 1 ? ' disabled' : '') + ' aria-label="Mover a página ' + (i + 1) + ' para baixo" title="Mover para baixo">↓</button>' +
+            '<button type="button" data-pa="blank" data-i="' + i + '" aria-label="Inserir página em branco depois da página ' + (i + 1) + '" title="Inserir página em branco depois">＋ Página</button>' +
+            '<button type="button" data-pa="del" data-i="' + i + '"' + (order.length < 2 ? ' disabled' : '') + ' aria-label="Excluir a página ' + (i + 1) + '" title="Excluir página" class="is-danger">Excluir</button></span>';
+          var wrap = document.createElement('div'); wrap.className = 'pdfpage'; wrap.style.aspectRatio = e.w + ' / ' + e.h; wrap.dataset.page = String(i);
+          wrap.setAttribute('aria-label', 'Página ' + (i + 1));
+          var layer = document.createElement('div'); layer.className = 'pdfpage__layer';
+          wrap.appendChild(e.canvas); wrap.appendChild(layer);
+          pagesEl.appendChild(bar); pagesEl.appendChild(wrap);
+          var pobj = { el: wrap, layer: layer, index: i, width: e.w, height: e.h };
+          pages.push(pobj); wirePage(pobj);
+        }
+        $('#esx-fname').textContent = fileName + ' · ' + order.length + (order.length > 1 ? ' páginas' : ' página');
+        redraw();
+        if (scrollTo != null && pages[scrollTo]) pages[scrollTo].el.previousSibling.scrollIntoView({ block: 'start' });
+        else stage.scrollTop = keepScroll;
+      }
+      function movePage(i, j) {
+        if (j < 0 || j >= order.length) return;
+        snapshot();
+        var t = order[i]; order[i] = order[j]; order[j] = t;
+        items.forEach(function (it) { if (it.page === i) it.page = j; else if (it.page === j) it.page = i; });
+        renderAll(j);
+      }
+      function deletePage(i) {
+        if (order.length < 2) return;
+        var n = items.filter(function (it) { return it.page === i; }).length;
+        if (!confirm('Excluir a página ' + (i + 1) + '?' + (n ? ' Os ' + n + ' itens colocados nela também serão removidos.' : ''))) return;
+        snapshot();
+        order.splice(i, 1);
+        items = items.filter(function (it) { return it.page !== i; });
+        items.forEach(function (it) { if (it.page > i) it.page -= 1; });
+        selected = null; renderAll(Math.min(i, order.length - 1));
+      }
+      function addBlank(after) {
+        snapshot();
+        var ref = order[after] || order[order.length - 1] || { w: 612, h: 792 };
+        order.splice(after + 1, 0, newEntry({ s: -1, p: 0, w: ref.w, h: ref.h }));
+        items.forEach(function (it) { if (it.page > after) it.page += 1; });
+        renderAll(after + 1);
+      }
+      var stage = view.querySelector('.esx__stage');
+      pagesEl.addEventListener('click', function (e) {
+        var b = e.target.closest('[data-pa]'); if (!b || b.disabled) return;
+        var i = +b.dataset.i, a = b.dataset.pa;
+        if (a === 'up') movePage(i, i - 1); else if (a === 'down') movePage(i, i + 1); else if (a === 'blank') addBlank(i); else if (a === 'del') deletePage(i);
+      });
+      $('#esx-addpage').onclick = function () { if (!order.length) return ctx.msg($('#esx-msg'), 'Primeiro suba o PDF.', 'error'); addBlank(order.length - 1); };
+      $('#esx-addpdf').onclick = function () { if (!order.length) return ctx.msg($('#esx-msg'), 'Primeiro suba o PDF.', 'error'); $('#esx-pdf2').click(); };
+      $('#esx-pdf2').onchange = async function (e) {
+        var f = e.target.files[0]; e.target.value = ''; if (!f) return;
+        if (f.size > 20 * 1024 * 1024) return ctx.msg($('#esx-msg'), 'O PDF precisa ter até 20 MB.', 'error');
+        try {
+          var bytes = new Uint8Array(await f.arrayBuffer()), d = await EPdf.open(bytes);
+          snapshot(); var at = order.length;
+          await addSource(bytes, d, f.name, at); await renderAll(at);
+        } catch (err) { ctx.msg($('#esx-msg'), 'Não foi possível abrir este PDF.', 'error'); }
+      };
 
       /* ---------- tools ---------- */
       function setTool(k) {
@@ -150,7 +243,7 @@
       });
 
       function pageOf(i) { return pages[i]; }
-      function snapshot() { history.push(JSON.stringify(items)); if (history.length > 60) history.shift(); $('#esx-undo').disabled = false; }
+      function snapshot() { history.push(JSON.stringify({ items: items, order: order.map(function (e) { return e.id; }) })); if (history.length > 60) history.shift(); $('#esx-undo').disabled = false; }
 
       function placeAt(k, pageIndex, clientX, clientY) {
         var p = pageOf(pageIndex), r = p.el.getBoundingClientRect(), t = TOOLS[k];
@@ -284,7 +377,10 @@
       $('#esx-del').onclick = removeSelected;
       $('#esx-undo').onclick = function () {
         if (!history.length) return;
-        items = JSON.parse(history.pop()); selected = null; redraw();
+        var st = JSON.parse(history.pop()), prev = order.map(function (e) { return e.id; }).join();
+        items = st.items; selected = null;
+        order = st.order.map(function (id) { return registry[id]; });
+        if (order.map(function (e) { return e.id; }).join() !== prev) renderAll(); else redraw();
         $('#esx-undo').disabled = !history.length;
       };
       function onKey(e) {
@@ -323,8 +419,9 @@
       /* Pages with eraser areas are rebuilt as a flattened image so the erased content is really removed
          (not just covered). Other pages keep their original, selectable content. */
       async function flattenPage(doc, L, idx, erases) {
-        var page = doc.getPages()[idx], b = page.getCropBox();
-        var src = await pdfDoc.getPage(idx + 1);
+        var page = doc.getPages()[idx], b = page.getCropBox(), entry = order[idx];
+        if (!entry || entry.s < 0) return false;
+        var src = await sources[entry.s].doc.getPage(entry.p + 1);
         if ((src.rotate || 0) % 360 !== 0 || page.getRotation().angle % 360 !== 0) return false;
         var vp = src.getViewport({ scale: 2.5 });
         var c = document.createElement('canvas'); c.width = Math.floor(vp.width); c.height = Math.floor(vp.height);
@@ -340,9 +437,17 @@
       }
       async function bake() {
         var edits = items.filter(function (i) { return i.kind !== 'field'; });
-        if (!edits.length) return fileBytes;
+        var identity = sources.length === 1 && order.length === sources[0].doc.numPages && order.every(function (e, i) { return e.s === 0 && e.p === i; });
+        if (!edits.length && identity) return fileBytes;
         var L = window.PDFLib;
-        var doc = await L.PDFDocument.load(fileBytes);
+        var doc = await L.PDFDocument.create();
+        for (var oi = 0; oi < order.length; oi++) {
+          var en = order[oi];
+          if (en.s < 0) { doc.addPage([en.w, en.h]); continue; }
+          var srcDoc = sources[en.s];
+          if (!srcDoc.lib) srcDoc.lib = await L.PDFDocument.load(srcDoc.bytes, { ignoreEncryption: true });
+          doc.addPage((await doc.copyPages(srcDoc.lib, [en.p]))[0]);
+        }
         var font = await doc.embedFont(L.StandardFonts.Helvetica);
         var pg = doc.getPages();
         var erasePages = {};
@@ -387,7 +492,7 @@
             token_expires_at: new Date(Date.now() + days * 864e5).toISOString() }).select('*').single();
           if (ins.error) throw ins.error;
           var env = ins.data;
-          await sb.from('envelope_events').insert({ envelope_id: env.id, event: 'sent', details: { fields: fields.length, edits: items.length - fields.length, file: fileName } });
+          await sb.from('envelope_events').insert({ envelope_id: env.id, event: 'sent', details: { fields: fields.length, edits: items.length - fields.length, pages: order.length, file: fileName } });
           var mailed = false;
           if ($('#ev-mail').checked) mailed = await ctx.emailSigner(env);
           ctx.onDone(env, mailed);
