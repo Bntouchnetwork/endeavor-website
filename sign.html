@@ -53,13 +53,8 @@
         </div>
       </div>
       <div class="check-row" style="margin-top:1rem"><input type="checkbox" id="c-consent"><label for="c-consent" data-t="consentLabel">I have read the disclosure above, I am able to access and keep electronic records, and I agree to use electronic records and signatures for this document.</label></div>
-      <div class="portal-grid2" style="margin-top:1rem">
-        <div class="field"><label for="s-email"><span data-t="emailLabel">Your email address</span> <span class="req" aria-hidden="true">*</span></label>
-          <input id="s-email" type="email" autocomplete="email" required aria-describedby="s-email-hint">
-          <p class="portal-muted" id="s-email-hint" style="font-size:.82rem;margin:0" data-t="emailHint">The email where you received this link.</p></div>
-        <div class="field"><label for="s-name"><span data-t="nameLabel">Full legal name</span> <span class="req" aria-hidden="true">*</span></label>
-          <input id="s-name" type="text" autocomplete="name" required maxlength="200"></div>
-      </div>
+      <div class="field" style="margin-top:1rem;max-width:28rem"><label for="s-name"><span data-t="nameLabel">Full legal name</span> <span class="req" aria-hidden="true">*</span></label>
+        <input id="s-name" type="text" autocomplete="name" required maxlength="200"></div>
       <div class="portal-alert" id="s1-msg" role="alert"></div>
       <button class="btn btn--navy" type="button" id="start-btn" data-t="continue">Continue to the document</button>
     </section>

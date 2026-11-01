@@ -112,7 +112,6 @@
   $('start-btn').onclick = async function () {
     var m = $('s1-msg');
     if (!$('c-consent').checked) { setMsg(m, 'needConsent'); $('c-consent').focus(); return; }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('s-email').value.trim())) { setMsg(m, 'needEmail'); $('s-email').focus(); return; }
     if ($('s-name').value.trim().length < 2) { setMsg(m, 'name_required'); $('s-name').focus(); return; }
     setMsg(m, '');
     if (!$('docwrap').hidden) { $('docwrap').scrollIntoView({ behavior: 'smooth' }); return; }
@@ -127,7 +126,7 @@
     progress();
     $('docwrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-  ['s-name', 's-email'].forEach(function (id) { $(id).addEventListener('input', fillAuto); });
+  $('s-name').addEventListener('input', fillAuto);
 
   /* ---------- fields on the document ---------- */
   function buildFields(pages) {
@@ -164,7 +163,7 @@
       var el = els[f.id]; if (!el) return;
       if (f.type === 'date') el.textContent = dateText;
       if (f.type === 'name') el.textContent = $('s-name').value.trim();
-      if (f.type === 'email') el.textContent = $('s-email').value.trim();
+      if (f.type === 'email') el.textContent = doc.signer_email || '';
     });
   }
   function isDone(f) {
@@ -281,8 +280,7 @@
     e.preventDefault();
     var m = $('s-msg'), btn = $('s-submit');
     if (!$('c-consent').checked) { setMsg(m, 'needConsent'); $('step1').scrollIntoView({ behavior: 'smooth' }); return; }
-    var email = $('s-email').value.trim(), name = $('s-name').value.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { setMsg(m, 'needEmail'); $('s-email').focus(); return; }
+    var email = doc.signer_email || '', name = $('s-name').value.trim();
     if (name.length < 2) { setMsg(m, 'name_required'); $('s-name').focus(); return; }
     var missing = fields.filter(function (f) { return countable(f) && !isDone(f); })[0];
     if (missing) { setMsg(m, missing.type === 'signature' ? 'signature_required' : missing.type === 'initials' ? 'initials_required' : 'fields_required'); focusField(missing); return; }
@@ -291,7 +289,7 @@
     btn.disabled = true; btn.textContent = t('signing'); setMsg(m, '');
     var vals = {}; fields.forEach(function (f) { if (f.type === 'text') vals[f.id] = String(values[f.id] || ''); if (f.type === 'checkbox') vals[f.id] = values[f.id] === true; });
     try {
-      var res = await EP.fn('esign', { action: 'sign', token: token, typed_name: name, email: email, signature_png: sigPng || '', initials_png: iniPng || '', values: vals, consent: true, agree: true });
+      var res = await EP.fn('esign', { action: 'sign', token: token, typed_name: name, signature_png: sigPng || '', initials_png: iniPng || '', values: vals, consent: true, agree: true });
       EP.notify({ _subject: 'Document signed: ' + doc.title + ' (' + name + ')', document: doc.title, signer: name, signer_email: email,
         signed_at_utc: res.signed_at, signed_sha256: res.signed_sha256, note: 'Open the admin console (Assinaturas) to view the signed PDF and audit trail.' });
       $('flow').hidden = true; $('done').hidden = false;

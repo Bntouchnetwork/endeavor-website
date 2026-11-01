@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
       const firstView = !env.viewed_at;
       if (firstView) await admin.from("envelopes").update({ status: "viewed", viewed_at: new Date().toISOString() }).eq("id", env.id);
       await event(env.id, "viewed", ip, ua);
-      return json({ status: "viewed", first_view: firstView, title: env.title, message: env.message, signer_name: env.signer_name,
+      return json({ status: "viewed", first_view: firstView, title: env.title, message: env.message, signer_name: env.signer_name, signer_email: env.signer_email,
         fields: env.fields || [], document_sha256: env.document_sha256, document_url: await signedUrl(env.document_path, 1800) });
     }
 
@@ -77,13 +77,11 @@ Deno.serve(async (req) => {
     if (action === "sign") {
       if (env.status === "signed") return json({ error: "already_signed" }, 409);
       const typed = String(body.typed_name || "").trim();
-      const email = String(body.email || "").trim().toLowerCase();
       const sig = String(body.signature_png || "");
       const ini = String(body.initials_png || "");
       const values = body.values && typeof body.values === "object" ? body.values : {};
       if (body.consent !== true || body.agree !== true) return json({ error: "consent_required" }, 400);
       if (typed.length < 2 || typed.length > 200) return json({ error: "name_required" }, 400);
-      if (email !== String(env.signer_email).toLowerCase()) return json({ error: "email_mismatch" }, 403);
       if (sig && !isPng(sig)) return json({ error: "signature_required" }, 400);
       if (ini && !isPng(ini)) return json({ error: "initials_required" }, 400);
 
@@ -160,7 +158,7 @@ Deno.serve(async (req) => {
       for (const e of evs || []) line(String(e.at).replace("T", " ").slice(0, 19) + " UTC  " + e.event + (e.ip ? "  IP " + e.ip : ""), 8.5);
       line(stamp + "  signed  IP " + ip, 8.5);
       cy -= 8;
-      line("The signer accessed this document through a unique link sent to the email address above, confirmed that email address, consented to use electronic records and signatures, and adopted the signature shown on the document. The SHA-256 fingerprint of the original document was verified before signing. Any change to this PDF after signing changes its fingerprint, which is recorded by Endeavor.", 8.5, font, rgb(0.3, 0.3, 0.3));
+      line("The signer accessed this document through a unique, private link sent only to the email address above, consented to use electronic records and signatures, and adopted the signature shown on the document. The SHA-256 fingerprint of the original document was verified before signing. Any change to this PDF after signing changes its fingerprint, which is recorded by Endeavor.", 8.5, font, rgb(0.3, 0.3, 0.3));
 
       const signedBytes = await pdf.save();
       const signedHash = await sha256Hex(signedBytes);
