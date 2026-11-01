@@ -443,14 +443,20 @@
     view.innerHTML = '<div class="console__head"><div><h1>Assinaturas</h1><p class="portal-muted">Prepare documentos, posicione os campos de assinatura e acompanhe tudo por aqui.</p></div>' +
       '<a class="btn btn--navy btn--xs" href="#/assinaturas?novo=1" id="env-new">Novo documento</a></div>' +
       '<div class="toolbar"><input type="search" id="env-q" placeholder="Buscar título ou signatário…" aria-label="Buscar documentos"><select id="env-st" aria-label="Filtrar por status"><option value="">Todos</option><option value="sent">Enviado</option><option value="viewed">Visualizado</option><option value="signed">Assinado</option><option value="voided">Anulado</option><option value="expired">Expirado</option></select></div>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Documento</th><th>Signatário</th><th>Status</th><th>Enviado</th><th>Assinado</th></tr></thead><tbody id="env-body"></tbody></table></div>';
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Documento</th><th>Signatário</th><th>Status</th><th>Enviado</th><th>Assinado</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody id="env-body"></tbody></table></div>';
     function draw() {
       var t = $('#env-q').value.trim().toLowerCase(), st = $('#env-st').value;
       var rows = state.envelopes.filter(function (e) { return (!st || e.status === st) && (!t || (e.title + ' ' + e.signer_name + ' ' + e.signer_email).toLowerCase().indexOf(t) > -1); });
       $('#env-body').innerHTML = rows.length ? rows.map(function (e) {
-        return '<tr data-id="' + esc(e.id) + '" tabindex="0"><td><strong>' + esc(e.title) + '</strong></td><td>' + esc(e.signer_name) + '<span class="sub">' + esc(e.signer_email) + '</span></td><td>' + badge(e.status) + '</td><td>' + esc(fmtDT(e.created_at)) + '</td><td>' + esc(fmtDT(e.signed_at)) + '</td></tr>';
-      }).join('') : '<tr><td colspan="5" class="empty">Nenhum documento.</td></tr>';
-      $$('#env-body tr[data-id]').forEach(function (tr) { tr.onclick = function () { openEnvelope(tr.dataset.id); }; tr.onkeydown = function (ev) { if (ev.key === 'Enter') openEnvelope(tr.dataset.id); }; });
+        return '<tr data-id="' + esc(e.id) + '" tabindex="0"><td><strong>' + esc(e.title) + '</strong></td><td>' + esc(e.signer_name) + '<span class="sub">' + esc(e.signer_email) + '</span></td><td>' + badge(e.status) + '</td><td>' + esc(fmtDT(e.created_at)) + '</td><td>' + esc(fmtDT(e.signed_at)) + '</td>' +
+          '<td><button type="button" class="btn btn--danger btn--xs" data-envdel="' + esc(e.id) + '" aria-label="Excluir ' + esc(e.title) + '">Excluir</button></td></tr>';
+      }).join('') : '<tr><td colspan="6" class="empty">Nenhum documento.</td></tr>';
+      $$('#env-body tr[data-id]').forEach(function (tr) { tr.onclick = function () { openEnvelope(tr.dataset.id); }; tr.onkeydown = function (ev) { if (ev.key === 'Enter' && ev.target === tr) openEnvelope(tr.dataset.id); }; });
+      $$('#env-body [data-envdel]').forEach(function (b) { b.onclick = async function (ev) {
+        ev.stopPropagation();
+        var e = state.envelopes.find(function (x) { return x.id === b.dataset.envdel; });
+        if (await deleteEnvelope(e)) { state.envelopes = state.envelopes.filter(function (x) { return x.id !== e.id; }); draw(); }
+      }; });
     }
     $('#env-q').addEventListener('input', draw); $('#env-st').addEventListener('input', draw);
     draw();
@@ -564,6 +570,23 @@
     };
   }
 
+  /* Permanently deletes an envelope: original PDF, signed PDF, the record and its audit trail. */
+  async function deleteEnvelope(e) {
+    if (!e) return false;
+    if (e.status === 'signed') {
+      var typed = prompt('Excluir definitivamente o documento ASSINADO "' + e.title + '" de ' + e.signer_name + '?\n\nO PDF assinado, o certificado e a trilha de auditoria serão apagados e não podem ser recuperados. Se precisar guardar, baixe antes.\n\nPara confirmar, digite EXCLUIR:');
+      if (!typed || typed.trim().toUpperCase() !== 'EXCLUIR') return false;
+    } else if (!confirm('Excluir o documento "' + e.title + '"?' + (e.status === 'sent' || e.status === 'viewed' ? ' O link de assinatura deixa de funcionar.' : '') + ' Esta ação não pode ser desfeita.')) return false;
+    var paths = [e.document_path, e.signed_document_path].filter(Boolean);
+    if (paths.length) {
+      var rm = await sb.storage.from('documents').remove(paths);
+      if (rm.error) { alert('Não foi possível apagar os arquivos: ' + errText(rm.error)); return false; }
+    }
+    var r = await sb.from('envelopes').delete().eq('id', e.id);
+    if (r.error) { alert('Não foi possível excluir: ' + errText(r.error)); return false; }
+    return true;
+  }
+
   async function openEnvelope(id) {
     var e = await q(sb.from('envelopes').select('*').eq('id', id).single());
     var evs = await q(sb.from('envelope_events').select('*').eq('envelope_id', id).order('at'));
@@ -580,6 +603,7 @@
         (open ? '<button class="btn btn--ghost btn--xs" type="button" id="e-copy">Copiar link</button><button class="btn btn--ghost btn--xs" type="button" id="e-mail">Reenviar e-mail</button>' : '') +
         '<button class="btn btn--ghost btn--xs" type="button" id="e-audit">Exportar trilha</button>' +
         (open ? '<button class="btn btn--danger btn--xs" type="button" id="e-void">Anular</button>' : '') +
+        '<button class="btn btn--danger btn--xs" type="button" id="e-del">Excluir documento</button>' +
       '</div><div class="portal-alert" id="e-msg" role="status"></div>' +
       '<h3 style="margin-top:1.25rem">Trilha de auditoria</h3><ul class="timeline">' + evs.map(function (x) {
         return '<li><strong>' + esc(EV[x.event] || x.event) + '</strong> · ' + esc(fmtDT(x.at, { timeStyle: 'medium' })) + (x.ip ? '<br><span class="portal-muted">IP ' + esc(x.ip) + ' · ' + esc(String(x.user_agent || '').slice(0, 90)) + '</span>' : '') + '</li>';
@@ -591,6 +615,7 @@
     $('#e-audit', o).onclick = function () {
       download('trilha-' + e.id + '.json', JSON.stringify({ envelope: { id: e.id, title: e.title, signer_name: e.signer_name, signer_email: e.signer_email, status: e.status, created_at: e.created_at, signed_at: e.signed_at, signer_ip: e.signer_ip, signer_user_agent: e.signer_user_agent, signature_name: e.signature_name, document_sha256: e.document_sha256, signed_document_sha256: e.signed_document_sha256, fields: e.fields, field_values: e.field_values }, events: evs }, null, 2), 'application/json');
     };
+    $('#e-del', o).onclick = async function () { if (await deleteEnvelope(e)) { closeOverlay(); route(); } };
     if ($('#e-void', o)) $('#e-void', o).onclick = async function () {
       if (!confirm('Anular este documento? O link deixa de funcionar.')) return;
       var r = await sb.from('envelopes').update({ status: 'voided' }).eq('id', e.id);
