@@ -33,18 +33,10 @@
     <p class="portal-muted"><span data-t="sentTo">Prepared for</span> <strong id="doc-signer"></strong> · <span data-t="sentBy">sent by Endeavor Business Solutions</span></p>
     <div class="portal-alert portal-alert--info" id="doc-msg" hidden></div>
 
-    <section class="portal-card" aria-labelledby="s1">
-      <h2 class="portal-h2" id="s1" data-t="step1">1. Review the document</h2>
-      <iframe class="doc-frame" id="doc-frame" title="Document" data-t-aria="docFrame"></iframe>
-      <div class="portal-btn-row" style="margin-top:.75rem">
-        <a class="btn btn--ghost btn--xs" id="doc-open" target="_blank" rel="noopener" data-t="openPdf">Open PDF in a new tab</a>
-      </div>
-      <p class="portal-muted" style="font-size:.8rem;word-break:break-all"><span data-t="fingerprint">Document fingerprint (SHA-256):</span> <span class="mono" id="doc-hash"></span></p>
-    </section>
-
-    <section class="portal-card" aria-labelledby="s2">
-      <h2 class="portal-h2" id="s2" data-t="step2">2. Consent to electronic records and signatures</h2>
-      <div class="disclosure" tabindex="0" role="region" aria-labelledby="disc-h" id="disclosure">
+    <!-- Step 1: consent and identity -->
+    <section class="portal-card" aria-labelledby="s1" id="step1">
+      <h2 class="portal-h2" id="s1" data-t="step1">1. Before you start</h2>
+      <div class="disclosure" tabindex="0" role="region" aria-labelledby="disc-h">
         <h3 id="disc-h" data-t="discTitle">Electronic Record and Signature Disclosure</h3>
         <div data-t="discBody">
           <p>Endeavor Tax Solutions LLC, doing business as Endeavor Business Solutions ("Endeavor"), asks you to receive and sign this document electronically. Under the U.S. Electronic Signatures in Global and National Commerce Act (15 U.S.C. § 7001 et seq.) and the Florida Uniform Electronic Transaction Act (Fla. Stat. § 668.50), an electronic signature has the same legal effect as a handwritten signature when both parties agree to transact electronically.</p>
@@ -61,32 +53,39 @@
         </div>
       </div>
       <div class="check-row" style="margin-top:1rem"><input type="checkbox" id="c-consent"><label for="c-consent" data-t="consentLabel">I have read the disclosure above, I am able to access and keep electronic records, and I agree to use electronic records and signatures for this document.</label></div>
-    </section>
-
-    <form class="portal-card portal-form" id="sign-form" novalidate aria-labelledby="s3">
-      <h2 class="portal-h2" id="s3" data-t="step3">3. Confirm your identity and sign</h2>
-      <div class="portal-grid2">
+      <div class="portal-grid2" style="margin-top:1rem">
         <div class="field"><label for="s-email"><span data-t="emailLabel">Your email address</span> <span class="req" aria-hidden="true">*</span></label>
           <input id="s-email" type="email" autocomplete="email" required aria-describedby="s-email-hint">
           <p class="portal-muted" id="s-email-hint" style="font-size:.82rem;margin:0" data-t="emailHint">The email where you received this link.</p></div>
         <div class="field"><label for="s-name"><span data-t="nameLabel">Full legal name</span> <span class="req" aria-hidden="true">*</span></label>
           <input id="s-name" type="text" autocomplete="name" required maxlength="200"></div>
       </div>
+      <div class="portal-alert" id="s1-msg" role="alert"></div>
+      <button class="btn btn--navy" type="button" id="start-btn" data-t="continue">Continue to the document</button>
+    </section>
 
-      <fieldset class="field" style="border:0;padding:0;margin:0">
-        <legend style="font-weight:600;margin-bottom:.4rem" data-t="sigMode">Signature</legend>
-        <div class="radio-row">
-          <label><input type="radio" name="sm" value="draw" checked> <span data-t="draw">Draw</span></label>
-          <label><input type="radio" name="sm" value="type"> <span data-t="type">Type</span></label>
+    <!-- Step 2: the document with fields -->
+    <section id="docwrap" hidden aria-labelledby="s2" style="margin-top:1.25rem">
+      <h2 class="portal-h2" id="s2" data-t="step2">2. Fill in and sign the fields</h2>
+      <div class="sguide" role="region" aria-label="Progress">
+        <strong id="g-progress" aria-live="polite"></strong>
+        <div class="portal-btn-row" style="margin:0">
+          <button class="btn btn--gold-solid btn--xs" type="button" id="g-next" data-t="next">Next field</button>
+          <button class="btn btn--ghost btn--xs" type="button" id="g-finish" data-t="finish" style="background:#fff">Finish</button>
         </div>
-      </fieldset>
-      <div class="sigpad" id="sigpad">
-        <canvas id="sig-canvas" role="img" aria-label="Signature area" data-t-aria="sigArea"></canvas>
-        <div class="sigpad__line"></div><span class="sigpad__hint" id="sig-hint" data-t="sigHint">Sign here with your mouse, finger or stylus</span>
       </div>
-      <div class="portal-btn-row"><button type="button" class="btn btn--ghost btn--xs" id="sig-clear" data-t="clear">Clear</button></div>
-      <p class="portal-muted" style="font-size:.85rem;margin:0" data-t="typeNote">Keyboard users: choose "Type" to adopt your typed name as your signature.</p>
+      <div class="sdoc"><div id="sdoc-pages" class="esx__pages"></div></div>
+      <p class="portal-muted" style="font-size:.8rem;word-break:break-all;margin-top:.75rem"><span data-t="fingerprint">Document fingerprint (SHA-256):</span> <span class="mono" id="doc-hash"></span></p>
+    </section>
 
+    <!-- Step 3: finish -->
+    <form class="portal-card portal-form" id="sign-form" novalidate aria-labelledby="s3" hidden style="margin-top:1.25rem">
+      <h2 class="portal-h2" id="s3" data-t="step3">3. Finish</h2>
+      <div id="legacy-sig" hidden>
+        <p data-t="legacyHint">Adopt your signature. It will be placed on the last page of the document.</p>
+        <div class="portal-btn-row"><button type="button" class="btn btn--ghost" id="legacy-adopt" data-t="adoptSig">Adopt signature</button></div>
+        <img id="legacy-prev" alt="" hidden style="max-height:4.5rem;border-bottom:1px solid #c9ced8">
+      </div>
       <div class="check-row"><input type="checkbox" id="c-agree"><label for="c-agree" data-t="agreeLabel">By selecting "Sign document", I adopt the signature above as my electronic signature, I confirm I am the person named, and I agree to be bound by this document.</label></div>
       <div class="portal-alert" id="s-msg" role="alert"></div>
       <button class="btn btn--navy btn--block" type="submit" id="s-submit" data-t="signBtn">Sign document</button>
@@ -97,12 +96,37 @@
     <h1 class="portal-h1" data-t="doneTitle">Document signed</h1>
     <p data-t="doneText">Thank you. Your signed copy, with its certificate of completion, is ready. Download it and keep it for your records. Endeavor has been notified.</p>
     <p class="portal-muted" style="font-size:.8rem;word-break:break-all"><span data-t="signedFp">Signed document fingerprint (SHA-256):</span> <span class="mono" id="done-hash"></span></p>
-    <div class="portal-btn-row"><a class="btn btn--navy" id="done-dl" target="_blank" rel="noopener" data-t="download">Download signed PDF</a></div>
+    <div class="portal-btn-row"><button class="btn btn--navy" id="done-dl" type="button" data-t="download">Download signed PDF</button></div>
   </section>
 </main>
 
+<!-- Adopt signature / initials -->
+<dialog class="modal adopt" id="adopt" aria-labelledby="adopt-title">
+  <form method="dialog" class="portal-form" id="adopt-form">
+    <h2 class="portal-h2" id="adopt-title" data-t="adoptTitle">Adopt your signature</h2>
+    <div class="radio-row" role="radiogroup" aria-labelledby="adopt-title">
+      <label><input type="radio" name="am" value="draw" checked> <span data-t="draw">Draw</span></label>
+      <label><input type="radio" name="am" value="type"> <span data-t="type">Type</span></label>
+    </div>
+    <div class="field" id="ad-type-wrap" hidden><label for="ad-text" data-t="adText">Text</label><input id="ad-text" type="text" maxlength="200"></div>
+    <div class="sigpad" id="sigpad">
+      <canvas id="sig-canvas" role="img" aria-label="Signature area" data-t-aria="sigArea"></canvas>
+      <div class="sigpad__line"></div><span class="sigpad__hint" id="sig-hint" data-t="sigHint">Sign here with your mouse, finger or stylus</span>
+    </div>
+    <div class="portal-alert" id="ad-msg" role="alert"></div>
+    <div class="portal-btn-row">
+      <button type="button" class="btn btn--ghost btn--xs" id="sig-clear" data-t="clear">Clear</button>
+      <span style="flex:1"></span>
+      <button type="button" class="btn btn--ghost" id="ad-cancel" data-t="cancel">Cancel</button>
+      <button type="button" class="btn btn--navy" id="ad-ok" data-t="adoptOk">Adopt and sign</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="app-config.js"></script>
 <script src="portal-common.js"></script>
+<script src="pdfview.js"></script>
 <script src="sign.js"></script>
 </body>
 </html>

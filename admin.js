@@ -427,9 +427,10 @@
 
   /* ---------- E-signature ---------- */
   async function viewEnvelopes(view) {
+    if (/novo=1/.test(location.hash)) return viewEditor(view);
     state.envelopes = await q(sb.from('envelopes').select('*').order('created_at', { ascending: false }).limit(500));
-    view.innerHTML = '<div class="console__head"><div><h1>Assinaturas</h1><p class="portal-muted">Envie PDFs para assinatura eletrônica com trilha de auditoria e certificado de conclusão.</p></div>' +
-      '<button class="btn btn--navy btn--xs" type="button" id="env-new">Novo documento</button></div>' +
+    view.innerHTML = '<div class="console__head"><div><h1>Assinaturas</h1><p class="portal-muted">Prepare documentos, posicione os campos de assinatura e acompanhe tudo por aqui.</p></div>' +
+      '<a class="btn btn--navy btn--xs" href="#/assinaturas?novo=1" id="env-new">Novo documento</a></div>' +
       '<div class="toolbar"><input type="search" id="env-q" placeholder="Buscar título ou signatário…" aria-label="Buscar documentos"><select id="env-st" aria-label="Filtrar por status"><option value="">Todos</option><option value="sent">Enviado</option><option value="viewed">Visualizado</option><option value="signed">Assinado</option><option value="voided">Anulado</option><option value="expired">Expirado</option></select></div>' +
       '<div class="table-wrap"><table class="data"><thead><tr><th>Documento</th><th>Signatário</th><th>Status</th><th>Enviado</th><th>Assinado</th></tr></thead><tbody id="env-body"></tbody></table></div>';
     function draw() {
@@ -441,99 +442,105 @@
       $$('#env-body tr[data-id]').forEach(function (tr) { tr.onclick = function () { openEnvelope(tr.dataset.id); }; tr.onkeydown = function (ev) { if (ev.key === 'Enter') openEnvelope(tr.dataset.id); }; });
     }
     $('#env-q').addEventListener('input', draw); $('#env-st').addEventListener('input', draw);
-    $('#env-new').addEventListener('click', newEnvelope);
     draw();
-    if (/novo=1/.test(location.hash)) newEnvelope();
   }
 
   function signLink(e) { return siteUrl('sign.html') + '?t=' + encodeURIComponent(e.token); }
-  function mailtoFor(e) {
-    var link = signLink(e);
-    var subject = 'Documento para assinatura / Document for signature: ' + e.title;
-    var body = 'Olá ' + e.signer_name + ',\n\nA Endeavor Business Solutions enviou o documento "' + e.title + '" para sua assinatura eletrônica.\nAbra o link abaixo, revise e assine:\n' + link +
-      '\n\nO link é pessoal e expira em ' + new Date(e.token_expires_at).toLocaleDateString('pt-BR') + '.\n\n---\n\nHello ' + e.signer_name + ',\n\nEndeavor Business Solutions sent you "' + e.title + '" for electronic signature.\nOpen the link below to review and sign:\n' + link +
-      (e.message ? '\n\n' + e.message : '') + '\n\nEndeavor Business Solutions\n' + CFG.adminEmail;
-    return 'mailto:' + encodeURIComponent(e.signer_email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+
+  /* Emails the signing link through the account's FormSubmit form: the signer receives the auto-response with the link,
+     and support@endeavorbiz.com receives the notification copy. */
+  async function emailSigner(e) {
+    var link = signLink(e), exp = new Date(e.token_expires_at).toLocaleDateString('pt-BR');
+    var text = 'Olá ' + e.signer_name + ', a Endeavor Business Solutions enviou o documento "' + e.title + '" para sua assinatura eletrônica. ' +
+      (e.message ? e.message + ' ' : '') + 'Abra o link para revisar e assinar: ' + link + ' (link pessoal, válido até ' + exp + '). ' +
+      '— Hello ' + e.signer_name + ', Endeavor Business Solutions sent you "' + e.title + '" for electronic signature. Review and sign here: ' + link + ' — ' +
+      'Hola ' + e.signer_name + ', Endeavor Business Solutions le envió "' + e.title + '" para firma electrónica. Revise y firme aquí: ' + link +
+      ' — Endeavor Business Solutions · ' + CFG.adminEmail + ' · +1 (407) 436-9567';
+    try {
+      var r = await fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ _subject: 'Documento enviado para assinatura: ' + e.title + ' → ' + e.signer_name, _template: 'table', _captcha: 'false',
+          name: e.signer_name, email: e.signer_email, documento: e.title, link_de_assinatura: link, expira_em: exp, mensagem: e.message || '', _autoresponse: text }) });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok || String(j.success) === 'false') throw new Error(j.message || 'send failed');
+      await sb.from('envelope_events').insert({ envelope_id: e.id, event: 'emailed', details: { to: e.signer_email, cc: CFG.adminEmail } });
+      return true;
+    } catch (err) { console.warn(err); return false; }
   }
 
-  async function newEnvelope() {
+  async function viewEditor(view) {
     var leads = await q(sb.from('leads').select('id,name,email').order('created_at', { ascending: false }).limit(500));
     var pre = (location.hash.match(/lead=([0-9a-f-]{36})/) || [])[1];
-    var preLead = leads.find(function (l) { return l.id === pre; });
-    var o = openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Novo documento para assinatura</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
-      '<form class="portal-form" id="env-form">' +
-      '<div class="field"><label for="ev-lead">Vincular a um lead (opcional)</label><select id="ev-lead"><option value="">Nenhum</option>' + leads.map(function (l) { return '<option value="' + esc(l.id) + '"' + (l.id === pre ? ' selected' : '') + '>' + esc(l.name) + ' · ' + esc(l.email) + '</option>'; }).join('') + '</select></div>' +
-      fld('ev-title', 'Título do documento', '', 'text', true) +
-      '<div class="portal-grid2">' + fld('ev-name', 'Nome do signatário', preLead ? preLead.name : '', 'text', true) + fld('ev-email', 'E-mail do signatário', preLead ? preLead.email : '', 'email', true) + '</div>' +
-      '<div class="field"><label for="ev-msg">Mensagem ao signatário (opcional)</label><textarea id="ev-msg" rows="3"></textarea></div>' +
-      '<div class="field"><label for="ev-days">Link válido por (dias)</label><input id="ev-days" type="number" min="1" max="90" value="30"></div>' +
-      '<div class="field"><label for="ev-file">Arquivo PDF (até 20 MB) <span class="req" aria-hidden="true">*</span></label><input id="ev-file" type="file" accept="application/pdf" required></div>' +
-      '<p class="portal-muted">A assinatura é aplicada na última página e um certificado de conclusão é anexado ao final do PDF.</p>' +
-      '<div class="portal-alert" id="ev-out" role="status"></div><button class="btn btn--navy" type="submit" id="ev-submit">Criar e gerar link</button></form>');
-    $('#ev-lead', o).onchange = function () {
-      var l = leads.find(function (x) { return x.id === $('#ev-lead').value; });
-      if (l) { $('#ev-name').value = l.name; $('#ev-email').value = l.email; }
-    };
-    $('#env-form', o).addEventListener('submit', async function (ev) {
-      ev.preventDefault();
-      var out = $('#ev-out'), file = $('#ev-file').files[0];
-      var title = $('#ev-title').value.trim(), name = $('#ev-name').value.trim(), email = $('#ev-email').value.trim().toLowerCase();
-      if (title.length < 2 || name.length < 2 || email.indexOf('@') < 1) return msg(out, 'Preencha título, nome e e-mail.', 'error');
-      if (!file || file.type !== 'application/pdf') return msg(out, 'Escolha um arquivo PDF.', 'error');
-      if (file.size > 20 * 1024 * 1024) return msg(out, 'O PDF precisa ter até 20 MB.', 'error');
-      $('#ev-submit').disabled = true; msg(out, 'Enviando documento…', 'info');
-      try {
-        var buf = await file.arrayBuffer();
-        var hash = await sha256Hex(buf);
-        var path = 'originals/' + crypto.randomUUID() + '.pdf';
-        var up = await sb.storage.from('documents').upload(path, new Blob([buf], { type: 'application/pdf' }), { contentType: 'application/pdf', upsert: false });
-        if (up.error) throw up.error;
-        var days = Math.min(90, Math.max(1, +$('#ev-days').value || 30));
-        var ins = await sb.from('envelopes').insert({ title: title, signer_name: name, signer_email: email, message: $('#ev-msg').value.trim() || null,
-          lead_id: $('#ev-lead').value || null, document_path: path, document_sha256: hash, token_expires_at: new Date(Date.now() + days * 864e5).toISOString() }).select('*').single();
-        if (ins.error) throw ins.error;
-        var e = ins.data;
-        await sb.from('envelope_events').insert({ envelope_id: e.id, event: 'sent', details: { channel: 'link' } });
-        $('#env-form').outerHTML = '<div class="portal-alert portal-alert--ok">Documento criado. Envie o link ao signatário.</div>' +
+    view.innerHTML = '<p class="portal-muted">Carregando editor…</p>';
+    if (!window.EPdf || !window.pdfjsLib || !window.PDFLib || !window.EndeavorEditor) {
+      view.innerHTML = '<div class="portal-alert portal-alert--error">Não foi possível carregar o editor de PDF. Verifique a conexão e recarregue a página.</div>'; return;
+    }
+    EndeavorEditor.mount(view, {
+      sb: sb, CFG: CFG, esc: esc, msg: msg, errText: errText, sha256Hex: sha256Hex, leads: leads, preLeadId: pre,
+      preLead: leads.find(function (l) { return l.id === pre; }), emailSigner: emailSigner,
+      onCancel: function () { location.hash = '#/assinaturas'; },
+      onDone: function (e, mailed) {
+        history.replaceState(null, '', '#/assinaturas');
+        view.innerHTML = '<div class="console__head"><h1>Documento enviado</h1></div><section class="portal-card esx-done">' +
+          '<p class="portal-alert portal-alert--ok">' + (mailed ? 'O link de assinatura foi enviado para <strong>' + esc(e.signer_email) + '</strong> e uma cópia foi para ' + esc(CFG.adminEmail) + '.' : 'Documento criado. Copie o link abaixo e envie ao signatário.') + '</p>' +
+          '<dl class="kv"><dt>Documento</dt><dd>' + esc(e.title) + '</dd><dt>Signatário</dt><dd>' + esc(e.signer_name) + ' · ' + esc(e.signer_email) + '</dd><dt>Campos</dt><dd>' + (e.fields || []).length + '</dd><dt>Expira</dt><dd>' + esc(fmtDT(e.token_expires_at)) + '</dd></dl>' +
           '<div class="field"><label for="ev-link">Link de assinatura</label><input id="ev-link" readonly value="' + esc(signLink(e)) + '"></div>' +
-          '<div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ev-copy">Copiar link</button><a class="btn btn--ghost" href="' + esc(mailtoFor(e)) + '">Abrir e-mail pronto</a></div>';
+          '<div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ev-copy">Copiar link</button>' +
+          (mailed ? '' : '<button class="btn btn--ghost" type="button" id="ev-mail">Enviar por e-mail</button>') +
+          '<button class="btn btn--ghost" type="button" id="ev-view">Ver documento</button><a class="btn btn--ghost" href="#/assinaturas?novo=1">Novo documento</a><a class="btn btn--ghost" href="#/assinaturas">Ver lista</a></div>' +
+          '<div class="portal-alert" id="ev-out" role="status"></div></section>';
         $('#ev-copy').onclick = function (b) { copy(signLink(e), b.currentTarget); sb.from('envelope_events').insert({ envelope_id: e.id, event: 'link_copied' }); };
-        if (/novo=1/.test(location.hash)) history.replaceState(null, '', '#/assinaturas');
-        state.envelopes.unshift(e);
-      } catch (err) { $('#ev-submit').disabled = false; msg(out, errText(err), 'error'); }
+        $('#ev-view').onclick = function () { viewPdf(e.document_path, e.title, e); };
+        if ($('#ev-mail')) $('#ev-mail').onclick = async function (b) { var ok = await emailSigner(e); msg($('#ev-out'), ok ? 'E-mail enviado.' : 'Não foi possível enviar o e-mail agora. Copie o link e envie manualmente.', ok ? 'ok' : 'error'); };
+      }
     });
+  }
+
+  /* In-console PDF viewer with download (no new tabs). */
+  async function viewPdf(path, title, e) {
+    var o = openOverlay('<div class="viewer"><div class="viewer__bar"><strong>' + esc(title) + '</strong><div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="vw-dl">Baixar PDF</button><button class="close-x" type="button" aria-label="Fechar">×</button></div></div>' +
+      '<div class="viewer__pages" id="vw-pages"><p class="portal-muted">Carregando documento…</p></div></div>', true);
+    o.querySelector('.modal').classList.add('modal--wide');
+    var r = await sb.storage.from('documents').createSignedUrl(path, 600);
+    if (r.error) { $('#vw-pages').innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(r.error)) + '</div>'; return; }
+    var bytes;
+    try {
+      bytes = new Uint8Array(await (await fetch(r.data.signedUrl)).arrayBuffer());
+      var doc = await EPdf.open(bytes);
+      await EPdf.render(doc, $('#vw-pages'), { maxWidth: 900, pageLabel: 'Página' });
+    } catch (err) { $('#vw-pages').innerHTML = '<div class="portal-alert portal-alert--error">Não foi possível exibir o PDF.</div>'; }
+    $('#vw-dl').onclick = function () {
+      if (!bytes) return;
+      download(title.replace(/[\\/:*?"<>|]+/g, '-') + '.pdf', new Blob([bytes], { type: 'application/pdf' }));
+      if (e) sb.from('envelope_events').insert({ envelope_id: e.id, event: 'downloaded', details: { file: path.split('/')[0] } });
+    };
   }
 
   async function openEnvelope(id) {
     var e = await q(sb.from('envelopes').select('*').eq('id', id).single());
     var evs = await q(sb.from('envelope_events').select('*').eq('envelope_id', id).order('at'));
-    var EV = { created: 'Criado', sent: 'Enviado', viewed: 'Visualizado', consented: 'Consentiu com registros eletrônicos', signed: 'Assinado', completed: 'Concluído (PDF final gerado)', voided: 'Anulado', downloaded: 'Baixado', link_copied: 'Link copiado' };
+    var EV = { created: 'Criado', sent: 'Enviado', emailed: 'E-mail enviado ao signatário', viewed: 'Visualizado', consented: 'Consentiu com registros eletrônicos', signed: 'Assinado', completed: 'Concluído (PDF final gerado)', voided: 'Anulado', downloaded: 'Baixado', link_copied: 'Link copiado' };
     var open = e.status === 'sent' || e.status === 'viewed';
     var o = openOverlay('<div class="drawer__head"><div><h2 class="portal-h2" style="margin:0">' + esc(e.title) + '</h2><p>' + badge(e.status) + '</p></div><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<dl class="kv"><dt>Signatário</dt><dd>' + esc(e.signer_name) + '<br>' + esc(e.signer_email) + '</dd><dt>Criado</dt><dd>' + esc(fmtDT(e.created_at)) + ' por ' + esc(e.created_by || '') + '</dd>' +
+      '<dt>Campos</dt><dd>' + ((e.fields || []).length || 'Bloco de assinatura padrão') + '</dd>' +
       '<dt>Expira</dt><dd>' + esc(fmtDT(e.token_expires_at)) + '</dd>' + (e.signed_at ? '<dt>Assinado</dt><dd>' + esc(fmtDT(e.signed_at)) + ' · IP ' + esc(e.signer_ip) + '</dd><dt>Nome adotado</dt><dd>' + esc(e.signature_name) + '</dd>' : '') +
       '<dt>SHA-256 original</dt><dd class="mono">' + esc(e.document_sha256) + '</dd>' + (e.signed_document_sha256 ? '<dt>SHA-256 assinado</dt><dd class="mono">' + esc(e.signed_document_sha256) + '</dd>' : '') + '</dl>' +
       '<div class="portal-btn-row">' +
-        (open ? '<button class="btn btn--navy btn--xs" type="button" id="e-copy">Copiar link</button><a class="btn btn--ghost btn--xs" href="' + esc(mailtoFor(e)) + '">E-mail pronto</a>' : '') +
-        '<button class="btn btn--ghost btn--xs" type="button" id="e-orig">Baixar original</button>' +
-        (e.signed_document_path ? '<button class="btn btn--ghost btn--xs" type="button" id="e-signed">Baixar assinado</button>' : '') +
+        (e.signed_document_path ? '<button class="btn btn--navy btn--xs" type="button" id="e-signed">Ver assinado</button>' : '') +
+        '<button class="btn btn--ghost btn--xs" type="button" id="e-orig">Ver original</button>' +
+        (open ? '<button class="btn btn--ghost btn--xs" type="button" id="e-copy">Copiar link</button><button class="btn btn--ghost btn--xs" type="button" id="e-mail">Reenviar e-mail</button>' : '') +
         '<button class="btn btn--ghost btn--xs" type="button" id="e-audit">Exportar trilha</button>' +
         (open ? '<button class="btn btn--danger btn--xs" type="button" id="e-void">Anular</button>' : '') +
       '</div><div class="portal-alert" id="e-msg" role="status"></div>' +
       '<h3 style="margin-top:1.25rem">Trilha de auditoria</h3><ul class="timeline">' + evs.map(function (x) {
         return '<li><strong>' + esc(EV[x.event] || x.event) + '</strong> · ' + esc(fmtDT(x.at, { timeStyle: 'medium' })) + (x.ip ? '<br><span class="portal-muted">IP ' + esc(x.ip) + ' · ' + esc(String(x.user_agent || '').slice(0, 90)) + '</span>' : '') + '</li>';
       }).join('') + '</ul>');
-    async function dl(path, name) {
-      var r = await sb.storage.from('documents').createSignedUrl(path, 120, { download: name });
-      if (r.error) return msg($('#e-msg'), errText(r.error), 'error');
-      sb.from('envelope_events').insert({ envelope_id: e.id, event: 'downloaded', details: { file: name } });
-      window.open(r.data.signedUrl, '_blank', 'noopener');
-    }
     if ($('#e-copy', o)) $('#e-copy', o).onclick = function (b) { copy(signLink(e), b.currentTarget); sb.from('envelope_events').insert({ envelope_id: e.id, event: 'link_copied' }); };
-    $('#e-orig', o).onclick = function () { dl(e.document_path, e.title + ' - original.pdf'); };
-    if ($('#e-signed', o)) $('#e-signed', o).onclick = function () { dl(e.signed_document_path, e.title + ' - assinado.pdf'); };
+    if ($('#e-mail', o)) $('#e-mail', o).onclick = async function () { var ok = await emailSigner(e); msg($('#e-msg'), ok ? 'E-mail reenviado para ' + e.signer_email + '.' : 'Não foi possível enviar agora. Use "Copiar link".', ok ? 'ok' : 'error'); };
+    $('#e-orig', o).onclick = function () { viewPdf(e.document_path, e.title + ' - original', e); };
+    if ($('#e-signed', o)) $('#e-signed', o).onclick = function () { viewPdf(e.signed_document_path, e.title + ' - assinado', e); };
     $('#e-audit', o).onclick = function () {
-      download('trilha-' + e.id + '.json', JSON.stringify({ envelope: { id: e.id, title: e.title, signer_name: e.signer_name, signer_email: e.signer_email, status: e.status, created_at: e.created_at, signed_at: e.signed_at, signer_ip: e.signer_ip, signer_user_agent: e.signer_user_agent, signature_name: e.signature_name, document_sha256: e.document_sha256, signed_document_sha256: e.signed_document_sha256 }, events: evs }, null, 2), 'application/json');
+      download('trilha-' + e.id + '.json', JSON.stringify({ envelope: { id: e.id, title: e.title, signer_name: e.signer_name, signer_email: e.signer_email, status: e.status, created_at: e.created_at, signed_at: e.signed_at, signer_ip: e.signer_ip, signer_user_agent: e.signer_user_agent, signature_name: e.signature_name, document_sha256: e.document_sha256, signed_document_sha256: e.signed_document_sha256, fields: e.fields, field_values: e.field_values }, events: evs }, null, 2), 'application/json');
     };
     if ($('#e-void', o)) $('#e-void', o).onclick = async function () {
       if (!confirm('Anular este documento? O link deixa de funcionar.')) return;
