@@ -850,3 +850,6 @@ html.a11y-contrast .wa-float { background: #000; border: 2px solid #fff; }
 .note--dark { background: rgb(255 255 255 / 0.06); color: var(--on-dark); border-left-color: var(--gold); }
 .note--dark .icon { color: var(--gold); }
 .footer__legalname { font-size: 0.85rem; margin-top: -0.4rem; }
+
+/* Discreet admin access in the footer */
+.footer__admin { opacity: .85; font-size: .85em; }

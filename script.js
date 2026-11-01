@@ -63,6 +63,7 @@
     // dynamic UI
     if (typeof toggleLabel !== 'undefined' && toggleLabel) toggleLabel.textContent = nav.classList.contains('is-open') ? ui('close') : ui('menu');
     // WhatsApp links carry a greeting in the current language
+    document.querySelectorAll('.js-sched').forEach(function (l) { l.href = 'schedule.html?lang=' + lang; });
     document.querySelectorAll('#wa-float, .js-wa').forEach(function (l) {
       l.href = 'https://wa.me/16306898702?text=' + encodeURIComponent(ui('waText'));
     });
@@ -328,6 +329,19 @@
     submitBtn.setAttribute('aria-busy', 'true');
     submitLabel.textContent = ui('sending');
     statusEl.classList.remove('is-error');
+    // Also record the lead in the CRM (best effort, never blocks the email delivery)
+    var CFG = window.ENDEAVOR_CFG;
+    if (CFG && CFG.supabaseUrl) {
+      try {
+        fetch(CFG.supabaseUrl + '/rest/v1/rpc/submit_lead', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey },
+          body: JSON.stringify({ p_name: payload.name || '', p_email: payload.email || '', p_phone: payload.phone || null, p_country: payload.country || null,
+            p_company: payload.company || null, p_assistance: payload.assistance || null, p_message: payload.message || null,
+            p_language: lang, p_marketing_consent: payload.marketing_consent === 'yes' })
+        }).catch(function () { /* ignore */ });
+      } catch (e) { /* ignore */ }
+    }
     fetch(FORM_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule a Call | Endeavor Business Solutions</title>
+  <meta name="description" content="Book a free introductory call with Endeavor Business Solutions. Pick a day and time that works for you.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="portal.css">
+</head>
+<body class="portal">
+<a class="skip-link" href="#main" data-t="skip">Skip to content</a>
+<header class="portal-top">
+  <div class="portal-top__inner">
+    <a href="index.html" data-keep-lang aria-label="Endeavor Business Solutions, home"><img class="portal-top__logo" src="logo-endeavor.svg" alt="" width="950" height="180"></a>
+    <nav class="lang-mini" aria-label="Language">
+      <a href="?lang=en" hreflang="en" data-lang="en">EN</a>
+      <a href="?lang=pt" hreflang="pt-BR" data-lang="pt">PT</a>
+      <a href="?lang=es" hreflang="es" data-lang="es">ES</a>
+    </nav>
+  </div>
+</header>
+
+<main class="portal-main" id="main" tabindex="-1">
+  <h1 class="portal-h1" data-t="title">Schedule a call</h1>
+  <p class="portal-muted" data-t="lead">Choose a day and time for a free introductory conversation. A consultation does not create a client relationship.</p>
+
+  <div id="booking">
+    <div class="sched">
+      <section class="portal-card" aria-labelledby="cal-title">
+        <h2 class="portal-h2" id="cal-title" data-t="pickDay">1. Pick a day</h2>
+        <div class="cal__head">
+          <button type="button" id="cal-prev" data-t-aria="prevMonth" aria-label="Previous month">‹</button>
+          <strong id="cal-month" aria-live="polite"></strong>
+          <button type="button" id="cal-next" data-t-aria="nextMonth" aria-label="Next month">›</button>
+        </div>
+        <div class="cal__grid" id="cal-grid" role="group" aria-labelledby="cal-month"></div>
+        <p class="portal-muted" id="tz-note" style="margin-top:1rem"></p>
+      </section>
+
+      <section class="portal-card" aria-labelledby="slot-title">
+        <h2 class="portal-h2" id="slot-title" data-t="pickTime">2. Pick a time</h2>
+        <p class="portal-muted" id="slot-hint" data-t="pickDayFirst">Select an available day on the calendar.</p>
+        <div class="slots" id="slots" role="group" aria-labelledby="slot-title"></div>
+
+        <form class="portal-form" id="book-form" novalidate hidden style="margin-top:1.5rem">
+          <h2 class="portal-h2" data-t="yourDetails">3. Your details</h2>
+          <div class="chosen" id="chosen" aria-live="polite"></div>
+          <div class="portal-grid2">
+            <div class="field"><label for="b-name"><span data-t="name">Full name</span> <span class="req" aria-hidden="true">*</span></label><input id="b-name" type="text" autocomplete="name" required maxlength="120"><p class="field__error" id="b-name-err"></p></div>
+            <div class="field"><label for="b-email"><span data-t="email">Email</span> <span class="req" aria-hidden="true">*</span></label><input id="b-email" type="email" autocomplete="email" required maxlength="200"><p class="field__error" id="b-email-err"></p></div>
+            <div class="field"><label for="b-phone" data-t="phone">Phone / WhatsApp</label><input id="b-phone" type="tel" autocomplete="tel" maxlength="40"></div>
+            <div class="field"><label for="b-topic" data-t="topic">Topic</label>
+              <select id="b-topic">
+                <option value="Business Formation" data-t="o1">Business Formation</option>
+                <option value="Compliance" data-t="o2">Compliance</option>
+                <option value="Tax Coordination" data-t="o3">Tax Coordination</option>
+                <option value="Brazil to USA" data-t="o4">Brazil to USA</option>
+                <option value="Paraguay Operations" data-t="o5">Paraguay Operations</option>
+                <option value="Business Financing" data-t="o6">Business Financing</option>
+                <option value="Real Estate" data-t="o7">Real Estate</option>
+                <option value="Family Office" data-t="o8">Family Office</option>
+                <option value="Other" data-t="o9">Other</option>
+              </select></div>
+          </div>
+          <fieldset class="field" style="border:0;padding:0;margin:0">
+            <legend data-t="meetType" style="font-weight:600;margin-bottom:.4rem">How should we meet?</legend>
+            <div class="radio-row">
+              <label><input type="radio" name="mt" value="video" checked> <span data-t="video">Video call</span></label>
+              <label><input type="radio" name="mt" value="phone"> <span data-t="phoneCall">Phone</span></label>
+              <label><input type="radio" name="mt" value="whatsapp"> <span>WhatsApp</span></label>
+            </div>
+          </fieldset>
+          <div class="field"><label for="b-notes" data-t="notes">Anything we should know before the call?</label><textarea id="b-notes" rows="3" maxlength="2000"></textarea>
+            <p class="portal-muted" data-t="noSensitive">Please do not include SSN, ITIN, passport or bank account numbers.</p></div>
+          <div class="portal-alert" id="b-msg" role="alert"></div>
+          <button class="btn btn--navy btn--block" type="submit" id="b-submit" data-t="confirm">Confirm booking</button>
+          <p class="portal-muted" style="font-size:.85rem"><span data-t="privacy">By booking, you agree that we may use your details to contact you about this call, as described in our</span> <a href="privacy-policy.html" data-keep-lang data-t="pp">Privacy Policy</a>.</p>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <section class="portal-card" id="done" hidden tabindex="-1" aria-labelledby="done-title">
+    <h2 class="portal-h1" id="done-title" data-t="doneTitle">You're booked</h2>
+    <p id="done-when" class="chosen"></p>
+    <p data-t="doneText">A confirmation was sent to your email. We will reach out using the method you chose. To reschedule, reply to the confirmation or write to support@endeavorbiz.com.</p>
+    <p id="done-note" class="portal-muted"></p>
+    <div class="portal-btn-row">
+      <button class="btn btn--navy" type="button" id="ics" data-t="addCal">Add to calendar (.ics)</button>
+      <a class="btn btn--ghost" id="gcal" target="_blank" rel="noopener" data-t="gcal">Google Calendar</a>
+      <a class="btn btn--ghost" href="index.html" data-keep-lang data-t="back">Back to site</a>
+    </div>
+  </section>
+</main>
+
+<script src="app-config.js"></script>
+<script src="portal-common.js"></script>
+<script src="schedule.js"></script>
+</body>
+</html>
