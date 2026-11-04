@@ -64,6 +64,7 @@
     if (typeof toggleLabel !== 'undefined' && toggleLabel) toggleLabel.textContent = nav.classList.contains('is-open') ? ui('close') : ui('menu');
     // WhatsApp links carry a greeting in the current language
     document.querySelectorAll('.js-sched').forEach(function (l) { l.href = 'schedule.html?lang=' + lang; });
+    document.querySelectorAll('.js-client').forEach(function (l) { l.href = 'client.html?lang=' + lang; });
     document.querySelectorAll('#wa-float, .js-wa').forEach(function (l) {
       l.href = 'https://wa.me/16306898702?text=' + encodeURIComponent(ui('waText'));
     });
@@ -94,6 +95,24 @@
   });
   document.addEventListener('click', function (e) { if (!langMenu.hidden && !e.target.closest('#lang')) closeLangMenu(false); });
   document.addEventListener('focusin', function (e) { if (!langMenu.hidden && !e.target.closest('#lang')) closeLangMenu(false); });
+
+  /* ---------- Login dropdown (Client Portal / Admin) ---------- */
+  var loginToggle = document.getElementById('login-toggle');
+  var loginMenu = document.getElementById('login-menu');
+  if (loginToggle && loginMenu) {
+    var openLogin = function () { closeLangMenu(false); loginMenu.hidden = false; loginToggle.setAttribute('aria-expanded', 'true'); loginMenu.querySelector('a').focus(); };
+    var closeLogin = function (focus) { loginMenu.hidden = true; loginToggle.setAttribute('aria-expanded', 'false'); if (focus) loginToggle.focus(); };
+    loginToggle.addEventListener('click', function () { loginMenu.hidden ? openLogin() : closeLogin(false); });
+    loginMenu.addEventListener('keydown', function (e) {
+      var items = Array.prototype.slice.call(loginMenu.querySelectorAll('a')), i = items.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') { e.preventDefault(); items[(i + 1) % items.length].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
+      else if (e.key === 'Escape') { e.stopPropagation(); closeLogin(true); }
+    });
+    document.addEventListener('click', function (e) { if (!loginMenu.hidden && !e.target.closest('#login')) closeLogin(false); });
+    document.addEventListener('focusin', function (e) { if (!loginMenu.hidden && !e.target.closest('#login')) closeLogin(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !loginMenu.hidden) closeLogin(true); });
+  }
 
   function initialLanguage() {
     var q = null;

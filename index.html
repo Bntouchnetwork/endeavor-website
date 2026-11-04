@@ -8,16 +8,16 @@
   <meta name="theme-color" content="#0B1F3A">
 
   <!-- Canonical: replace with the final production domain before launch -->
-  <link rel="canonical" href="https://www.your-domain.com/">
+  <link rel="canonical" href="https://endeavorbiz.com/">
 
   <!-- Open Graph -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Endeavor Business Solutions">
   <meta property="og:title" content="Endeavor Business Solutions | Start. Structure. Operate. Grow.">
   <meta property="og:description" content="Business formation, registered agent, compliance, tax coordination, financing and international expansion in the United States. One relationship, multiple business solutions.">
-  <meta property="og:url" content="https://www.your-domain.com/">
+  <meta property="og:url" content="https://endeavorbiz.com/">
   <meta property="og:locale" content="en_US">
-  <!-- Add once a 1200×630 share image exists: <meta property="og:image" content="https://www.your-domain.com/og-image.jpg"> -->
+  <!-- Add once a 1200×630 share image exists: <meta property="og:image" content="https://endeavorbiz.com/og-image.jpg"> -->
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +32,7 @@
     "name": "Endeavor Business Solutions",
     "legalName": "Endeavor Tax Solutions LLC",
     "description": "Business formation, registered agent, compliance, tax coordination, financing coordination and international business expansion services in the United States.",
-    "url": "https://www.your-domain.com/",
+    "url": "https://endeavorbiz.com/",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "111 North Orange Avenue, Suite 800",
@@ -71,6 +71,8 @@
   <symbol id="flag-us" viewBox="0 0 30 20"><rect width="30" height="20" fill="#B22234"/><path d="M0 2.3h30M0 5.4h30M0 8.5h30M0 11.5h30M0 14.6h30M0 17.7h30" stroke="#fff" stroke-width="1.54"/><rect width="13" height="10.8" fill="#3C3B6E"/><g fill="#fff"><circle cx="2.2" cy="2" r=".6"/><circle cx="5.4" cy="2" r=".6"/><circle cx="8.6" cy="2" r=".6"/><circle cx="11" cy="2" r=".6"/><circle cx="3.8" cy="4.3" r=".6"/><circle cx="7" cy="4.3" r=".6"/><circle cx="10.2" cy="4.3" r=".6"/><circle cx="2.2" cy="6.5" r=".6"/><circle cx="5.4" cy="6.5" r=".6"/><circle cx="8.6" cy="6.5" r=".6"/><circle cx="11" cy="6.5" r=".6"/><circle cx="3.8" cy="8.8" r=".6"/><circle cx="7" cy="8.8" r=".6"/><circle cx="10.2" cy="8.8" r=".6"/></g></symbol>
   <symbol id="flag-br" viewBox="0 0 30 20"><rect width="30" height="20" fill="#009C3B"/><path d="M15 2.2L27.4 10 15 17.8 2.6 10z" fill="#FFDF00"/><circle cx="15" cy="10" r="4.6" fill="#002776"/><path d="M10.6 9.1c3-.6 6.2-.2 8.9 1.3" fill="none" stroke="#fff" stroke-width=".9"/></symbol>
   <symbol id="flag-py" viewBox="0 0 30 20"><rect width="30" height="20" fill="#fff"/><rect width="30" height="6.67" fill="#D52B1E"/><rect y="13.33" width="30" height="6.67" fill="#0038A8"/><circle cx="15" cy="10" r="2.6" fill="none" stroke="#1F7A3A" stroke-width=".7"/><circle cx="15" cy="10" r=".9" fill="#F7C600"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M4 20.5c.9-4 4-6 8-6s7.1 2 8 6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8 10.5V7.5a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
   <symbol id="i-caret" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
   <symbol id="i-percent" viewBox="0 0 24 24"><path d="M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="7" cy="7" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="17" r="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
@@ -114,6 +116,18 @@
         <li><button type="button" data-lang="en" lang="en" aria-current="true"><svg class="flag" aria-hidden="true"><use href="#flag-us"/></svg>English</button></li>
         <li><button type="button" data-lang="pt" lang="pt-BR"><svg class="flag" aria-hidden="true"><use href="#flag-br"/></svg>Português (Brasil)</button></li>
         <li><button type="button" data-lang="es" lang="es"><svg class="flag" aria-hidden="true"><use href="#flag-py"/></svg>Español</button></li>
+      </ul>
+    </div>
+
+    <div class="login" id="login">
+      <button class="login__toggle" type="button" aria-expanded="false" aria-controls="login-menu" id="login-toggle">
+        <svg class="icon" aria-hidden="true"><use href="#i-user"/></svg>
+        <span class="login__label">Login</span>
+        <svg class="icon lang__caret" aria-hidden="true"><use href="#i-caret"/></svg>
+      </button>
+      <ul class="login__menu" id="login-menu" role="list" hidden>
+        <li><a class="js-client" href="client.html" rel="nofollow"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg><span><strong>Client Portal</strong><small>Documents, deadlines and reports</small></span></a></li>
+        <li><a href="admin.html" rel="nofollow"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span><strong>Admin</strong><small>Endeavor team</small></span></a></li>
       </ul>
     </div>
 
