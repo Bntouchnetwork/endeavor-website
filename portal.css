@@ -515,3 +515,35 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .tpl-card ul { margin: 0; padding-left: 1.1rem; font-size: .86rem; color: var(--muted); display: grid; gap: .2rem; }
 .tpl-card__foot { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .85rem; border-top: 1px solid #edf0f4; padding-top: .6rem; }
 .tpl-chip { justify-self: start; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: #8a6a2a; background: #f6f3ea; border-radius: 999px; padding: .15rem .55rem; margin-bottom: .2rem; }
+
+/* ---------- fixed pages (desktop): frame never scrolls, panels scroll inside ---------- */
+@media (min-width: 1000px) and (min-height: 560px) {
+  body.app-shell .console__content:not(.is-editor) { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 0; }
+  body.app-shell .console__content:not(.is-editor) > .fit-fixed { flex: none; width: 100%; }
+  body.app-shell .console__content:not(.is-editor) > .console__head { margin-bottom: 1rem; }
+  body.app-shell .console__content:not(.is-editor) > .kpis { margin-bottom: 1rem !important; }
+  body.app-shell .console__content:not(.is-editor) > .subtabs { margin-bottom: 1rem; }
+  body.app-shell .console__content:not(.is-editor) > .fit-body { flex: 1 1 auto; min-height: 0; max-width: none; width: calc(100% + 2rem); margin-inline: -1rem; padding: 0 1rem 1.5rem; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+  body.app-shell .console__content:not(.is-editor) > .fit-body > * { max-width: 88rem; margin-inline: auto; }
+  /* two-column pages: each column scrolls on its own and the page fits the screen */
+  body.app-shell .console__content.fit-has-dash > .fit-body { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 1rem; }
+  body.app-shell .console__content.fit-has-dash > .fit-body > .dash,
+  body.app-shell .console__content.fit-has-dash > .fit-body > .checkout { flex: 1 1 auto; min-height: 0; width: 100%; align-items: stretch; }
+  body.app-shell .console__content.fit-has-dash > .fit-body > .dash > *,
+  body.app-shell .console__content.fit-has-dash > .fit-body > .checkout > * { min-height: 0; max-height: 100%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  body.app-shell .console__content.fit-has-dash > .fit-body > .dash > aside.links-panel { position: static; }
+  body.app-shell .console__content.fit-has-dash > .fit-body > .ref-board { flex: 1 1 auto; min-height: 0; width: 100%; max-width: none; }
+  body.app-shell .console__content.fit-has-dash > .fit-body > .ref-board .ref-col { overflow-y: auto; max-height: 100%; }
+  body.app-shell .console__content.fit-has-dash > .fit-body > :not(.dash):not(.checkout):not(.ref-board) { flex: none; }
+}
+@media (min-width: 1000px) and (min-height: 560px) and (max-height: 820px) {
+  body.app-shell .console__content:not(.is-editor) { padding-top: 1.1rem; }
+  body.app-shell .console__head h1 { font-size: 1.6rem; }
+  body.app-shell .kpi { padding: .8rem 1rem; }
+  body.app-shell .kpi__value { font-size: 1.6rem; }
+}
+@media (min-width: 1000px) and (min-height: 560px) {
+  body.app-shell .console__content.fit-has-dash > .fit-body > .ref-board { grid-auto-columns: minmax(8.5rem, 1fr); }
+  .ref-col__h { align-items: center; gap: .4rem; }
+  .ref-col__h { font-size: .72rem; letter-spacing: .05em; }
+}
