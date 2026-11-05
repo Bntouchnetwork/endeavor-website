@@ -1518,6 +1518,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   var AUTH = { user: null, aal: null, listeners: [] };
   var SKEY = 'endeavor-demo-auth-' + MODE;
   try { var saved = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); if (saved) { AUTH.user = saved.u === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = saved.aal; } } catch (e) { /* ignore */ }
+  if (window.DEMO_AUTOLOGIN) { AUTH.user = MODE === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = 'aal2'; }
   function persist() { try { if (AUTH.user) sessionStorage.setItem(SKEY, JSON.stringify({ u: AUTH.user === ADMIN ? 'admin' : 'client', aal: AUTH.aal })); else sessionStorage.removeItem(SKEY); } catch (e) { /* ignore */ } }
   function session() { return AUTH.user ? { access_token: 'demo', user: { id: AUTH.user.id, email: AUTH.user.email, last_sign_in_at: new Date().toISOString(), factors: [{ id: 'f1', factor_type: 'totp', status: 'verified' }] } } : null; }
   var ok = function (d) { return Promise.resolve({ data: d, error: null }); };
@@ -1535,7 +1536,8 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     signUp: function () { return Promise.resolve({ data: {}, error: { message: 'Demo: use the sample login shown at the bottom of the screen.' } }); },
     resetPasswordForEmail: function () { return ok({}); },
     updateUser: function () { return ok({ user: session() && session().user }); },
-    signOut: function () { AUTH.user = null; AUTH.aal = null; persist(); AUTH.listeners.forEach(function (cb) { try { cb('SIGNED_OUT'); } catch (e) { /* ignore */ } }); return ok({}); },
+    signOut: function () { AUTH.user = null; AUTH.aal = null; persist();
+      if (window.ENDEAVOR_COMBINED) { try { sessionStorage.removeItem('endeavor-combined-open'); } catch (e) { /* ignore */ } location.reload(); return new Promise(function () {}); } AUTH.listeners.forEach(function (cb) { try { cb('SIGNED_OUT'); } catch (e) { /* ignore */ } }); return ok({}); },
     mfa: {
       getAuthenticatorAssuranceLevel: function () { return ok({ currentLevel: AUTH.aal, nextLevel: 'aal2' }); },
       listFactors: function () { return ok({ totp: [{ id: 'f1', status: 'verified', factor_type: 'totp' }], all: [{ id: 'f1', status: 'verified' }] }); },
