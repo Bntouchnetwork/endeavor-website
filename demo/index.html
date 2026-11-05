@@ -980,6 +980,20 @@ html.a11y-contrast .wa-float { background: #000; border: 2px solid #fff; }
 
 <a class="skip-link" href="#main">Skip to main content</a>
 
+<div class="demo-bar" role="region" aria-label="Demo">
+  <div class="container demo-bar__inner">
+    <span class="demo-bar__txt"><strong>Live demo</strong> with sample data:</span>
+    <a href="#client-demo" data-demo="client" class="demo-bar__btn">Enter the Client Portal</a>
+    <a href="#admin-demo" data-demo="admin" class="demo-bar__btn demo-bar__btn--alt">Enter the Admin</a>
+  </div>
+</div>
+<style>
+.demo-bar{background:#c8a45d;color:#07162b;font-size:.9rem}
+.demo-bar__inner{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem .75rem;padding-block:.5rem}
+.demo-bar__btn{display:inline-flex;align-items:center;min-height:2.4rem;padding:0 .9rem;border-radius:8px;background:#0b1f3a;color:#fff;font-weight:700;text-decoration:none}
+.demo-bar__btn:hover{background:#13305a}.demo-bar__btn--alt{background:#fff;color:#0b1f3a}
+.demo-bar__btn:focus-visible{outline:3px solid #0b1f3a;outline-offset:2px}
+</style>
 <header class="site-header" id="site-header">
   <div class="container header__inner">
     <a class="brand" href="#top" aria-label="Endeavor Business Solutions, home">
@@ -2067,6 +2081,10 @@ window.ENDEAVOR_I18N = {
       'Documents, deadlines and reports': 'Documentos, prazos e relatórios',
       'Endeavor team': 'Equipe Endeavor',
       'Demo: sample client': 'Demo: cliente de exemplo',
+      'Live demo': 'Demonstração',
+      'with sample data:': 'com dados de exemplo:',
+      'Enter the Client Portal': 'Entrar no Portal do Cliente',
+      'Enter the Admin': 'Entrar no Admin',
       'Demo: sample data': 'Demo: dados de exemplo',
       "A trade name of Endeavor Tax Solutions LLC": "Nome comercial da Endeavor Tax Solutions LLC",
       "Endeavor Business Solutions is not a law firm and does not provide legal advice. Legal documents are prepared by independent licensed attorneys under their own engagement with you.": "A Endeavor Business Solutions não é um escritório de advocacia e não presta consultoria jurídica. Documentos jurídicos são elaborados por advogados licenciados independentes, contratados diretamente por você.",
@@ -2430,6 +2448,10 @@ window.ENDEAVOR_I18N = {
       'Documents, deadlines and reports': 'Documentos, plazos y reportes',
       'Endeavor team': 'Equipo Endeavor',
       'Demo: sample client': 'Demo: cliente de ejemplo',
+      'Live demo': 'Demostración',
+      'with sample data:': 'con datos de ejemplo:',
+      'Enter the Client Portal': 'Entrar al Portal del Cliente',
+      'Enter the Admin': 'Entrar al Admin',
       'Demo: sample data': 'Demo: datos de ejemplo',
       "A trade name of Endeavor Tax Solutions LLC": "Nombre comercial de Endeavor Tax Solutions LLC",
       "Endeavor Business Solutions is not a law firm and does not provide legal advice. Legal documents are prepared by independent licensed attorneys under their own engagement with you.": "Endeavor Business Solutions no es un bufete de abogados y no presta asesoría legal. Los documentos legales son preparados por abogados independientes con licencia, contratados directamente por usted.",
@@ -2624,7 +2646,7 @@ window.ENDEAVOR_I18N = {
     var nl = (navigator.language || 'en').toLowerCase();
     if (nl.indexOf('pt') === 0) return 'pt';
     if (nl.indexOf('es') === 0) return 'es';
-    return 'en';
+    return 'pt';
   }
 
   /* ---------- Header: scrolled state ---------- */
@@ -2916,6 +2938,8 @@ window.ENDEAVOR_I18N = {
   var KEY = 'endeavor-combined-open';
   function openDemo(m) {
     try { sessionStorage.setItem(KEY, m); } catch (e) { /* ignore */ }
+    var lg = (document.documentElement.lang || 'pt').slice(0, 2);
+    try { history.replaceState(null, '', location.pathname + '?lang=' + lg); } catch (e) { /* ignore */ }
     var html = JSON.parse(document.getElementById('demo-' + m).textContent);
     html = html.replace('<head>
 <meta name="robots" content="noindex, nofollow">', '<head><script>window.ENDEAVOR_COMBINED=true;<\/script>');
