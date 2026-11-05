@@ -38,7 +38,7 @@
       nextDeadlines: 'Next deadlines', recentDocs: 'Recent documents', seeAll: 'See all', quick: 'Quick actions', qUpload: 'Upload documents for your tax return', qInvite: 'Invite your accountant or bookkeeper', qQbo: 'Connect QuickBooks',
       noCompanies: 'No companies yet', noCompaniesText: 'Endeavor will add your companies here.', formed: 'Formed {d}', docNumber: 'Florida document no.', ein: 'EIN', agent: 'Registered agent', fye: 'Fiscal year end', address: 'Address',
       st_active: 'Active', st_in_formation: 'In formation', st_inactive: 'Inactive', st_dissolved: 'Dissolved',
-      tab_docs: 'Documents', tab_deadlines: 'Deadlines', tab_finance: 'QuickBooks & reports', back: 'My Companies',
+      tab_timeline: 'Timeline', tab_docs: 'Documents', tab_deadlines: 'Deadlines', tab_finance: 'QuickBooks & reports', back: 'My Companies',
       cat_formation: 'Formation', cat_tax_return: 'Tax return', cat_report: 'Financial report', cat_uploaded: 'Uploaded', cat_compliance: 'Compliance', cat_other: 'Other',
       allCompanies: 'All companies', allCategories: 'All categories', search: 'Search…', view: 'View', download: 'Download', print: 'Print', close: 'Close',
       noDocs: 'No documents yet', noPreview: 'Preview not available for this file type. Use Download.', viewErr: 'Could not open the file.',
@@ -89,7 +89,7 @@
       nextDeadlines: 'Próximos prazos', recentDocs: 'Documentos recentes', seeAll: 'Ver todos', quick: 'Ações rápidas', qUpload: 'Enviar documentos para o imposto', qInvite: 'Convidar seu contador ou bookkeeper', qQbo: 'Conectar QuickBooks',
       noCompanies: 'Nenhuma empresa ainda', noCompaniesText: 'A Endeavor vai adicionar suas empresas aqui.', formed: 'Constituída em {d}', docNumber: 'Nº do documento na Flórida', ein: 'EIN', agent: 'Registered agent', fye: 'Fim do ano fiscal', address: 'Endereço',
       st_active: 'Ativa', st_in_formation: 'Em formação', st_inactive: 'Inativa', st_dissolved: 'Dissolvida',
-      tab_docs: 'Documentos', tab_deadlines: 'Prazos', tab_finance: 'QuickBooks e relatórios', back: 'Minhas empresas',
+      tab_timeline: 'Linha do tempo', tab_docs: 'Documentos', tab_deadlines: 'Prazos', tab_finance: 'QuickBooks e relatórios', back: 'Minhas empresas',
       cat_formation: 'Formação', cat_tax_return: 'Declaração de imposto', cat_report: 'Relatório financeiro', cat_uploaded: 'Enviado', cat_compliance: 'Compliance', cat_other: 'Outro',
       allCompanies: 'Todas as empresas', allCategories: 'Todas as categorias', search: 'Buscar…', view: 'Ver', download: 'Baixar', print: 'Imprimir', close: 'Fechar',
       noDocs: 'Nenhum documento ainda', noPreview: 'Pré-visualização indisponível para este tipo de arquivo. Use Baixar.', viewErr: 'Não foi possível abrir o arquivo.',
@@ -140,7 +140,7 @@
       nextDeadlines: 'Próximos plazos', recentDocs: 'Documentos recientes', seeAll: 'Ver todos', quick: 'Acciones rápidas', qUpload: 'Enviar documentos para el impuesto', qInvite: 'Invitar a su contador o bookkeeper', qQbo: 'Conectar QuickBooks',
       noCompanies: 'Aún no hay empresas', noCompaniesText: 'Endeavor agregará sus empresas aquí.', formed: 'Constituida el {d}', docNumber: 'N.º de documento en Florida', ein: 'EIN', agent: 'Registered agent', fye: 'Cierre del año fiscal', address: 'Dirección',
       st_active: 'Activa', st_in_formation: 'En constitución', st_inactive: 'Inactiva', st_dissolved: 'Disuelta',
-      tab_docs: 'Documentos', tab_deadlines: 'Plazos', tab_finance: 'QuickBooks y reportes', back: 'Mis empresas',
+      tab_timeline: 'Línea de tiempo', tab_docs: 'Documentos', tab_deadlines: 'Plazos', tab_finance: 'QuickBooks y reportes', back: 'Mis empresas',
       cat_formation: 'Constitución', cat_tax_return: 'Declaración de impuestos', cat_report: 'Reporte financiero', cat_uploaded: 'Enviado', cat_compliance: 'Cumplimiento', cat_other: 'Otro',
       allCompanies: 'Todas las empresas', allCategories: 'Todas las categorías', search: 'Buscar…', view: 'Ver', download: 'Descargar', print: 'Imprimir', close: 'Cerrar',
       noDocs: 'Aún no hay documentos', noPreview: 'Vista previa no disponible para este tipo de archivo. Use Descargar.', viewErr: 'No se pudo abrir el archivo.',
@@ -377,6 +377,10 @@
   }
   function startShell() {
     document.body.classList.add('app-shell');
+    if (window.EClientOA && S.client) {
+      EClientOA.init(refCtx());
+      if (!S.accessLogged) { S.accessLogged = true; sb.rpc('audit_event', { p_action: 'portal.access', p_entity_type: 'portal', p_entity_id: PARTNER ? 'partner' : 'client', p_company: null, p_details: { client_id: S.client.id } }).then(function () {}, function () {}); }
+    }
     var multi = S.memberships.length > 1;
     var clientBox = !S.client ? '' : multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem;background:#fff;color:#0b1f3a;font:inherit;font-weight:600">' +
         S.memberships.map(function (m) { return '<option value="' + m.client_id + '"' + (m.client_id === S.client.id ? ' selected' : '') + '>' + esc(m.client_name) + '</option>'; }).join('') + '</select></div>'
@@ -403,11 +407,15 @@
     var items = navItems().filter(function (n) { return n[0] !== '-'; });
     var h = ERoute.get().replace(/^#\/?/, ''), v = h.split('?')[0] || items[0][0];
     var allowed = items.map(function (n) { return n[0]; });
+    if (S.client && S.perms.owner && window.EClientOA) allowed.push('oa');
     if (allowed.indexOf(v) < 0) v = items[0][0];
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    var view = $('#view'); view.innerHTML = '<p class="portal-muted">' + t('loading') + '</p>'; view.scrollTop = 0;
+    var view = $('#view'); if (!view) return;
+    view.innerHTML = '<p class="portal-muted">' + t('loading') + '</p>'; view.scrollTop = 0;
     var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: vUpload, invoices: vInvoices, collaborators: vCollab, settings: vSettings };
     if (S.ref) Object.assign(V, S.ref.views);
+    if (window.EClientOA) V.oa = EClientOA.view;
+    if (v === 'oa') $$('.console__nav a').forEach(function (a) { if (a.dataset.view === 'companies') a.setAttribute('aria-current', 'page'); });
     V[v](view).catch(function (e) { view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>'; console.error(e); });
   }
   function param(k) { var m = ERoute.get().match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; }
@@ -474,7 +482,7 @@
       (S.perms.view ? kpi(t('k_docs'), res[2].count || 0) : '') + (S.perms.reports ? kpi(t('k_reports'), res[3].count || 0) : '');
     view.innerHTML = head(t('hello', { n: first }), PARTNER ? t('p_overviewLead', { c: S.client.name }) : t('overviewLead')) +
       (S.openInv && S.openInv.n ? '<div class="portal-alert portal-alert--info" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem"><strong>' + esc(t('inv_banner', { n: S.openInv.n, a: money(S.openInv.cents) })) + '</strong><a class="btn btn--navy btn--xs" href="#/invoices">' + t('inv_bannerBtn') + '</a></div>' : '') +
-      '<div class="dash"><div><div class="kpis">' + kp + '</div>' +
+      '<div class="dash"><div><div class="kpis">' + kp + '</div><div id="tl-ov"></div>' +
         (!S.perms.deadlines ? '' : '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('nextDeadlines') + '</h2><a href="#/compliance">' + t('seeAll') + '</a></div>' +
           (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>') +
         (S.perms.view ? '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('recentDocs') + '</h2><a href="#/documents">' + t('seeAll') + '</a></div>' + docItems(res[1], true) + '</section>' : '') +
@@ -484,6 +492,7 @@
         '<li><a href="#/companies"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>' + t('nav_companies') + '</a></li>' +
       '</ul>' + (PARTNER ? '<h3 class="portal-h2" style="margin-top:1.25rem;font-size:1rem">' + t('myAccess') + '</h3><p class="perm-sum">' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</p>' : '') + '<p class="portal-muted" style="font-size:.8rem;margin-top:1rem">' + t('privacyNote') + '</p></aside></div>';
     wireDocs(view, res[1]);
+    if (window.EClientOA && S.companies.length) EClientOA.overviewCard(S.companies).then(function (h) { var b = $('#tl-ov', view); if (b) b.innerHTML = h; }, function () {});
   }
   function kpi(l, v, small) { return '<div class="kpi"><div class="kpi__label">' + esc(l) + '</div><div class="kpi__value"' + (small ? ' style="font-size:1.35rem;padding-top:.35rem"' : '') + '>' + esc(v) + '</div></div>'; }
 
@@ -492,11 +501,12 @@
     if (id && coById(id)) return companyDetail(view, coById(id));
     view.innerHTML = head(t('nav_companies'), '') + (S.companies.length ? '<div class="cards">' + S.companies.map(function (c) {
       return '<a class="co-card" href="#/companies?id=' + c.id + '"><h3>' + esc(c.legal_name) + '</h3><div class="meta">' + esc(c.state || '') + (c.formation_date ? ' · ' + esc(t('formed', { d: fmtDate(c.formation_date) })) : '') + '</div>' +
-        '<div class="row"><span>' + (c.ein ? 'EIN ' + esc(c.ein) : '') + '</span><span class="pill' + (c.status === 'active' ? ' pill--done' : '') + '">' + esc(t('st_' + c.status)) + '</span></div></a>';
+        '<div class="row"><span>' + (c.ein ? 'EIN ' + esc(c.ein) : '') + '</span><span class="pill' + (c.status === 'active' ? ' pill--done' : '') + '">' + esc(t('st_' + c.status)) + '</span></div>' + (window.EOAUI && c.stage ? EOAUI.stepper(L, c, null) : '') + '</a>';
     }).join('') + '</div>' : '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong>' + t('noCompaniesText') + '</div>');
   }
   async function companyDetail(view, co) {
     var tabs = [];
+    if (window.EClientOA) tabs.push(['timeline', t('tab_timeline')]);
     if (S.perms.view) tabs.push(['docs', t('tab_docs')]);
     if (S.perms.deadlines) tabs.push(['deadlines', t('tab_deadlines')]);
     if (S.perms.reports) tabs.push(['finance', t('tab_finance')]);
@@ -506,7 +516,9 @@
       (kv.length ? '<section class="portal-card"><dl class="kv">' + kv.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></section>' : '') +
       '<nav class="subtabs" style="margin-top:1.25rem" aria-label="' + esc(co.legal_name) + '">' + tabs.map(function (x) { return '<a href="#/companies?id=' + co.id + '&tab=' + x[0] + '"' + (x[0] === tab ? ' aria-current="page"' : '') + '>' + esc(x[1]) + '</a>'; }).join('') + '</nav><div id="co-body"></div>';
     var body = $('#co-body', view);
-    if (tab === 'docs' && S.perms.view) {
+    if (tab === 'timeline' && window.EClientOA) {
+      await EClientOA.companyTab(body, co);
+    } else if (tab === 'docs' && S.perms.view) {
       var docs = await q(sb.from('company_documents').select('*').eq('company_id', co.id).order('category').order('created_at', { ascending: false }));
       var groups = ['formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].filter(function (c) { return docs.some(function (d) { return d.category === c; }); });
       body.innerHTML = groups.length ? groups.map(function (g) { return '<section class="portal-card"><h2 class="portal-h2">' + esc(t('cat_' + g)) + '</h2>' + docItems(docs.filter(function (d) { return d.category === g; }), false) + '</section>'; }).join('') : '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';

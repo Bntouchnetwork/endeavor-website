@@ -193,10 +193,12 @@
       (companies.length ? '<div class="cards">' + companies.map(function (co) {
         return '<div class="co-card"><h3>' + esc(co.legal_name) + '</h3><div class="meta">' + esc(ENTITY[co.entity_type] || co.entity_type || '') + ' · ' + esc(co.state || '') + (co.formation_date ? ' · constituída em ' + fmtD(co.formation_date) : '') + '</div>' +
           '<div class="row"><span>' + (co.document_number ? 'Sunbiz ' + esc(co.document_number) : '') + (co.ein ? ' · EIN ' + esc(co.ein) : '') + '</span><span class="pill' + (co.status === 'active' ? ' pill--done' : '') + '">' + esc({ active: 'Ativa', in_formation: 'Em formação', inactive: 'Inativa', dissolved: 'Dissolvida' }[co.status]) + '</span></div>' +
-          '<div class="portal-btn-row" style="margin-top:.85rem"><button class="btn btn--ghost btn--xs" data-edit="' + co.id + '">Editar</button><button class="btn btn--ghost btn--xs" data-dl="' + co.id + '">Gerar prazos padrão</button></div></div>';
+          (window.AdminOA ? AdminOA.stepper(co, null) : '') +
+          '<div class="portal-btn-row" style="margin-top:.85rem">' + (window.AdminOA ? '<button class="btn btn--navy btn--xs" data-tl="' + co.id + '">Timeline</button>' : '') + '<button class="btn btn--ghost btn--xs" data-edit="' + co.id + '">Editar</button><button class="btn btn--ghost btn--xs" data-dl="' + co.id + '">Gerar prazos padrão</button></div></div>';
       }).join('') + '</div>' : '<div class="portal-card empty-state"><strong>Nenhuma empresa cadastrada</strong>Adicione a primeira empresa deste cliente.</div>');
     body.querySelector('#co-new').onclick = function () { editCompany(ctx, c, null); };
     body.querySelectorAll('[data-edit]').forEach(function (b) { b.onclick = function () { editCompany(ctx, c, companies.find(function (x) { return x.id === b.dataset.edit; })); }; });
+    body.querySelectorAll('[data-tl]').forEach(function (b) { b.onclick = function () { AdminOA.timelineDrawer(ctx, companies.find(function (x) { return x.id === b.dataset.tl; })); }; });
     body.querySelectorAll('[data-dl]').forEach(function (b) { b.onclick = function () { genDeadlines(ctx, companies.find(function (x) { return x.id === b.dataset.dl; })); }; });
   }
   function editCompany(ctx, c, co) {

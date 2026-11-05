@@ -3,7 +3,7 @@
    content panels below them scroll inside their own area. On phones the page scrolls normally. */
 (function () {
   'use strict';
-  var FIXED = '.console__head, .subtabs, .kpis, .toolbar, .tpl-pick, .portal-alert, .back-link';
+  var FIXED = '.console__head, .subtabs, .kpis, .toolbar, .tpl-pick, .portal-alert, .back-link, .tl-steps--oa';
   // a short paragraph made only of in-app links ("← Back", breadcrumbs like "Clientes /")
   function isBackLink(el) { return el.tagName === 'P' && el.children.length > 0 && el.textContent.trim().length < 80 && Array.prototype.every.call(el.children, function (c) { return c.tagName === 'A' && /^#/.test(c.getAttribute('href') || ''); }); }
   function fixedEl(el) { return el.matches(FIXED) || isBackLink(el); }

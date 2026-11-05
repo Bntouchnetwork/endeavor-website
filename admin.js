@@ -186,7 +186,7 @@
   /* ---------- console shell ---------- */
   var NAV = [
     ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['clientes', 'Clientes', 'i-brief'], ['agenda', 'Agenda', 'i-cal'],
-    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['pagamentos', 'Pagamentos', 'i-card'], ['config', 'Configurações', 'i-gear']];
+    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
     $('#topbar-user').hidden = false;
@@ -204,6 +204,7 @@
     window.addEventListener('hashchange', function () { setNav(false); route(); });
     loadSettings().then(route);
     if (window.AdminPayments && AdminPayments.bell) AdminPayments.bell(clientsCtx());
+    if (window.AdminOA) AdminOA.subscribe(clientsCtx());
   }
   async function loadSettings() { var r = await sb.from('booking_settings').select('*').eq('id', 1).single(); if (!r.error) state.settings = r.data; }
 
@@ -211,8 +212,9 @@
     var v = (ERoute.get().replace(/^#\/?/, '') || 'dashboard').split('?')[0];
     if (!NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
-    var view = $('#view'); view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
-    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, pagamentos: viewPayments, config: viewConfig })[v](view).catch(function (e) {
+    var view = $('#view'); if (!view) return;
+    view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
+    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
   }
@@ -539,6 +541,10 @@
   function viewPartners(view) {
     if (!window.AdminPayments) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de parceiros não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
     return AdminPayments.partners(view, clientsCtx());
+  }
+  function viewCompliance(view) {
+    if (!window.AdminOA) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de compliance não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
+    return AdminOA.compliance(view, clientsCtx());
   }
   function viewPayments(view) {
     if (!window.AdminPayments) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de pagamentos não carregou. Recarregue a página.</div>'; return Promise.resolve(); }

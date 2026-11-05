@@ -1461,6 +1461,136 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .auth-links { text-align: center; margin: .25rem 0 0; font-size: .92rem; }
 .auth-help { text-align: center; font-size: .85rem; margin: 0; }
 
+/* ---------- Timeline (shared by admin and client portals) ---------- */
+.pill--info { background: #e6effb; color: #1d4e89; }
+.pill--warn { background: #fdf2dc; color: #84652a; }
+.tl-steps { list-style: none; margin: .65rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .25rem; }
+.tl-steps li { position: relative; padding-top: 1.05rem; font-size: .72rem; line-height: 1.25; color: var(--muted); text-align: center; }
+.tl-steps li::before { content: ""; position: absolute; top: .33rem; left: -50%; right: 50%; height: 2px; background: var(--line); }
+.tl-steps li:first-child::before { display: none; }
+.tl-steps .tl-dot { position: absolute; top: 0; left: calc(50% - .4rem); width: .8rem; height: .8rem; border-radius: 50%; background: #fff; border: 2px solid var(--line); z-index: 1; }
+.tl-steps li.done .tl-dot { background: var(--success); border-color: var(--success); }
+.tl-steps li.done::before, .tl-steps li.now::before { background: var(--success); }
+.tl-steps li.now .tl-dot { background: var(--gold); border-color: var(--gold-ink); box-shadow: 0 0 0 3px rgba(200, 164, 93, .25); }
+.tl-steps li.now { color: var(--ink); font-weight: 600; }
+.tl-steps small { display: block; font-weight: 600; color: var(--gold-ink); margin-top: .15rem; }
+.tl-steps--oa { grid-template-columns: repeat(6, minmax(0, 1fr)); margin: 0 0 1.1rem; }
+.tl-card .tl-row { padding: .85rem 0; border-top: 1px solid var(--line); }
+.tl-card .tl-row:first-of-type { border-top: 0; padding-top: .25rem; }
+.tl-row__head { display: flex; justify-content: space-between; gap: .75rem; align-items: center; flex-wrap: wrap; }
+.co-card .tl-steps { margin-top: .85rem; }
+.tl-full, .tl-sub { list-style: none; margin: 0; padding: 0; }
+.tl-full > li { position: relative; padding: 0 0 1rem 1.6rem; border-left: 2px solid var(--line); margin-left: .45rem; }
+.tl-full > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+.tl-full > li.tl-done { border-left-color: var(--success); }
+.tl-head { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.tl-full > li > .tl-head .tl-dot { position: absolute; left: -.5rem; top: .15rem; width: .9rem; height: .9rem; border-radius: 50%; background: #fff; border: 2px solid var(--line); }
+.tl-full > li.tl-done > .tl-head .tl-dot { background: var(--success); border-color: var(--success); }
+.tl-full > li.tl-now > .tl-head .tl-dot { background: var(--gold); border-color: var(--gold-ink); box-shadow: 0 0 0 3px rgba(200, 164, 93, .25); }
+.tl-tag { font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.tl-now > .tl-head .tl-tag { color: var(--gold-ink); font-weight: 700; }
+.tl-next > .tl-head strong { color: var(--muted); font-weight: 500; }
+.tl-when { font-size: .8rem; color: var(--muted); }
+.tl-sub { margin: .5rem 0 0; display: grid; gap: .3rem; }
+.tl-sub li { display: flex; align-items: baseline; gap: .45rem; font-size: .88rem; flex-wrap: wrap; }
+.tl-sub .tl-dot { width: .55rem; height: .55rem; border-radius: 50%; border: 2px solid var(--line); background: #fff; flex: none; transform: translateY(-1px); }
+.tl-sub .tl-done .tl-dot { background: var(--success); border-color: var(--success); }
+.tl-sub .tl-now { font-weight: 700; color: var(--ink); }
+.tl-sub .tl-now .tl-dot { background: var(--gold); border-color: var(--gold-ink); }
+.tl-sub .tl-next { color: var(--muted); }
+.oa-cta { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; padding: .9rem 1rem; margin-bottom: 1.1rem; border-radius: 10px; background: #fbf6ea; border: 1px solid var(--gold-soft); }
+
+/* ---------- Operating Agreement assistant (client) ---------- */
+.oa-start p { max-width: 62rem; }
+.oa-steps { margin: .5rem 0 1rem; padding-left: 1.2rem; display: grid; gap: .2rem; }
+.oa-consent { align-items: flex-start; max-width: 62rem; padding: .85rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--gray-50); font-size: .9rem; margin-bottom: .75rem; }
+.oa-sec .portal-h2 { margin-bottom: .5rem; }
+.oa-q { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 22rem); gap: 1rem 1.25rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+.oa-sec .oa-q:first-of-type { border-top: 0; }
+.oa-q__main { display: grid; gap: .45rem; align-content: start; min-width: 0; }
+.oa-q__label { font-weight: 600; color: var(--ink); }
+.oa-q .req { color: var(--error); }
+.oa-q input:not([type=radio]):not([type=checkbox]), .oa-q select { width: 100%; min-height: 2.6rem; border: 1px solid var(--line); border-radius: 8px; padding: 0 .7rem; font: inherit; background: #fff; }
+.oa-q input:focus, .oa-q select:focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+.oa-src { font-size: .78rem; color: #1d4e89; background: #e6effb; border-radius: 6px; padding: .2rem .5rem; justify-self: start; }
+.oa-help { background: #f6f8fb; border: 1px solid var(--line); border-left: 3px solid var(--navy-800); border-radius: 8px; padding: .7rem .85rem; font-size: .86rem; line-height: 1.5; color: var(--text); align-self: start; }
+.oa-help strong { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--navy-800); margin-bottom: .25rem; }
+.oa-help p { margin: 0 0 .4rem; }
+.oa-help p:last-child { margin-bottom: 0; }
+.oa-help__state { border-top: 1px dashed var(--line); padding-top: .4rem; color: var(--ink); }
+.oa-person { border: 1px solid var(--line); border-radius: 10px; padding: .75rem; margin-bottom: .6rem; background: #fff; }
+.oa-person .field { margin: 0 0 .4rem; }
+.oa-person label { font-size: .8rem; }
+.oa-yn { border: 0; padding: 0; margin: .25rem 0 .5rem; display: flex; gap: 1rem; flex-wrap: wrap; font-size: .88rem; }
+.oa-yn legend { font-size: .82rem; color: var(--muted); margin-bottom: .2rem; width: 100%; }
+.oa-yn label { display: inline-flex; gap: .35rem; align-items: center; }
+.oa-list__foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.oa-total { font-weight: 700; color: var(--ink); }
+.oa-detail { margin-top: .4rem; }
+.oa-savebar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: flex-end; min-height: 1.4rem; margin-bottom: .35rem; }
+.oa-savebar span { font-size: .8rem; color: var(--success); background: #fff; padding: .1rem .5rem; border-radius: 6px; }
+.oa-savebar span.is-err { color: var(--error); }
+.oa-issues { border: 1px solid #f1c9c4; background: #fdf3f2; border-radius: 10px; padding: .75rem 1rem; margin-bottom: .75rem; font-size: .9rem; }
+.oa-issues ul { margin: .35rem 0 0; padding-left: 1.1rem; }
+.oa-issues--review { border-color: var(--gold-soft); background: #fbf6ea; }
+.oa-wait { text-align: center; padding: 2.25rem 1rem; }
+.oa-spinner { width: 2.4rem; height: 2.4rem; margin: 0 auto 1rem; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--gold); animation: oa-spin 1s linear infinite; }
+@keyframes oa-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .oa-spinner { animation: none; } }
+.oa-review { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; gap: 1.25rem; align-items: start; }
+.oa-pdf { background: #e9edf2; border-radius: 8px; padding: .75rem; max-height: 70vh; overflow: auto; }
+.oa-comments { list-style: none; padding: 0; margin: 0 0 1rem; display: grid; gap: .6rem; font-size: .88rem; }
+.oa-comments li { border: 1px solid var(--line); border-radius: 8px; padding: .55rem .7rem; }
+.oa-comments p { margin: .3rem 0 0; }
+.oa-approve { border: 1px solid var(--gold-soft); }
+.oa-approve .check { font-size: .88rem; align-items: flex-start; }
+.oa-signers { list-style: none; padding: 0; margin: .5rem 0 1rem; display: grid; gap: .5rem; }
+.oa-signers li { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; padding: .65rem .85rem; }
+.oa-signers li.is-done { border-color: #bfdcc9; background: #f2f9f4; }
+.oa-signers li.is-now { border-color: var(--gold-soft); background: #fbf6ea; }
+.oa-done { text-align: center; padding: 2rem 1rem; }
+.oa-done__icon { width: 3rem; height: 3rem; margin: 0 auto .75rem; border-radius: 50%; display: grid; place-items: center; background: var(--success); color: #fff; font-size: 1.5rem; font-weight: 700; }
+
+/* ---------- Compliance (admin) ---------- */
+.oa-adm { display: grid; grid-template-columns: minmax(0, 1fr) 20rem; gap: 1.25rem; align-items: start; }
+.oa-adm__side { font-size: .9rem; }
+.oa-actions { gap: .5rem; }
+.oa-issue-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.oa-issue-list li { display: flex; justify-content: space-between; gap: .75rem; align-items: center; border: 1px solid var(--gold-soft); background: #fbf6ea; border-radius: 8px; padding: .5rem .75rem; flex-wrap: wrap; }
+.oa-issue-list li.is-done { border-color: #bfdcc9; background: #f2f9f4; }
+.oa-issue-list small { width: 100%; color: var(--muted); }
+.oa-secs { display: grid; gap: .65rem; }
+.oa-secrow { border: 1px solid var(--line); border-radius: 10px; padding: .75rem .9rem; background: #fff; }
+.oa-secrow header { display: flex; gap: .45rem; align-items: center; flex-wrap: wrap; }
+.oa-secrow p { margin: .45rem 0 0; font-size: .9rem; line-height: 1.55; }
+.oa-secrow details { margin-top: .5rem; font-size: .85rem; }
+.oa-secrow summary { cursor: pointer; color: #1d4e89; }
+.oa-refs { margin: .35rem 0 0; padding-left: 1.1rem; font-size: .82rem; }
+.kv--wide { grid-template-columns: minmax(12rem, 18rem) 1fr; }
+.audit-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr)); gap: .25rem .75rem; align-items: end; }
+.audit-filters .field { margin: 0; }
+.audit-filters__btns { grid-column: 1 / -1; display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+.table--audit td { vertical-align: top; font-size: .85rem; }
+.rules-view h3 { margin: 1.1rem 0 .4rem; font-size: 1rem; color: var(--ink); }
+.rv-q { border-top: 1px solid var(--line); padding: .55rem 0; font-size: .86rem; }
+.rv-q p { margin: .25rem 0 0; }
+.rev-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.rev-list li { display: flex; justify-content: space-between; gap: 1rem; border: 1px solid var(--line); border-radius: 8px; padding: .5rem .75rem; flex-wrap: wrap; }
+.clean-list { margin: 0; padding-left: 1.1rem; display: grid; gap: .3rem; font-size: .9rem; }
+
+@media (max-width: 1100px) { .oa-review, .oa-adm { grid-template-columns: 1fr; } }
+@media (max-width: 760px) {
+  .oa-q { grid-template-columns: 1fr; }
+  .tl-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: .6rem; }
+  .tl-steps li:nth-child(4)::before { display: none; }
+  .kv--wide { grid-template-columns: 1fr; }
+}
+.oa-consent { display: flex; gap: .65rem; line-height: 1.5; }
+.oa-consent input { flex: none; margin-top: .3rem; width: 1.05rem; height: 1.05rem; }
+.oa-start .btn { display: inline-flex; margin-top: .35rem; }
+.oa-approve .check, .oa-review .check { display: flex; gap: .55rem; line-height: 1.45; }
+.oa-approve .check input { flex: none; margin-top: .2rem; }
+
 </style>
 </head>
 <body class="portal">
@@ -1770,13 +1900,16 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       case 'referral_items': case 'referral_events': return rows.filter(function (r) { var ref = DB.referrals.find(function (x) { return x.id === r.referral_id; }); return PME && ref && ref.partner_id === PME.id && (table === 'referral_items' || r.visible_to_partner); });
       case 'invoices': return rows.filter(function (r) { return r.status !== 'draft' && r.status !== 'void' && role(r.client_id) === 'owner'; });
       case 'proposals': return rows.filter(function (r) { return (r.status === 'sent' || r.status === 'accepted') && role(r.client_id) === 'owner'; });
-      default: return [];
+      default: return oaVisible(table, rows, role, coOk) || [];
     }
   }
   function Q(table) { this.t = table; this.f = []; this.o = []; this.lim = null; this.op = 'select'; this.one = false; this.ret = false; this.opts = {}; }
   Q.prototype.select = function (cols, opts) { if (this.op === 'select') { this.opts = opts || {}; this.cols = cols || '*'; } else this.ret = true; return this; };
   Q.prototype.not = function (c, op, v) { this.f.push(['not', c, v]); return this; };
   Q.prototype.is = function (c, v) { this.f.push(['is', c, v]); return this; };
+  Q.prototype.like = function (c, v) { this.f.push(['like', c, v]); return this; };
+  Q.prototype.ilike = function (c, v) { this.f.push(['ilike', c, v]); return this; };
+  Q.prototype.or = function (expr) { this.f.push(['or', null, expr]); return this; };
   ['eq', 'neq', 'gte', 'lte', 'gt', 'lt', 'in'].forEach(function (k) { Q.prototype[k] = function (c, v) { this.f.push([k, c, v]); return this; }; });
   Q.prototype.order = function (c, o) { this.o.push([c, !(o && o.ascending === false)]); return this; };
   Q.prototype.limit = function (n) { this.lim = n; return this; };
@@ -1794,9 +1927,21 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       case 'in': return x.map(String).indexOf(String(v)) > -1;
       case 'not': return x === null ? v != null : String(v) !== String(x);
       case 'is': return x === null ? v == null : v === x;
+      case 'like': case 'ilike': var rx = new RegExp('^' + String(x).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/[%*]/g, '.*') + '$', f[0] === 'ilike' ? 'i' : ''); return v != null && rx.test(String(v));
+      case 'or': return orMatch(r, x);
     } return true;
   }
+  function splitTop(e) { var out = [], d = 0, cur = ''; for (var i = 0; i < e.length; i++) { var ch = e[i]; if (ch === '(') d++; if (ch === ')') d--; if (ch === ',' && !d) { out.push(cur); cur = ''; } else cur += ch; } if (cur) out.push(cur); return out; }
+  function orMatch(r, expr, and) {
+    var parts = splitTop(expr).map(function (p) {
+      var m = p.match(/^(and|or)\((.*)\)$/); if (m) return orMatch(r, m[2], m[1] === 'and');
+      var q = p.match(/^(\w+)\.(eq|neq|like|ilike|gte|lte)\.(.*)$/); if (!q) return false;
+      return match(r, [q[2], q[1], q[3]]);
+    });
+    return and ? parts.every(Boolean) : parts.some(Boolean);
+  }
   Q.prototype.run = function () {
+    if (this.t === 'oa_rule_sets') seedRules();
     var self = this, tbl = DB[this.t] || (DB[this.t] = []);
     var filt = function (rows) { return rows.filter(function (r) { return self.f.every(function (f) { return match(r, f); }); }); };
     var out;
@@ -1809,7 +1954,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       out = JSON.parse(JSON.stringify(out));
       var joins = String(this.cols || '').match(/(\w+)(![\w]+)?\(([^)]*)\)/g) || [];
       joins.forEach(function (j) {
-        var t = j.split('(')[0].split('!')[0], key = t.replace(/s$/, '') + '_id';
+        var t = j.split('(')[0].split('!')[0], key = t === 'companies' ? 'company_id' : t.replace(/s$/, '') + '_id';
         out.forEach(function (r) { var x = (DB[t] || []).find(function (y) { return y.id === r[key]; }); r[t] = x ? JSON.parse(JSON.stringify(x)) : null; });
       });
       if (this.one) return out.length ? { data: out[0], error: null } : (this.maybe ? { data: null, error: null } : { data: null, error: { message: 'Row not found' } });
@@ -1829,9 +1974,12 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       return { data: this.ret ? (this.one ? out[0] : out) : null, error: null };
     }
     if (this.op === 'update') {
+      var staged = [];
       filt(tbl).forEach(function (r) {
-        var before = r.status;
+        var before = r.status, beforeStage = r.stage;
         Object.assign(r, self.vals, { updated_at: new Date().toISOString() });
+        if (self.t === 'companies' && self.vals.stage && self.vals.stage !== beforeStage) staged.push([r, beforeStage]);
+        if (self.t === 'compliance_settings') { auditPush({ action: 'compliance.settings', entity_type: 'settings', entity_id: '1', details: { capture_ip: r.capture_ip, capture_user_agent: r.capture_user_agent } }); r.updated_by = current() && current().email; oaSave(); }
         var by = current() ? current().email : 'system';
         if (self.t === 'referrals' && r.status !== before) DB.referral_events.push({ id: Date.now() + Math.random(), referral_id: r.id, at: new Date().toISOString(), kind: 'status', label: r.status, visible_to_partner: true, created_by: by });
         if (self.t === 'referral_items' && r.status !== before && r.status !== 'pending') DB.referral_events.push({ id: Date.now() + Math.random(), referral_id: r.referral_id, at: new Date().toISOString(), kind: 'document', label: r.status + ':' + r.label, visible_to_partner: true, created_by: by });
@@ -1841,6 +1989,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
             .forEach(function (x) { new Q('referrals').update({ status: nv }).eq('id', x.id).run(); });
         }
       });
+      staged.forEach(function (x) { stageChanged(x[0], x[1]); });
       return { data: null, error: null };
     }
     if (this.op === 'delete') {
@@ -1906,8 +2055,8 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   var storage = { from: function () {
     return {
       upload: function (path, blob) { FILES[path] = blob; return ok({ path: path }); },
-      createSignedUrl: async function (path) { if (!FILES[path]) FILES[path] = await samplePdf(path); return { data: { signedUrl: URL.createObjectURL(FILES[path]) }, error: null }; },
-      download: async function (path) { if (!FILES[path]) FILES[path] = await samplePdf(path); return { data: FILES[path], error: null }; },
+      createSignedUrl: async function (path) { if (!FILES[path]) FILES[path] = GEN[path] ? await bytesOf(path) : await samplePdf(path); return { data: { signedUrl: URL.createObjectURL(FILES[path]) }, error: null }; },
+      download: async function (path) { if (!FILES[path]) FILES[path] = GEN[path] ? await bytesOf(path) : await samplePdf(path); return { data: FILES[path], error: null }; },
       remove: function (paths) { (paths || []).forEach(function (p) { delete FILES[p]; }); return ok([]); }
     };
   } };
@@ -1915,6 +2064,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   /* ---------------- rpc ---------------- */
   function rpc(name, args) {
     args = args || {};
+    var ox = oaRpc(name, args); if (ox) return Promise.resolve({ data: ox.v, error: null });
     var r = null;
     if (name === 'is_admin' || name === 'is_admin_email') r = MODE === 'admin' && AUTH.user === ADMIN && (name === 'is_admin_email' || AUTH.aal === 'aal2');
     else if (name === 'claim_invitations') r = DB.client_users.filter(function (u) { return u.user_id === ME.id && u.status === 'active'; }).map(function (u) { var c = DB.clients.find(function (x) { return x.id === u.client_id; }); return { client_id: u.client_id, client_name: c.name, role: u.role, status: u.status }; });
@@ -1938,7 +2088,404 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     return Promise.resolve({ data: r, error: null });
   }
 
-  window.supabase = { createClient: function () { return { from: function (t) { return new Q(t); }, auth: auth, storage: storage, rpc: rpc }; } };
+  /* ================= DEMO: timeline + Operating Agreement + e-signature chain + audit ================= */
+  // Same flow as the `oa` edge function, run in the browser with the shared rules (oa-rules.js) and renderer (oa-render.js).
+  // The "AI" is simulated in the demo. State is kept in sessionStorage so the client, admin and signing demos share it.
+  var OAK = 'endeavor-demo-oa', GEN = {}, LISTEN = [], SIGS = {};
+  var RS_ID = { WY: 'd0000000-0000-4000-8000-0000000000a1', FL: 'd0000000-0000-4000-8000-0000000000a2', DE: 'd0000000-0000-4000-8000-0000000000a3', TX: 'd0000000-0000-4000-8000-0000000000a4' };
+  var OA1 = 'f9000000-0000-4000-8000-000000000001', OA2 = 'f9000000-0000-4000-8000-000000000002', OA3 = 'f9000000-0000-4000-8000-000000000003';
+  DB.company_timeline = []; DB.operating_agreements = []; DB.oa_versions = []; DB.oa_comments = []; DB.audit_log = []; DB.oa_rule_sets = [];
+  DB.compliance_settings = [{ id: 1, capture_ip: true, capture_user_agent: true, updated_at: iso(-30), updated_by: ADMIN.email }];
+  DB.admins[0].legal_reviewer = true;
+  var demoIp = function () { return MODE === 'admin' ? '72.185.14.9' : '189.40.12.77'; };
+  function notify(table, ev, row, old) {
+    LISTEN.forEach(function (l) {
+      if (l.table !== table || (l.event !== '*' && l.event !== ev)) return;
+      var m = l.filter && l.filter.match(/^(\w+)=eq\.(.+)$/); if (m && String(row[m[1]]) !== m[2]) return;
+      setTimeout(function () { try { l.cb({ eventType: ev, new: JSON.parse(JSON.stringify(row)), old: old || {}, table: table }); } catch (e) { console.error(e); } }, 30);
+    });
+  }
+  function rtChannel() { var ch = { on: function (type, o, cb) { LISTEN.push({ table: o.table, event: o.event || '*', filter: o.filter, cb: cb, ch: ch }); return ch; }, subscribe: function () { return ch; } }; return ch; }
+  function rtRemove(ch) { LISTEN = LISTEN.filter(function (l) { return l.ch !== ch; }); return Promise.resolve(); }
+  function fnv(s) { var h1 = 0x811c9dc5, h2 = 0x01000193; for (var i = 0; i < s.length; i++) { h1 ^= s.charCodeAt(i); h1 = Math.imul(h1, 16777619) >>> 0; h2 = Math.imul(h2 ^ s.charCodeAt(i), 2246822519) >>> 0; } var x = ('0000000' + h1.toString(16)).slice(-8) + ('0000000' + h2.toString(16)).slice(-8); return x + x.split('').reverse().join('') + x + x.split('').reverse().join(''); }
+  function rowHash(r, prev) { return fnv((prev || '') + '|' + r.id + '|' + r.at + '|' + (r.actor_email || '') + '|' + (r.actor_role || '') + '|' + r.action + '|' + (r.entity_id || '') + '|' + (r.ip || '') + '|' + JSON.stringify(r.details || {})); }
+  function auditPush(o) {
+    var last = DB.audit_log[DB.audit_log.length - 1];
+    var r = Object.assign({ id: (last ? last.id : 0) + 1, at: new Date().toISOString(), actor_id: current() ? current().id : null, actor_email: current() ? current().email : 'system', actor_role: !current() ? 'system' : MODE === 'admin' ? 'admin' : 'client_owner',
+      entity_type: null, entity_id: null, client_id: null, company_id: null, ip: DB.compliance_settings[0].capture_ip ? demoIp() : null, user_agent: DB.compliance_settings[0].capture_user_agent ? 'Mozilla/5.0 (demo browser)' : null, details: {} }, o);
+    r.prev_hash = last ? last.hash : null; r.hash = rowHash(r, r.prev_hash);
+    DB.audit_log.push(r); return r;
+  }
+  function tlPush(co, stage, sub, at, actor, note) {
+    var r = { id: DB.company_timeline.length + 1, company_id: co.id, client_id: co.client_id, at: at || new Date().toISOString(), stage: stage, substatus: sub || null, note: note || null, visible_to_client: true, actor_email: actor || 'system', actor_role: !actor || actor === 'system' ? 'system' : MODE === 'admin' ? 'admin' : 'user' };
+    DB.company_timeline.push(r); notify('company_timeline', 'INSERT', r); return r;
+  }
+  function oaSet(oa, patch, actor) {
+    var before = oa.status, old = JSON.parse(JSON.stringify(oa));
+    Object.assign(oa, patch, { updated_at: new Date().toISOString() });
+    if (patch.status && patch.status !== before) { oa.status_actor = actor || 'system'; var co = DB.companies.find(function (c) { return c.id === oa.company_id; }); tlPush(co, 'operating_agreement', oa.status, null, actor, oa.status === 'in_review' && oa.review_required ? 'review_required' : null); }
+    notify('operating_agreements', 'UPDATE', oa, old); oaSave(); return oa;
+  }
+  function stageChanged(co, before) {
+    co.stage_at = new Date().toISOString();
+    tlPush(co, co.stage, null, null, current() ? current().email : 'system');
+    auditPush({ action: 'timeline.stage', entity_type: 'company', entity_id: co.id, client_id: co.client_id, company_id: co.id, details: { from: before, to: co.stage } });
+    notify('companies', 'UPDATE', co);
+    if (co.stage === 'approved') { var b = co.stage; co.stage = 'operating_agreement'; stageChanged(co, b); return; }
+    if (co.stage === 'operating_agreement' && !DB.operating_agreements.some(function (o) { return o.company_id === co.id && o.status !== 'cancelled'; })) {
+      var oa = { id: uuid(), company_id: co.id, client_id: co.client_id, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: 'pending_generation', status_actor: 'system', state: co.state, answers: {}, prefill: {}, prefill_sources: {}, issues: [], review_required: false, review_note: null, rule_set_id: null, rules_version: null, version: 0, current_version_id: null, consents: [], signers: [] };
+      DB.operating_agreements.push(oa); tlPush(co, 'operating_agreement', 'pending_generation'); notify('operating_agreements', 'INSERT', oa);
+    }
+    oaSave();
+  }
+
+  /* ---- seed: three companies at different stages ---- */
+  (function seedOA() {
+    var co1 = DB.companies.find(function (c) { return c.id === CO1; }), co2 = DB.companies.find(function (c) { return c.id === CO2; }), co3 = DB.companies.find(function (c) { return c.id === CO3; }), co4 = DB.companies.find(function (c) { return c.id === CO4; });
+    Object.assign(co2, { formation_date: day(-8), document_number: 'L' + String(Y).slice(2) + '000987654', address: '7345 W Sand Lake Rd, Suite 210, Orlando, FL 32819', status: 'active', notes: 'Aprovada pela Sunbiz.' });
+    doc(CO2, C1, 'formation', 'Articles of Organization', Y, 6);
+    var env0 = DB.envelopes.find(function (e) { return /Operating Agreement - Lima Real Estate/.test(e.title); }); if (env0) env0.title = 'Engagement Letter - Lima Real Estate LLC';
+    var walk = function (co, upto, d0, oaStatus, oaId) {
+      var st = ['onboarding', 'documents', 'filing_prep', 'filed', 'approved', 'operating_agreement'];
+      for (var i = 0; i <= st.indexOf(upto); i++) tlPush(co, st[i], null, iso(-d0 + Math.min(i, 4), 10 + i), i ? ADMIN.email : 'system');
+      co.stage = upto; co.stage_at = iso(-d0 + 4);
+      if (upto !== 'operating_agreement') return;
+      var subs = ['pending_generation', 'questionnaire', 'drafting', 'in_review', 'client_review', 'approved', 'signing', 'signed', 'archived'];
+      subs.slice(0, subs.indexOf(oaStatus) + 1).forEach(function (s, j) { tlPush(co, 'operating_agreement', s, iso(-d0 + 4 + (j ? Math.ceil(j / 3) : 0), 16 + j), s === 'pending_generation' || s === 'drafting' ? 'system' : 'carlos.lima@example.com'); });
+      DB.operating_agreements.push({ id: oaId, company_id: co.id, client_id: co.client_id, created_at: iso(-d0 + 4), updated_at: iso(-d0 + 6), status: oaStatus, status_actor: 'system', state: co.state, answers: {}, prefill: {}, prefill_sources: {}, issues: [], review_required: false, review_note: null,
+        rule_set_id: oaStatus === 'archived' ? RS_ID.FL : null, rules_version: oaStatus === 'archived' ? '2026.11-1' : null, version: oaStatus === 'archived' ? 1 : 0, current_version_id: null, consents: [], signers: [], archived_at: oaStatus === 'archived' ? iso(-d0 + 6) : null });
+    };
+    DB.company_timeline = [];
+    walk(co1, 'operating_agreement', 40, 'archived', OA1);
+    walk(co3, 'operating_agreement', 28, 'archived', OA3);
+    walk(co2, 'operating_agreement', 12, 'pending_generation', OA2);
+    walk(co4, 'approved', 22);
+    LISTEN = [];
+    var A = function (d, who, role, action, co, det, ip) { auditPush({ at: iso(-d), actor_email: who, actor_role: role, action: action, entity_type: /^oa\./.test(action) ? 'operating_agreement' : 'company', entity_id: co.id, client_id: co.client_id, company_id: co.id, ip: ip || null, details: det || {} }); };
+    A(36, ADMIN.email, 'admin', 'timeline.stage', co1, { from: 'filed', to: 'approved' }, '72.185.14.9');
+    A(35, 'carlos.lima@example.com', 'client_owner', 'oa.consent', co1, { consent: 'ai_drafting_and_data_use', version: '2026-11-05' }, '189.40.12.77');
+    A(34, 'carlos.lima@example.com', 'client_owner', 'oa.approve', co1, { final_pdf_sha256: 'demo', signers: 1 }, '189.40.12.77');
+    A(34, 'system', 'system', 'oa.archived', co1, { final_sha256: 'demo' });
+    A(6, ADMIN.email, 'admin', 'timeline.stage', co2, { from: 'filed', to: 'approved' }, '72.185.14.9');
+    A(2, 'carlos.lima@example.com', 'client_owner', 'portal.access', co2, {}, '189.40.12.77');
+    A(1, 'carlos.lima@example.com', 'client_owner', 'doc.view', co1, { title: 'Articles of Organization', category: 'formation' }, '189.40.12.77');
+  })();
+  function oaSave() {
+    try {
+      var envs = DB.envelopes.filter(function (e) { return e.oa_id; });
+      sessionStorage.setItem(OAK, JSON.stringify({ co: DB.companies.map(function (c) { return { id: c.id, stage: c.stage, stage_at: c.stage_at }; }), oa: DB.operating_agreements, v: DB.oa_versions, c: DB.oa_comments, tl: DB.company_timeline, a: DB.audit_log,
+        e: envs, ev: DB.envelope_events.filter(function (x) { return envs.some(function (e) { return e.id === x.envelope_id; }); }), docs: DB.company_documents.filter(function (d) { return d.oa_doc; }),
+        ae: DB.admin_events.filter(function (x) { return /^oa_/.test(x.kind); }), sig: SIGS, cs: DB.compliance_settings, rs: DB.oa_rule_sets.map(function (r) { return { id: r.id, status: r.status, approved_by: r.approved_by, approved_at: r.approved_at }; }), adm: DB.admins }));
+    } catch (e) { /* storage full or blocked */ }
+  }
+  (function oaLoad() {
+    var s = null; try { s = JSON.parse(sessionStorage.getItem(OAK) || 'null'); } catch (e) { /* ignore */ }
+    if (!s) return;
+    (s.co || []).forEach(function (x) { var c = DB.companies.find(function (y) { return y.id === x.id; }); if (c) { c.stage = x.stage; c.stage_at = x.stage_at; } });
+    DB.operating_agreements = s.oa || []; DB.oa_versions = s.v || []; DB.oa_comments = s.c || []; DB.company_timeline = s.tl || []; DB.audit_log = s.a || [];
+    DB.envelopes = DB.envelopes.concat(s.e || []); DB.envelope_events = DB.envelope_events.concat(s.ev || []); DB.company_documents = DB.company_documents.concat(s.docs || []);
+    DB.admin_events = (s.ae || []).concat(DB.admin_events); SIGS = s.sig || {}; DB.compliance_settings = s.cs || DB.compliance_settings; DB.admins = s.adm || DB.admins; window.__DEMO_RS = s.rs || [];
+    (s.docs || []).forEach(function (d) { GEN[d.path] = d.oa_doc === 'evidence' ? function () { return evidenceBytes(d.oa_id); } : function () { return signedBytes(DB.envelopes.find(function (e) { return e.id === d.env_id; })); }; });
+  })();
+  function seedRules() {
+    if (DB.oa_rule_sets.length || !window.EOARules) return;
+    Object.keys(RS_ID).forEach(function (st) {
+      var c = EOARules.buildRuleSet(st);
+      var r = { id: RS_ID[st], state: st, version: c.version, status: 'approved', content: c, content_sha256: fnv(JSON.stringify(c)), created_at: iso(-20), approved_at: iso(-19), approved_by: 'support@endeavorbiz.com', approval_note: 'Demo: conjunto aprovado para demonstração. Em produção, um advogado habilitado aprova.' };
+      var saved = (window.__DEMO_RS || []).find(function (x) { return x.id === r.id; }); if (saved) Object.assign(r, saved);
+      DB.oa_rule_sets.push(r);
+    });
+  }
+  function ruleSet(state) {
+    seedRules();
+    var r = DB.oa_rule_sets.find(function (x) { return x.state === state && x.status === 'approved'; });
+    if (r) return { rs: r.content, id: r.id, approved: true, version: r.version };
+    var b = window.EOARules && EOARules.buildRuleSet(state); return b ? { rs: b, id: null, approved: false, version: b.version } : null;
+  }
+  function genericRules() { var rs = EOARules.buildRuleSet('FL'); rs.state = 'other'; rs.state_name = ''; rs.questions.forEach(function (q) { q.note = null; }); return { rs: rs, id: null, approved: false, version: rs.version }; }
+
+  /* ---- PDFs ---- */
+  async function bytesOf(path) { var b = FILES[path] || (GEN[path] ? await GEN[path]() : null); if (b && !(b instanceof Blob)) b = new Blob([b], { type: 'application/pdf' }); if (b) FILES[path] = b; return b; }
+  async function versionBytes(v) {
+    var p = 'oa/' + v.oa_id + '/v' + v.version + (v.final ? '-final' : '') + '.pdf';
+    if (!FILES[p]) { var r = await EOARender.render(PDFLib, v.content, v.final ? { footerLeft: 'Final v' + v.version, footerRight: 'OA ' + v.oa_id.slice(0, 8), fixedDate: v.created_at } : { watermark: 'DRAFT FOR REVIEW', footerLeft: 'Draft v' + v.version + ' - not for signature', footerRight: 'Rules ' + v.rules_version, fixedDate: v.created_at }); FILES[p] = new Blob([r.bytes], { type: 'application/pdf' }); }
+    return FILES[p];
+  }
+  async function docBytes(env) {
+    if (env.signer_index > 0) { var prev = DB.envelopes.find(function (e) { return e.oa_id === env.oa_id && e.signer_index === env.signer_index - 1; }); return signedBytes(prev); }
+    var v = DB.oa_versions.find(function (x) { return x.oa_id === env.oa_id && x.final; }); return versionBytes(v);
+  }
+  async function signedBytes(env) {
+    var base = new Uint8Array(await (await docBytes(env)).arrayBuffer()), s = SIGS[env.id];
+    if (!s) return new Blob([base], { type: 'application/pdf' });
+    var P = window.PDFLib, pdf = await P.PDFDocument.load(base), f = await pdf.embedFont(P.StandardFonts.Helvetica), b = await pdf.embedFont(P.StandardFonts.HelveticaBold);
+    var img = s.png ? await pdf.embedPng(Uint8Array.from(atob(s.png.split(',')[1]), function (c) { return c.charCodeAt(0); })) : null, pages = pdf.getPages(), ink = P.rgb(0.04, 0.12, 0.27);
+    (env.fields || []).forEach(function (fl) {
+      var p = pages[fl.page], W = p.getWidth(), H = p.getHeight(), x = fl.x * W, w = fl.w * W, h = fl.h * H, y = H - fl.y * H - h;
+      if (fl.type === 'signature') { if (img) { var sc = img.scaleToFit(w - 4, h - 10); p.drawImage(img, { x: x + 2, y: y + 8, width: sc.width, height: sc.height }); } else p.drawText(pdfSafe(s.typed), { x: x + 2, y: y + 12, size: 14, font: b, color: ink }); p.drawText(pdfSafe('Signed electronically by ' + s.typed + ' | Envelope ' + env.id.slice(0, 8)), { x: x + 2, y: y + 1, size: 5.5, font: f, color: P.rgb(0.35, 0.35, 0.4) }); }
+      if (fl.type === 'date') p.drawText(s.date, { x: x + 2, y: y + 3, size: 10, font: f, color: ink });
+    });
+    if (env.signer_index === 0) pages.forEach(function (p) { p.drawText('Endeavor Envelope ID: ' + env.id.toUpperCase(), { x: 18, y: p.getHeight() - 14, size: 6.5, font: f, color: P.rgb(0.45, 0.47, 0.52) }); });
+    var c = pdf.addPage([612, 792]), y = 740, line = function (t, sz, fo) { c.drawText(pdfSafe(t), { x: 40, y: y, size: sz || 9, font: fo || f, color: P.rgb(0.12, 0.12, 0.15) }); y -= (sz || 9) + 6; };
+    line('Certificate of Completion (demo)', 17, b); y -= 6;
+    [['Envelope ID', env.id], ['Document', env.title], ['Signer', env.signer_name + ' <' + env.signer_email + '>'], ['Typed signature name', s.typed], ['Signed at', s.at.replace('T', ' ').slice(0, 19) + ' UTC'], ['Signer IP address', '189.40.12.77 (demo)'], ['Original document SHA-256', env.document_sha256]].forEach(function (r) { line(r[0], 8.5, b); line('   ' + r[1], 9); });
+    line('Fictitious demonstration record. In production the Endeavor e-signature module records the real IP, device and SHA-256 fingerprints.', 7.5);
+    return new Blob([await pdf.save()], { type: 'application/pdf' });
+  }
+  async function evidenceBytes(oaId) {
+    var oa = DB.operating_agreements.find(function (o) { return o.id === oaId; }), P = window.PDFLib, pdf = await P.PDFDocument.create(), f = await pdf.embedFont(P.StandardFonts.Helvetica), b = await pdf.embedFont(P.StandardFonts.HelveticaBold);
+    var pg = pdf.addPage([612, 792]), y = 740, line = function (t, sz, fo) { if (y < 50) { pg = pdf.addPage([612, 792]); y = 740; } pg.drawText(pdfSafe(t).slice(0, 120), { x: 48, y: y, size: sz || 8.5, font: fo || f }); y -= (sz || 8.5) + 5; };
+    line('Operating Agreement - Signature and Compliance Evidence (demo)', 14, b); line('OA ' + oa.id + ' · rules ' + oa.rules_version + ' · final v' + oa.version); y -= 6;
+    line('Versions', 11, b); DB.oa_versions.filter(function (v) { return v.oa_id === oa.id; }).forEach(function (v) { line('v' + v.version + (v.final ? ' final' : '') + ' · ' + v.source + ' · ' + (v.ai_model || '-') + ' · rules ' + v.rules_version); });
+    line('Consents', 11, b); (oa.consents || []).forEach(function (c) { line(c.type + ' v' + c.version + ' · ' + c.by + ' · ' + c.at); });
+    line('Signatures', 11, b); DB.envelopes.filter(function (e) { return e.oa_id === oa.id; }).forEach(function (e) { line(e.signer_name + ' <' + e.signer_email + '> · ' + (e.signed_at || '') + ' · envelope ' + e.id); });
+    line('Audit trail', 11, b); DB.audit_log.filter(function (a) { return a.company_id === oa.company_id; }).forEach(function (a) { line(a.at.replace('T', ' ').slice(0, 19) + ' · ' + a.action + ' · ' + (a.actor_email || '') + (a.ip ? ' · IP ' + a.ip : '') + ' · ' + a.hash.slice(0, 12)); });
+    return new Blob([await pdf.save()], { type: 'application/pdf' });
+  }
+
+  /* ---- e-signature chain + archive ---- */
+  function demoSignUrl(token, lang) { return 'sign.html?t=' + token + '&ret=client&lang=' + (lang || 'pt'); }
+  async function createEnvelope(oa, i, fields) {
+    var s = oa.signers[i], co = DB.companies.find(function (c) { return c.id === oa.company_id; });
+    var env = prepare('envelopes', { title: 'Operating Agreement - ' + co.legal_name, signer_name: s.name, signer_email: s.email, message: 'Operating Agreement approved in the Endeavor client portal. Signer ' + (i + 1) + ' of ' + oa.signers.length + '.',
+      document_path: i === 0 ? 'oa/' + oa.id + '/v' + oa.version + '-final.pdf' : 'signed/' + DB.envelopes.find(function (e) { return e.oa_id === oa.id && e.signer_index === i - 1; }).id + '.pdf',
+      document_sha256: fnv(oa.id + i), fields: fields.filter(function (f) { return f.signer === i; }).map(function (f) { var o = Object.assign({}, f); delete o.signer; return o; }), oa_id: oa.id, signer_index: i, id_stamped: i > 0, status: 'sent' });
+    env.created_by = 'oa-module'; DB.envelopes.push(env);
+    ['created', 'sent'].forEach(function (k) { DB.envelope_events.push({ id: Date.now() + Math.random(), envelope_id: env.id, event: k, at: new Date().toISOString(), ip: null, user_agent: null, details: { oa_id: oa.id, signer_index: i } }); });
+    auditPush({ action: 'esign.created', actor_email: s.email, actor_role: 'system', entity_type: 'envelope', entity_id: env.id, client_id: oa.client_id, company_id: oa.company_id, ip: null, details: { oa_id: oa.id, signer_index: i } });
+    oa.signers[i] = Object.assign({}, s, { envelope_id: env.id, status: 'sent', sent_at: new Date().toISOString() });
+    return env;
+  }
+  function mailSigner(oa, s, env) {
+    var co = DB.companies.find(function (c) { return c.id === oa.company_id; });
+    mailPreview({ email: s.email, _subject: 'Assinatura do Operating Agreement: ' + co.legal_name, _autoresponse: 'Olá ' + s.name + ',\n\nO Operating Agreement de ' + co.legal_name + ' foi aprovado e aguarda a sua assinatura eletrônica.\n\nAssinar: https://endeavorbiz.com/sign.html?t=' + env.token + '\n\nO link é pessoal. Endeavor Business Solutions' });
+    DB.envelope_events.push({ id: Date.now() + Math.random(), envelope_id: env.id, event: 'emailed', at: new Date().toISOString(), ip: null, user_agent: null, details: { to: s.email } });
+  }
+  async function advance(oa) {
+    if (oa.status !== 'signing') return oa;
+    var envs = DB.envelopes.filter(function (e) { return e.oa_id === oa.id; }).sort(function (a, b) { return a.signer_index - b.signer_index; }), last = null;
+    envs.forEach(function (e) { var s = oa.signers[e.signer_index]; if (e.status === 'signed') { last = e; if (s.status !== 'signed') oa.signers[e.signer_index] = Object.assign({}, s, { status: 'signed', signed_at: e.signed_at }); } });
+    var next = oa.signers.findIndex(function (s) { return s.status !== 'signed'; });
+    if (next >= 0) {
+      if (!oa.signers[next].envelope_id && last) {
+        var fin = DB.oa_versions.find(function (v) { return v.oa_id === oa.id && v.final; });
+        var env = await createEnvelope(oa, next, fin.fields);
+        auditPush({ action: 'oa.signature_requested', actor_email: 'system', actor_role: 'system', entity_type: 'operating_agreement', entity_id: oa.id, client_id: oa.client_id, company_id: oa.company_id, ip: null, details: { signer_index: next, envelope_id: env.id } });
+        mailSigner(oa, oa.signers[next], env);
+      }
+      oaSet(oa, { signers: oa.signers }); return oa;
+    }
+    oaSet(oa, { status: 'signed', signed_at: new Date().toISOString(), signers: oa.signers });
+    auditPush({ action: 'oa.signed', actor_email: 'system', actor_role: 'system', entity_type: 'operating_agreement', entity_id: oa.id, client_id: oa.client_id, company_id: oa.company_id, ip: null, details: { envelopes: envs.map(function (e) { return e.id; }) } });
+    var co = DB.companies.find(function (c) { return c.id === oa.company_id; }), dd = new Date().toISOString().slice(0, 10), base = oa.client_id + '/' + oa.company_id + '/formation/';
+    var p1 = base + 'Operating-Agreement-signed-' + dd + '-' + oa.id.slice(0, 8) + '.pdf', p2 = base + 'Operating-Agreement-evidence-' + dd + '-' + oa.id.slice(0, 8) + '.pdf';
+    var d1 = prepare('company_documents', { company_id: oa.company_id, category: 'formation', title: 'Operating Agreement (signed)', year: Y, path: p1, mime: 'application/pdf', size_bytes: 61234, sha256: fnv(p1), visible_to_client: true, uploaded_by: null, uploaded_by_email: 'Endeavor e-signature', note: 'Signed by ' + envs.map(function (e) { return e.signer_name; }).join(', ') });
+    var d2 = prepare('company_documents', { company_id: oa.company_id, category: 'compliance', title: 'Operating Agreement - signature evidence', year: Y, path: p2, mime: 'application/pdf', size_bytes: 18200, sha256: fnv(p2), visible_to_client: false, uploaded_by: null, uploaded_by_email: 'Endeavor compliance' });
+    d1.uploaded_by = null; d2.uploaded_by = null; d1.oa_doc = 'signed'; d1.env_id = last.id; d2.oa_doc = 'evidence'; d2.oa_id = oa.id; DB.company_documents.push(d1, d2);
+    GEN[p1] = function () { return signedBytes(last); }; GEN[p2] = function () { return evidenceBytes(oa.id); };
+    oaSet(oa, { status: 'archived', archived_at: new Date().toISOString(), final_document_id: d1.id, evidence_document_id: d2.id, final_sha256: d1.sha256 });
+    auditPush({ action: 'oa.archived', actor_email: 'system', actor_role: 'system', entity_type: 'operating_agreement', entity_id: oa.id, client_id: oa.client_id, company_id: oa.company_id, ip: null, details: { document_id: d1.id, evidence_document_id: d2.id } });
+    DB.admin_events.unshift({ id: Date.now(), at: new Date().toISOString(), kind: 'oa_archived', title: 'Operating Agreement assinado e arquivado: ' + co.legal_name, body: 'PDF final e evidências na pasta da empresa.', link: '#/clientes?id=' + oa.client_id + '&tab=documentos', read_at: null });
+    oaSave(); toast('Demo: todos assinaram. PDF final e evidências arquivados na pasta da empresa.');
+    return oa;
+  }
+
+  /* ---- the `oa` function ---- */
+  async function oaFn(pb) {
+    var err = function (code, status, detail) { var e = new Error(code); e.status = status || 400; e.detail = detail; throw e; };
+    var A = String(pb.action || '');
+    seedRules();
+    if (A === 'envelope_signed') { var e0 = DB.envelopes.find(function (e) { return e.token === pb.token; }); if (!e0 || !e0.oa_id || e0.status !== 'signed') return { ok: true }; var o0 = await advance(DB.operating_agreements.find(function (o) { return o.id === e0.oa_id; })); return { ok: true, status: o0.status }; }
+    if (A === 'rules_seed') return { ok: true, inserted: 0 };
+    var oa = DB.operating_agreements.find(function (o) { return o.id === pb.oa_id; }); if (!oa) err('not_found', 404);
+    var isAdmin = MODE === 'admin', me = current() ? current().email : '', role = isAdmin ? 'admin' : 'client_owner';
+    if (!isAdmin) { var m = DB.client_users.find(function (u) { return u.user_id === ME.id && u.client_id === oa.client_id && u.status === 'active'; }); if (!m || m.role !== 'owner') err('forbidden', 403); }
+    if (/^admin_/.test(A) && !isAdmin) err('forbidden', 403);
+    var co = DB.companies.find(function (c) { return c.id === oa.company_id; }), cl = DB.clients.find(function (c) { return c.id === oa.client_id; });
+    var log = function (action, det) { auditPush({ action: action, actor_role: role, entity_type: 'operating_agreement', entity_id: oa.id, client_id: oa.client_id, company_id: oa.company_id, details: Object.assign({}, det || {}, { oa_version: oa.version, rules_version: oa.rules_version }) }); oaSave(); };
+    var need = function (c, code) { if (!c) err(code || 'invalid_state', 409); };
+    var bell = function (kind, title, body) { DB.admin_events.unshift({ id: Date.now() + Math.random(), at: new Date().toISOString(), kind: kind, title: title, body: body, link: '#/compliance?tab=oa&id=' + oa.id, read_at: null }); };
+    switch (A) {
+      case 'get':
+        if (oa.status === 'signing') await advance(oa);
+        var st = oa.answers.state || oa.state || co.state, ri = (st && ruleSet(st)) || genericRules();
+        return { oa: Object.assign({}, JSON.parse(JSON.stringify(oa)), { signers: (oa.signers || []).map(function (s) { return { name: s.name, capacity: s.capacity, status: s.status, signed_at: s.signed_at || null, me: s.email === me, email: isAdmin || s.email === me ? s.email : undefined }; }) }),
+          company: JSON.parse(JSON.stringify(co)), client: { name: cl.name, language: cl.language }, rules: Object.assign({}, ri.rs, { clauses: isAdmin ? ri.rs.clauses : undefined, approved: ri.approved, rule_set_id: ri.id }),
+          versions: DB.oa_versions.filter(function (v) { return v.oa_id === oa.id; }).sort(function (a, b) { return b.version - a.version || (b.final ? 1 : -1); }).map(function (v) { return JSON.parse(JSON.stringify(v)); }),
+          comments: DB.oa_comments.filter(function (c) { return c.oa_id === oa.id; }), ai_configured: true, email_configured: false, reviewer: isAdmin };
+      case 'pdf':
+        var v = DB.oa_versions.find(function (x) { return x.oa_id === oa.id && x.version === (+pb.version || oa.version) && !!x.final === !!pb.final; }) || DB.oa_versions.find(function (x) { return x.oa_id === oa.id && x.version === oa.version; });
+        if (!v) err('not_found', 404);
+        log('oa.pdf_view', { version: v.version, final: v.final });
+        return { url: URL.createObjectURL(await versionBytes(v)) };
+      case 'start':
+        need(!isAdmin, 'owner_only'); need(oa.status === 'pending_generation' || oa.status === 'questionnaire');
+        if (pb.consent !== true) err('consent_required');
+        if (oa.status === 'questionnaire') return { ok: true };
+        var art = DB.company_documents.find(function (d) { return d.company_id === co.id && d.category === 'formation' && /Articles/.test(d.title); });
+        var pf = { legal_name: co.legal_name, state: co.state, filing_number: co.document_number, formation_date: co.formation_date, principal_address: co.address, registered_agent: co.registered_agent, management: art ? 'manager' : undefined, fiscal_year: co.fiscal_year_end === '12-31' ? '12-31' : 'other' };
+        Object.keys(pf).forEach(function (k) { if (pf[k] == null || pf[k] === '') delete pf[k]; });
+        var src = {}; Object.keys(pf).forEach(function (k) { src[k] = art && k !== 'fiscal_year' ? 'articles' : 'company_record'; });
+        src._articles_document = art ? art.id : null; src._articles_ai = art ? { provider: 'demo', model: 'simulated (demo)' } : null;
+        var consent = { type: 'ai_drafting_and_data_use', version: '2026-11-05', at: new Date().toISOString(), by: me, ip: demoIp() };
+        await new Promise(function (r) { setTimeout(r, 900); });
+        oaSet(oa, { status: 'questionnaire', prefill: pf, prefill_sources: src, answers: JSON.parse(JSON.stringify(pf)), consents: oa.consents.concat([consent]) }, me);
+        log('oa.consent', { consent: consent.type, version: consent.version }); log('oa.start', { prefilled: Object.keys(pf), sources: 'company_record+articles' });
+        return { ok: true };
+      case 'save':
+        need(oa.status === 'questionnaire');
+        oa.answers = Object.assign({}, oa.answers, JSON.parse(JSON.stringify(pb.answers || {}))); oa.updated_at = new Date().toISOString();
+        log('oa.answer', { fields: Object.keys(pb.answers || {}).slice(0, 30) });
+        var r1 = ruleSet(oa.answers.state) || genericRules();
+        return { ok: true, saved_at: new Date().toISOString(), evaluation: EOARules.evaluate(r1.rs, oa.answers, oa.prefill) };
+      case 'submit':
+        need(oa.status === 'questionnaire');
+        var r2 = ruleSet(oa.answers.state), ev = EOARules.evaluate(r2 ? r2.rs : genericRules().rs, oa.answers, oa.prefill);
+        if (ev.missing.length || ev.errors.length) err('incomplete', 422, ev);
+        var c2 = { type: 'questionnaire_submitted', version: '2026-11-05', at: new Date().toISOString(), by: me, ip: demoIp() };
+        log('oa.submit', { review_reasons: ev.review.map(function (x) { return x.code; }) });
+        if (!r2) { oaSet(oa, { status: 'in_review', issues: ev.review.map(function (x) { return Object.assign({}, x, { resolved: false }); }), review_required: true, consents: oa.consents.concat([c2]) }, me); bell('oa_review', 'Revisão habilitada necessária: ' + co.legal_name, 'Estado sem regras aprovadas.'); return { ok: true, status: 'in_review' }; }
+        oaSet(oa, { status: 'drafting', consents: oa.consents.concat([c2]) }, me);
+        setTimeout(function () { draft(oa, ev.review, null); }, 2200);
+        return { ok: true, status: 'drafting' };
+      case 'comment':
+        need(oa.status === 'client_review');
+        DB.oa_comments.push({ id: DB.oa_comments.length + 1, oa_id: oa.id, version: oa.version, at: new Date().toISOString(), author_email: me, author_role: 'client_owner', section: pb.section || null, body: String(pb.body || '').slice(0, 2000), resolved_at: null, resolved_by: null, resolution: null });
+        log('oa.comment', { section: pb.section || null });
+        if (pb.request_changes) { oaSet(oa, { status: 'in_review' }, me); log('oa.changes_requested', {}); bell('oa_review', 'Cliente pediu correções: ' + co.legal_name, String(pb.body || '').slice(0, 200)); }
+        oaSave(); return { ok: true };
+      case 'approve':
+        need(oa.status === 'client_review');
+        if (pb.consent !== true || String(pb.typed_name || '').trim().length < 3) err('consent_required');
+        var cur = DB.oa_versions.find(function (x) { return x.id === oa.current_version_id; });
+        var fin = Object.assign({}, JSON.parse(JSON.stringify(cur)), { id: uuid(), final: true, created_at: new Date().toISOString(), created_by: me, note: 'Approved by client' });
+        var rr = await EOARender.render(PDFLib, fin.content, { footerLeft: 'Final v' + fin.version, footerRight: 'OA ' + oa.id.slice(0, 8), fixedDate: fin.created_at });
+        FILES['oa/' + oa.id + '/v' + fin.version + '-final.pdf'] = new Blob([rr.bytes], { type: 'application/pdf' });
+        var signers = EOARules.signers(oa.answers).map(function (s) { return Object.assign({}, s, { status: 'pending' }); }), mine = signers.findIndex(function (s) { return s.email === me; });
+        if (mine > 0) signers = [signers[mine]].concat(signers.filter(function (x, i) { return i !== mine; }));
+        var order = EOARules.signers(oa.answers).map(function (s) { return s.email; });
+        fin.fields = rr.fields.map(function (f) { return Object.assign({}, f, { signer: signers.findIndex(function (s) { return s.email === order[f.signer]; }) }); });
+        fin.pdf_sha256 = fnv('final' + oa.id + fin.version); DB.oa_versions.push(fin);
+        var c3 = { type: 'final_version_approved', version: '2026-11-05', at: new Date().toISOString(), by: me, ip: demoIp(), typed_name: pb.typed_name, oa_version: oa.version, pdf_sha256: cur.pdf_sha256 };
+        oa.signers = signers;
+        oaSet(oa, { status: 'approved', approved_at: new Date().toISOString(), approved_by_email: me, consents: oa.consents.concat([c3]), signers: signers }, me);
+        log('oa.approve', { typed_name: pb.typed_name, signers: signers.length });
+        var env = await createEnvelope(oa, 0, fin.fields);
+        oaSet(oa, { status: 'signing', signers: oa.signers });
+        log('oa.signature_requested', { signer_index: 0, envelope_id: env.id });
+        bell('oa_client', 'Operating Agreement aprovado pelo cliente: ' + co.legal_name, 'Assinaturas em andamento (' + signers.length + ' signatário(s)).');
+        if (signers[0].email === me) return { ok: true, sign_url: demoSignUrl(env.token, cl.language) };
+        mailSigner(oa, signers[0], env); return { ok: true };
+      case 'sign_link':
+        need(oa.status === 'signing'); await advance(oa);
+        var ni = oa.signers.findIndex(function (s) { return s.status !== 'signed'; });
+        if (ni < 0 || oa.signers[ni].email !== me) err('not_your_turn', 403);
+        return { url: demoSignUrl(DB.envelopes.find(function (e) { return e.id === oa.signers[ni].envelope_id; }).token, cl.language) };
+      case 'resend':
+        var ri2 = oa.signers.findIndex(function (s) { return s.status !== 'signed'; }); if (ri2 < 0) return { ok: true };
+        mailSigner(oa, oa.signers[ri2], DB.envelopes.find(function (e) { return e.id === oa.signers[ri2].envelope_id; })); log('oa.signature_resent', { signer_index: ri2, emailed: true }); return { ok: true, emailed: true };
+      case 'admin_release':
+        need(oa.status === 'in_review' && !!oa.current_version_id);
+        var open = (oa.issues || []).filter(function (i) { return !i.resolved; }); if (open.length) err('issues_open', 409, open.map(function (i) { return i.code; }));
+        oaSet(oa, { status: 'client_review', review_note: pb.note || null }, me); log('oa.released_to_client', { reviewer: true, rules_approved: true }); return { ok: true };
+      case 'admin_regenerate':
+        need(['in_review', 'client_review'].indexOf(oa.status) > -1);
+        oaSet(oa, { status: 'drafting' }, me); log('oa.regenerate', {}); setTimeout(function () { draft(oa, (oa.issues || []).filter(function (i) { return !i.resolved; }), pb.note || null); }, 1800); return { ok: true };
+      case 'admin_edit_section':
+        var cv = DB.oa_versions.find(function (x) { return x.id === oa.current_version_id; }), content = JSON.parse(JSON.stringify(cv.content));
+        content.articles.forEach(function (a) { a.sections.forEach(function (s) { if (s.rule === pb.rule) { s.text = String(pb.text || ''); s.ai = false; s.edited_by = me; } }); });
+        var nv = { id: uuid(), oa_id: oa.id, version: oa.version + 1, final: false, created_at: new Date().toISOString(), created_by: me, source: 'edit', content: content, pdf_sha256: fnv(JSON.stringify(content)), rules_version: oa.rules_version, rule_set_id: oa.rule_set_id, validation: [], note: 'Section ' + pb.rule + ' edited' };
+        DB.oa_versions.push(nv); oaSet(oa, { version: nv.version, current_version_id: nv.id }); if (oa.status === 'client_review') oaSet(oa, { status: 'in_review' }, me);
+        log('oa.section_edited', { rule: pb.rule, version: nv.version }); return { ok: true };
+      case 'admin_resolve_issue':
+        var iss = (oa.issues || []).slice(); iss[+pb.index] = Object.assign({}, iss[+pb.index], { resolved: true, resolved_by: me, resolved_at: new Date().toISOString(), note: pb.note });
+        oaSet(oa, { issues: iss }); log('oa.issue_resolved', { code: iss[+pb.index].code, note: String(pb.note || '').slice(0, 300) }); return { ok: true };
+      case 'admin_resolve_comment':
+        var cm = DB.oa_comments.find(function (c) { return c.id === +pb.comment_id; }); if (cm) Object.assign(cm, { resolved_at: new Date().toISOString(), resolved_by: me, resolution: pb.resolution });
+        log('oa.comment_resolved', { comment_id: +pb.comment_id }); return { ok: true };
+      case 'admin_return': oaSet(oa, { status: 'questionnaire', review_note: pb.note || null }, me); log('oa.returned_to_client', {}); return { ok: true };
+      case 'admin_cancel': oaSet(oa, { status: 'cancelled', review_note: pb.note || null }, me); log('oa.cancelled', { note: pb.note }); return { ok: true };
+      case 'admin_restart': var n2 = Object.assign({}, oa, { id: uuid(), status: 'pending_generation', answers: {}, versions: 0, version: 0, current_version_id: null, issues: [], consents: [], signers: [] }); DB.operating_agreements.push(n2); tlPush(co, 'operating_agreement', 'pending_generation'); log('oa.restarted', { new_id: n2.id }); return { ok: true, id: n2.id };
+    }
+    err('unknown_action');
+  }
+  async function draft(oa, reasons, notes) {
+    var ri = ruleSet(oa.answers.state), co = DB.companies.find(function (c) { return c.id === oa.company_id; });
+    var model = EOARules.compose(ri.rs, oa.answers, co);
+    model.articles.forEach(function (a) { a.sections.forEach(function (s) { s.ai = true; }); });
+    var v = { id: uuid(), oa_id: oa.id, version: oa.version + 1, final: false, created_at: new Date().toISOString(), created_by: 'carlos.lima@example.com', source: 'ai', content: model, pdf_sha256: fnv(JSON.stringify(model)), pages: null, fields: null,
+      ai_provider: 'demo', ai_model: 'simulated (demo)', ai_request_id: 'demo_' + Date.now(), prompt_sha256: fnv('prompt' + oa.id + Date.now()), rules_version: ri.rs.version, rule_set_id: ri.id, validation: [], note: notes };
+    DB.oa_versions.push(v);
+    var issues = (reasons || []).map(function (x) { return Object.assign({}, x, { resolved: !!x.resolved }); });
+    oaSet(oa, { status: 'in_review', version: v.version, current_version_id: v.id, rule_set_id: ri.id, rules_version: ri.rs.version, issues: issues, review_required: issues.some(function (i) { return !i.resolved; }), last_error: null });
+    auditPush({ action: 'oa.draft_generated', actor_email: 'system', actor_role: 'system', entity_type: 'operating_agreement', entity_id: oa.id, client_id: oa.client_id, company_id: oa.company_id, ip: null, details: { version_id: v.id, source: 'ai', ai_provider: 'demo', ai_model: 'simulated (demo)', rules_approved: true, review_reasons: issues.map(function (i) { return i.code; }) } });
+    DB.admin_events.unshift({ id: Date.now(), at: new Date().toISOString(), kind: 'oa_review', title: (issues.length ? 'Revisão habilitada necessária: ' : 'Minuta para revisar: ') + 'Operating Agreement · ' + co.legal_name, body: 'Minuta v' + v.version + ' pronta.', link: '#/compliance?tab=oa&id=' + oa.id, read_at: null });
+    oaSave();
+    toast(MODE === 'admin' ? 'Demo: nova minuta gerada.' : 'Demo: minuta gerada. A Endeavor revisa e libera no Admin → Compliance.');
+  }
+
+  /* ---- the e-signature function (signer page) ---- */
+  async function esignFn(pb) {
+    var env = DB.envelopes.find(function (e) { return e.token === pb.token; });
+    var err = function (c, s) { var e = new Error(c); e.status = s || 400; throw e; };
+    if (!env) err('invalid_link', 404);
+    if (pb.action === 'get') {
+      if (env.status === 'signed') return { status: 'signed', title: env.title, signer_name: env.signer_name, signed_at: env.signed_at, signed_url: URL.createObjectURL(await signedBytes(env)), signed_sha256: env.signed_document_sha256 };
+      var first = !env.viewed_at; if (first) { env.viewed_at = new Date().toISOString(); env.status = 'viewed'; }
+      DB.envelope_events.push({ id: Date.now() + Math.random(), envelope_id: env.id, event: 'viewed', at: new Date().toISOString(), ip: '189.40.12.77', user_agent: 'demo', details: {} });
+      if (env.oa_id) { var o = DB.operating_agreements.find(function (x) { return x.id === env.oa_id; }); auditPush({ action: 'esign.viewed', actor_email: env.signer_email, actor_role: 'signer', entity_type: 'envelope', entity_id: env.id, client_id: o.client_id, company_id: o.company_id, details: { oa_id: o.id, signer_index: env.signer_index } }); }
+      oaSave();
+      return { status: 'viewed', first_view: first, title: env.title, message: env.message, signer_name: env.signer_name, signer_email: env.signer_email, fields: env.fields || [], document_sha256: env.document_sha256, document_url: URL.createObjectURL(env.oa_id ? await docBytes(env) : await samplePdf(env.document_path)) };
+    }
+    if (pb.action === 'sign') {
+      if (env.status === 'signed') err('already_signed', 409);
+      var at = new Date();
+      SIGS[env.id] = { png: pb.signature_png || '', typed: pb.typed_name, at: at.toISOString(), date: new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', month: '2-digit', day: '2-digit', year: 'numeric' }).format(at) };
+      Object.assign(env, { status: 'signed', signed_at: at.toISOString(), consent_at: at.toISOString(), signature_name: pb.typed_name, signer_ip: '189.40.12.77', signer_user_agent: 'demo', signed_document_path: 'signed/' + env.id + '.pdf', signed_document_sha256: fnv('signed' + env.id) });
+      GEN['signed/' + env.id + '.pdf'] = function () { return signedBytes(env); };
+      ['consented', 'signed', 'completed'].forEach(function (k) { DB.envelope_events.push({ id: Date.now() + Math.random(), envelope_id: env.id, event: k, at: at.toISOString(), ip: '189.40.12.77', user_agent: 'demo', details: {} }); });
+      if (env.oa_id) { var o2 = DB.operating_agreements.find(function (x) { return x.id === env.oa_id; }); ['esign.consented', 'esign.signed', 'esign.completed'].forEach(function (k) { auditPush({ action: k, actor_email: env.signer_email, actor_role: 'signer', entity_type: 'envelope', entity_id: env.id, client_id: o2.client_id, company_id: o2.company_id, ip: '189.40.12.77', details: { oa_id: o2.id, signer_index: env.signer_index, signer_name: env.signer_name } }); }); }
+      oaSave();
+      if (env.oa_id) setTimeout(function () { demoNextSigner(env); }, 900);
+      return { status: 'signed', signed_at: env.signed_at, signed_sha256: env.signed_document_sha256, signed_url: URL.createObjectURL(await signedBytes(env)) };
+    }
+    if (pb.action === 'download') return { signed_url: URL.createObjectURL(await signedBytes(env)) };
+    err('unknown_action');
+  }
+  // demo shortcut: after one signer signs, offer to open the next signer's link (in production it arrives by e-mail)
+  function demoNextSigner(env) {
+    var nx = DB.envelopes.find(function (e) { return e.oa_id === env.oa_id && e.signer_index === env.signer_index + 1; });
+    var box = document.getElementById('done'); if (!box || !nx || nx.status === 'signed') return;
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn--gold'; b.id = 'demo-next-signer'; b.style.marginTop = '1rem';
+    b.textContent = 'Demo: abrir o link do próximo signatário (' + nx.signer_name + ')';
+    b.onclick = function () { if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN('sign', null, { t: nx.token, ret: 'client' }); else location.href = 'sign-demo.html?t=' + nx.token + '&ret=client'; };
+    box.appendChild(b);
+  }
+
+  /* ---- rpc additions ---- */
+  function oaRpc(name, args) {
+    if (name === 'audit_event') { var co = args.p_company && DB.companies.find(function (c) { return c.id === args.p_company; }); auditPush({ action: args.p_action, entity_type: args.p_entity_type, entity_id: args.p_entity_id, company_id: args.p_company || null, client_id: co ? co.client_id : (args.p_details && args.p_details.client_id) || null, details: args.p_details || {} }); oaSave(); return { v: null }; }
+    if (name === 'audit_verify') { var prev = null, n = 0; for (var i = 0; i < DB.audit_log.length; i++) { var r = DB.audit_log[i]; n++; if (r.prev_hash !== prev || r.hash !== rowHash(r, prev)) return { v: [{ ok: false, checked: n, first_bad: r.id }] }; prev = r.hash; } return { v: [{ ok: true, checked: n, first_bad: null }] }; }
+    if (name === 'is_legal_reviewer') return { v: MODE === 'admin' && !!(DB.admins.find(function (a) { return a.email === ADMIN.email; }) || {}).legal_reviewer };
+    if (name === 'set_legal_reviewer') { var a = DB.admins.find(function (x) { return x.email === args.p_email; }); if (a) a.legal_reviewer = args.p_on; auditPush({ action: 'compliance.reviewer', entity_type: 'admin', entity_id: args.p_email, details: { legal_reviewer: args.p_on } }); oaSave(); return { v: null }; }
+    if (name === 'approve_rule_set' || name === 'retire_rule_set') { seedRules(); var s = DB.oa_rule_sets.find(function (x) { return x.id === args.p_id; }); if (s) Object.assign(s, name === 'approve_rule_set' ? { status: 'approved', approved_at: new Date().toISOString(), approved_by: ADMIN.email, approval_note: args.p_note } : { status: 'retired', approval_note: args.p_note }); auditPush({ action: name === 'approve_rule_set' ? 'rules.approve' : 'rules.retire', entity_type: 'rule_set', entity_id: args.p_id, details: { state: s && s.state, note: args.p_note } }); oaSave(); return { v: null }; }
+    return null;
+  }
+  function oaVisible(table, rows, role, coOk) {
+    switch (table) {
+      case 'company_timeline': return rows.filter(function (r) { return r.visible_to_client && coOk(r.client_id, r.company_id); });
+      case 'operating_agreements': return rows.filter(function (r) { return role(r.client_id) === 'owner'; });
+      case 'oa_versions': case 'oa_comments': return rows.filter(function (r) { var o = DB.operating_agreements.find(function (x) { return x.id === r.oa_id; }); return o && role(o.client_id) === 'owner'; });
+      case 'oa_rule_sets': seedRules(); return rows.filter(function (r) { return r.status === 'approved'; });
+    }
+    return null;
+  }
+
+  window.supabase = { createClient: function () { return { from: function (t) { return new Q(t); }, auth: auth, storage: storage, rpc: rpc, channel: rtChannel, removeChannel: rtRemove }; } };
+  window.EOA_NAVIGATE = function (url) {
+    var q = {}; (url.split('?')[1] || '').split('&').forEach(function (kv) { var p = kv.split('='); if (p[0]) q[p[0]] = decodeURIComponent(p[1] || ''); });
+    if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN('sign', null, q); else location.href = 'sign-demo.html?' + (url.split('?')[1] || '');
+  };
 
   /* ---------------- edge functions & FormSubmit ---------------- */
   var realFetch = window.fetch.bind(window);
@@ -1957,6 +2504,10 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
         QBO[co.id].last_sync_at = new Date().toISOString();
         return new Promise(function (r) { setTimeout(function () { r(json({ ok: true, period: label })); }, 900); });
       }
+    }
+    if (/\/functions\/v1\/(oa|esign)$/.test(u)) {
+      var ob = {}; try { ob = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      return (/\/oa$/.test(u) ? oaFn : esignFn)(ob).then(function (r) { return json(r); }, function (e) { if (!e.status) console.error(e); return json({ error: e.message, detail: e.detail }, e.status || 500); });
     }
     if (/\/functions\/v1\/payments/.test(u)) {
       var pb = {}; try { pb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
@@ -2038,7 +2589,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     document.head.appendChild(css);
     var pill = document.createElement('aside'); pill.className = 'demo-pill'; pill.setAttribute('aria-label', 'Demo');
     pill.innerHTML = '<button type="button" aria-label="Fechar aviso">×</button><b>MODO DEMONSTRAÇÃO</b> · dados fictícios<span class="demo-pill__more">, nada é salvo.<br>' +
-      (MODE === 'proposal' ? 'Página pública da proposta: é o link que o cliente recebe por e-mail.' : 'Login: <code>' + (MODE === 'admin' ? ADMIN.email : ME.email) + '</code> · qualquer senha · código <code>123456</code>') + '</span>';
+      (MODE === 'proposal' ? 'Página pública da proposta: é o link que o cliente recebe por e-mail.' : MODE === 'sign' ? 'Ferramenta de assinatura eletrônica da Endeavor: é o link que cada signatário recebe.' : 'Login: <code>' + (MODE === 'admin' ? ADMIN.email : ME.email) + '</code> · qualquer senha · código <code>123456</code>') + '</span>';
     document.body.appendChild(pill);
     pill.querySelector('button').onclick = function () { pill.remove(); };
     var badge = document.createElement('span'); badge.className = 'demo-badge'; badge.textContent = 'DEMO'; badge.title = 'Modo demonstração: dados fictícios, nada é salvo';
@@ -2068,7 +2619,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
         if (/^index\.html/.test(h) || a.closest('.portal-top__left')) { e.preventDefault(); try { sessionStorage.removeItem('endeavor-combined-open'); } catch (x) { /* ignore */ } location.reload(); return; }
         if (a.closest('.lang-mini')) { e.preventDefault(); try { localStorage.setItem('endeavor-lang', JSON.stringify(a.dataset.lang)); } catch (x) { /* ignore */ } if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN(MODE, a.dataset.lang); else location.reload(); return; }
       }
-      if (/client\.html/.test(h) && MODE === 'proposal') { e.preventDefault(); if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN('client'); else location.href = 'client-demo.html'; return; }
+      if (/client\.html/.test(h) && (MODE === 'proposal' || MODE === 'sign')) { e.preventDefault(); if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN('client'); else location.href = 'client-demo.html'; return; }
       if (/proposal\.html\?t=/.test(h) || a.hasAttribute('data-open-proposal')) { e.preventDefault(); if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN('proposal'); else window.open('proposal-demo.html', '_blank'); return; }
       if (/^https:\/\/pay\.stripe\.com\/invoice\/.+\/pdf$/.test(h)) { e.preventDefault(); var ir = DB.invoices.find(function (x) { return x.invoice_pdf === h; }); if (ir) showInvoicePdf(ir); return; }
       if (/^https:\/\/(invoice|pay|connect)\.stripe\.com\//.test(h)) { e.preventDefault(); toast('Demo: abriria a página segura do Stripe (pagamento com cartão, Pix ou transferência).'); return; }

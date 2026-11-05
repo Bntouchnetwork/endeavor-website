@@ -11,7 +11,7 @@
       document_integrity_failed: 'We could not verify the document. Please contact support@endeavorbiz.com before signing.',
       generic: 'Something went wrong. Please try again in a moment or contact support@endeavorbiz.com.', signing: 'Signing…', signBtn: 'Sign document',
       needConsent: 'Check the consent box to continue.', needEmail: 'Enter the email where you received this link.',
-      alreadyTitle: 'This document is already signed', signedOn: 'Signed on', download: 'Download signed PDF',
+      backPortal: 'Back to the client portal', alreadyTitle: 'This document is already signed', signedOn: 'Signed on', download: 'Download signed PDF',
       progress: '{d} of {n} required fields completed', allDone: 'All required fields are complete. Select Finish.', noFields: 'Review the document, then select Finish.',
       signHere: 'Sign', initialHere: 'Initial', fieldSig: 'Signature field', fieldIni: 'Initials field', fieldText: 'Text field', fieldCheck: 'Checkbox', page: 'page', required: 'required',
       adoptTitle: 'Adopt your signature', adoptIniTitle: 'Adopt your initials', adText: 'Text', drawFirst: 'Draw your signature or choose Type.', typeFirst: 'Type the text for your signature.',
@@ -37,7 +37,7 @@
       document_integrity_failed: 'Não conseguimos verificar o documento. Fale com support@endeavorbiz.com antes de assinar.',
       generic: 'Algo deu errado. Tente de novo em instantes ou fale com support@endeavorbiz.com.', signing: 'Assinando…',
       needConsent: 'Marque a caixa de consentimento para continuar.', needEmail: 'Informe o e-mail em que recebeu este link.',
-      alreadyTitle: 'Este documento já está assinado', signedOn: 'Assinado em',
+      backPortal: 'Voltar ao portal do cliente', alreadyTitle: 'Este documento já está assinado', signedOn: 'Assinado em',
       progress: '{d} de {n} campos obrigatórios concluídos', allDone: 'Todos os campos obrigatórios estão prontos. Selecione Concluir.', noFields: 'Revise o documento e selecione Concluir.',
       signHere: 'Assinar', initialHere: 'Rubricar', fieldSig: 'Campo de assinatura', fieldIni: 'Campo de rubrica', fieldText: 'Campo de texto', fieldCheck: 'Caixa de seleção', page: 'página', required: 'obrigatório',
       drawFirst: 'Desenhe sua assinatura ou escolha Digitar.', typeFirst: 'Digite o texto da assinatura.', needAgree: 'Marque a caixa para adotar sua assinatura.', needLegacy: 'Adote sua assinatura primeiro.', pageLabel: 'Página' },
@@ -62,14 +62,15 @@
       document_integrity_failed: 'No pudimos verificar el documento. Escriba a support@endeavorbiz.com antes de firmar.',
       generic: 'Algo salió mal. Intente de nuevo en un momento o escriba a support@endeavorbiz.com.', signing: 'Firmando…',
       needConsent: 'Marque la casilla de consentimiento para continuar.', needEmail: 'Ingrese el correo donde recibió este enlace.',
-      alreadyTitle: 'Este documento ya está firmado', signedOn: 'Firmado el',
+      backPortal: 'Volver al portal del cliente', alreadyTitle: 'Este documento ya está firmado', signedOn: 'Firmado el',
       progress: '{d} de {n} campos obligatorios completos', allDone: 'Todos los campos obligatorios están listos. Seleccione Finalizar.', noFields: 'Revise el documento y seleccione Finalizar.',
       signHere: 'Firmar', initialHere: 'Iniciales', fieldSig: 'Campo de firma', fieldIni: 'Campo de iniciales', fieldText: 'Campo de texto', fieldCheck: 'Casilla', page: 'página', required: 'obligatorio',
       drawFirst: 'Dibuje su firma o elija Escribir.', typeFirst: 'Escriba el texto de su firma.', needAgree: 'Marque la casilla para adoptar su firma.', needLegacy: 'Adopte su firma primero.', pageLabel: 'Página' }
   };
   var t = EP.init(DICT);
   var $ = function (id) { return document.getElementById(id); };
-  var token = new URLSearchParams(location.search).get('t') || '';
+  function qp(k) { return new URLSearchParams(location.search).get(k) || (window.DEMO_QS || {})[k] || null; }
+  var token = qp('t') || '';
   var doc = null, fields = [], els = {}, values = {}, sigPng = null, iniPng = null;
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -87,6 +88,16 @@
     } catch (e) { alert(t(errKey(e))); }
   }
 
+  // Operating Agreement envelopes: tell the OA module (idempotent) so it opens the next signer or archives; offer the way back
+  function oaAfterSign(box) {
+    try { EP.fn('oa', { action: 'envelope_signed', token: token }).catch(function () {}); } catch (e) { /* not an OA envelope */ }
+    var ret = qp('ret');
+    if (ret === 'client' && box && !box.querySelector('.ret-portal')) {
+      var a = document.createElement('a'); a.className = 'btn btn--ghost ret-portal'; a.textContent = t('backPortal');
+      a.href = 'client.html?lang=' + encodeURIComponent(qp('lang') || EP.lang || 'en') + '#/overview';
+      (box.querySelector('.portal-btn-row') || box).appendChild(a);
+    }
+  }
   async function load() {
     if (!/^[0-9a-f-]{36}$/i.test(token)) return showState('<div class="portal-alert portal-alert--error">' + esc(t('invalid_link')) + '</div>');
     try { doc = await EP.fn('esign', { action: 'get', token: token }); }
@@ -96,6 +107,7 @@
         esc(new Intl.DateTimeFormat(EP.locale, { dateStyle: 'long', timeStyle: 'short' }).format(new Date(doc.signed_at))) + '</p>' +
         '<button class="btn btn--navy" type="button" id="dl-again">' + esc(t('download')) + '</button>');
       $('dl-again').onclick = freshDownload;
+      oaAfterSign($('state'));
       return;
     }
     if (doc.first_view) EP.notify({ _subject: 'Document opened: ' + doc.title + ' (' + doc.signer_name + ')', document: doc.title, signer: doc.signer_name, event: 'The signer opened the signing link.' });
@@ -296,6 +308,7 @@
       $('done-hash').textContent = res.signed_sha256;
       $('done-dl').onclick = freshDownload;
       $('done').focus();
+      oaAfterSign($('done'));
     } catch (err) {
       setMsg(m, errKey(err)); btn.disabled = false; btn.textContent = t('signBtn');
       if (errKey(err) === 'already_signed') load();
