@@ -3235,7 +3235,7 @@ window.ENDEAVOR_CFG = {
    this file is the source used to build it. Plain script: sets globalThis.EOARules (works in browsers and Deno). */
 (function (G) {
   'use strict';
-  var VERSION = '2026.11-1';
+  var VERSION = '2026.11-2';
   var L = function (pt, en, es) { return { pt: pt, en: en, es: es }; };
 
   /* ---------------- states and statutory references ---------------- */
@@ -3312,10 +3312,35 @@ window.ENDEAVOR_CFG = {
     { id: 'registered_agent', section: 'company', type: 'text', essential: true, prefill: 'registered_agent',
       label: L('Agente registrado (registered agent)', 'Registered agent', 'Agente registrado (registered agent)'),
       help: L('Pessoa ou empresa no estado que recebe citações e avisos oficiais em nome da LLC. Todo estado exige um agente registrado ativo; perder um aviso pode levar a decisões à revelia.', 'The person or company in the state that receives lawsuits and official notices for the LLC. Every state requires an active registered agent; a missed notice can lead to default judgments.', 'Persona o empresa en el estado que recibe demandas y avisos oficiales en nombre de la LLC. Todo estado exige un agente registrado activo; perder un aviso puede llevar a decisiones en rebeldía.') },
-    { id: 'purpose', section: 'company', type: 'select', essential: true, options: [['any', L('Qualquer atividade lícita', 'Any lawful business', 'Cualquier actividad lícita')], ['specific', L('Atividade específica', 'A specific business', 'Una actividad específica')]],
+    // options: [value, labels, approved clause text used in Section "Purpose" (English)]
+    { id: 'purpose', section: 'company', type: 'select', essential: true, options: [
+        ['any', L('Qualquer atividade lícita (mais flexível)', 'Any lawful business (most flexible)', 'Cualquier actividad lícita (más flexible)')],
+        ['real_estate', L('Investimento imobiliário: comprar, manter, alugar e vender imóveis', 'Real estate investment: buy, hold, rent and sell property', 'Inversión inmobiliaria: comprar, mantener, alquilar y vender inmuebles'),
+          'to acquire, own, hold, finance, lease (including long-term and short-term rentals), manage, improve, sell, exchange and otherwise deal with real property and interests in real property, and to engage in any lawful activity related to it'],
+        ['real_estate_development', L('Desenvolvimento imobiliário: construção, reforma e revenda (flip)', 'Real estate development: construction, renovation and resale (flip)', 'Desarrollo inmobiliario: construcción, remodelación y reventa (flip)'),
+          'to acquire real property and to develop, construct, renovate, improve, subdivide, market, lease and sell it, and to engage in any lawful activity related to it'],
+        ['property_management', L('Administração de imóveis de terceiros', 'Property management for third parties', 'Administración de inmuebles de terceros'),
+          'to provide property management, leasing and related services for real property owned by others, subject to any license required by applicable law, and to engage in any lawful activity related to it'],
+        ['holding', L('Holding de participações (deter quotas e ações de outras empresas)', 'Holding company (owning interests in other companies)', 'Holding de participaciones (tener cuotas y acciones de otras empresas)'),
+          'to acquire, own, hold, manage, vote, finance and dispose of equity interests, membership interests, shares and other ownership interests in other entities, and to engage in any lawful activity related to it'],
+        ['investment', L('Investimentos próprios (ações, fundos e outros ativos financeiros)', 'Own investments (stocks, funds and other financial assets)', 'Inversiones propias (acciones, fondos y otros activos financieros)'),
+          'to invest in, hold, manage and dispose of securities, funds, notes and other investment assets for its own account only, and not as an investment adviser, broker or dealer for others, and to engage in any lawful activity related to it'],
+        ['real_estate_holding', L('Holding patrimonial: imóveis + participações em outras empresas', 'Asset holding: real estate + interests in other companies', 'Holding patrimonial: inmuebles + participaciones en otras empresas'),
+          'to acquire, own, hold, lease, manage and dispose of real property and interests in real property, and to acquire, own, hold, manage, vote and dispose of equity interests in other entities, and to engage in any lawful activity related to it'],
+        ['trade', L('Comércio, importação e exportação', 'Trade, import and export', 'Comercio, importación y exportación'),
+          'to purchase, sell, import, export and distribute goods and products, and to engage in any lawful activity related to it'],
+        ['ecommerce', L('Comércio eletrônico (venda online)', 'E-commerce (online sales)', 'Comercio electrónico (venta en línea)'),
+          'to sell goods and services through online and other channels, and to engage in any lawful activity related to it'],
+        ['services', L('Consultoria e prestação de serviços', 'Consulting and business services', 'Consultoría y prestación de servicios'),
+          'to provide consulting, advisory and business services, other than services that require a professional license unless the Company and its personnel hold that license, and to engage in any lawful activity related to it'],
+        ['technology', L('Tecnologia e software', 'Technology and software', 'Tecnología y software'),
+          'to develop, license, sell and support software, technology products and related services, and to engage in any lawful activity related to it'],
+        ['specific', L('Outra atividade específica (descrever)', 'Another specific business (describe)', 'Otra actividad específica (describir)')]],
       detail: { when: 'specific', label: L('Descreva a atividade', 'Describe the business', 'Describa la actividad') },
       label: L('Objeto da empresa', 'Purpose of the company', 'Objeto de la empresa'),
-      help: L('"Qualquer atividade lícita" dá mais flexibilidade e é o mais comum. Um objeto específico (por exemplo, manter um imóvel) limita o que a empresa pode fazer sem alterar o acordo, o que alguns bancos e investidores preferem.', '"Any lawful business" gives the most flexibility and is the most common choice. A specific purpose (for example, holding one property) limits what the company may do without amending the agreement, which some lenders and investors prefer.', '"Cualquier actividad lícita" da más flexibilidad y es lo más común. Un objeto específico (por ejemplo, mantener un inmueble) limita lo que la empresa puede hacer sin modificar el acuerdo, algo que algunos bancos e inversionistas prefieren.') },
+      help: L('"Qualquer atividade lícita" dá mais flexibilidade e é o mais comum. Os objetos da lista (imóveis, holding de participações, investimentos e outros) descrevem a atividade com o texto aprovado pela Endeavor e ajudam bancos, title companies e investidores a entender a empresa, mas limitam o que ela pode fazer sem alterar o acordo. Uma holding de investimentos próprios não pode administrar dinheiro de terceiros sem as licenças exigidas. "Outra atividade específica" passa pela revisão de um profissional habilitado.',
+        '"Any lawful business" gives the most flexibility and is the most common choice. The listed purposes (real estate, holding company, investments and others) describe the business with wording approved by Endeavor and help banks, title companies and investors understand the company, but they limit what it may do without amending the agreement. A company that invests for its own account may not manage other people\'s money without the required licenses. "Another specific business" is reviewed by a qualified professional.',
+        '"Cualquier actividad lícita" da más flexibilidad y es lo más común. Los objetos de la lista (inmuebles, holding de participaciones, inversiones y otros) describen la actividad con el texto aprobado por Endeavor y ayudan a bancos, title companies e inversionistas a entender la empresa, pero limitan lo que puede hacer sin modificar el acuerdo. Una empresa que invierte por cuenta propia no puede administrar dinero de terceros sin las licencias exigidas. "Otra actividad específica" pasa por la revisión de un profesional habilitado.') },
     { id: 'members', section: 'owners', type: 'members', essential: true,
       label: L('Sócios (members)', 'Members', 'Socios (members)'),
       help: L('Liste todos os donos da LLC, a porcentagem de cada um (o total deve ser 100%) e o que cada um aportou. As porcentagens definem votos, divisão de lucros e quem assina. O e-mail é usado só para enviar o link de assinatura e não aparece no documento. Não informe SSN, ITIN, passaporte ou dados bancários.',
@@ -3503,7 +3528,7 @@ window.ENDEAVOR_CFG = {
     var top = ms.slice().sort(function (x, y) { return (Number(y.pct) || 0) - (Number(x.pct) || 0); })[0] || {};
     var S = { company: (a.legal_name || company.legal_name || '').trim(), state_name: rs.state_name, act: rs.act, filing: rs.filing, office: rs.office,
       filing_date_phrase: a.formation_date ? ' on ' + longDate(a.formation_date) : '', filing_number_phrase: a.filing_number ? ' under document number ' + String(a.filing_number).trim() : '',
-      purpose_text: a.purpose === 'specific' && a.purpose_detail ? String(a.purpose_detail).trim().replace(/\.$/, '') + ', and any lawful activity related to it' : 'to engage in any lawful business, purpose or activity for which limited liability companies may be formed under the Act',
+      purpose_text: a.purpose === 'specific' && a.purpose_detail ? String(a.purpose_detail).trim().replace(/\.$/, '') + ', and any lawful activity related to it' : purposeText(rs, a.purpose) || 'to engage in any lawful business, purpose or activity for which limited liability companies may be formed under the Act',
       principal_address: String(a.principal_address || '').trim(), registered_agent: String(a.registered_agent || '').trim(), decision_body: decision,
       member_word_pl: single ? 'Member' : 'Members', or_manager: mgr ? ' or Manager' : '',
       voting_text: majority, major_text: major, members_consent: membersConsent,
@@ -3525,6 +3550,8 @@ window.ENDEAVOR_CFG = {
       no_member_event: rs.no_member_event || 'the passage of ninety (90) consecutive days during which the Company has no Members, unless the Company is continued as permitted by the Act' };
     return S;
   }
+  // approved clause wording of the chosen purpose (kept in the rule set, so it is versioned and approved with it)
+  function purposeText(rs, val) { var q = (rs.questions || []).find(function (x) { return x.id === 'purpose'; }); var o = q && (q.options || []).find(function (x) { return x[0] === val; }); return o && o[2] ? o[2] : null; }
   function fill(text, v) { return String(text).replace(/\{\{(\w+)\}\}/g, function (m, k) { return v[k] == null ? m : v[k]; }); }
   // Model draft: every applicable approved clause, filled with the answers (the baseline the AI tailors and the reviewer compares against)
   function compose(rs, a, company) {
