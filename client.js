@@ -8,12 +8,13 @@
   /* ---------------- i18n ---------------- */
   var D = {
     en: {
-      p_portal: 'Partner Portal', p_loginTitle: 'Partner portal', p_loginLead: 'For accountants, bookkeepers and property managers invited by Endeavor clients.',
-      p_overviewLead: 'Documents and deadlines {c} shared with you.', p_clients: 'Client', p_noAccess: 'No partner access', p_noAccessText: 'This account is not linked to any client as a partner. If a client invited you, confirm you used the same email. Questions: support@endeavorbiz.com.',
+      p_portal: 'Partner Portal', p_loginTitle: 'Partner portal', p_loginLead: 'For referral partners and for accountants, bookkeepers and property managers invited by Endeavor clients.',
+      p_overviewLead: 'Documents and deadlines {c} shared with you.', p_clients: 'Client', p_noAccess: 'No partner access', p_noAccessText: 'This account is not linked to a partner program or to any client. If you were invited, confirm you used the same email. Questions: support@endeavorbiz.com.',
       useClientPortal: 'This account is a client account. Open the Client Portal instead.', usePartnerPortal: 'This account has partner access only. Open the Partner Portal instead.', openClient: 'Open Client Portal', openPartner: 'Open Partner Portal',
       access: 'Access', permCompanies: 'Companies', permAll: 'All companies (including new ones)', permDocs: 'Documents they can see', permOther: 'Other permissions',
       permDeadlines: 'Can see tax deadlines', permUpload: 'Can upload documents', permDocsHint: 'They always see the documents they uploaded.', editPerms: 'Permissions', savePerms: 'Save permissions', permsSaved: 'Permissions updated.',
       full: 'Full access', docsShort: 'Docs', noDocs: 'No documents', deadlinesShort: 'Deadlines', uploadShort: 'Upload', noCompanies: 'No companies', myAccess: 'My access', sharedBy: 'Shared by', yourRole: 'Your role',
+      nav_invoices: 'Invoices', invLead: 'Invoices from Endeavor. Pay securely by card or bank transfer through Stripe.', invNone: 'No invoices yet.', invNo: 'Invoice', invDate: 'Issued', invDue: 'Due', invTotal: 'Total', invStatus: 'Status', invPay: 'Pay now', invPdf: 'PDF', inv_open: 'Awaiting payment', inv_paid: 'Paid', inv_uncollectible: 'Overdue', invOpenTotal: 'Open balance', invPaidTotal: 'Paid this year', p_partnerLead: 'Referral partner',
       enrollS1: 'Install the free <strong>Google Authenticator</strong> app on your phone (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). The icon is a colorful asterisk.', enrollS2: 'In the app, tap <strong>+</strong> and choose <strong>Scan a QR code</strong>. Point the camera at the code below.', enrollS3: 'Type the 6-digit code the app shows (it changes every 30 seconds) and click <strong>Activate and continue</strong>.', mfaHint: 'Open Google Authenticator and use the code shown under <strong>Endeavor Business Solutions</strong>. Lost your phone? Write to support@endeavorbiz.com and we will reset your verification.',
       loading: 'Loading…', signOut: 'Sign out', menu: 'Menu', closeMenu: 'Close menu',
       portal: 'Client Portal', loginTitle: 'Client portal', loginLead: 'Access your companies, documents and deadlines.', email: 'Email', password: 'Password',
@@ -55,12 +56,13 @@
       switchClient: 'Account', privacyNote: 'Access to every file is recorded for your security.', generic: 'Something went wrong. Please try again.'
     },
     pt: {
-      p_portal: 'Portal do Parceiro', p_loginTitle: 'Portal do parceiro', p_loginLead: 'Para contadores, bookkeepers e administradores de imóveis convidados por clientes da Endeavor.',
-      p_overviewLead: 'Documentos e prazos que {c} compartilhou com você.', p_clients: 'Cliente', p_noAccess: 'Sem acesso de parceiro', p_noAccessText: 'Esta conta não está ligada a nenhum cliente como parceiro. Se um cliente convidou você, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
+      p_portal: 'Portal do Parceiro', p_loginTitle: 'Portal do parceiro', p_loginLead: 'Para parceiros de indicação e para contadores, bookkeepers e administradores de imóveis convidados por clientes da Endeavor.',
+      p_overviewLead: 'Documentos e prazos que {c} compartilhou com você.', p_clients: 'Cliente', p_noAccess: 'Sem acesso de parceiro', p_noAccessText: 'Esta conta não está ligada ao programa de parceiros nem a nenhum cliente. Se você foi convidado, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
       useClientPortal: 'Esta é uma conta de cliente. Abra o Portal do Cliente.', usePartnerPortal: 'Esta conta tem só acesso de parceiro. Abra o Portal do Parceiro.', openClient: 'Abrir Portal do Cliente', openPartner: 'Abrir Portal do Parceiro',
       access: 'Acesso', permCompanies: 'Empresas', permAll: 'Todas as empresas (inclusive novas)', permDocs: 'Documentos que pode ver', permOther: 'Outras permissões',
       permDeadlines: 'Pode ver os prazos fiscais', permUpload: 'Pode enviar documentos', permDocsHint: 'Ele sempre vê os documentos que ele mesmo enviou.', editPerms: 'Permissões', savePerms: 'Salvar permissões', permsSaved: 'Permissões atualizadas.',
       full: 'Acesso completo', docsShort: 'Docs', noDocs: 'Sem documentos', deadlinesShort: 'Prazos', uploadShort: 'Envio', noCompanies: 'Nenhuma empresa', myAccess: 'Meu acesso', sharedBy: 'Compartilhado por', yourRole: 'Seu perfil',
+      nav_invoices: 'Faturas', invLead: 'Faturas da Endeavor. Pague com segurança por cartão ou transferência bancária via Stripe.', invNone: 'Nenhuma fatura ainda.', invNo: 'Fatura', invDate: 'Emissão', invDue: 'Vencimento', invTotal: 'Total', invStatus: 'Status', invPay: 'Pagar agora', invPdf: 'PDF', inv_open: 'Aguardando pagamento', inv_paid: 'Paga', inv_uncollectible: 'Em atraso', invOpenTotal: 'Em aberto', invPaidTotal: 'Pago este ano', p_partnerLead: 'Parceiro de indicações',
       enrollS1: 'Instale no celular o app gratuito <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). O ícone é um asterisco colorido.', enrollS2: 'No app, toque no <strong>+</strong> e escolha <strong>Ler código QR</strong>. Aponte a câmera para o código abaixo.', enrollS3: 'Digite o código de 6 dígitos que aparece no app (ele muda a cada 30 segundos) e clique em <strong>Ativar e continuar</strong>.', mfaHint: 'Abra o Google Authenticator e use o código que aparece em <strong>Endeavor Business Solutions</strong>. Perdeu o celular? Escreva para support@endeavorbiz.com que a Endeavor reseta a sua verificação.',
       loading: 'Carregando…', signOut: 'Sair', menu: 'Menu', closeMenu: 'Fechar menu',
       portal: 'Portal do Cliente', loginTitle: 'Portal do cliente', loginLead: 'Acesse suas empresas, documentos e prazos.', email: 'E-mail', password: 'Senha',
@@ -102,12 +104,13 @@
       switchClient: 'Conta', privacyNote: 'O acesso a cada arquivo é registrado para a sua segurança.', generic: 'Algo deu errado. Tente de novo.'
     },
     es: {
-      p_portal: 'Portal de Socios', p_loginTitle: 'Portal de socios', p_loginLead: 'Para contadores, bookkeepers y administradores de propiedades invitados por clientes de Endeavor.',
-      p_overviewLead: 'Documentos y plazos que {c} compartió con usted.', p_clients: 'Cliente', p_noAccess: 'Sin acceso de socio', p_noAccessText: 'Esta cuenta no está vinculada a ningún cliente como socio. Si un cliente lo invitó, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
+      p_portal: 'Portal de Socios', p_loginTitle: 'Portal de socios', p_loginLead: 'Para socios de referidos y para contadores, bookkeepers y administradores de propiedades invitados por clientes de Endeavor.',
+      p_overviewLead: 'Documentos y plazos que {c} compartió con usted.', p_clients: 'Cliente', p_noAccess: 'Sin acceso de socio', p_noAccessText: 'Esta cuenta no está vinculada al programa de socios ni a ningún cliente. Si fue invitado, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
       useClientPortal: 'Esta es una cuenta de cliente. Abra el Portal del Cliente.', usePartnerPortal: 'Esta cuenta solo tiene acceso de socio. Abra el Portal de Socios.', openClient: 'Abrir Portal del Cliente', openPartner: 'Abrir Portal de Socios',
       access: 'Acceso', permCompanies: 'Empresas', permAll: 'Todas las empresas (incluso nuevas)', permDocs: 'Documentos que puede ver', permOther: 'Otros permisos',
       permDeadlines: 'Puede ver los plazos fiscales', permUpload: 'Puede enviar documentos', permDocsHint: 'Siempre ve los documentos que él mismo envió.', editPerms: 'Permisos', savePerms: 'Guardar permisos', permsSaved: 'Permisos actualizados.',
       full: 'Acceso completo', docsShort: 'Docs', noDocs: 'Sin documentos', deadlinesShort: 'Plazos', uploadShort: 'Envío', noCompanies: 'Ninguna empresa', myAccess: 'Mi acceso', sharedBy: 'Compartido por', yourRole: 'Su perfil',
+      nav_invoices: 'Facturas', invLead: 'Facturas de Endeavor. Pague con seguridad con tarjeta o transferencia bancaria vía Stripe.', invNone: 'Aún no hay facturas.', invNo: 'Factura', invDate: 'Emisión', invDue: 'Vencimiento', invTotal: 'Total', invStatus: 'Estado', invPay: 'Pagar ahora', invPdf: 'PDF', inv_open: 'Esperando pago', inv_paid: 'Pagada', inv_uncollectible: 'Vencida', invOpenTotal: 'Saldo abierto', invPaidTotal: 'Pagado este año', p_partnerLead: 'Socio de referidos',
       enrollS1: 'Instale en su celular la app gratuita <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). El ícono es un asterisco de colores.', enrollS2: 'En la app, toque <strong>+</strong> y elija <strong>Escanear un código QR</strong>. Apunte la cámara al código de abajo.', enrollS3: 'Escriba el código de 6 dígitos que muestra la app (cambia cada 30 segundos) y haga clic en <strong>Activar y continuar</strong>.', mfaHint: 'Abra Google Authenticator y use el código que aparece en <strong>Endeavor Business Solutions</strong>. ¿Perdió su celular? Escriba a support@endeavorbiz.com y Endeavor restablecerá su verificación.',
       loading: 'Cargando…', signOut: 'Salir', menu: 'Menú', closeMenu: 'Cerrar menú',
       portal: 'Portal del Cliente', loginTitle: 'Portal del cliente', loginLead: 'Acceda a sus empresas, documentos y plazos.', email: 'Correo', password: 'Contraseña',
@@ -215,6 +218,8 @@
     var mem = await sb.rpc('claim_invitations');
     var allMem = mem.data || [];
     S.memberships = allMem.filter(function (x) { return PARTNER ? x.role === 'collaborator' : x.role === 'owner'; });
+    if (PARTNER && window.EPartnerRef) { var pr = await sb.rpc('claim_partner'); S.partner = (pr.data || [])[0] || null; }
+    if (S.partner) { S.ref = EPartnerRef.init(refCtx()); if (!S.memberships.length) { S.client = null; S.perms = {}; S.companies = []; S.me = {}; startShell(); return; } }
     if (!S.memberships.length && allMem.length) {
       var other = PARTNER ? 'client.html' : 'partner.html';
       return authShell('<h1 class="portal-h1">' + t('noAccess') + '</h1><p>' + t(PARTNER ? 'useClientPortal' : 'usePartnerPortal') + '</p><a class="btn btn--navy" href="' + other + '?lang=' + L + '">' + t(PARTNER ? 'openClient' : 'openPartner') + '</a>');
@@ -224,6 +229,11 @@
     var m = S.memberships.find(function (x) { return x.client_id === saved; }) || S.memberships[0];
     await selectClient(m.client_id);
     startShell();
+  }
+  function refCtx() {
+    return { sb: sb, CFG: CFG, L: L, locale: EP.locale, t: t, esc: esc, $: $, $$: $$, msg: msg, q: q, errText: errText, fmtDate: fmtDate, fmtDT: fmtDT,
+      head: function (a, b, c) { return head(a, b, c); }, kpi: function (a, b, c) { return kpi(a, b, c); }, openOverlay: function (h, c) { return openOverlay(h, c); }, closeOverlay: function () { closeOverlay(); },
+      param: function (k) { return param(k); }, siteUrl: siteUrl, route: function () { route(); }, S: S };
   }
   async function selectClient(id) {
     S.client = (await q(sb.from('clients').select('*').eq('id', id).single()));
@@ -296,24 +306,32 @@
 
   /* ---------------- shell ---------------- */
   function navItems() {
+    var out = S.ref ? S.ref.nav.slice() : [];
+    if (!S.client) return out.concat([['settings', t('nav_settings'), 'i-gear']]);
+    if (S.ref) out.push(['-', S.ref.sep]);
+    return out.concat(clientNav().map(function (x) { return [x[0], t(x[1]), x[2]]; }));
+  }
+  function clientNav() {
     var n = [['overview', 'nav_overview', 'i-grid'], ['companies', 'nav_companies', 'i-brief']];
     if (S.perms.view) n.push(['documents', 'nav_documents', 'i-file']);
     if (S.perms.deadlines) n.push(['compliance', 'nav_compliance', 'i-cal']);
     if (S.perms.reports) n.push(['reports', 'nav_reports', 'i-chart']);
     if (S.perms.upload) n.push(['upload', 'nav_upload', 'i-up']);
-    if (S.perms.owner) n.push(['collaborators', 'nav_collab', 'i-users']);
+    if (S.perms.owner) n.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
     n.push(['settings', 'nav_settings', 'i-gear']);
     return n;
   }
   function startShell() {
     document.body.classList.add('app-shell');
     var multi = S.memberships.length > 1;
+    var clientBox = !S.client ? '' : multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem;background:#fff;color:#0b1f3a;font:inherit;font-weight:600">' +
+        S.memberships.map(function (m) { return '<option value="' + m.client_id + '"' + (m.client_id === S.client.id ? ' selected' : '') + '>' + esc(m.client_name) + '</option>'; }).join('') + '</select></div>'
+        : '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.client.name) + '</div>';
+    var navLi = function (n) { return n[0] === '-' ? '<li class="nav-sep" role="presentation">' + esc(n[1]) + '</li>' + (S.ref ? '<li role="presentation">' + clientBox + '</li>' : '') : '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + esc(n[1]) + '</a></li>'; };
     app.innerHTML = '<div class="console" id="console"><nav class="console__nav" id="console-nav" aria-label="' + t('portal') + '">' +
       '<div class="console__nav-title">' + t('portal') + '</div>' +
-      (multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem;background:#fff;color:#0b1f3a;font:inherit;font-weight:600">' +
-        S.memberships.map(function (m) { return '<option value="' + m.client_id + '"' + (m.client_id === S.client.id ? ' selected' : '') + '>' + esc(m.client_name) + '</option>'; }).join('') + '</select></div>'
-        : '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.client.name) + '</div>') +
-      '<ul>' + navItems().map(function (n) { return '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + t(n[1]) + '</a></li>'; }).join('') + '</ul>' +
+      (S.ref ? '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.partner.company || S.partner.name) + '<div style="font-weight:400;font-size:.8rem;color:var(--on-dark-muted)">' + esc(t('p_partnerLead')) + '</div></div>' : clientBox) +
+      '<ul>' + navItems().map(navLi).join('') + '</ul>' +
       '<div class="console__nav-foot">Endeavor Business Solutions<br>support@endeavorbiz.com</div></nav><div class="nav-backdrop" id="nav-backdrop"></div>' +
       '<main class="console__content" id="view" tabindex="-1"></main></div><div class="overlay" id="overlay" hidden></div>';
     var tgl = $('#nav-toggle'), con = $('#console');
@@ -327,12 +345,14 @@
     route();
   }
   function route() {
-    var h = ERoute.get().replace(/^#\/?/, ''), v = h.split('?')[0] || 'overview';
-    var allowed = navItems().map(function (n) { return n[0]; });
-    if (allowed.indexOf(v) < 0) v = 'overview';
+    var items = navItems().filter(function (n) { return n[0] !== '-'; });
+    var h = ERoute.get().replace(/^#\/?/, ''), v = h.split('?')[0] || items[0][0];
+    var allowed = items.map(function (n) { return n[0]; });
+    if (allowed.indexOf(v) < 0) v = items[0][0];
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); view.innerHTML = '<p class="portal-muted">' + t('loading') + '</p>'; view.scrollTop = 0;
-    var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: vUpload, collaborators: vCollab, settings: vSettings };
+    var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: vUpload, invoices: vInvoices, collaborators: vCollab, settings: vSettings };
+    if (S.ref) Object.assign(V, S.ref.views);
     V[v](view).catch(function (e) { view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>'; console.error(e); });
   }
   function param(k) { var m = ERoute.get().match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; }
@@ -628,11 +648,28 @@
     };
   }
 
+  async function vInvoices(view) {
+    var rows = await q(sb.from('invoices').select('id, number, created_at, due_date, total_cents, amount_paid_cents, currency, status, hosted_invoice_url, invoice_pdf, description').eq('client_id', S.client.id).order('created_at', { ascending: false }));
+    var money = function (c, cur) { return new Intl.NumberFormat(EP.locale, { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((c || 0) / 100); };
+    var y = String(new Date().getFullYear());
+    var open = rows.filter(function (r) { return r.status === 'open' || r.status === 'uncollectible'; }).reduce(function (s, r) { return s + r.total_cents - r.amount_paid_cents; }, 0);
+    var paid = rows.filter(function (r) { return r.status === 'paid' && String(r.created_at).slice(0, 4) === y; }).reduce(function (s, r) { return s + r.amount_paid_cents; }, 0);
+    var safe = function (u) { return /^https:\/\/(invoice|pay)\.stripe\.com\//.test(u || '') ? u : null; };
+    view.innerHTML = head(t('nav_invoices'), t('invLead')) + '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(t('invOpenTotal'), money(open), true) + kpi(t('invPaidTotal'), money(paid), true) + '</div>' +
+      '<section class="portal-card">' + (rows.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>' + t('invNo') + '</th><th>' + t('invDate') + '</th><th>' + t('invDue') + '</th><th class="num">' + t('invTotal') + '</th><th>' + t('invStatus') + '</th><th><span class="sr-only">PDF</span></th></tr></thead><tbody>' +
+        rows.map(function (r) {
+          var payUrl = safe(r.hosted_invoice_url), pdf = safe(r.invoice_pdf);
+          return '<tr><td><strong>' + esc(r.number || '—') + '</strong>' + (r.description ? '<div class="portal-muted" style="font-size:.85rem">' + esc(r.description) + '</div>' : '') + '</td><td>' + esc(fmtDate(r.created_at)) + '</td><td>' + esc(r.due_date ? fmtDate(r.due_date) : '—') + '</td>' +
+            '<td class="num">' + esc(money(r.total_cents, r.currency)) + '</td><td><span class="inv-st inv-st--' + esc(r.status) + '">' + esc(t('inv_' + r.status)) + '</span></td>' +
+            '<td class="portal-btn-row">' + (r.status !== 'paid' && payUrl ? '<a class="btn btn--navy btn--xs" href="' + esc(payUrl) + '" target="_blank" rel="noopener">' + t('invPay') + '</a>' : '') + (pdf ? '<a class="btn btn--ghost btn--xs" href="' + esc(pdf) + '" target="_blank" rel="noopener">' + t('invPdf') + '</a>' : '') + '</td></tr>';
+        }).join('') + '</tbody></table></div>' : '<div class="empty-state"><strong>' + t('invNone') + '</strong></div>') + '</section>';
+  }
+
   async function vSettings(view) {
     var u = (await sb.auth.getUser()).data.user;
     view.innerHTML = head(t('nav_settings'), t('settingsLead')) +
       '<section class="portal-card"><h2 class="portal-h2">' + t('account') + '</h2><dl class="kv"><dt>' + t('email') + '</dt><dd>' + esc(u.email) + '</dd><dt>' + t('lastLogin') + '</dt><dd>' + esc(fmtDT(u.last_sign_in_at)) + '</dd>' +
-      '<dt>' + t('yourRole') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : t('c_' + (S.me.collab_type || 'other'))) + '</dd>' + (PARTNER ? '<dt>' + t('sharedBy') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('myAccess') + '</dt><dd>' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</dd>' : '') + '<dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
+      '<dt>' + t('yourRole') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : [S.partner ? t('p_partnerLead') : '', S.client ? t('c_' + (S.me.collab_type || 'other')) : ''].filter(Boolean).join(' · ')) + '</dd>' + (PARTNER && S.client ? '<dt>' + t('sharedBy') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('myAccess') + '</dt><dd>' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</dd>' : '') + '<dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
       '<section class="portal-card"><h2 class="portal-h2">' + t('changePass') + '</h2><form class="portal-form" id="pw"><div class="field"><label for="pw-n">' + t('newPass') + '</label><input id="pw-n" type="password" autocomplete="new-password" minlength="12" required></div>' +
       '<div class="portal-alert" id="pw-m" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('savePass') + '</button></form></section>';
     $('#pw').onsubmit = async function (e) {

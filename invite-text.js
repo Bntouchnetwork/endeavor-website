@@ -11,10 +11,11 @@
       return [
         'Olá ' + o.name + ',',
         '',
-        o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Solutions, para acessar os documentos que compartilhou com você.'
+        o.referral ? 'A Endeavor Business Solutions convidou você para o Programa de Parceiros. Pelo Portal do Parceiro você indica clientes, acompanha cada etapa e recebe as suas comissões pela sua conta Stripe.'
+        : o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Solutions, para acessar os documentos que compartilhou com você.'
         : o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'A Endeavor Business Solutions criou o seu acesso ao portal do cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
+        o.referral ? 'Por segurança, o acesso usa senha e um código do celular.' : 'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
         '',
         'PRIMEIRO ACESSO (leva uns 5 minutos)',
         '1. Instale no celular o app gratuito "Google Authenticator". O ícone é um asterisco colorido.',
@@ -39,10 +40,11 @@
       return [
         'Hello ' + o.name + ',',
         '',
-        o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Solutions Partner Portal to access the documents they shared with you.'
+        o.referral ? 'Endeavor Business Solutions invited you to its Partner Program. In the Partner Portal you refer clients, follow every step and receive your commissions through your own Stripe account.'
+        : o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Solutions Partner Portal to access the documents they shared with you.'
         : o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Solutions client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions created your access to the client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
+        o.referral ? 'For security, access uses a password and a code from your phone.' : 'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
         '',
         'FIRST ACCESS (about 5 minutes)',
         '1. Install the free "Google Authenticator" app on your phone. The icon is a colorful asterisk.',
@@ -67,10 +69,11 @@
       return [
         'Hola ' + o.name + ',',
         '',
-        o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Solutions para acceder a los documentos que compartió con usted.'
+        o.referral ? 'Endeavor Business Solutions lo invitó a su Programa de Socios. En el Portal de Socios usted refiere clientes, sigue cada etapa y recibe sus comisiones en su propia cuenta Stripe.'
+        : o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Solutions para acceder a los documentos que compartió con usted.'
         : o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions creó su acceso al portal del cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
+        o.referral ? 'Por seguridad, el acceso usa contraseña y un código del celular.' : 'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
         '',
         'PRIMER ACCESO (unos 5 minutos)',
         '1. Instale en su celular la app gratuita "Google Authenticator". El ícono es un asterisco de colores.',

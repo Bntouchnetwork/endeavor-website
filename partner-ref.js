@@ -1,0 +1,263 @@
+/* Partner portal: referrals (pipeline, documents received, timeline), commissions and Stripe Connect payouts.
+   Loaded by partner.html; client.js calls EPartnerRef.init(ctx) when the signed-in user is an active referral partner. */
+(function () {
+  'use strict';
+  var STAGES = ['submitted', 'contacted', 'proposal', 'onboarding', 'in_process', 'completed'];
+  var SERVICES = ['Start a U.S. Company', 'Registered Agent', 'EIN / ITIN', 'Annual Report / Compliance', 'Tax Services', 'Expand My Business to the U.S.',
+    'Start Operations in Paraguay', 'Business Financing', 'Real Estate Structure', 'Family Office', 'Other Business Services'];
+  var D = {
+    en: {
+      r_nav_home: 'Dashboard', r_nav_refs: 'My referrals', r_nav_new: 'New referral', r_nav_comm: 'Commissions', r_nav_pay: 'Stripe payouts', r_sep_clients: 'Shared clients',
+      r_hello: 'Hello, {n}', r_homeLead: 'Your referral pipeline with Endeavor Business Solutions.',
+      k_refs: 'Referrals', k_active: 'In progress', k_won: 'Became clients', k_earned: 'Commissions received', k_due: 'Commissions to receive',
+      r_recent: 'Latest referrals', r_seeAll: 'See all', r_none: 'No referrals yet', r_noneText: 'Refer a client and follow every step here.', r_newBtn: 'Refer a client',
+      st_submitted: 'Received', st_contacted: 'In contact', st_proposal: 'Proposal', st_onboarding: 'Onboarding', st_in_process: 'In process', st_completed: 'Completed', st_lost: 'Closed',
+      r_refsLead: 'Follow each referral from first contact to completion.', r_board: 'Pipeline', r_list: 'List', r_showLost: 'Show closed',
+      r_service: 'Service', r_since: 'Referred on', r_updated: 'Updated', r_progress: 'Progress', r_docs: 'Documents received', r_noDocsReq: 'No document checklist yet.',
+      di_pending: 'Pending', di_received: 'Received', di_approved: 'Approved', r_timeline: 'Timeline', r_detailsTitle: 'Referral',
+      ev_status: 'Status: {s}', ev_doc_received: 'Document received: {d}', ev_doc_approved: 'Document approved: {d}', r_contact: 'Contact',
+      r_newLead: 'Send the client\'s contact details. Endeavor will reach out and you can follow every step here.',
+      f_name: 'Client name', f_email: 'Client email', f_phone: 'Phone / WhatsApp', f_country: 'Country', f_company: 'Company (if any)', f_service: 'Service needed',
+      f_select: 'Select', f_msg: 'Context for our team (optional)', f_lang: 'Client language', f_consent: 'The client agreed to be contacted by Endeavor Business Solutions.',
+      f_privacy: 'Do not include SSN, ITIN, passport, bank or card numbers. We collect documents directly from the client through the secure portal.',
+      f_submit: 'Send referral', f_sent: 'Referral sent. Endeavor will contact the client.', e_name: 'Enter the client\'s name and a valid email.', e_consent: 'Confirm that the client agreed to be contacted.', e_rate: 'Daily limit of referrals reached. Try again tomorrow.',
+      c_lead: 'Commissions on invoices paid by the clients you referred. Your share is sent automatically to your Stripe account when the client pays.',
+      c_date: 'Date', c_inv: 'Invoice', c_client: 'Client', c_total: 'Invoice total', c_share: 'Your share', c_status: 'Invoice', c_payout: 'Payout', c_none: 'No commissions yet.',
+      is_open: 'Awaiting payment', is_paid: 'Paid', is_void: 'Canceled', is_uncollectible: 'Uncollectible',
+      ts_none: '—', ts_scheduled: 'Automatic on payment', ts_pending: 'Pending (connect Stripe)', ts_paid: 'Sent to Stripe', ts_failed: 'Failed', ts_reversed: 'Reversed',
+      p_lead: 'Connect your own Stripe account to receive your commissions automatically. Endeavor never sees your bank details: you enter them directly with Stripe.',
+      p_status: 'Stripe account', p_notConnected: 'Not connected', p_incomplete: 'Setup incomplete', p_ready: 'Ready to receive', p_review: 'Under review by Stripe',
+      p_country: 'Country of your bank account', p_connect: 'Connect Stripe account', p_continue: 'Continue Stripe setup', p_dashboard: 'Open Stripe dashboard', p_refresh: 'Refresh status',
+      p_steps: 'How it works', p_s1: 'Click "Connect Stripe account" and create (or sign in to) your Stripe Express account.', p_s2: 'Enter your details and the bank account that will receive the payouts.', p_s3: 'When a client you referred pays an Endeavor invoice, your share goes straight to your Stripe balance and then to your bank.',
+      p_returned: 'Welcome back from Stripe. Status updated.', p_notReady: 'Online payments are being set up by Endeavor. Try again later.',
+      p_sharePct: 'Default commission', p_accountId: 'Account', yes: 'Yes', no: 'No', p_payouts: 'Payouts to bank', p_transfers: 'Receives transfers'
+    },
+    pt: {
+      r_nav_home: 'Painel', r_nav_refs: 'Minhas indicações', r_nav_new: 'Nova indicação', r_nav_comm: 'Comissões', r_nav_pay: 'Recebimentos Stripe', r_sep_clients: 'Clientes compartilhados',
+      r_hello: 'Olá, {n}', r_homeLead: 'Seu pipeline de indicações com a Endeavor Business Solutions.',
+      k_refs: 'Indicações', k_active: 'Em andamento', k_won: 'Viraram clientes', k_earned: 'Comissões recebidas', k_due: 'Comissões a receber',
+      r_recent: 'Últimas indicações', r_seeAll: 'Ver todas', r_none: 'Nenhuma indicação ainda', r_noneText: 'Indique um cliente e acompanhe cada etapa por aqui.', r_newBtn: 'Indicar cliente',
+      st_submitted: 'Recebida', st_contacted: 'Em contato', st_proposal: 'Proposta', st_onboarding: 'Cadastro', st_in_process: 'Em processamento', st_completed: 'Concluída', st_lost: 'Encerrada',
+      r_refsLead: 'Acompanhe cada indicação do primeiro contato até a conclusão.', r_board: 'Pipeline', r_list: 'Lista', r_showLost: 'Mostrar encerradas',
+      r_service: 'Serviço', r_since: 'Indicado em', r_updated: 'Atualizado', r_progress: 'Andamento', r_docs: 'Documentação recebida', r_noDocsReq: 'Ainda não há lista de documentos.',
+      di_pending: 'Pendente', di_received: 'Recebido', di_approved: 'Aprovado', r_timeline: 'Linha do tempo', r_detailsTitle: 'Indicação',
+      ev_status: 'Status: {s}', ev_doc_received: 'Documento recebido: {d}', ev_doc_approved: 'Documento aprovado: {d}', r_contact: 'Contato',
+      r_newLead: 'Envie os dados de contato do cliente. A Endeavor entra em contato e você acompanha cada etapa por aqui.',
+      f_name: 'Nome do cliente', f_email: 'E-mail do cliente', f_phone: 'Telefone / WhatsApp', f_country: 'País', f_company: 'Empresa (se houver)', f_service: 'Serviço de interesse',
+      f_select: 'Selecione', f_msg: 'Contexto para a nossa equipe (opcional)', f_lang: 'Idioma do cliente', f_consent: 'O cliente autorizou o contato da Endeavor Business Solutions.',
+      f_privacy: 'Não inclua SSN, ITIN, passaporte, dados bancários ou de cartão. Os documentos são coletados direto com o cliente pelo portal seguro.',
+      f_submit: 'Enviar indicação', f_sent: 'Indicação enviada. A Endeavor vai entrar em contato com o cliente.', e_name: 'Informe o nome do cliente e um e-mail válido.', e_consent: 'Confirme que o cliente autorizou o contato.', e_rate: 'Limite diário de indicações atingido. Tente amanhã.',
+      c_lead: 'Comissões sobre faturas pagas pelos clientes que você indicou. A sua parte vai automaticamente para a sua conta Stripe quando o cliente paga.',
+      c_date: 'Data', c_inv: 'Fatura', c_client: 'Cliente', c_total: 'Total da fatura', c_share: 'Sua parte', c_status: 'Fatura', c_payout: 'Repasse', c_none: 'Nenhuma comissão ainda.',
+      is_open: 'Aguardando pagamento', is_paid: 'Paga', is_void: 'Cancelada', is_uncollectible: 'Não cobrável',
+      ts_none: '—', ts_scheduled: 'Automático no pagamento', ts_pending: 'Pendente (conecte o Stripe)', ts_paid: 'Enviado ao Stripe', ts_failed: 'Falhou', ts_reversed: 'Estornado',
+      p_lead: 'Conecte a sua própria conta Stripe para receber as comissões automaticamente. A Endeavor não vê os seus dados bancários: você informa direto no Stripe.',
+      p_status: 'Conta Stripe', p_notConnected: 'Não conectada', p_incomplete: 'Cadastro incompleto', p_ready: 'Pronta para receber', p_review: 'Em análise pelo Stripe',
+      p_country: 'País da sua conta bancária', p_connect: 'Conectar conta Stripe', p_continue: 'Continuar cadastro no Stripe', p_dashboard: 'Abrir painel Stripe', p_refresh: 'Atualizar status',
+      p_steps: 'Como funciona', p_s1: 'Clique em "Conectar conta Stripe" e crie (ou entre na) sua conta Stripe Express.', p_s2: 'Informe seus dados e a conta bancária que vai receber os repasses.', p_s3: 'Quando um cliente indicado por você paga uma fatura da Endeavor, a sua parte cai direto no seu saldo Stripe e depois no seu banco.',
+      p_returned: 'Você voltou do Stripe. Status atualizado.', p_notReady: 'Os pagamentos online estão sendo configurados pela Endeavor. Tente mais tarde.',
+      p_sharePct: 'Comissão padrão', p_accountId: 'Conta', yes: 'Sim', no: 'Não', p_payouts: 'Saques para o banco', p_transfers: 'Recebe repasses'
+    },
+    es: {
+      r_nav_home: 'Panel', r_nav_refs: 'Mis referidos', r_nav_new: 'Nuevo referido', r_nav_comm: 'Comisiones', r_nav_pay: 'Pagos Stripe', r_sep_clients: 'Clientes compartidos',
+      r_hello: 'Hola, {n}', r_homeLead: 'Su pipeline de referidos con Endeavor Business Solutions.',
+      k_refs: 'Referidos', k_active: 'En curso', k_won: 'Se volvieron clientes', k_earned: 'Comisiones recibidas', k_due: 'Comisiones por recibir',
+      r_recent: 'Últimos referidos', r_seeAll: 'Ver todos', r_none: 'Aún no hay referidos', r_noneText: 'Refiera un cliente y siga cada etapa aquí.', r_newBtn: 'Referir cliente',
+      st_submitted: 'Recibido', st_contacted: 'En contacto', st_proposal: 'Propuesta', st_onboarding: 'Registro', st_in_process: 'En proceso', st_completed: 'Completado', st_lost: 'Cerrado',
+      r_refsLead: 'Siga cada referido desde el primer contacto hasta la conclusión.', r_board: 'Pipeline', r_list: 'Lista', r_showLost: 'Mostrar cerrados',
+      r_service: 'Servicio', r_since: 'Referido el', r_updated: 'Actualizado', r_progress: 'Avance', r_docs: 'Documentación recibida', r_noDocsReq: 'Aún no hay lista de documentos.',
+      di_pending: 'Pendiente', di_received: 'Recibido', di_approved: 'Aprobado', r_timeline: 'Línea de tiempo', r_detailsTitle: 'Referido',
+      ev_status: 'Estado: {s}', ev_doc_received: 'Documento recibido: {d}', ev_doc_approved: 'Documento aprobado: {d}', r_contact: 'Contacto',
+      r_newLead: 'Envíe los datos de contacto del cliente. Endeavor se comunicará y usted sigue cada etapa aquí.',
+      f_name: 'Nombre del cliente', f_email: 'Correo del cliente', f_phone: 'Teléfono / WhatsApp', f_country: 'País', f_company: 'Empresa (si tiene)', f_service: 'Servicio de interés',
+      f_select: 'Seleccione', f_msg: 'Contexto para nuestro equipo (opcional)', f_lang: 'Idioma del cliente', f_consent: 'El cliente autorizó el contacto de Endeavor Business Solutions.',
+      f_privacy: 'No incluya SSN, ITIN, pasaporte, datos bancarios ni de tarjeta. Los documentos se recogen directamente con el cliente en el portal seguro.',
+      f_submit: 'Enviar referido', f_sent: 'Referido enviado. Endeavor se comunicará con el cliente.', e_name: 'Ingrese el nombre del cliente y un correo válido.', e_consent: 'Confirme que el cliente autorizó el contacto.', e_rate: 'Se alcanzó el límite diario de referidos. Intente mañana.',
+      c_lead: 'Comisiones sobre facturas pagadas por los clientes que usted refirió. Su parte va automáticamente a su cuenta Stripe cuando el cliente paga.',
+      c_date: 'Fecha', c_inv: 'Factura', c_client: 'Cliente', c_total: 'Total de la factura', c_share: 'Su parte', c_status: 'Factura', c_payout: 'Transferencia', c_none: 'Aún no hay comisiones.',
+      is_open: 'Esperando pago', is_paid: 'Pagada', is_void: 'Anulada', is_uncollectible: 'Incobrable',
+      ts_none: '—', ts_scheduled: 'Automática al pagar', ts_pending: 'Pendiente (conecte Stripe)', ts_paid: 'Enviada a Stripe', ts_failed: 'Falló', ts_reversed: 'Revertida',
+      p_lead: 'Conecte su propia cuenta Stripe para recibir sus comisiones automáticamente. Endeavor no ve sus datos bancarios: usted los ingresa directamente en Stripe.',
+      p_status: 'Cuenta Stripe', p_notConnected: 'No conectada', p_incomplete: 'Registro incompleto', p_ready: 'Lista para recibir', p_review: 'En revisión por Stripe',
+      p_country: 'País de su cuenta bancaria', p_connect: 'Conectar cuenta Stripe', p_continue: 'Continuar registro en Stripe', p_dashboard: 'Abrir panel Stripe', p_refresh: 'Actualizar estado',
+      p_steps: 'Cómo funciona', p_s1: 'Haga clic en "Conectar cuenta Stripe" y cree (o ingrese a) su cuenta Stripe Express.', p_s2: 'Ingrese sus datos y la cuenta bancaria que recibirá los pagos.', p_s3: 'Cuando un cliente referido por usted paga una factura de Endeavor, su parte va directo a su saldo Stripe y luego a su banco.',
+      p_returned: 'Volvió de Stripe. Estado actualizado.', p_notReady: 'Endeavor está configurando los pagos en línea. Intente más tarde.',
+      p_sharePct: 'Comisión estándar', p_accountId: 'Cuenta', yes: 'Sí', no: 'No', p_payouts: 'Retiros al banco', p_transfers: 'Recibe transferencias'
+    }
+  };
+  var COUNTRIES = [['US', 'United States'], ['BR', 'Brasil'], ['PY', 'Paraguay'], ['PT', 'Portugal'], ['MX', 'México'], ['CO', 'Colombia'], ['AR', 'Argentina'], ['CL', 'Chile'], ['ES', 'España'], ['GB', 'United Kingdom'], ['CA', 'Canada']];
+
+  window.EPartnerRef = {
+    init: function (C) {
+      var L = C.L, P = C.S.partner;
+      function t(k, v) { var s = (D[L] && D[L][k] != null) ? D[L][k] : (D.en[k] != null ? D.en[k] : C.t(k, v)); if (v) Object.keys(v).forEach(function (x) { s = s.replace('{' + x + '}', v[x]); }); return s; }
+      var esc = C.esc, $ = C.$, $$ = C.$$, sb = C.sb, q = C.q;
+      var money = function (cents, cur) { return new Intl.NumberFormat(C.locale, { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((cents || 0) / 100); };
+      var stPill = function (s) { return '<span class="ref-st ref-st--' + esc(s) + '">' + esc(t('st_' + s)) + '</span>'; };
+
+      async function pay(payload) {
+        var sess = (await sb.auth.getSession()).data.session;
+        var r = await fetch(C.CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: C.CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify(payload) });
+        var j = await r.json().catch(function () { return {}; });
+        if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+        return j;
+      }
+      function stepper(status) {
+        var lost = status === 'lost', ix = STAGES.indexOf(status);
+        return '<ol class="ref-steps' + (lost ? ' is-lost' : '') + '" aria-label="' + esc(t('r_progress')) + '">' + STAGES.map(function (s, i) {
+          var cls = lost ? '' : i < ix ? ' is-done' : i === ix ? ' is-current' : '';
+          return '<li class="ref-step' + cls + '"' + (i === ix && !lost ? ' aria-current="step"' : '') + '><span class="ref-step__dot" aria-hidden="true"></span><span>' + esc(t('st_' + s)) + '</span></li>';
+        }).join('') + '</ol>' + (lost ? '<p>' + stPill('lost') + '</p>' : '');
+      }
+      function stripeState() {
+        if (!P.stripe_account_id) return ['none', t('p_notConnected')];
+        if (P.stripe_transfers_active) return ['ok', t('p_ready')];
+        if (P.stripe_details_submitted) return ['review', t('p_review')];
+        return ['incomplete', t('p_incomplete')];
+      }
+      async function loadRefs() { return q(sb.from('referrals').select('*').order('created_at', { ascending: false })); }
+
+      /* ---------- dashboard ---------- */
+      async function vHome(view) {
+        var res = await Promise.all([loadRefs(), sb.rpc('partner_commissions')]);
+        var refs = res[0], comm = res[1].data || [];
+        var active = refs.filter(function (r) { return r.status !== 'lost' && r.status !== 'completed' && STAGES.indexOf(r.status) < 3; }).length;
+        var won = refs.filter(function (r) { return STAGES.indexOf(r.status) >= 3; }).length;
+        var earned = comm.filter(function (c) { return c.transfer_status === 'paid'; }).reduce(function (s, c) { return s + c.partner_amount_cents; }, 0);
+        var due = comm.filter(function (c) { return c.status !== 'void' && c.status !== 'uncollectible' && c.transfer_status !== 'paid' && c.transfer_status !== 'reversed'; }).reduce(function (s, c) { return s + c.partner_amount_cents; }, 0);
+        var ss = stripeState();
+        view.innerHTML = C.head(t('r_hello', { n: P.name.split(' ')[0] }), t('r_homeLead'), '<a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a>') +
+          '<div class="dash"><div><div class="kpis">' + C.kpi(t('k_refs'), refs.length) + C.kpi(t('k_active'), active) + C.kpi(t('k_won'), won) + C.kpi(t('k_earned'), money(earned), true) + '</div>' +
+          '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('r_recent') + '</h2><a href="#/referrals">' + t('r_seeAll') + '</a></div>' +
+          (refs.length ? '<ul class="ref-list">' + refs.slice(0, 6).map(refRow).join('') + '</ul>' : '<div class="empty-state"><strong>' + t('r_none') + '</strong><p>' + t('r_noneText') + '</p><a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a></div>') + '</section></div>' +
+          '<aside class="links-panel portal-card"><h2 class="portal-h2">' + t('p_status') + '</h2><p><span class="stripe-st stripe-st--' + ss[0] + '">' + esc(ss[1]) + '</span></p>' +
+          '<dl class="kv" style="margin-top:.75rem"><dt>' + t('k_due') + '</dt><dd>' + esc(money(due)) + '</dd><dt>' + t('p_sharePct') + '</dt><dd>' + esc(String(+P.default_share_pct)) + '%</dd></dl>' +
+          '<ul style="margin-top:1rem"><li><a href="#/payouts"><svg class="icon" aria-hidden="true"><use href="#i-card"/></svg>' + t('r_nav_pay') + '</a></li><li><a href="#/commissions"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>' + t('r_nav_comm') + '</a></li></ul></aside></div>';
+        wireRefs(view, refs);
+      }
+      function refRow(r) {
+        return '<li><button type="button" class="ref-row" data-ref="' + r.id + '"><span class="ref-row__main"><strong>' + esc(r.name) + '</strong><span class="portal-muted">' + esc([r.company, r.service].filter(Boolean).join(' · ')) + '</span></span>' +
+          '<span class="ref-row__side">' + stPill(r.status) + '<span class="portal-muted">' + esc(C.fmtDate(r.created_at)) + '</span></span></button></li>';
+      }
+      function wireRefs(root, refs) { $$('[data-ref]', root).forEach(function (b) { b.onclick = function () { detail(refs.find(function (r) { return r.id === b.dataset.ref; })); }; }); }
+
+      /* ---------- pipeline ---------- */
+      async function vRefs(view) {
+        var refs = await loadRefs();
+        var mode = C.param('view') === 'list' ? 'list' : 'board', showLost = C.param('lost') === '1';
+        var shown = refs.filter(function (r) { return showLost || r.status !== 'lost'; });
+        var tabs = '<div class="subtabs" role="tablist"><a href="#/referrals' + (showLost ? '?lost=1' : '') + '"' + (mode === 'board' ? ' aria-current="page"' : '') + '>' + t('r_board') + '</a><a href="#/referrals?view=list' + (showLost ? '&lost=1' : '') + '"' + (mode === 'list' ? ' aria-current="page"' : '') + '>' + t('r_list') + '</a></div>';
+        var body;
+        if (!refs.length) body = '<div class="empty-state portal-card"><strong>' + t('r_none') + '</strong><p>' + t('r_noneText') + '</p><a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a></div>';
+        else if (mode === 'board') {
+          body = '<div class="ref-board">' + STAGES.concat(showLost ? ['lost'] : []).map(function (s) {
+            var col = shown.filter(function (r) { return r.status === s; });
+            return '<section class="ref-col" aria-label="' + esc(t('st_' + s)) + '"><h2 class="ref-col__h">' + esc(t('st_' + s)) + ' <span>' + col.length + '</span></h2>' +
+              col.map(function (r) { return '<button type="button" class="ref-card" data-ref="' + r.id + '"><strong>' + esc(r.name) + '</strong><span>' + esc(r.service || r.company || '') + '</span><small>' + esc(C.fmtDate(r.created_at)) + '</small></button>'; }).join('') + '</section>';
+          }).join('') + '</div>';
+        } else body = '<section class="portal-card"><ul class="ref-list">' + shown.map(refRow).join('') + '</ul></section>';
+        view.innerHTML = C.head(t('r_nav_refs'), t('r_refsLead'), '<a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a>') +
+          '<div class="toolbar" style="justify-content:space-between;align-items:center">' + tabs + '<div class="check-row"><input type="checkbox" id="rf-lost"' + (showLost ? ' checked' : '') + '><label for="rf-lost">' + t('r_showLost') + '</label></div></div>' + body;
+        $('#rf-lost').onchange = function () { ERoute.set('#/referrals?' + (mode === 'list' ? 'view=list&' : '') + (this.checked ? 'lost=1' : ''), true); C.route(); };
+        wireRefs(view, refs);
+        var open = C.param('id'); if (open) { var r = refs.find(function (x) { return x.id === open; }); if (r) detail(r); }
+      }
+      async function detail(r) {
+        var o = C.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + t('r_detailsTitle') + ': ' + esc(r.name) + '</h2><button class="close-x" type="button" aria-label="' + C.t('close') + '">×</button></div><div id="rd-body"><p class="portal-muted">' + C.t('loading') + '</p></div>');
+        var res = await Promise.all([q(sb.from('referral_items').select('*').eq('referral_id', r.id).order('created_at')), q(sb.from('referral_events').select('*').eq('referral_id', r.id).order('at', { ascending: false }))]);
+        var items = res[0], evs = res[1];
+        var evLabel = function (e) {
+          if (e.kind === 'status') return t('ev_status', { s: t('st_' + e.label) });
+          if (e.kind === 'document') { var p = e.label.split(':'); return t('ev_doc_' + p[0], { d: p.slice(1).join(':') }); }
+          return e.label;
+        };
+        $('#rd-body', o).innerHTML = stepper(r.status) +
+          '<dl class="kv" style="margin:1rem 0"><dt>' + t('r_service') + '</dt><dd>' + esc(r.service || '—') + '</dd><dt>' + t('r_contact') + '</dt><dd>' + esc([r.email, r.phone].filter(Boolean).join(' · ')) + '</dd>' +
+          (r.company ? '<dt>' + t('f_company') + '</dt><dd>' + esc(r.company) + '</dd>' : '') + '<dt>' + t('r_since') + '</dt><dd>' + esc(C.fmtDate(r.created_at)) + '</dd><dt>' + t('r_updated') + '</dt><dd>' + esc(C.fmtDT(r.updated_at)) + '</dd></dl>' +
+          '<h3 class="portal-h2" style="font-size:1rem">' + t('r_docs') + '</h3>' +
+          (items.length ? '<ul class="ref-docs">' + items.map(function (i) { return '<li><span class="ref-doc ref-doc--' + i.status + '" aria-hidden="true"></span><span>' + esc(i.label) + '</span><span class="portal-muted">' + esc(t('di_' + i.status)) + '</span></li>'; }).join('') + '</ul>' : '<p class="portal-muted">' + t('r_noDocsReq') + '</p>') +
+          '<h3 class="portal-h2" style="font-size:1rem;margin-top:1.25rem">' + t('r_timeline') + '</h3><ol class="timeline">' +
+          evs.map(function (e) { return '<li><strong>' + esc(evLabel(e)) + '</strong><span class="portal-muted">' + esc(C.fmtDT(e.at)) + '</span></li>'; }).join('') + '</ol>';
+      }
+
+      /* ---------- new referral ---------- */
+      async function vNew(view) {
+        view.innerHTML = C.head(t('r_nav_new'), t('r_newLead')) +
+          '<section class="portal-card" style="max-width:44rem"><form class="portal-form" id="rf-form" novalidate>' +
+          '<div class="portal-grid2"><div class="field"><label for="rf-name">' + t('f_name') + '</label><input id="rf-name" autocomplete="off" required maxlength="200"></div>' +
+          '<div class="field"><label for="rf-email">' + t('f_email') + '</label><input id="rf-email" type="email" autocomplete="off" required maxlength="254"></div>' +
+          '<div class="field"><label for="rf-phone">' + t('f_phone') + '</label><input id="rf-phone" type="tel" autocomplete="off" maxlength="50"></div>' +
+          '<div class="field"><label for="rf-country">' + t('f_country') + '</label><input id="rf-country" maxlength="100"></div>' +
+          '<div class="field"><label for="rf-company">' + t('f_company') + '</label><input id="rf-company" maxlength="200"></div>' +
+          '<div class="field"><label for="rf-service">' + t('f_service') + '</label><select id="rf-service"><option value="">' + t('f_select') + '</option>' + SERVICES.map(function (s) { return '<option>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
+          '<div class="field"><label for="rf-lang">' + t('f_lang') + '</label><select id="rf-lang"><option value="pt"' + (L === 'pt' ? ' selected' : '') + '>Português</option><option value="en"' + (L === 'en' ? ' selected' : '') + '>English</option><option value="es"' + (L === 'es' ? ' selected' : '') + '>Español</option></select></div></div>' +
+          '<div class="field"><label for="rf-msg">' + t('f_msg') + '</label><textarea id="rf-msg" rows="4" maxlength="3000"></textarea></div>' +
+          '<p class="portal-alert portal-alert--info" style="display:block">' + t('f_privacy') + '</p>' +
+          '<div class="check-row"><input type="checkbox" id="rf-consent" required><label for="rf-consent">' + t('f_consent') + '</label></div>' +
+          '<div class="portal-alert" id="rf-msgbox" role="alert"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('f_submit') + '</button></form></section>';
+        $('#rf-form').onsubmit = async function (e) {
+          e.preventDefault();
+          var v = function (id) { return $('#' + id).value.trim(); };
+          var p = { name: v('rf-name'), email: v('rf-email').toLowerCase(), phone: v('rf-phone'), country: v('rf-country'), company: v('rf-company'), service: v('rf-service'), message: v('rf-msg'), language: v('rf-lang'), consent: $('#rf-consent').checked };
+          if (p.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(p.email)) return C.msg($('#rf-msgbox'), t('e_name'), 'error');
+          if (!p.consent) return C.msg($('#rf-msgbox'), t('e_consent'), 'error');
+          var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+          var r = await sb.rpc('submit_referral', { p: p });
+          btn.disabled = false;
+          if (r.error) return C.msg($('#rf-msgbox'), /rate_limited/.test(r.error.message) ? t('e_rate') : /consent/.test(r.error.message) ? t('e_consent') : /invalid_/.test(r.error.message) ? t('e_name') : C.errText(r.error), 'error');
+          ERoute.set('#/referrals?id=' + r.data, true); C.route();
+        };
+      }
+
+      /* ---------- commissions ---------- */
+      async function vComm(view) {
+        var rows = (await sb.rpc('partner_commissions')).data || [];
+        var paid = rows.filter(function (c) { return c.transfer_status === 'paid'; }).reduce(function (s, c) { return s + c.partner_amount_cents; }, 0);
+        var due = rows.filter(function (c) { return c.status !== 'void' && c.status !== 'uncollectible' && c.transfer_status !== 'paid' && c.transfer_status !== 'reversed'; }).reduce(function (s, c) { return s + c.partner_amount_cents; }, 0);
+        view.innerHTML = C.head(t('r_nav_comm'), t('c_lead')) + '<div class="kpis" style="margin-bottom:1.25rem">' + C.kpi(t('k_earned'), money(paid), true) + C.kpi(t('k_due'), money(due), true) + '</div>' +
+          '<section class="portal-card">' + (rows.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>' + t('c_date') + '</th><th>' + t('c_client') + '</th><th>' + t('c_inv') + '</th><th class="num">' + t('c_total') + '</th><th class="num">' + t('c_share') + '</th><th>' + t('c_status') + '</th><th>' + t('c_payout') + '</th></tr></thead><tbody>' +
+            rows.map(function (c) {
+              return '<tr><td>' + esc(C.fmtDate(c.created_at)) + '</td><td>' + esc(c.client_label) + '</td><td>' + esc(c.number || '—') + '</td><td class="num">' + esc(money(c.total_cents, c.currency)) + '</td>' +
+                '<td class="num"><strong>' + esc(money(c.partner_amount_cents, c.currency)) + '</strong>' + (c.partner_pct != null ? ' <span class="portal-muted">(' + esc(String(+c.partner_pct)) + '%)</span>' : '') + '</td>' +
+                '<td><span class="inv-st inv-st--' + esc(c.status) + '">' + esc(t('is_' + c.status)) + '</span></td><td>' + esc(t('ts_' + c.transfer_status)) + '</td></tr>';
+            }).join('') + '</tbody></table></div>' : '<div class="empty-state"><strong>' + t('c_none') + '</strong></div>') + '</section>';
+      }
+
+      /* ---------- Stripe payouts ---------- */
+      async function vPay(view, note) {
+        var ss = stripeState();
+        view.innerHTML = C.head(t('r_nav_pay'), t('p_lead')) +
+          '<div class="dash"><section class="portal-card"><h2 class="portal-h2">' + t('p_status') + '</h2><p><span class="stripe-st stripe-st--' + ss[0] + '">' + esc(ss[1]) + '</span></p>' +
+          (P.stripe_account_id ? '<dl class="kv" style="margin:1rem 0"><dt>' + t('p_accountId') + '</dt><dd><code>' + esc(P.stripe_account_id) + '</code></dd><dt>' + t('p_transfers') + '</dt><dd>' + t(P.stripe_transfers_active ? 'yes' : 'no') + '</dd><dt>' + t('p_payouts') + '</dt><dd>' + t(P.stripe_payouts_enabled ? 'yes' : 'no') + '</dd><dt>' + t('p_sharePct') + '</dt><dd>' + esc(String(+P.default_share_pct)) + '%</dd></dl>' : '') +
+          (!P.stripe_account_id ? '<div class="field" style="max-width:20rem;margin-top:1rem"><label for="py-country">' + t('p_country') + '</label><select id="py-country">' + COUNTRIES.map(function (c) { return '<option value="' + c[0] + '">' + esc(c[1]) + '</option>'; }).join('') + '</select></div>' : '') +
+          '<div class="portal-alert" id="py-msg" role="status"></div><div class="portal-btn-row" style="margin-top:1rem">' +
+          (ss[0] === 'ok' || ss[0] === 'review' ? '<button class="btn btn--navy" type="button" id="py-dash">' + t('p_dashboard') + '</button>' : '<button class="btn btn--navy" type="button" id="py-connect">' + t(P.stripe_account_id ? 'p_continue' : 'p_connect') + '</button>') +
+          (P.stripe_account_id ? '<button class="btn btn--ghost" type="button" id="py-refresh">' + t('p_refresh') + '</button>' : '') + '</div></section>' +
+          '<aside class="portal-card"><h2 class="portal-h2">' + t('p_steps') + '</h2><ol class="steps-ol"><li>' + t('p_s1') + '</li><li>' + t('p_s2') + '</li><li>' + t('p_s3') + '</li></ol></aside></div>';
+        if (note) C.msg($('#py-msg'), note, 'ok');
+        var err = function (e) { C.msg($('#py-msg'), /stripe_not_configured|stripe_error/.test(e.message) ? t('p_notReady') : C.errText(e), 'error'); };
+        if ($('#py-connect')) $('#py-connect').onclick = async function () {
+          this.disabled = true;
+          try { var j = await pay({ action: 'partner_onboard', country: $('#py-country') ? $('#py-country').value : undefined, return_to: C.siteUrl('partner.html') + '?lang=' + L }); if (/^#/.test(j.url)) { ERoute.go(j.url); } else window.location.assign(j.url); }
+          catch (e) { this.disabled = false; err(e); }
+        };
+        if ($('#py-dash')) $('#py-dash').onclick = async function () { try { var j = await pay({ action: 'partner_login' }); if (!/^#/.test(j.url)) window.open(j.url, '_blank', 'noopener'); } catch (e) { err(e); } };
+        if ($('#py-refresh')) $('#py-refresh').onclick = async function () { try { await refresh(); vPay(view, t('p_returned')); } catch (e) { err(e); } };
+      }
+      async function refresh() {
+        await pay({ action: 'partner_refresh' });
+        var r = await sb.from('partners').select('*').eq('id', P.id).single(); if (!r.error) { P = r.data; C.S.partner = P; }
+      }
+      async function vPayRoute(view) {
+        if (C.param('stripe') === 'return') { try { await refresh(); } catch (e) { /* ignore */ } ERoute.set('#/payouts', true); return vPay(view, t('p_returned')); }
+        return vPay(view);
+      }
+
+      return {
+        nav: [['ref-home', t('r_nav_home'), 'i-grid'], ['referrals', t('r_nav_refs'), 'i-users'], ['ref-new', t('r_nav_new'), 'i-plus'], ['commissions', t('r_nav_comm'), 'i-chart'], ['payouts', t('r_nav_pay'), 'i-card']],
+        sep: t('r_sep_clients'),
+        views: { 'ref-home': vHome, referrals: vRefs, 'ref-new': vNew, commissions: vComm, payouts: vPayRoute }
+      };
+    }
+  };
+})();

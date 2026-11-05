@@ -13,7 +13,7 @@
   var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', client: 'Cliente', lost: 'Perdido',
     sent: 'Enviado', viewed: 'Visualizado', signed: 'Assinado', voided: 'Anulado', expired: 'Expirado',
     confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído', no_show: 'Não compareceu' };
-  var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual' };
+  var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro' };
   var MEET_PT = { video: 'Vídeo', phone: 'Telefone', whatsapp: 'WhatsApp' };
   function badge(s) { return '<span class="badge badge--' + esc(s) + '">' + esc(STATUS_PT[s] || s) + '</span>'; }
   function tz() { return (state.settings && state.settings.timezone) || 'America/New_York'; }
@@ -170,7 +170,7 @@
   /* ---------- console shell ---------- */
   var NAV = [
     ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['clientes', 'Clientes', 'i-brief'], ['agenda', 'Agenda', 'i-cal'],
-    ['assinaturas', 'Assinaturas', 'i-pen'], ['config', 'Configurações', 'i-gear']];
+    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['pagamentos', 'Pagamentos', 'i-card'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
     $('#topbar-user').hidden = false;
@@ -195,7 +195,7 @@
     if (!NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
-    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, config: viewConfig })[v](view).catch(function (e) {
+    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, pagamentos: viewPayments, config: viewConfig })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
   }
@@ -279,7 +279,7 @@
       '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--navy btn--xs" type="button" id="crm-new">Novo lead</button></div></div>' +
       '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar leads">' +
       '<select id="crm-status" aria-label="Filtrar por status"><option value="">Todos os status</option>' + Object.keys(STATUS_PT).slice(0, 6).map(function (k) { return '<option value="' + k + '">' + STATUS_PT[k] + '</option>'; }).join('') + '</select>' +
-      '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option></select></div>' +
+      '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="partner">Parceiro</option></select></div>' +
       '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência</th><th>Origem</th><th>Status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
     function draw() {
       var term = $('#crm-q').value.trim().toLowerCase(), st = $('#crm-status').value, so = $('#crm-source').value;
@@ -301,6 +301,7 @@
     $('#crm-new').addEventListener('click', function () { openLead(null); });
     draw();
     if (/novo=1/.test(ERoute.get())) openLead(null);
+    var lq = (ERoute.get().match(/[?&]lead=([0-9a-f-]{36})/) || [])[1]; if (lq && state.leads.some(function (x) { return x.id === lq; })) openLead(lq);
   }
 
   async function openLead(id) {
@@ -516,7 +517,15 @@
 
   function clientsCtx() {
     return { sb: sb, CFG: CFG, esc: esc, q: q, msg: msg, errText: errText, fmtDT: fmtDT, openOverlay: openOverlay, closeOverlay: closeOverlay,
-      copy: copy, download: download, viewFile: viewFile, sha256Hex: sha256Hex, siteUrl: siteUrl, route: route };
+      copy: copy, download: download, viewFile: viewFile, sha256Hex: sha256Hex, siteUrl: siteUrl, route: route, $: $ };
+  }
+  function viewPartners(view) {
+    if (!window.AdminPayments) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de parceiros não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
+    return AdminPayments.partners(view, clientsCtx());
+  }
+  function viewPayments(view) {
+    if (!window.AdminPayments) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de pagamentos não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
+    return AdminPayments.payments(view, clientsCtx());
   }
   async function viewClients(view) {
     if (!window.AdminClients) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de clientes não carregou. Recarregue a página.</div>'; return; }
