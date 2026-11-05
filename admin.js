@@ -2,6 +2,9 @@
 (function () {
   'use strict';
   var CFG = window.ENDEAVOR_CFG;
+  var AUTH_HASH = String(location.hash || '');
+  var AUTH_TYPE = (AUTH_HASH.match(/[#&]type=(invite|recovery)/) || [])[1] || null;
+  var AUTH_ERR = /[#&]error_code=/.test(AUTH_HASH);
   var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true } });
   var app = document.getElementById('app');
   var state = { settings: null, leads: [], bookings: [], envelopes: [] };
@@ -48,11 +51,12 @@
   }
 
   /* ---------- auth flow ---------- */
-  var recoveryMode = false;
+  var recoveryMode = !!AUTH_TYPE, pwShown = false;
   sb.auth.onAuthStateChange(function (ev) {
-    if (ev === 'PASSWORD_RECOVERY') { recoveryMode = true; renderNewPassword(); }
+    if (!pwShown && (ev === 'PASSWORD_RECOVERY' || (recoveryMode && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION')))) { recoveryMode = true; pwShown = true; renderNewPassword(AUTH_TYPE === 'invite'); return; }
     if (ev === 'SIGNED_OUT') { renderLogin(); }
   });
+  if (recoveryMode) setTimeout(async function () { if (pwShown) return; var s = (await sb.auth.getSession()).data.session; pwShown = true; if (!s) { recoveryMode = false; renderForgot(true); } else renderNewPassword(AUTH_TYPE === 'invite'); }, 2500);
   document.getElementById('btn-signout').addEventListener('click', async function () { await sb.auth.signOut(); ERoute.set('', true); renderLogin(); });
 
   async function boot() {
@@ -77,16 +81,22 @@
     app.innerHTML = '<main class="portal-main"><div class="auth portal-card">' + inner + '</div></main>';
   }
 
+  function pwField(id, label, auto) {
+    return '<div class="field"><label for="' + id + '">' + label + '</label><div class="pw-wrap"><input id="' + id + '" type="password" autocomplete="' + auto + '" required>' +
+      '<button type="button" class="pw-eye" data-eye="' + id + '" aria-label="Mostrar senha" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></button></div></div>';
+  }
+  function wireEyes() { $$('[data-eye]').forEach(function (b) { b.onclick = function () { var i = document.getElementById(b.dataset.eye), on = i.type === 'password'; i.type = on ? 'text' : 'password'; b.setAttribute('aria-pressed', String(on)); }; }); }
   function renderLogin() {
+    if (AUTH_ERR) { AUTH_ERR = false; history.replaceState(null, '', location.pathname); return renderForgot(true); }
     authShell(
       '<h1 class="portal-h1">Console Admin</h1><p class="portal-muted">Acesso restrito à equipe da Endeavor.</p>' +
       '<form class="portal-form" id="f-login" novalidate>' +
-      '<div class="field"><label for="l-email">E-mail</label><input id="l-email" type="email" autocomplete="username" required value="' + esc(CFG.adminEmail) + '"></div>' +
-      '<div class="field"><label for="l-pass">Senha</label><input id="l-pass" type="password" autocomplete="current-password" required minlength="10"></div>' +
+      '<div class="field"><label for="l-email">E-mail</label><input id="l-email" type="email" autocomplete="username" required></div>' +
+      pwField('l-pass', 'Senha', 'current-password') +
       '<div class="portal-alert" id="l-msg" role="alert"></div>' +
       '<button class="btn btn--navy btn--block" type="submit">Entrar</button>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="l-first">Primeiro acesso: criar senha</button>' +
-      '<button class="btn btn--ghost btn--xs" type="button" id="l-forgot">Esqueci a senha</button></div></form>');
+      '<p class="auth-links"><a href="#" id="l-forgot">Esqueci a senha</a></p></form>');
+    wireEyes();
     var m = $('#l-msg');
     $('#f-login').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -95,29 +105,35 @@
       if (r.error) return msg(m, errText(r.error), 'error');
       boot();
     });
-    $('#l-first').addEventListener('click', async function () {
-      var email = $('#l-email').value.trim().toLowerCase(), pass = $('#l-pass').value;
-      if (email !== CFG.adminEmail.toLowerCase()) return msg(m, 'O primeiro acesso só pode ser criado para ' + CFG.adminEmail + '.', 'error');
-      if (pass.length < 12) return msg(m, 'Escolha uma senha com pelo menos 12 caracteres e digite no campo Senha.', 'error');
-      var r = await sb.auth.signUp({ email: email, password: pass, options: { emailRedirectTo: siteUrl('admin.html') } });
-      if (r.error) return msg(m, errText(r.error), 'error');
-      if (r.data.session) return boot();
-      msg(m, 'Conta criada. Abra o e-mail de confirmação enviado para ' + email + ', clique no link e depois entre aqui.', 'ok');
-    });
-    $('#l-forgot').addEventListener('click', async function () {
-      var email = $('#l-email').value.trim();
-      var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: siteUrl('admin.html') });
-      msg(m, r.error ? errText(r.error) : 'Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', r.error ? 'error' : 'ok');
+    $('#l-forgot').addEventListener('click', function (e) { e.preventDefault(); renderForgot(false, $('#l-email').value.trim()); });
+  }
+
+  function renderForgot(expired, email) {
+    authShell('<h1 class="portal-h1">Redefinir senha</h1><p class="portal-muted">Digite o seu e-mail. Vamos enviar um link para você criar uma nova senha.</p>' +
+      (expired ? '<div class="portal-alert portal-alert--error" style="display:block">Este link expirou ou já foi usado. Peça um novo abaixo.</div>' : '') +
+      '<form class="portal-form" id="f-forgot" novalidate><div class="field"><label for="fg-email">E-mail</label><input id="fg-email" type="email" autocomplete="username" required value="' + esc(email || '') + '"></div>' +
+      '<div class="portal-alert" id="fg-msg" role="status"></div><button class="btn btn--navy btn--block" type="submit">Enviar link</button>' +
+      '<p class="auth-links"><a href="#" id="fg-back">Voltar ao login</a></p></form>');
+    $('#fg-back').addEventListener('click', function (e) { e.preventDefault(); renderLogin(); });
+    $('#f-forgot').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var em = $('#fg-email').value.trim().toLowerCase(), m = $('#fg-msg');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return msg(m, 'Digite um e-mail válido.', 'error');
+      var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl('admin.html') });
+      var limited = r.error && /rate|limit|seconds/i.test(r.error.message);
+      msg(m, limited ? errText(r.error) : 'Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', limited ? 'error' : 'ok');
     });
   }
 
-  function renderNewPassword() {
-    authShell('<h1 class="portal-h1">Nova senha</h1><form class="portal-form" id="f-np">' +
-      '<div class="field"><label for="np">Nova senha (mín. 12 caracteres)</label><input id="np" type="password" autocomplete="new-password" minlength="12" required></div>' +
+  function renderNewPassword(invite) {
+    authShell('<h1 class="portal-h1">' + (invite ? 'Crie a sua senha' : 'Crie uma nova senha') + '</h1><p class="portal-muted">' + (invite ? 'Bem-vindo ao console da Endeavor. Depois da senha você ativa o código do celular.' : 'Escolha uma nova senha para a sua conta.') + '</p>' +
+      '<form class="portal-form" id="f-np" novalidate>' + pwField('np', 'Nova senha (mín. 12 caracteres)', 'new-password') + pwField('np2', 'Confirme a senha', 'new-password') +
       '<div class="portal-alert" id="np-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Salvar senha</button></form>');
+    wireEyes();
     $('#f-np').addEventListener('submit', async function (e) {
       e.preventDefault();
       var p = $('#np').value; if (p.length < 12) return msg($('#np-msg'), 'Use pelo menos 12 caracteres.', 'error');
+      if (p !== $('#np2').value) return msg($('#np-msg'), 'As senhas não são iguais.', 'error');
       var r = await sb.auth.updateUser({ password: p });
       if (r.error) return msg($('#np-msg'), errText(r.error), 'error');
       recoveryMode = false; history.replaceState(null, '', location.pathname); boot();

@@ -39,8 +39,18 @@
   function inviteText(lang, name, clientName, link, role, email) {
     return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName, invitedBy: role === 'owner' ? '' : clientName, partner: role !== 'owner' });
   }
+  // access link (create password) is sent by Supabase Auth through the payments function; the instructions go by FormSubmit
+  async function sendAccess(ctx, payload) {
+    try {
+      var sess = (await ctx.sb.auth.getSession()).data.session;
+      var r = await fetch(ctx.CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify(Object.assign({ action: 'send_access' }, payload)) });
+      var j = await r.json().catch(function () { return {}; });
+      return r.ok && !j.error;
+    } catch (e) { return false; }
+  }
   async function sendInvite(ctx, o) {
     var link = ctx.siteUrl(o.role === 'owner' ? 'client.html' : 'partner.html') + '?lang=' + (o.lang || 'pt');
+    if (o.clientId && !(await sendAccess(ctx, { client_id: o.clientId, email: o.email }))) return false;
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao portal do cliente: ' + o.name + ' (' + o.clientName + ')', _template: 'table', _captcha: 'false',
@@ -152,7 +162,7 @@
           if ($('#nc-dl').checked) { var y = new Date().getFullYear(); await ctx.q(ctx.sb.from('compliance_items').insert(standardDeadlines(co, y).concat(standardDeadlines(co, y + 1)).filter(function (d) { return daysUntil(d.due_date) >= 0; }))); }
         }
         if ($('#nc-lead').value) await ctx.sb.from('leads').update({ status: 'client' }).eq('id', $('#nc-lead').value);
-        var sent = $('#nc-inv').checked ? await sendInvite(ctx, { email: email, name: name, clientName: name, role: 'owner', lang: $('#nc-lang').value }) : false;
+        var sent = $('#nc-inv').checked ? await sendInvite(ctx, { clientId: c.id, email: email, name: name, clientName: name, role: 'owner', lang: $('#nc-lang').value }) : false;
         ctx.closeOverlay();
         ERoute.set('#/clientes?id=' + c.id + (sent ? '&convite=1' : ''));
       } catch (err) { ctx.msg(m, ctx.errText(err), 'error'); }
@@ -361,7 +371,7 @@
           (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-revoke="' + u.id + '">Revogar</button>' : '<button class="btn btn--ghost btn--xs" data-restore="' + u.id + '">Reativar</button>') + '</div></td></tr>';
       }).join('') + '</tbody></table></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">O titular entra pelo Portal do Cliente. Contadores, bookkeepers e administradores de imóveis entram pelo Portal do Parceiro e só veem o que estiver liberado. Todos precisam ativar a verificação em duas etapas.</p>';
     var find = function (id) { return users.find(function (x) { return x.id === id; }); };
-    body.querySelectorAll('[data-resend]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); var ok = await sendInvite(ctx, { email: u.email, name: u.name || u.email, clientName: c.name, role: u.role, lang: c.language }); alert(ok ? 'Convite reenviado.' : 'Não foi possível enviar agora.'); }; });
+    body.querySelectorAll('[data-resend]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); var ok = await sendInvite(ctx, { clientId: c.id, email: u.email, name: u.name || u.email, clientName: c.name, role: u.role, lang: c.language }); alert(ok ? 'Convite reenviado.' : 'Não foi possível enviar agora.'); }; });
     body.querySelectorAll('[data-revoke]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.revoke); if (!confirm('Revogar o acesso de ' + u.email + '?')) return; await ctx.sb.from('client_users').update({ status: 'revoked' }).eq('id', u.id); ctx.route(); }; });
     body.querySelectorAll('[data-restore]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.restore); var r = await ctx.sb.from('client_users').update({ status: u.user_id ? 'active' : 'invited' }).eq('id', u.id); if (r.error) alert(ctx.errText(r.error)); ctx.route(); }; });
     body.querySelectorAll('[data-perm]').forEach(function (b) { b.onclick = function () { userForm(find(b.dataset.perm)); }; });
@@ -388,7 +398,7 @@
           var email = $('#u-email').value.trim().toLowerCase(), name = $('#u-name').value.trim();
           if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return ctx.msg($('#u-msg'), 'Preencha nome e e-mail válido.', 'error');
           r = await ctx.sb.from('client_users').insert(Object.assign({ client_id: c.id, email: email, name: name, role: role }, row));
-          if (!r.error && $('#u-inv').checked) await sendInvite(ctx, { email: email, name: name, clientName: c.name, role: role, lang: c.language });
+          if (!r.error && $('#u-inv').checked) await sendInvite(ctx, { clientId: c.id, email: email, name: name, clientName: c.name, role: role, lang: c.language });
         }
         if (r.error) return ctx.msg($('#u-msg'), /unique|duplicate/i.test(r.error.message) ? 'Este e-mail já tem acesso a este cliente.' : ctx.errText(r.error), 'error');
         ctx.closeOverlay(); ctx.route();

@@ -35,6 +35,7 @@
 
   async function sendInvite(ctx, p) {
     var link = ctx.siteUrl('partner.html') + '?lang=' + (p.language || 'pt');
+    try { await call(ctx, { action: 'send_access', partner_id: p.id }); } catch (e) { return false; }
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao Programa de Parceiros: ' + p.name, _template: 'table', _captcha: 'false', name: p.name, email: p.email, empresa: p.company || '', link: link,
@@ -93,7 +94,7 @@
       if (!(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
       var r = edit ? await ctx.sb.from('partners').update(row).eq('id', p.id) : await ctx.sb.from('partners').insert(row).select('id').single();
       if (r.error) return ctx.msg(ctx.$('#pf-msg', o), /duplicate|unique/i.test(r.error.message) ? 'Já existe um parceiro com este e-mail.' : ctx.errText(r.error), 'error');
-      if (!edit) { var ok = await sendInvite(ctx, row); ctx.closeOverlay(); ERoute.go('#/parceiros?id=' + r.data.id + (ok ? '' : '&invite=erro')); return; }
+      if (!edit) { var ok = await sendInvite(ctx, Object.assign({ id: r.data.id }, row)); ctx.closeOverlay(); ERoute.go('#/parceiros?id=' + r.data.id + (ok ? '' : '&invite=erro')); return; }
       ctx.closeOverlay(); ctx.route();
     };
   }

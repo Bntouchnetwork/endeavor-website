@@ -1452,6 +1452,14 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   .ref-col__h { align-items: center; gap: .4rem; }
   .ref-col__h { font-size: .72rem; letter-spacing: .05em; }
 }
+.pw-wrap { position: relative; }
+.pw-wrap input { width: 100%; padding-right: 3rem; }
+.pw-eye { position: absolute; right: .35rem; top: 50%; transform: translateY(-50%); width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border: 0; background: none; color: var(--muted); border-radius: 8px; cursor: pointer; }
+.pw-eye:hover { color: var(--navy-900); background: #f2f4f8; }
+.pw-eye[aria-pressed="true"] { color: var(--navy-900); }
+.pw-eye svg { width: 1.25rem; height: 1.25rem; }
+.auth-links { text-align: center; margin: .25rem 0 0; font-size: .92rem; }
+.auth-help { text-align: center; font-size: .85rem; margin: 0; }
 
 </style>
 </head>
@@ -1964,6 +1972,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
           toast('Demo: no site real o parceiro preenche o cadastro no Stripe e volta para cá.');
           return later({ url: '#/payouts?stripe=return' });
         case 'partner_refresh': return later({ ok: true });
+        case 'send_access': toast('Demo: o Supabase enviaria o e-mail "Crie sua senha do portal Endeavor" com o link de acesso.'); return later({ ok: true, sent: 'invite' });
         case 'partner_login': toast('Demo: abriria o painel Stripe Express do parceiro.'); return later({ url: '#/payouts' });
         case 'invoice_create':
           var cl = DB.clients.find(function (c) { return c.id === pb.client_id; }), its = pb.items || [], tot = its.reduce(function (s, i) { return s + i.amount_cents * (i.quantity || 1); }, 0);
@@ -1999,7 +2008,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
           if (pp2.status === 'accepted') return later(Object.assign(pub(), { portal_url: portalUrl, already: true }));
           var at = new Date().toISOString(), newInv = acceptProposal(pp2, pb.name, at);
           if (pp2.id === DB.proposals[0].id) flowSet({ accepted: { name: pb.name, at: at } });
-          return later(Object.assign(pub(), { portal_url: portalUrl, first_access: true, email: cl2.primary_email, invoice: { number: newInv.number, total_cents: newInv.total_cents, currency: 'usd', due_date: newInv.due_date } }));
+          return later(Object.assign(pub(), { portal_url: portalUrl, first_access: true, access_email: 'invite', email: cl2.primary_email, invoice: { number: newInv.number, total_cents: newInv.total_cents, currency: 'usd', due_date: newInv.due_date } }));
         case 'invoice_sync':
           markPaid(invRow, new Date().toISOString());
           toast('Demo: pagamento simulado. ' + (invRow.transfer_status === 'paid' ? 'A comissão foi repassada automaticamente ao parceiro.' : invRow.transfer_status === 'pending' ? 'O parceiro ainda não conectou o Stripe: repasse pendente.' : ''));
@@ -2254,12 +2263,12 @@ window.ENDEAVOR_CFG = {
         '1. Instale no celular o app gratuito "Google Authenticator". O ícone é um asterisco colorido.',
         '   iPhone: ' + IOS,
         '   Android: ' + AND,
-        '2. No computador, abra o portal: ' + o.link,
-        '3. Digite este e-mail (' + o.email + ') e crie uma senha com pelo menos 12 caracteres. Depois clique em "Primeiro acesso: criar senha".',
-        '4. Você vai receber um e-mail de confirmação. Clique no link desse e-mail.',
-        '5. Volte ao portal e clique em "Entrar" com o e-mail e a senha. Vai aparecer um QR code (um quadrado de pontinhos).',
-        '6. No Google Authenticator, toque no botão "+" e escolha "Ler código QR". Aponte a câmera do celular para o QR code na tela.',
-        '7. O app mostra um código de 6 dígitos, que muda a cada 30 segundos. Digite esse código no portal e clique em "Ativar e continuar".',
+        '2. Você vai receber um segundo e-mail, com o assunto "Crie sua senha do portal Endeavor", enviado para ' + o.email + '. Abra esse e-mail no computador e clique em "Criar minha senha".',
+        '3. Crie uma senha com pelo menos 12 caracteres e clique em "Salvar senha". Vai aparecer um QR code (um quadrado de pontinhos).',
+        '4. No Google Authenticator, toque no botão "+" e escolha "Ler código QR". Aponte a câmera do celular para o QR code na tela.',
+        '5. O app mostra um código de 6 dígitos, que muda a cada 30 segundos. Digite esse código no portal e clique em "Ativar e continuar".',
+        'Endereço do portal: ' + o.link,
+        'O link de criação de senha vale por 24 horas. Se expirar, abra o portal e clique em "Esqueci a senha" para receber um novo.',
         '',
         'NOS PRÓXIMOS ACESSOS',
         'Entre com e-mail e senha. Quando o portal pedir o código, abra o Google Authenticator e digite o número que aparece em "Endeavor Business Solutions".',
@@ -2285,12 +2294,12 @@ window.ENDEAVOR_CFG = {
         '1. Install the free "Google Authenticator" app on your phone. The icon is a colorful asterisk.',
         '   iPhone: ' + IOS,
         '   Android: ' + AND,
-        '2. On your computer, open the portal: ' + o.link,
-        '3. Enter this email (' + o.email + ') and create a password with at least 12 characters. Then click "First access: create password".',
-        '4. You will receive a confirmation email. Click the link in that email.',
-        '5. Go back to the portal and click "Sign in" with your email and password. A QR code (a square of dots) will appear.',
-        '6. In Google Authenticator, tap the "+" button and choose "Scan a QR code". Point your phone camera at the QR code on the screen.',
-        '7. The app shows a 6-digit code that changes every 30 seconds. Type that code in the portal and click "Activate and continue".',
+        '2. You will receive a second email, with the subject "Create your Endeavor portal password", sent to ' + o.email + '. Open it on your computer and click "Create my password".',
+        '3. Create a password with at least 12 characters and click "Save password". A QR code (a square of dots) will appear.',
+        '4. In Google Authenticator, tap the "+" button and choose "Scan a QR code". Point your phone camera at the QR code on the screen.',
+        '5. The app shows a 6-digit code that changes every 30 seconds. Type that code in the portal and click "Activate and continue".',
+        'Portal address: ' + o.link,
+        'The password link is valid for 24 hours. If it expires, open the portal and click "Forgot password" to get a new one.',
         '',
         'NEXT TIME',
         'Sign in with your email and password. When the portal asks for the code, open Google Authenticator and type the number shown under "Endeavor Business Solutions".',
@@ -2316,12 +2325,12 @@ window.ENDEAVOR_CFG = {
         '1. Instale en su celular la app gratuita "Google Authenticator". El ícono es un asterisco de colores.',
         '   iPhone: ' + IOS,
         '   Android: ' + AND,
-        '2. En la computadora, abra el portal: ' + o.link,
-        '3. Ingrese este correo (' + o.email + ') y cree una contraseña de al menos 12 caracteres. Luego haga clic en "Primer acceso: crear contraseña".',
-        '4. Recibirá un correo de confirmación. Haga clic en el enlace de ese correo.',
-        '5. Vuelva al portal y haga clic en "Ingresar" con su correo y contraseña. Aparecerá un código QR (un cuadrado de puntitos).',
-        '6. En Google Authenticator, toque el botón "+" y elija "Escanear un código QR". Apunte la cámara del celular al código QR de la pantalla.',
-        '7. La app muestra un código de 6 dígitos que cambia cada 30 segundos. Escríbalo en el portal y haga clic en "Activar y continuar".',
+        '2. Recibirá un segundo correo, con el asunto "Cree su contraseña del portal Endeavor", enviado a ' + o.email + '. Ábralo en la computadora y haga clic en "Crear mi contraseña".',
+        '3. Cree una contraseña de al menos 12 caracteres y haga clic en "Guardar contraseña". Aparecerá un código QR (un cuadrado de puntitos).',
+        '4. En Google Authenticator, toque el botón "+" y elija "Escanear un código QR". Apunte la cámara del celular al código QR de la pantalla.',
+        '5. La app muestra un código de 6 dígitos que cambia cada 30 segundos. Escríbalo en el portal y haga clic en "Activar y continuar".',
+        'Dirección del portal: ' + o.link,
+        'El enlace para crear la contraseña vale por 24 horas. Si vence, abra el portal y haga clic en "Olvidé mi contraseña" para recibir uno nuevo.',
         '',
         'EN LOS PRÓXIMOS ACCESOS',
         'Ingrese con su correo y contraseña. Cuando el portal pida el código, abra Google Authenticator y escriba el número que aparece en "Endeavor Business Solutions".',
@@ -2459,7 +2468,7 @@ window.ENDEAVOR_CFG = {
       terms: 'Terms', validUntil: 'Valid until', acceptTitle: 'Accept the proposal', acceptLead: 'Type your full name to accept. After that you receive an email with the link to create your access to the client portal and pay the invoice.',
       name: 'Full name', agree: 'I have read and accept this proposal and its terms.', accept: 'Accept proposal', questions: 'Questions? Talk to us first', notFound: 'Proposal not found', notFoundText: 'The link may be incomplete or the proposal was replaced. Write to support@endeavorbiz.com.',
       expired: 'This proposal has expired', expiredText: 'Ask us for an updated proposal: support@endeavorbiz.com or WhatsApp +1 (630) 689-8702.',
-      okTitle: 'Proposal accepted. Thank you!', okText: 'We sent the next steps to {e}. Create your login in the client portal: you will go straight to the invoices page to pay by card, Pix or bank transfer.',
+      okTitle: 'Proposal accepted. Thank you!', okText: 'We sent the next steps to {e}. You will also receive an email with the subject \"Create your Endeavor portal password\": click the button to create your password. After you sign in you go straight to the invoices page to pay by card, Pix or bank transfer.',
       okInvoice: 'Invoice {n} ({a}) is ready for payment in the portal.', okPending: 'Your invoice will be available in the portal shortly.', portalBtn: 'Create my access and pay', portalBtnReturning: 'Sign in and pay',
       already: 'This proposal was accepted by {n} on {d}.', errName: 'Type your full name and confirm that you accept.', errGeneric: 'We could not register the acceptance. Try again or write to support@endeavorbiz.com.',
       emailSubject: 'Proposal accepted: next steps', invoiceLine: 'Invoice {n} for {a} is waiting for you in the portal.', step: 'Step' },
@@ -2467,7 +2476,7 @@ window.ENDEAVOR_CFG = {
       terms: 'Condições', validUntil: 'Válida até', acceptTitle: 'Aceitar a proposta', acceptLead: 'Digite o seu nome completo para aceitar. Em seguida você recebe um e-mail com o link para criar o seu acesso ao portal do cliente e pagar a fatura.',
       name: 'Nome completo', agree: 'Li e aceito esta proposta e as suas condições.', accept: 'Aceitar proposta', questions: 'Ficou com dúvida? Fale com a gente antes', notFound: 'Proposta não encontrada', notFoundText: 'O link pode estar incompleto ou a proposta foi substituída. Escreva para support@endeavorbiz.com.',
       expired: 'Esta proposta expirou', expiredText: 'Peça uma proposta atualizada: support@endeavorbiz.com ou WhatsApp +1 (630) 689-8702.',
-      okTitle: 'Proposta aceita. Obrigado!', okText: 'Enviamos os próximos passos para {e}. Crie o seu login no portal do cliente: você vai direto para a página de faturas para pagar com cartão, Pix ou transferência.',
+      okTitle: 'Proposta aceita. Obrigado!', okText: 'Enviamos os próximos passos para {e}. Você também vai receber um e-mail com o assunto \"Crie sua senha do portal Endeavor\": clique no botão para criar a sua senha. Ao entrar, você vai direto para a página de faturas para pagar com cartão, Pix ou transferência.',
       okInvoice: 'A fatura {n} ({a}) já está disponível para pagamento no portal.', okPending: 'A sua fatura estará disponível no portal em instantes.', portalBtn: 'Criar meu acesso e pagar', portalBtnReturning: 'Entrar e pagar',
       already: 'Esta proposta foi aceita por {n} em {d}.', errName: 'Digite o seu nome completo e confirme que aceita.', errGeneric: 'Não conseguimos registrar o aceite. Tente de novo ou escreva para support@endeavorbiz.com.',
       emailSubject: 'Proposta aceita: próximos passos', invoiceLine: 'A fatura {n}, de {a}, já está esperando por você no portal.', step: 'Passo' },
@@ -2475,7 +2484,7 @@ window.ENDEAVOR_CFG = {
       terms: 'Condiciones', validUntil: 'Válida hasta', acceptTitle: 'Aceptar la propuesta', acceptLead: 'Escriba su nombre completo para aceptar. Luego recibirá un correo con el enlace para crear su acceso al portal del cliente y pagar la factura.',
       name: 'Nombre completo', agree: 'Leí y acepto esta propuesta y sus condiciones.', accept: 'Aceptar propuesta', questions: '¿Tiene dudas? Hable con nosotros primero', notFound: 'Propuesta no encontrada', notFoundText: 'El enlace puede estar incompleto o la propuesta fue reemplazada. Escriba a support@endeavorbiz.com.',
       expired: 'Esta propuesta expiró', expiredText: 'Pida una propuesta actualizada: support@endeavorbiz.com o WhatsApp +1 (630) 689-8702.',
-      okTitle: 'Propuesta aceptada. ¡Gracias!', okText: 'Enviamos los próximos pasos a {e}. Cree su acceso en el portal del cliente: irá directo a la página de facturas para pagar con tarjeta, Pix o transferencia.',
+      okTitle: 'Propuesta aceptada. ¡Gracias!', okText: 'Enviamos los próximos pasos a {e}. También recibirá un correo con el asunto \"Cree su contraseña del portal Endeavor\": haga clic en el botón para crear su contraseña. Al ingresar irá directo a la página de facturas para pagar con tarjeta, Pix o transferencia.',
       okInvoice: 'La factura {n} ({a}) ya está disponible para pago en el portal.', okPending: 'Su factura estará disponible en el portal en instantes.', portalBtn: 'Crear mi acceso y pagar', portalBtnReturning: 'Ingresar y pagar',
       already: 'Esta propuesta fue aceptada por {n} el {d}.', errName: 'Escriba su nombre completo y confirme que acepta.', errGeneric: 'No pudimos registrar la aceptación. Intente de nuevo o escriba a support@endeavorbiz.com.',
       emailSubject: 'Propuesta aceptada: próximos pasos', invoiceLine: 'La factura {n}, de {a}, ya lo espera en el portal.', step: 'Paso' }

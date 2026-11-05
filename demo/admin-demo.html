@@ -1451,6 +1451,14 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   .ref-col__h { align-items: center; gap: .4rem; }
   .ref-col__h { font-size: .72rem; letter-spacing: .05em; }
 }
+.pw-wrap { position: relative; }
+.pw-wrap input { width: 100%; padding-right: 3rem; }
+.pw-eye { position: absolute; right: .35rem; top: 50%; transform: translateY(-50%); width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border: 0; background: none; color: var(--muted); border-radius: 8px; cursor: pointer; }
+.pw-eye:hover { color: var(--navy-900); background: #f2f4f8; }
+.pw-eye[aria-pressed="true"] { color: var(--navy-900); }
+.pw-eye svg { width: 1.25rem; height: 1.25rem; }
+.auth-links { text-align: center; margin: .25rem 0 0; font-size: .92rem; }
+.auth-help { text-align: center; font-size: .85rem; margin: 0; }
 
 </style>
 </head>
@@ -1977,6 +1985,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
           toast('Demo: no site real o parceiro preenche o cadastro no Stripe e volta para cá.');
           return later({ url: '#/payouts?stripe=return' });
         case 'partner_refresh': return later({ ok: true });
+        case 'send_access': toast('Demo: o Supabase enviaria o e-mail "Crie sua senha do portal Endeavor" com o link de acesso.'); return later({ ok: true, sent: 'invite' });
         case 'partner_login': toast('Demo: abriria o painel Stripe Express do parceiro.'); return later({ url: '#/payouts' });
         case 'invoice_create':
           var cl = DB.clients.find(function (c) { return c.id === pb.client_id; }), its = pb.items || [], tot = its.reduce(function (s, i) { return s + i.amount_cents * (i.quantity || 1); }, 0);
@@ -2012,7 +2021,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
           if (pp2.status === 'accepted') return later(Object.assign(pub(), { portal_url: portalUrl, already: true }));
           var at = new Date().toISOString(), newInv = acceptProposal(pp2, pb.name, at);
           if (pp2.id === DB.proposals[0].id) flowSet({ accepted: { name: pb.name, at: at } });
-          return later(Object.assign(pub(), { portal_url: portalUrl, first_access: true, email: cl2.primary_email, invoice: { number: newInv.number, total_cents: newInv.total_cents, currency: 'usd', due_date: newInv.due_date } }));
+          return later(Object.assign(pub(), { portal_url: portalUrl, first_access: true, access_email: 'invite', email: cl2.primary_email, invoice: { number: newInv.number, total_cents: newInv.total_cents, currency: 'usd', due_date: newInv.due_date } }));
         case 'invoice_sync':
           markPaid(invRow, new Date().toISOString());
           toast('Demo: pagamento simulado. ' + (invRow.transfer_status === 'paid' ? 'A comissão foi repassada automaticamente ao parceiro.' : invRow.transfer_status === 'pending' ? 'O parceiro ainda não conectou o Stripe: repasse pendente.' : ''));
@@ -2351,12 +2360,12 @@ window.ENDEAVOR_CFG = {
         '1. Instale no celular o app gratuito "Google Authenticator". O ícone é um asterisco colorido.',
         '   iPhone: ' + IOS,
         '   Android: ' + AND,
-        '2. No computador, abra o portal: ' + o.link,
-        '3. Digite este e-mail (' + o.email + ') e crie uma senha com pelo menos 12 caracteres. Depois clique em "Primeiro acesso: criar senha".',
-        '4. Você vai receber um e-mail de confirmação. Clique no link desse e-mail.',
-        '5. Volte ao portal e clique em "Entrar" com o e-mail e a senha. Vai aparecer um QR code (um quadrado de pontinhos).',
-        '6. No Google Authenticator, toque no botão "+" e escolha "Ler código QR". Aponte a câmera do celular para o QR code na tela.',
-        '7. O app mostra um código de 6 dígitos, que muda a cada 30 segundos. Digite esse código no portal e clique em "Ativar e continuar".',
+        '2. Você vai receber um segundo e-mail, com o assunto "Crie sua senha do portal Endeavor", enviado para ' + o.email + '. Abra esse e-mail no computador e clique em "Criar minha senha".',
+        '3. Crie uma senha com pelo menos 12 caracteres e clique em "Salvar senha". Vai aparecer um QR code (um quadrado de pontinhos).',
+        '4. No Google Authenticator, toque no botão "+" e escolha "Ler código QR". Aponte a câmera do celular para o QR code na tela.',
+        '5. O app mostra um código de 6 dígitos, que muda a cada 30 segundos. Digite esse código no portal e clique em "Ativar e continuar".',
+        'Endereço do portal: ' + o.link,
+        'O link de criação de senha vale por 24 horas. Se expirar, abra o portal e clique em "Esqueci a senha" para receber um novo.',
         '',
         'NOS PRÓXIMOS ACESSOS',
         'Entre com e-mail e senha. Quando o portal pedir o código, abra o Google Authenticator e digite o número que aparece em "Endeavor Business Solutions".',
@@ -2382,12 +2391,12 @@ window.ENDEAVOR_CFG = {
         '1. Install the free "Google Authenticator" app on your phone. The icon is a colorful asterisk.',
         '   iPhone: ' + IOS,
         '   Android: ' + AND,
-        '2. On your computer, open the portal: ' + o.link,
-        '3. Enter this email (' + o.email + ') and create a password with at least 12 characters. Then click "First access: create password".',
-        '4. You will receive a confirmation email. Click the link in that email.',
-        '5. Go back to the portal and click "Sign in" with your email and password. A QR code (a square of dots) will appear.',
-        '6. In Google Authenticator, tap the "+" button and choose "Scan a QR code". Point your phone camera at the QR code on the screen.',
-        '7. The app shows a 6-digit code that changes every 30 seconds. Type that code in the portal and click "Activate and continue".',
+        '2. You will receive a second email, with the subject "Create your Endeavor portal password", sent to ' + o.email + '. Open it on your computer and click "Create my password".',
+        '3. Create a password with at least 12 characters and click "Save password". A QR code (a square of dots) will appear.',
+        '4. In Google Authenticator, tap the "+" button and choose "Scan a QR code". Point your phone camera at the QR code on the screen.',
+        '5. The app shows a 6-digit code that changes every 30 seconds. Type that code in the portal and click "Activate and continue".',
+        'Portal address: ' + o.link,
+        'The password link is valid for 24 hours. If it expires, open the portal and click "Forgot password" to get a new one.',
         '',
         'NEXT TIME',
         'Sign in with your email and password. When the portal asks for the code, open Google Authenticator and type the number shown under "Endeavor Business Solutions".',
@@ -2413,12 +2422,12 @@ window.ENDEAVOR_CFG = {
         '1. Instale en su celular la app gratuita "Google Authenticator". El ícono es un asterisco de colores.',
         '   iPhone: ' + IOS,
         '   Android: ' + AND,
-        '2. En la computadora, abra el portal: ' + o.link,
-        '3. Ingrese este correo (' + o.email + ') y cree una contraseña de al menos 12 caracteres. Luego haga clic en "Primer acceso: crear contraseña".',
-        '4. Recibirá un correo de confirmación. Haga clic en el enlace de ese correo.',
-        '5. Vuelva al portal y haga clic en "Ingresar" con su correo y contraseña. Aparecerá un código QR (un cuadrado de puntitos).',
-        '6. En Google Authenticator, toque el botón "+" y elija "Escanear un código QR". Apunte la cámara del celular al código QR de la pantalla.',
-        '7. La app muestra un código de 6 dígitos que cambia cada 30 segundos. Escríbalo en el portal y haga clic en "Activar y continuar".',
+        '2. Recibirá un segundo correo, con el asunto "Cree su contraseña del portal Endeavor", enviado a ' + o.email + '. Ábralo en la computadora y haga clic en "Crear mi contraseña".',
+        '3. Cree una contraseña de al menos 12 caracteres y haga clic en "Guardar contraseña". Aparecerá un código QR (un cuadrado de puntitos).',
+        '4. En Google Authenticator, toque el botón "+" y elija "Escanear un código QR". Apunte la cámara del celular al código QR de la pantalla.',
+        '5. La app muestra un código de 6 dígitos que cambia cada 30 segundos. Escríbalo en el portal y haga clic en "Activar y continuar".',
+        'Dirección del portal: ' + o.link,
+        'El enlace para crear la contraseña vale por 24 horas. Si vence, abra el portal y haga clic en "Olvidé mi contraseña" para recibir uno nuevo.',
         '',
         'EN LOS PRÓXIMOS ACCESOS',
         'Ingrese con su correo y contraseña. Cuando el portal pida el código, abra Google Authenticator y escriba el número que aparece en "Endeavor Business Solutions".',
@@ -3114,8 +3123,18 @@ window.ENDEAVOR_CFG = {
   function inviteText(lang, name, clientName, link, role, email) {
     return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName, invitedBy: role === 'owner' ? '' : clientName, partner: role !== 'owner' });
   }
+  // access link (create password) is sent by Supabase Auth through the payments function; the instructions go by FormSubmit
+  async function sendAccess(ctx, payload) {
+    try {
+      var sess = (await ctx.sb.auth.getSession()).data.session;
+      var r = await fetch(ctx.CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify(Object.assign({ action: 'send_access' }, payload)) });
+      var j = await r.json().catch(function () { return {}; });
+      return r.ok && !j.error;
+    } catch (e) { return false; }
+  }
   async function sendInvite(ctx, o) {
     var link = ctx.siteUrl(o.role === 'owner' ? 'client.html' : 'partner.html') + '?lang=' + (o.lang || 'pt');
+    if (o.clientId && !(await sendAccess(ctx, { client_id: o.clientId, email: o.email }))) return false;
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao portal do cliente: ' + o.name + ' (' + o.clientName + ')', _template: 'table', _captcha: 'false',
@@ -3227,7 +3246,7 @@ window.ENDEAVOR_CFG = {
           if ($('#nc-dl').checked) { var y = new Date().getFullYear(); await ctx.q(ctx.sb.from('compliance_items').insert(standardDeadlines(co, y).concat(standardDeadlines(co, y + 1)).filter(function (d) { return daysUntil(d.due_date) >= 0; }))); }
         }
         if ($('#nc-lead').value) await ctx.sb.from('leads').update({ status: 'client' }).eq('id', $('#nc-lead').value);
-        var sent = $('#nc-inv').checked ? await sendInvite(ctx, { email: email, name: name, clientName: name, role: 'owner', lang: $('#nc-lang').value }) : false;
+        var sent = $('#nc-inv').checked ? await sendInvite(ctx, { clientId: c.id, email: email, name: name, clientName: name, role: 'owner', lang: $('#nc-lang').value }) : false;
         ctx.closeOverlay();
         ERoute.set('#/clientes?id=' + c.id + (sent ? '&convite=1' : ''));
       } catch (err) { ctx.msg(m, ctx.errText(err), 'error'); }
@@ -3436,7 +3455,7 @@ window.ENDEAVOR_CFG = {
           (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-revoke="' + u.id + '">Revogar</button>' : '<button class="btn btn--ghost btn--xs" data-restore="' + u.id + '">Reativar</button>') + '</div></td></tr>';
       }).join('') + '</tbody></table></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">O titular entra pelo Portal do Cliente. Contadores, bookkeepers e administradores de imóveis entram pelo Portal do Parceiro e só veem o que estiver liberado. Todos precisam ativar a verificação em duas etapas.</p>';
     var find = function (id) { return users.find(function (x) { return x.id === id; }); };
-    body.querySelectorAll('[data-resend]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); var ok = await sendInvite(ctx, { email: u.email, name: u.name || u.email, clientName: c.name, role: u.role, lang: c.language }); alert(ok ? 'Convite reenviado.' : 'Não foi possível enviar agora.'); }; });
+    body.querySelectorAll('[data-resend]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); var ok = await sendInvite(ctx, { clientId: c.id, email: u.email, name: u.name || u.email, clientName: c.name, role: u.role, lang: c.language }); alert(ok ? 'Convite reenviado.' : 'Não foi possível enviar agora.'); }; });
     body.querySelectorAll('[data-revoke]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.revoke); if (!confirm('Revogar o acesso de ' + u.email + '?')) return; await ctx.sb.from('client_users').update({ status: 'revoked' }).eq('id', u.id); ctx.route(); }; });
     body.querySelectorAll('[data-restore]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.restore); var r = await ctx.sb.from('client_users').update({ status: u.user_id ? 'active' : 'invited' }).eq('id', u.id); if (r.error) alert(ctx.errText(r.error)); ctx.route(); }; });
     body.querySelectorAll('[data-perm]').forEach(function (b) { b.onclick = function () { userForm(find(b.dataset.perm)); }; });
@@ -3463,7 +3482,7 @@ window.ENDEAVOR_CFG = {
           var email = $('#u-email').value.trim().toLowerCase(), name = $('#u-name').value.trim();
           if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return ctx.msg($('#u-msg'), 'Preencha nome e e-mail válido.', 'error');
           r = await ctx.sb.from('client_users').insert(Object.assign({ client_id: c.id, email: email, name: name, role: role }, row));
-          if (!r.error && $('#u-inv').checked) await sendInvite(ctx, { email: email, name: name, clientName: c.name, role: role, lang: c.language });
+          if (!r.error && $('#u-inv').checked) await sendInvite(ctx, { clientId: c.id, email: email, name: name, clientName: c.name, role: role, lang: c.language });
         }
         if (r.error) return ctx.msg($('#u-msg'), /unique|duplicate/i.test(r.error.message) ? 'Este e-mail já tem acesso a este cliente.' : ctx.errText(r.error), 'error');
         ctx.closeOverlay(); ctx.route();
@@ -3560,6 +3579,7 @@ window.ENDEAVOR_CFG = {
 
   async function sendInvite(ctx, p) {
     var link = ctx.siteUrl('partner.html') + '?lang=' + (p.language || 'pt');
+    try { await call(ctx, { action: 'send_access', partner_id: p.id }); } catch (e) { return false; }
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao Programa de Parceiros: ' + p.name, _template: 'table', _captcha: 'false', name: p.name, email: p.email, empresa: p.company || '', link: link,
@@ -3618,7 +3638,7 @@ window.ENDEAVOR_CFG = {
       if (!(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
       var r = edit ? await ctx.sb.from('partners').update(row).eq('id', p.id) : await ctx.sb.from('partners').insert(row).select('id').single();
       if (r.error) return ctx.msg(ctx.$('#pf-msg', o), /duplicate|unique/i.test(r.error.message) ? 'Já existe um parceiro com este e-mail.' : ctx.errText(r.error), 'error');
-      if (!edit) { var ok = await sendInvite(ctx, row); ctx.closeOverlay(); ERoute.go('#/parceiros?id=' + r.data.id + (ok ? '' : '&invite=erro')); return; }
+      if (!edit) { var ok = await sendInvite(ctx, Object.assign({ id: r.data.id }, row)); ctx.closeOverlay(); ERoute.go('#/parceiros?id=' + r.data.id + (ok ? '' : '&invite=erro')); return; }
       ctx.closeOverlay(); ctx.route();
     };
   }
@@ -4141,6 +4161,9 @@ window.ENDEAVOR_CFG = {
 (function () {
   'use strict';
   var CFG = window.ENDEAVOR_CFG;
+  var AUTH_HASH = String(location.hash || '');
+  var AUTH_TYPE = (AUTH_HASH.match(/[#&]type=(invite|recovery)/) || [])[1] || null;
+  var AUTH_ERR = /[#&]error_code=/.test(AUTH_HASH);
   var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true } });
   var app = document.getElementById('app');
   var state = { settings: null, leads: [], bookings: [], envelopes: [] };
@@ -4187,11 +4210,12 @@ window.ENDEAVOR_CFG = {
   }
 
   /* ---------- auth flow ---------- */
-  var recoveryMode = false;
+  var recoveryMode = !!AUTH_TYPE, pwShown = false;
   sb.auth.onAuthStateChange(function (ev) {
-    if (ev === 'PASSWORD_RECOVERY') { recoveryMode = true; renderNewPassword(); }
+    if (!pwShown && (ev === 'PASSWORD_RECOVERY' || (recoveryMode && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION')))) { recoveryMode = true; pwShown = true; renderNewPassword(AUTH_TYPE === 'invite'); return; }
     if (ev === 'SIGNED_OUT') { renderLogin(); }
   });
+  if (recoveryMode) setTimeout(async function () { if (pwShown) return; var s = (await sb.auth.getSession()).data.session; pwShown = true; if (!s) { recoveryMode = false; renderForgot(true); } else renderNewPassword(AUTH_TYPE === 'invite'); }, 2500);
   document.getElementById('btn-signout').addEventListener('click', async function () { await sb.auth.signOut(); ERoute.set('', true); renderLogin(); });
 
   async function boot() {
@@ -4216,16 +4240,22 @@ window.ENDEAVOR_CFG = {
     app.innerHTML = '<main class="portal-main"><div class="auth portal-card">' + inner + '</div></main>';
   }
 
+  function pwField(id, label, auto) {
+    return '<div class="field"><label for="' + id + '">' + label + '</label><div class="pw-wrap"><input id="' + id + '" type="password" autocomplete="' + auto + '" required>' +
+      '<button type="button" class="pw-eye" data-eye="' + id + '" aria-label="Mostrar senha" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></button></div></div>';
+  }
+  function wireEyes() { $$('[data-eye]').forEach(function (b) { b.onclick = function () { var i = document.getElementById(b.dataset.eye), on = i.type === 'password'; i.type = on ? 'text' : 'password'; b.setAttribute('aria-pressed', String(on)); }; }); }
   function renderLogin() {
+    if (AUTH_ERR) { AUTH_ERR = false; history.replaceState(null, '', location.pathname); return renderForgot(true); }
     authShell(
       '<h1 class="portal-h1">Console Admin</h1><p class="portal-muted">Acesso restrito à equipe da Endeavor.</p>' +
       '<form class="portal-form" id="f-login" novalidate>' +
-      '<div class="field"><label for="l-email">E-mail</label><input id="l-email" type="email" autocomplete="username" required value="' + esc(CFG.adminEmail) + '"></div>' +
-      '<div class="field"><label for="l-pass">Senha</label><input id="l-pass" type="password" autocomplete="current-password" required minlength="10"></div>' +
+      '<div class="field"><label for="l-email">E-mail</label><input id="l-email" type="email" autocomplete="username" required></div>' +
+      pwField('l-pass', 'Senha', 'current-password') +
       '<div class="portal-alert" id="l-msg" role="alert"></div>' +
       '<button class="btn btn--navy btn--block" type="submit">Entrar</button>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="l-first">Primeiro acesso: criar senha</button>' +
-      '<button class="btn btn--ghost btn--xs" type="button" id="l-forgot">Esqueci a senha</button></div></form>');
+      '<p class="auth-links"><a href="#" id="l-forgot">Esqueci a senha</a></p></form>');
+    wireEyes();
     var m = $('#l-msg');
     $('#f-login').addEventListener('submit', async function (e) {
       e.preventDefault();
@@ -4234,29 +4264,35 @@ window.ENDEAVOR_CFG = {
       if (r.error) return msg(m, errText(r.error), 'error');
       boot();
     });
-    $('#l-first').addEventListener('click', async function () {
-      var email = $('#l-email').value.trim().toLowerCase(), pass = $('#l-pass').value;
-      if (email !== CFG.adminEmail.toLowerCase()) return msg(m, 'O primeiro acesso só pode ser criado para ' + CFG.adminEmail + '.', 'error');
-      if (pass.length < 12) return msg(m, 'Escolha uma senha com pelo menos 12 caracteres e digite no campo Senha.', 'error');
-      var r = await sb.auth.signUp({ email: email, password: pass, options: { emailRedirectTo: siteUrl('admin.html') } });
-      if (r.error) return msg(m, errText(r.error), 'error');
-      if (r.data.session) return boot();
-      msg(m, 'Conta criada. Abra o e-mail de confirmação enviado para ' + email + ', clique no link e depois entre aqui.', 'ok');
-    });
-    $('#l-forgot').addEventListener('click', async function () {
-      var email = $('#l-email').value.trim();
-      var r = await sb.auth.resetPasswordForEmail(email, { redirectTo: siteUrl('admin.html') });
-      msg(m, r.error ? errText(r.error) : 'Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', r.error ? 'error' : 'ok');
+    $('#l-forgot').addEventListener('click', function (e) { e.preventDefault(); renderForgot(false, $('#l-email').value.trim()); });
+  }
+
+  function renderForgot(expired, email) {
+    authShell('<h1 class="portal-h1">Redefinir senha</h1><p class="portal-muted">Digite o seu e-mail. Vamos enviar um link para você criar uma nova senha.</p>' +
+      (expired ? '<div class="portal-alert portal-alert--error" style="display:block">Este link expirou ou já foi usado. Peça um novo abaixo.</div>' : '') +
+      '<form class="portal-form" id="f-forgot" novalidate><div class="field"><label for="fg-email">E-mail</label><input id="fg-email" type="email" autocomplete="username" required value="' + esc(email || '') + '"></div>' +
+      '<div class="portal-alert" id="fg-msg" role="status"></div><button class="btn btn--navy btn--block" type="submit">Enviar link</button>' +
+      '<p class="auth-links"><a href="#" id="fg-back">Voltar ao login</a></p></form>');
+    $('#fg-back').addEventListener('click', function (e) { e.preventDefault(); renderLogin(); });
+    $('#f-forgot').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      var em = $('#fg-email').value.trim().toLowerCase(), m = $('#fg-msg');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return msg(m, 'Digite um e-mail válido.', 'error');
+      var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl('admin.html') });
+      var limited = r.error && /rate|limit|seconds/i.test(r.error.message);
+      msg(m, limited ? errText(r.error) : 'Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', limited ? 'error' : 'ok');
     });
   }
 
-  function renderNewPassword() {
-    authShell('<h1 class="portal-h1">Nova senha</h1><form class="portal-form" id="f-np">' +
-      '<div class="field"><label for="np">Nova senha (mín. 12 caracteres)</label><input id="np" type="password" autocomplete="new-password" minlength="12" required></div>' +
+  function renderNewPassword(invite) {
+    authShell('<h1 class="portal-h1">' + (invite ? 'Crie a sua senha' : 'Crie uma nova senha') + '</h1><p class="portal-muted">' + (invite ? 'Bem-vindo ao console da Endeavor. Depois da senha você ativa o código do celular.' : 'Escolha uma nova senha para a sua conta.') + '</p>' +
+      '<form class="portal-form" id="f-np" novalidate>' + pwField('np', 'Nova senha (mín. 12 caracteres)', 'new-password') + pwField('np2', 'Confirme a senha', 'new-password') +
       '<div class="portal-alert" id="np-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Salvar senha</button></form>');
+    wireEyes();
     $('#f-np').addEventListener('submit', async function (e) {
       e.preventDefault();
       var p = $('#np').value; if (p.length < 12) return msg($('#np-msg'), 'Use pelo menos 12 caracteres.', 'error');
+      if (p !== $('#np2').value) return msg($('#np-msg'), 'As senhas não são iguais.', 'error');
       var r = await sb.auth.updateUser({ password: p });
       if (r.error) return msg($('#np-msg'), errText(r.error), 'error');
       recoveryMode = false; history.replaceState(null, '', location.pathname); boot();

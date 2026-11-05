@@ -2,6 +2,10 @@
 (function () {
   'use strict';
   var CFG = window.ENDEAVOR_CFG;
+  // links from the invitation / password e-mails arrive with #access_token=...&type=invite|recovery (read before Supabase clears it)
+  var AUTH_HASH = String(location.hash || '');
+  var AUTH_TYPE = (AUTH_HASH.match(/[#&]type=(invite|recovery|signup|magiclink)/) || [])[1] || null;
+  var AUTH_ERR = /[#&]error_code=/.test(AUTH_HASH) ? ((AUTH_HASH.match(/[#&]error_code=([^&]+)/) || [])[1] || 'link') : null;
   var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'endeavor-client-auth' } });
   var app = document.getElementById('app');
 
@@ -21,6 +25,7 @@
       loading: 'Loading…', signOut: 'Sign out', menu: 'Menu', closeMenu: 'Close menu',
       portal: 'Client Portal', loginTitle: 'Client portal', loginLead: 'Access your companies, documents and deadlines.', email: 'Email', password: 'Password',
       signIn: 'Sign in', firstAccess: 'First access: create password', forgot: 'Forgot password', newPass: 'New password (12+ characters)', savePass: 'Save password',
+      loginHelp: 'First access? Use the link in the invitation email to create your password.', forgotTitle: 'Reset password', forgotLead: 'Enter your email. We will send a link to create a new password.', sendLink: 'Send link', backLogin: 'Back to sign in', inviteTitle: 'Create your password', inviteLead: 'Welcome to the Endeavor portal. Create your password to continue; next you will activate the code on your phone.', resetTitle: 'Create a new password', resetLead: 'Choose a new password for your account.', confirmPass: 'Confirm the password', passMismatch: 'The passwords do not match.', linkExpired: 'This link has expired or was already used. Enter your email below to receive a new one.', passSaved: 'Password saved.', passRules: 'At least 12 characters. Use a phrase or a mix of words and numbers.', showPass: 'Show password',
       badLogin: 'Incorrect email or password.', notConfirmed: 'Confirm your email using the link we sent, then sign in.', noInvite: 'This email does not have an invitation. Please contact Endeavor at support@endeavorbiz.com.',
       passShort: 'Use at least 12 characters in the Password field.', created: 'Account created. Open the confirmation email sent to {e}, click the link and then sign in here.',
       resetSent: 'If this email is registered, you will receive a link to create a new password.', mfaTitle: 'Two-step verification', mfaLead: 'Enter the 6-digit code from your authenticator app.',
@@ -71,6 +76,7 @@
       loading: 'Carregando…', signOut: 'Sair', menu: 'Menu', closeMenu: 'Fechar menu',
       portal: 'Portal do Cliente', loginTitle: 'Portal do cliente', loginLead: 'Acesse suas empresas, documentos e prazos.', email: 'E-mail', password: 'Senha',
       signIn: 'Entrar', firstAccess: 'Primeiro acesso: criar senha', forgot: 'Esqueci a senha', newPass: 'Nova senha (mín. 12 caracteres)', savePass: 'Salvar senha',
+      loginHelp: 'Primeiro acesso? Use o link do e-mail de convite para criar a sua senha.', forgotTitle: 'Redefinir senha', forgotLead: 'Digite o seu e-mail. Vamos enviar um link para você criar uma nova senha.', sendLink: 'Enviar link', backLogin: 'Voltar ao login', inviteTitle: 'Crie a sua senha', inviteLead: 'Bem-vindo ao portal da Endeavor. Crie a sua senha para continuar; em seguida você ativa o código do celular.', resetTitle: 'Crie uma nova senha', resetLead: 'Escolha uma nova senha para a sua conta.', confirmPass: 'Confirme a senha', passMismatch: 'As senhas não são iguais.', linkExpired: 'Este link expirou ou já foi usado. Digite o seu e-mail abaixo para receber um novo.', passSaved: 'Senha salva.', passRules: 'Pelo menos 12 caracteres. Use uma frase ou uma mistura de palavras e números.', showPass: 'Mostrar senha',
       badLogin: 'E-mail ou senha incorretos.', notConfirmed: 'Confirme o seu e-mail pelo link que enviamos e depois entre.', noInvite: 'Este e-mail não tem convite. Fale com a Endeavor pelo support@endeavorbiz.com.',
       passShort: 'Use pelo menos 12 caracteres no campo Senha.', created: 'Conta criada. Abra o e-mail de confirmação enviado para {e}, clique no link e depois entre aqui.',
       resetSent: 'Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', mfaTitle: 'Verificação em duas etapas', mfaLead: 'Digite o código de 6 dígitos do seu aplicativo autenticador.',
@@ -121,6 +127,7 @@
       loading: 'Cargando…', signOut: 'Salir', menu: 'Menú', closeMenu: 'Cerrar menú',
       portal: 'Portal del Cliente', loginTitle: 'Portal del cliente', loginLead: 'Acceda a sus empresas, documentos y plazos.', email: 'Correo', password: 'Contraseña',
       signIn: 'Ingresar', firstAccess: 'Primer acceso: crear contraseña', forgot: 'Olvidé mi contraseña', newPass: 'Nueva contraseña (mín. 12 caracteres)', savePass: 'Guardar contraseña',
+      loginHelp: '¿Primer acceso? Use el enlace del correo de invitación para crear su contraseña.', forgotTitle: 'Restablecer contraseña', forgotLead: 'Ingrese su correo. Le enviaremos un enlace para crear una nueva contraseña.', sendLink: 'Enviar enlace', backLogin: 'Volver al ingreso', inviteTitle: 'Cree su contraseña', inviteLead: 'Bienvenido al portal de Endeavor. Cree su contraseña para continuar; luego activará el código del celular.', resetTitle: 'Cree una nueva contraseña', resetLead: 'Elija una nueva contraseña para su cuenta.', confirmPass: 'Confirme la contraseña', passMismatch: 'Las contraseñas no coinciden.', linkExpired: 'Este enlace venció o ya fue usado. Ingrese su correo abajo para recibir uno nuevo.', passSaved: 'Contraseña guardada.', passRules: 'Al menos 12 caracteres. Use una frase o una mezcla de palabras y números.', showPass: 'Mostrar contraseña',
       badLogin: 'Correo o contraseña incorrectos.', notConfirmed: 'Confirme su correo con el enlace que enviamos y luego ingrese.', noInvite: 'Este correo no tiene invitación. Contacte a Endeavor en support@endeavorbiz.com.',
       passShort: 'Use al menos 12 caracteres en el campo Contraseña.', created: 'Cuenta creada. Abra el correo de confirmación enviado a {e}, haga clic en el enlace y luego ingrese aquí.',
       resetSent: 'Si el correo está registrado, recibirá un enlace para crear una nueva contraseña.', mfaTitle: 'Verificación en dos pasos', mfaLead: 'Ingrese el código de 6 dígitos de su app autenticadora.',
@@ -205,8 +212,14 @@
 
   /* ---------------- auth ---------------- */
   var S = { memberships: [], client: null, role: null, perms: {}, companies: [], user: null };
-  var recovery = false;
-  sb.auth.onAuthStateChange(function (ev) { if (ev === 'PASSWORD_RECOVERY') { recovery = true; renderNewPassword(); } });
+  var PAGE = PARTNER ? 'partner.html' : 'client.html';
+  var recovery = AUTH_TYPE === 'invite' || AUTH_TYPE === 'recovery';
+  var pwShown = false;
+  sb.auth.onAuthStateChange(function (ev) {
+    if (pwShown) return;
+    if (ev === 'PASSWORD_RECOVERY' || (recovery && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION'))) { recovery = true; pwShown = true; renderNewPassword(AUTH_TYPE === 'invite' ? 'invite' : 'reset'); }
+  });
+  if (recovery) setTimeout(async function () { if (pwShown) return; var s = (await sb.auth.getSession()).data.session; pwShown = true; if (!s) { recovery = false; renderForgot(true); } else renderNewPassword(AUTH_TYPE === 'invite' ? 'invite' : 'reset'); }, 2500);
   $('#btn-signout').onclick = async function () { await sb.auth.signOut(); ERoute.set('', true); location.reload(); };
 
   function authShell(html) {
@@ -267,12 +280,19 @@
     try { localStorage.setItem('endeavor-client-id', id); } catch (e) { /* ignore */ }
   }
 
+  function pwField(id, label, auto) {
+    return '<div class="field"><label for="' + id + '">' + label + '</label><div class="pw-wrap"><input id="' + id + '" type="password" autocomplete="' + auto + '" required>' +
+      '<button type="button" class="pw-eye" data-eye="' + id + '" aria-label="' + t('showPass') + '" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></button></div></div>';
+  }
+  function wireEyes() { $$('[data-eye]').forEach(function (b) { b.onclick = function () { var i = document.getElementById(b.dataset.eye), on = i.type === 'password'; i.type = on ? 'text' : 'password'; b.setAttribute('aria-pressed', String(on)); }; }); }
   function renderLogin() {
+    if (AUTH_ERR) { var e0 = AUTH_ERR; AUTH_ERR = null; history.replaceState(null, '', location.pathname + location.search); return renderForgot(true, e0); }
     authShell('<h1 class="portal-h1">' + t('loginTitle') + '</h1><p class="portal-muted">' + t('loginLead') + '</p>' +
       '<form class="portal-form" id="f-login" novalidate><div class="field"><label for="l-email">' + t('email') + '</label><input id="l-email" type="email" autocomplete="username" required></div>' +
-      '<div class="field"><label for="l-pass">' + t('password') + '</label><input id="l-pass" type="password" autocomplete="current-password" required></div>' +
+      pwField('l-pass', t('password'), 'current-password') +
       '<div class="portal-alert" id="l-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">' + t('signIn') + '</button>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="l-first">' + t('firstAccess') + '</button><button class="btn btn--ghost btn--xs" type="button" id="l-forgot">' + t('forgot') + '</button></div></form>');
+      '<p class="auth-links"><a href="#" id="l-forgot">' + t('forgot') + '</a></p><p class="portal-muted auth-help">' + t('loginHelp') + '</p></form>');
+    wireEyes();
     var m = $('#l-msg');
     $('#f-login').onsubmit = async function (e) {
       e.preventDefault(); msg(m, t('loading'), 'info');
@@ -280,28 +300,41 @@
       if (r.error) return msg(m, errText(r.error), 'error');
       boot();
     };
-    $('#l-first').onclick = async function () {
-      var email = $('#l-email').value.trim().toLowerCase(), pass = $('#l-pass').value;
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return msg(m, t('fillNameEmail'), 'error');
-      if (pass.length < 12) return msg(m, t('passShort'), 'error');
-      var r = await sb.auth.signUp({ email: email, password: pass, options: { emailRedirectTo: siteUrl('client.html') } });
-      if (r.error) return msg(m, errText(r.error), 'error');
-      if (r.data.session) return boot();
-      msg(m, t('created', { e: email }), 'ok');
-    };
-    $('#l-forgot').onclick = async function () {
-      var r = await sb.auth.resetPasswordForEmail($('#l-email').value.trim(), { redirectTo: siteUrl('client.html') });
-      msg(m, r.error ? errText(r.error) : t('resetSent'), r.error ? 'error' : 'ok');
+    $('#l-forgot').onclick = function (e) { e.preventDefault(); renderForgot(false, null, $('#l-email').value.trim()); };
+  }
+  function renderForgot(expired, code, email) {
+    authShell('<h1 class="portal-h1">' + t('forgotTitle') + '</h1><p class="portal-muted">' + t('forgotLead') + '</p>' +
+      (expired ? '<div class="portal-alert portal-alert--error" style="display:block">' + t('linkExpired') + '</div>' : '') +
+      '<form class="portal-form" id="f-forgot" novalidate><div class="field"><label for="fg-email">' + t('email') + '</label><input id="fg-email" type="email" autocomplete="username" required value="' + esc(email || '') + '"></div>' +
+      '<div class="portal-alert" id="fg-msg" role="status"></div><button class="btn btn--navy btn--block" type="submit">' + t('sendLink') + '</button>' +
+      '<p class="auth-links"><a href="#" id="fg-back">' + t('backLogin') + '</a></p></form>');
+    $('#fg-back').onclick = function (e) { e.preventDefault(); renderLogin(); };
+    $('#f-forgot').onsubmit = async function (e) {
+      e.preventDefault();
+      var em = $('#fg-email').value.trim().toLowerCase(), m = $('#fg-msg');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return msg(m, t('fillNameEmail'), 'error');
+      var btn = this.querySelector('button'); btn.disabled = true;
+      var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl(PAGE) + '?lang=' + L });
+      btn.disabled = false;
+      // same message whether or not the e-mail exists (no account enumeration)
+      msg(m, r.error && !/rate|limit|seconds/i.test(r.error.message) ? t('resetSent') : r.error ? errText(r.error) : t('resetSent'), r.error && /rate|limit|seconds/i.test(r.error.message) ? 'error' : 'ok');
     };
   }
-  function renderNewPassword() {
-    authShell('<h1 class="portal-h1">' + t('newPass') + '</h1><form class="portal-form" id="f-np"><div class="field"><label for="np">' + t('newPass') + '</label><input id="np" type="password" autocomplete="new-password" minlength="12" required></div>' +
+  function renderNewPassword(mode) {
+    authShell('<h1 class="portal-h1">' + t(mode === 'invite' ? 'inviteTitle' : 'resetTitle') + '</h1><p class="portal-muted">' + t(mode === 'invite' ? 'inviteLead' : 'resetLead') + '</p>' +
+      '<form class="portal-form" id="f-np" novalidate>' + pwField('np', t('newPass'), 'new-password') + pwField('np2', t('confirmPass'), 'new-password') +
+      '<p class="portal-muted" style="font-size:.85rem;margin:-.25rem 0 0">' + t('passRules') + '</p>' +
       '<div class="portal-alert" id="np-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">' + t('savePass') + '</button></form>');
+    wireEyes();
     $('#f-np').onsubmit = async function (e) {
-      e.preventDefault(); var p = $('#np').value;
-      if (p.length < 12) return msg($('#np-msg'), t('passShort'), 'error');
+      e.preventDefault(); var p = $('#np').value, m = $('#np-msg');
+      if (p.length < 12) return msg(m, t('passShort'), 'error');
+      if (p !== $('#np2').value) return msg(m, t('passMismatch'), 'error');
+      var btn = this.querySelector('button'); btn.disabled = true;
       var r = await sb.auth.updateUser({ password: p });
-      if (r.error) return msg($('#np-msg'), errText(r.error), 'error');
+      btn.disabled = false;
+      if (r.error) return msg(m, errText(r.error), 'error');
+      msg(m, t('passSaved'), 'ok');
       recovery = false; history.replaceState(null, '', location.pathname + location.search); boot();
     };
   }
@@ -636,7 +669,9 @@
   async function sendInvite(email, name) {
     var link = siteUrl('partner.html') + '?lang=' + L;
     var txt = window.EndeavorInvite.text(L, { name: name, email: email, link: link, invitedBy: S.client.name, partner: true });
+    try { await payCall({ action: 'send_access', client_id: S.client.id, email: email }); } catch (e) { return false; }
     try { await fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ _subject: 'Collaborator invited: ' + name + ' (' + S.client.name + ')', _template: 'table', _captcha: 'false', name: name, email: email, client: S.client.name, invited_by: S.user.email, _autoresponse: txt }) }); } catch (e) { /* best effort */ }
+    return true;
   }
   function permLabels() {
     return { access: t('access'), companies: t('permCompanies'), allCompanies: t('permAll'), docs: t('permDocs'), other: t('permOther'),

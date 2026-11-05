@@ -547,3 +547,11 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   .ref-col__h { align-items: center; gap: .4rem; }
   .ref-col__h { font-size: .72rem; letter-spacing: .05em; }
 }
+.pw-wrap { position: relative; }
+.pw-wrap input { width: 100%; padding-right: 3rem; }
+.pw-eye { position: absolute; right: .35rem; top: 50%; transform: translateY(-50%); width: 2.4rem; height: 2.4rem; display: grid; place-items: center; border: 0; background: none; color: var(--muted); border-radius: 8px; cursor: pointer; }
+.pw-eye:hover { color: var(--navy-900); background: #f2f4f8; }
+.pw-eye[aria-pressed="true"] { color: var(--navy-900); }
+.pw-eye svg { width: 1.25rem; height: 1.25rem; }
+.auth-links { text-align: center; margin: .25rem 0 0; font-size: .92rem; }
+.auth-help { text-align: center; font-size: .85rem; margin: 0; }
