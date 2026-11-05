@@ -1367,6 +1367,21 @@ table.inv-table td:first-child strong, table.inv-table .sub { white-space: nowra
 table.inv-table tbody tr { cursor: default; }
 .toolbar .check-row { align-items: center; margin: 0; }
 
+/* ---------- invoice checkout ---------- */
+.checkout { display: grid; gap: 1.25rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 1000px) { .checkout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); } }
+.checkout .portal-card + .portal-card { margin-top: 0; }
+.cart { list-style: none; margin: 1rem 0 0; padding: 0; border-top: 1px solid #edf0f4; }
+.cart li { display: flex; justify-content: space-between; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid #edf0f4; font-size: .93rem; }
+.cart li span:first-child { display: grid; gap: .15rem; min-width: 0; }
+.cart small { color: var(--muted); font-size: .8rem; }
+.cart__amt { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cart__total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 1rem; font-size: 1rem; }
+.cart__total strong { font-size: 1.5rem; font-family: "Source Serif 4", Georgia, serif; color: var(--ink); }
+.ck-element { min-height: 12rem; margin-bottom: 1rem; }
+.ck-secure { display: flex; gap: .5rem; align-items: flex-start; font-size: .82rem; color: var(--muted); margin: 1rem 0 .5rem; }
+.ck-secure .icon { width: 1rem; height: 1rem; flex: none; margin-top: .1rem; color: #1e6b3a; }
+
 </style>
 </head>
 <body class="portal">
@@ -1380,6 +1395,7 @@ table.inv-table tbody tr { cursor: default; }
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 010 6.4M18 14.8c2 .7 3.2 2.5 3.5 5.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5V8a4 4 0 018 0v2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
   <symbol id="i-card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v8M8 12h8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
 </svg>
@@ -1821,6 +1837,11 @@ table.inv-table tbody tr { cursor: default; }
           return later({ ok: true });
         case 'invoice_send': Object.assign(invRow, { status: 'open', number: 'EBS-' + Y + '-' + String(DB.invoices.indexOf(invRow) + 1).padStart(4, '0'), sent_at: new Date().toISOString(), hosted_invoice_url: 'https://invoice.stripe.com/i/demo_x', invoice_pdf: 'https://pay.stripe.com/invoice/demo_x/pdf' }); toast('Demo: fatura enviada ao cliente pelo Stripe.'); return later({ ok: true });
         case 'invoice_void': invRow.status = 'void'; return later({ ok: true });
+        case 'invoice_checkout':
+          if (!invRow) return json({ error: 'not_found' }, 404);
+          return later({ status: invRow.status, client_secret: invRow.status === 'open' || invRow.status === 'uncollectible' ? 'pi_demo_' + invRow.id.slice(0, 8) + '_secret_demo' : undefined, publishable_key: 'pk_test_demo',
+            amount_due: invRow.total_cents - invRow.amount_paid_cents, currency: invRow.currency, hosted_invoice_url: invRow.hosted_invoice_url, invoice_pdf: invRow.invoice_pdf });
+        case 'invoice_refresh': return later({ ok: true, status: invRow && invRow.status });
         case 'invoice_sync':
           Object.assign(invRow, { status: 'paid', amount_paid_cents: invRow.total_cents, paid_at: new Date().toISOString() });
           if (invRow.transfer_status === 'scheduled') invRow.transfer_status = 'paid';
@@ -1881,10 +1902,135 @@ table.inv-table tbody tr { cursor: default; }
         if (/^index\.html/.test(h) || a.closest('.portal-top__left')) { e.preventDefault(); try { sessionStorage.removeItem('endeavor-combined-open'); } catch (x) { /* ignore */ } location.reload(); return; }
         if (a.closest('.lang-mini')) { e.preventDefault(); try { localStorage.setItem('endeavor-lang', JSON.stringify(a.dataset.lang)); } catch (x) { /* ignore */ } if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN(MODE, a.dataset.lang); else location.reload(); return; }
       }
-      if (/^https:\/\/(invoice|pay|connect)\.stripe\.com\//.test(h)) { e.preventDefault(); toast('Demo: abriria a página segura do Stripe (pagamento com cartão ou transferência).'); return; }
+      if (/^https:\/\/pay\.stripe\.com\/invoice\/.+\/pdf$/.test(h)) { e.preventDefault(); var ir = DB.invoices.find(function (x) { return x.invoice_pdf === h; }); if (ir) showInvoicePdf(ir); return; }
+      if (/^https:\/\/(invoice|pay|connect)\.stripe\.com\//.test(h)) { e.preventDefault(); toast('Demo: abriria a página segura do Stripe (pagamento com cartão, Pix ou transferência).'); return; }
       if (/^(index|schedule|login|privacy-policy|terms-of-use)\.html/.test(h)) { a.setAttribute('href', LIVE + h); a.target = '_blank'; a.rel = 'noopener'; }
     }, true);
   });
+
+  /* ---------------- demo invoice PDF ---------------- */
+  function pdfSafe(x) { return String(x == null ? '' : x).normalize('NFC').replace(/[^\x20-\x7E -ÿ]/g, function (c) { return c.normalize('NFKD').replace(/[^\x20-\x7E]/g, ''); }); }
+  async function invoicePdf(inv) {
+    var L2 = window.PDFLib, pdf = await L2.PDFDocument.create(), pg = pdf.addPage([612, 792]);
+    var f = await pdf.embedFont(L2.StandardFonts.Helvetica), b = await pdf.embedFont(L2.StandardFonts.HelveticaBold);
+    var navy = L2.rgb(0.04, 0.12, 0.23), gold = L2.rgb(0.78, 0.64, 0.36), grey = L2.rgb(0.42, 0.45, 0.5), ink = L2.rgb(0.1, 0.1, 0.12), green = L2.rgb(0.12, 0.42, 0.23);
+    var cl = DB.clients.find(function (c) { return c.id === inv.client_id; }) || {};
+    var usd = function (c) { return 'US$ ' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+    var T = function (t, x, y, o) { o = o || {}; pg.drawText(pdfSafe(t), { x: x, y: y, size: o.s || 10, font: o.b ? b : f, color: o.c || ink }); };
+    var R2 = function (t, x, y, o) { o = o || {}; var w = (o.b ? b : f).widthOfTextAtSize(pdfSafe(t), o.s || 10); T(t, x - w, y, o); };
+    pg.drawRectangle({ x: 0, y: 742, width: 612, height: 50, color: navy });
+    T('ENDEAVOR', 48, 768, { s: 18, b: true, c: L2.rgb(1, 1, 1) }); T('BUSINESS SOLUTIONS', 48, 754, { s: 8, c: gold });
+    R2('INVOICE / FATURA', 564, 762, { s: 14, b: true, c: L2.rgb(1, 1, 1) });
+    T('Endeavor Business Solutions (Endeavor Tax Solutions LLC)', 48, 712, { b: true }); T('111 N Orange Ave, Suite 800, Orlando, FL 32801', 48, 698, { c: grey });
+    T('support@endeavorbiz.com  ·  +1 (407) 436-9567', 48, 684, { c: grey });
+    R2('Invoice # ' + (inv.number || 'DRAFT'), 564, 712, { b: true }); R2('Issued: ' + inv.created_at.slice(0, 10), 564, 698, { c: grey }); R2('Due: ' + (inv.due_date || ''), 564, 684, { c: grey });
+    T('BILL TO', 48, 648, { s: 8, b: true, c: grey }); T(cl.name, 48, 634, { b: true }); T(cl.primary_email, 48, 620, { c: grey });
+    var y = 580;
+    pg.drawRectangle({ x: 48, y: y - 6, width: 516, height: 22, color: L2.rgb(0.95, 0.96, 0.98) });
+    T('DESCRIPTION', 58, y, { s: 8, b: true, c: grey }); R2('QTY', 420, y, { s: 8, b: true, c: grey }); R2('AMOUNT', 554, y, { s: 8, b: true, c: grey });
+    y -= 26;
+    (inv.items || []).forEach(function (i) { T(i.description, 58, y); R2(String(i.quantity || 1), 420, y); R2(usd(i.amount_cents * (i.quantity || 1)), 554, y); y -= 20; pg.drawLine({ start: { x: 48, y: y + 12 }, end: { x: 564, y: y + 12 }, thickness: 0.5, color: L2.rgb(0.88, 0.9, 0.93) }); });
+    y -= 8; T('Total', 380, y, { b: true }); R2(usd(inv.total_cents), 554, y, { b: true, s: 12 });
+    y -= 18; T('Amount paid', 380, y, { c: grey }); R2(usd(inv.amount_paid_cents), 554, y, { c: grey });
+    y -= 18; T('Amount due', 380, y, { b: true }); R2(usd(inv.total_cents - inv.amount_paid_cents), 554, y, { b: true, c: navy });
+    if (inv.status === 'paid') { pg.drawRectangle({ x: 48, y: y - 4, width: 120, height: 34, borderColor: green, borderWidth: 2 }); T('PAID / PAGA', 60, y + 8, { s: 14, b: true, c: green }); T('on ' + String(inv.paid_at || '').slice(0, 10), 60, y - 1, { s: 7, c: green }); }
+    y -= 60;
+    pg.drawLine({ start: { x: 48, y: y + 20 }, end: { x: 564, y: y + 20 }, thickness: 1, color: gold });
+    T('How to pay', 48, y, { b: true }); y -= 16;
+    T('Online in the Endeavor Client Portal (Invoices > Pay now): card, Pix, U.S. bank transfer (ACH), Apple Pay or Google Pay.', 48, y, { s: 9, c: grey }); y -= 13;
+    T('Payments are processed by Stripe. Endeavor never sees your card or bank details.', 48, y, { s: 9, c: grey });
+    T('SAMPLE DOCUMENT - DEMO MODE', 48, 40, { s: 8, b: true, c: gold }); R2('Page 1 of 1', 564, 40, { s: 8, c: grey });
+    return pdf.save();
+  }
+  async function showInvoicePdf(inv) {
+    var bytes = await invoicePdf(inv), name = 'Invoice-' + (inv.number || 'draft') + '.pdf';
+    var ov = document.createElement('div'); ov.className = 'overlay overlay--center'; ov.style.zIndex = 9000;
+    ov.innerHTML = '<div class="modal modal--wide" role="dialog" aria-modal="true" aria-label="' + name + '"><div class="viewer"><div class="viewer__bar"><strong>' + name + '</strong><div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" data-dl>Download</button><button class="close-x" type="button" aria-label="Close">×</button></div></div><div class="viewer__pages" data-pages></div></div></div>';
+    document.body.appendChild(ov);
+    var close = function () { ov.remove(); document.removeEventListener('keydown', esc); }, esc = function (e) { if (e.key === 'Escape') close(); };
+    document.addEventListener('keydown', esc); ov.querySelector('.close-x').onclick = close; ov.onclick = function (e) { if (e.target === ov) close(); };
+    ov.querySelector('[data-dl]').onclick = function () { var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
+    ov.querySelector('.close-x').focus();
+    if (window.EPdf) { var d = await EPdf.open(bytes.slice ? bytes.slice() : bytes); await EPdf.render(d, ov.querySelector('[data-pages]'), { maxWidth: 820, pageLabel: 'Page' }); }
+  }
+
+  /* ---------------- demo Stripe.js (Payment Element) ---------------- */
+  function payInvoice(secret, how) {
+    var inv = DB.invoices.find(function (i) { return secret.indexOf('pi_demo_' + i.id.slice(0, 8)) === 0; });
+    if (!inv) return;
+    if (how === 'ach') { toast('Demo: débito ACH iniciado. Ele leva de 1 a 4 dias úteis para compensar.'); return 'processing'; }
+    Object.assign(inv, { status: 'paid', amount_paid_cents: inv.total_cents, paid_at: new Date().toISOString() });
+    if (inv.transfer_status === 'scheduled') inv.transfer_status = 'paid';
+    toast('Demo: pagamento aprovado' + (inv.partner_id ? ' e comissão do parceiro repassada automaticamente.' : '.'));
+    return 'succeeded';
+  }
+  function fakeQr(canvas, seed) {
+    var n = 29, c = canvas.getContext('2d'), s = canvas.width / n, r = seed;
+    var rnd = function () { r = (r * 9301 + 49297) % 233280; return r / 233280; };
+    c.fillStyle = '#fff'; c.fillRect(0, 0, canvas.width, canvas.height); c.fillStyle = '#0b1f3a';
+    for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) if (rnd() > 0.52) c.fillRect(x * s, y * s, s, s);
+    [[0, 0], [n - 7, 0], [0, n - 7]].forEach(function (p) {
+      c.fillStyle = '#fff'; c.fillRect((p[0] - 1) * s, (p[1] - 1) * s, 9 * s, 9 * s);
+      c.fillStyle = '#0b1f3a'; c.fillRect(p[0] * s, p[1] * s, 7 * s, 7 * s); c.fillStyle = '#fff'; c.fillRect((p[0] + 1) * s, (p[1] + 1) * s, 5 * s, 5 * s); c.fillStyle = '#0b1f3a'; c.fillRect((p[0] + 2) * s, (p[1] + 2) * s, 3 * s, 3 * s);
+    });
+  }
+  window.Stripe = function (pk, opts) {
+    var pt = /^pt/.test((opts && opts.locale) || ''), es = /^es/.test((opts && opts.locale) || '');
+    var Lx = function (p, e, s2) { return pt ? p : es ? s2 : e; };
+    var state = { tab: 'card', bank: null, root: null, secret: null };
+    var css = document.createElement('style');
+    css.textContent = '.fpe{display:grid;gap:.85rem;font:400 15px/1.4 Inter,system-ui,sans-serif;color:#14213d}.fpe-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}@media(max-width:520px){.fpe-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}.fpe,.fpe-f,.fpe-row>*{min-width:0}.fpe-f input,.fpe-f select{width:100%;box-sizing:border-box}.fpe-tab{display:grid;gap:.35rem;justify-items:start;padding:.65rem .75rem;border:1px solid #d5dae3;border-radius:8px;background:#fff;cursor:pointer;font:600 13px Inter,system-ui,sans-serif;color:#30313d;text-align:left;box-shadow:0 1px 1px rgba(0,0,0,.03)}.fpe-tab[aria-selected=true]{border-color:#0b1f3a;box-shadow:0 0 0 1px #0b1f3a;color:#0b1f3a}.fpe-tab svg{width:22px;height:16px}' +
+      '.fpe-f{display:grid;gap:.3rem}.fpe-f label{font-size:13px;color:#30313d}.fpe-f input,.fpe-f select{min-height:44px;border:1px solid #d5dae3;border-radius:8px;padding:0 .75rem;font:inherit;background:#fff;box-shadow:0 1px 1px rgba(0,0,0,.03)}.fpe-f input:focus,.fpe-f select:focus{outline:2px solid rgba(11,31,58,.25);border-color:#0b1f3a}.fpe-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}' +
+      '.fpe-note{font-size:13px;color:#55627a;background:#f6f8fb;border-radius:8px;padding:.7rem .8rem}.fpe-banks{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}.fpe-bank{min-height:44px;border:1px solid #d5dae3;border-radius:8px;background:#fff;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}.fpe-bank[aria-pressed=true]{border-color:#0b1f3a;box-shadow:0 0 0 1px #0b1f3a}' +
+      '.fpe-wallet{min-height:48px;border-radius:8px;border:0;background:#000;color:#fff;font:600 16px Inter,system-ui,sans-serif}.fpe-pix{display:grid;justify-items:center;gap:.6rem;text-align:center;padding:.5rem}.fpe-pix canvas{width:210px;height:210px;border:8px solid #fff;box-shadow:0 0 0 1px #e3e7ee;border-radius:6px}.fpe-copy{display:flex;gap:.4rem;width:100%}.fpe-copy input{flex:1;min-width:0;min-height:40px;border:1px solid #d5dae3;border-radius:8px;padding:0 .6rem;font:12px ui-monospace,monospace}.fpe-copy button{border:1px solid #d5dae3;border-radius:8px;background:#fff;padding:0 .8rem;cursor:pointer;font:600 13px Inter,sans-serif}.fpe-wait{display:flex;gap:.5rem;align-items:center;font-size:13px;color:#55627a}.fpe-spin{width:14px;height:14px;border:2px solid #d5dae3;border-top-color:#0b1f3a;border-radius:50%;animation:fpe 0.8s linear infinite}@keyframes fpe{to{transform:rotate(360deg)}}.fpe-badge{font-size:11px;color:#6b7280;text-align:right}';
+    document.head.appendChild(css);
+    var ico = { card: '<svg viewBox="0 0 24 16"><rect x=".5" y=".5" width="23" height="15" rx="2" fill="none" stroke="currentColor"/><path d="M1 5h22" stroke="currentColor" stroke-width="2"/></svg>', pix: '<svg viewBox="0 0 24 16"><path d="M12 1l6 7-6 7-6-7z" fill="#32BCAD"/></svg>', ach: '<svg viewBox="0 0 24 16"><path d="M2 6l10-5 10 5M3 6v8M21 6v8M8 7v6M12 7v6M16 7v6M2 15h20" fill="none" stroke="currentColor"/></svg>', wallet: '<svg viewBox="0 0 24 16"><rect x="1" y="2" width="22" height="12" rx="3" fill="#000"/><text x="12" y="11" font-size="7" fill="#fff" text-anchor="middle" font-family="Arial">Pay</text></svg>' };
+    function render() {
+      var r = state.root; if (!r) return;
+      var tabs = [['card', Lx('Cartão', 'Card', 'Tarjeta')], ['pix', 'Pix'], ['ach', Lx('Banco dos EUA', 'US bank account', 'Banco de EE. UU.')], ['wallet', 'Apple Pay / Google Pay']];
+      var body = '';
+      if (state.tab === 'card') body = '<div class="fpe-f"><label for="fpe-num">' + Lx('Número do cartão', 'Card number', 'Número de tarjeta') + '</label><input id="fpe-num" inputmode="numeric" value="4242 4242 4242 4242" autocomplete="off"></div>' +
+        '<div class="fpe-row"><div class="fpe-f"><label for="fpe-exp">' + Lx('Validade', 'Expiration', 'Vencimiento') + '</label><input id="fpe-exp" value="12 / 30"></div><div class="fpe-f"><label for="fpe-cvc">CVC</label><input id="fpe-cvc" value="123" inputmode="numeric"></div></div>' +
+        '<div class="fpe-row"><div class="fpe-f"><label for="fpe-ctry">' + Lx('País', 'Country', 'País') + '</label><select id="fpe-ctry"><option>Brasil</option><option>United States</option><option>Paraguay</option></select></div><div class="fpe-f"><label for="fpe-zip">' + Lx('CEP / ZIP', 'ZIP', 'Código postal') + '</label><input id="fpe-zip" value="01310-100"></div></div>';
+      if (state.tab === 'pix') body = '<p class="fpe-note">' + Lx('Ao clicar em Pagar, aparece um QR code. Abra o app do seu banco, escolha Pix e leia o código. Compra internacional: o banco aplica IOF de 3,5%.', 'After you click Pay, a QR code appears. Open your bank app, choose Pix and scan it. International purchase: a 3.5% IOF applies.', 'Al hacer clic en Pagar aparece un código QR. Abra la app de su banco, elija Pix y escanéelo. Compra internacional: se aplica IOF de 3,5%.') + '</p>' +
+        '<div class="fpe-f"><label for="fpe-cpf">' + Lx('Nome completo', 'Full name', 'Nombre completo') + '</label><input id="fpe-cpf" value="Carlos Lima"></div>';
+      if (state.tab === 'ach') body = '<p class="fpe-note">' + Lx('Conecte a conta bancária nos EUA com segurança pelo Stripe. O débito compensa em 1 a 4 dias úteis.', 'Securely connect your U.S. bank account through Stripe. The debit clears in 1 to 4 business days.', 'Conecte su cuenta bancaria de EE. UU. con seguridad por Stripe. El débito se acredita en 1 a 4 días hábiles.') + '</p><div class="fpe-banks">' +
+        ['Chase', 'Bank of America', 'Wells Fargo', 'Truist'].map(function (bk) { return '<button type="button" class="fpe-bank" data-bank="' + bk + '" aria-pressed="' + (state.bank === bk) + '">' + bk + '</button>'; }).join('') + '</div>' + (state.bank ? '<p class="fpe-note">' + state.bank + ' · Checking ••••6789 ✓</p>' : '');
+      if (state.tab === 'wallet') body = '<p class="fpe-note">' + Lx('Pague com a carteira digital do seu celular ou navegador.', 'Pay with the wallet on your phone or browser.', 'Pague con la billetera de su celular o navegador.') + '</p><button type="button" class="fpe-wallet" data-wallet> Pay</button>';
+      r.innerHTML = '<div class="fpe"><div class="fpe-tabs" role="tablist">' + tabs.map(function (t) { return '<button type="button" role="tab" class="fpe-tab" data-tab="' + t[0] + '" aria-selected="' + (state.tab === t[0]) + '">' + ico[t[0]] + t[1] + '</button>'; }).join('') + '</div>' + body + '<div class="fpe-badge">Powered by <b>stripe</b> · demo</div></div>';
+      r.querySelectorAll('[data-tab]').forEach(function (b) { b.onclick = function () { state.tab = b.dataset.tab; render(); }; });
+      r.querySelectorAll('[data-bank]').forEach(function (b) { b.onclick = function () { state.bank = b.dataset.bank; render(); }; });
+      var w = r.querySelector('[data-wallet]'); if (w) w.onclick = function () { var f = r.closest('form'); if (f) f.requestSubmit(); };
+    }
+    var element = { mount: function (sel) { state.root = typeof sel === 'string' ? document.querySelector(sel) : sel; render(); setTimeout(function () { (element._ready || function () {})(); }, 50); }, on: function (ev, cb) { if (ev === 'ready') element._ready = cb; } };
+    return {
+      elements: function (o) { state.secret = o.clientSecret; return { create: function () { return element; } }; },
+      confirmPayment: function () {
+        var r = state.root;
+        if (state.tab === 'card') {
+          var num = (r.querySelector('#fpe-num').value || '').replace(/\D/g, '');
+          if (num.length < 15) return Promise.resolve({ error: { message: Lx('Número do cartão incompleto.', 'Your card number is incomplete.', 'Número de tarjeta incompleto.') } });
+          if (/^4000000000000002/.test(num)) return Promise.resolve({ error: { message: Lx('Cartão recusado.', 'Your card was declined.', 'Tarjeta rechazada.') } });
+          return new Promise(function (res) { setTimeout(function () { res({ paymentIntent: { status: payInvoice(state.secret, 'card') } }); }, 1200); });
+        }
+        if (state.tab === 'ach' && !state.bank) return Promise.resolve({ error: { message: Lx('Escolha o seu banco.', 'Choose your bank.', 'Elija su banco.') } });
+        if (state.tab === 'ach') return new Promise(function (res) { setTimeout(function () { res({ paymentIntent: { status: payInvoice(state.secret, 'ach') } }); }, 1000); });
+        if (state.tab === 'wallet') return new Promise(function (res) { setTimeout(function () { res({ paymentIntent: { status: payInvoice(state.secret, 'wallet') } }); }, 900); });
+        // Pix: show QR code and wait for the bank app
+        return new Promise(function (res) {
+          var code = '00020101021226870014br.gov.bcb.pix2565pix.stripe.com/qr/v2/' + state.secret.slice(8, 16) + '5204000053039865802BR5925ENDEAVOR BUSINESS SOLUT6009SAO PAULO62070503***6304' + 'A1B2';
+          r.innerHTML = '<div class="fpe fpe-pix"><strong>' + Lx('Pague com Pix', 'Pay with Pix', 'Pague con Pix') + '</strong><canvas width="290" height="290" aria-label="QR code Pix"></canvas>' +
+            '<div class="fpe-copy"><label class="sr-only" for="fpe-code">Pix copia e cola</label><input id="fpe-code" readonly value="' + code + '"><button type="button" data-copy>' + Lx('Copiar', 'Copy', 'Copiar') + '</button></div>' +
+            '<div class="fpe-wait" role="status"><span class="fpe-spin" aria-hidden="true"></span>' + Lx('Aguardando a confirmação do banco…', 'Waiting for your bank to confirm…', 'Esperando la confirmación del banco…') + '</div>' +
+            '<button type="button" class="fpe-bank" data-sim style="padding:0 1rem">' + Lx('Demo: simular pagamento no app do banco', 'Demo: simulate bank app payment', 'Demo: simular pago en la app del banco') + '</button><div class="fpe-badge">Powered by <b>stripe</b> · Pix</div></div>';
+          fakeQr(r.querySelector('canvas'), state.secret.length * 7919);
+          r.querySelector('[data-copy]').onclick = function () { try { navigator.clipboard.writeText(code); } catch (e) { /* ignore */ } this.textContent = '✓'; };
+          var done = false, finish = function () { if (done) return; done = true; res({ paymentIntent: { status: payInvoice(state.secret, 'pix') } }); };
+          r.querySelector('[data-sim]').onclick = finish; setTimeout(finish, 9000);
+        });
+      }
+    };
+  };
 })();
 
 </script>
@@ -2556,6 +2702,7 @@ window.ENDEAVOR_CFG = {
       access: 'Access', permCompanies: 'Companies', permAll: 'All companies (including new ones)', permDocs: 'Documents they can see', permOther: 'Other permissions',
       permDeadlines: 'Can see tax deadlines', permUpload: 'Can upload documents', permDocsHint: 'They always see the documents they uploaded.', editPerms: 'Permissions', savePerms: 'Save permissions', permsSaved: 'Permissions updated.',
       full: 'Full access', docsShort: 'Docs', noDocs: 'No documents', deadlinesShort: 'Deadlines', uploadShort: 'Upload', noCompanies: 'No companies', myAccess: 'My access', sharedBy: 'Shared by', yourRole: 'Your role',
+      ck_title: 'Invoice payment', ck_summary: 'Order summary', ck_total: 'Total due', ck_method: 'Payment method', ck_pay: 'Pay {a}', ck_secure: 'Payments are processed securely by Stripe. Endeavor never sees or stores your card or bank details.', ck_pdf: 'Download invoice (PDF)', ck_hosted: 'Pay on the Stripe page instead', ck_back: 'Back to invoices', ck_ok: 'Payment received. Thank you!', ck_okText: 'Your receipt was sent by email. The invoice is now marked as paid.', ck_processing: 'Payment in process. Bank transfers and Pix can take a moment to confirm; the invoice updates automatically.', ck_err: 'The payment could not be completed', ck_notReady: 'Online payment is still being set up. Use the Stripe link sent by email or write to support@endeavorbiz.com.', ck_paidAlready: 'This invoice is already paid.', ck_methods: 'Card, Pix, U.S. bank transfer (ACH), Apple Pay, Google Pay and other methods enabled by Endeavor.', ck_qty: 'Qty', ck_due: 'Due date', ck_loading: 'Preparing secure payment…', invDetails: 'Pay now', ck_billTo: 'Billed to', ck_from: 'From',
       nav_invoices: 'Invoices', invLead: 'Invoices from Endeavor. Pay securely by card or bank transfer through Stripe.', invNone: 'No invoices yet.', invNo: 'Invoice', invDate: 'Issued', invDue: 'Due', invTotal: 'Total', invStatus: 'Status', invPay: 'Pay now', invPdf: 'PDF', inv_open: 'Awaiting payment', inv_paid: 'Paid', inv_uncollectible: 'Overdue', invOpenTotal: 'Open balance', invPaidTotal: 'Paid this year', p_partnerLead: 'Referral partner',
       enrollS1: 'Install the free <strong>Google Authenticator</strong> app on your phone (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). The icon is a colorful asterisk.', enrollS2: 'In the app, tap <strong>+</strong> and choose <strong>Scan a QR code</strong>. Point the camera at the code below.', enrollS3: 'Type the 6-digit code the app shows (it changes every 30 seconds) and click <strong>Activate and continue</strong>.', mfaHint: 'Open Google Authenticator and use the code shown under <strong>Endeavor Business Solutions</strong>. Lost your phone? Write to support@endeavorbiz.com and we will reset your verification.',
       loading: 'Loading…', signOut: 'Sign out', menu: 'Menu', closeMenu: 'Close menu',
@@ -2604,6 +2751,7 @@ window.ENDEAVOR_CFG = {
       access: 'Acesso', permCompanies: 'Empresas', permAll: 'Todas as empresas (inclusive novas)', permDocs: 'Documentos que pode ver', permOther: 'Outras permissões',
       permDeadlines: 'Pode ver os prazos fiscais', permUpload: 'Pode enviar documentos', permDocsHint: 'Ele sempre vê os documentos que ele mesmo enviou.', editPerms: 'Permissões', savePerms: 'Salvar permissões', permsSaved: 'Permissões atualizadas.',
       full: 'Acesso completo', docsShort: 'Docs', noDocs: 'Sem documentos', deadlinesShort: 'Prazos', uploadShort: 'Envio', noCompanies: 'Nenhuma empresa', myAccess: 'Meu acesso', sharedBy: 'Compartilhado por', yourRole: 'Seu perfil',
+      ck_title: 'Pagamento da fatura', ck_summary: 'Resumo do pedido', ck_total: 'Total a pagar', ck_method: 'Forma de pagamento', ck_pay: 'Pagar {a}', ck_secure: 'Pagamento processado com segurança pelo Stripe. A Endeavor não vê nem guarda os dados do seu cartão ou da sua conta.', ck_pdf: 'Baixar fatura (PDF)', ck_hosted: 'Prefiro pagar na página do Stripe', ck_back: 'Voltar às faturas', ck_ok: 'Pagamento recebido. Obrigado!', ck_okText: 'O recibo foi enviado por e-mail e a fatura já aparece como paga.', ck_processing: 'Pagamento em processamento. Transferência bancária e Pix podem levar alguns instantes para confirmar; a fatura atualiza sozinha.', ck_err: 'Não foi possível concluir o pagamento', ck_notReady: 'O pagamento online ainda está sendo configurado. Use o link do Stripe enviado por e-mail ou escreva para support@endeavorbiz.com.', ck_paidAlready: 'Esta fatura já está paga.', ck_methods: 'Cartão, Pix, transferência bancária nos EUA (ACH), Apple Pay, Google Pay e outras formas habilitadas pela Endeavor.', ck_qty: 'Qtd', ck_due: 'Vencimento', ck_loading: 'Preparando o pagamento seguro…', invDetails: 'Pagar agora', ck_billTo: 'Cobrado de', ck_from: 'Emitido por',
       nav_invoices: 'Faturas', invLead: 'Faturas da Endeavor. Pague com segurança por cartão ou transferência bancária via Stripe.', invNone: 'Nenhuma fatura ainda.', invNo: 'Fatura', invDate: 'Emissão', invDue: 'Vencimento', invTotal: 'Total', invStatus: 'Status', invPay: 'Pagar agora', invPdf: 'PDF', inv_open: 'Aguardando pagamento', inv_paid: 'Paga', inv_uncollectible: 'Em atraso', invOpenTotal: 'Em aberto', invPaidTotal: 'Pago este ano', p_partnerLead: 'Parceiro de indicações',
       enrollS1: 'Instale no celular o app gratuito <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). O ícone é um asterisco colorido.', enrollS2: 'No app, toque no <strong>+</strong> e escolha <strong>Ler código QR</strong>. Aponte a câmera para o código abaixo.', enrollS3: 'Digite o código de 6 dígitos que aparece no app (ele muda a cada 30 segundos) e clique em <strong>Ativar e continuar</strong>.', mfaHint: 'Abra o Google Authenticator e use o código que aparece em <strong>Endeavor Business Solutions</strong>. Perdeu o celular? Escreva para support@endeavorbiz.com que a Endeavor reseta a sua verificação.',
       loading: 'Carregando…', signOut: 'Sair', menu: 'Menu', closeMenu: 'Fechar menu',
@@ -2652,6 +2800,7 @@ window.ENDEAVOR_CFG = {
       access: 'Acceso', permCompanies: 'Empresas', permAll: 'Todas las empresas (incluso nuevas)', permDocs: 'Documentos que puede ver', permOther: 'Otros permisos',
       permDeadlines: 'Puede ver los plazos fiscales', permUpload: 'Puede enviar documentos', permDocsHint: 'Siempre ve los documentos que él mismo envió.', editPerms: 'Permisos', savePerms: 'Guardar permisos', permsSaved: 'Permisos actualizados.',
       full: 'Acceso completo', docsShort: 'Docs', noDocs: 'Sin documentos', deadlinesShort: 'Plazos', uploadShort: 'Envío', noCompanies: 'Ninguna empresa', myAccess: 'Mi acceso', sharedBy: 'Compartido por', yourRole: 'Su perfil',
+      ck_title: 'Pago de la factura', ck_summary: 'Resumen del pedido', ck_total: 'Total a pagar', ck_method: 'Forma de pago', ck_pay: 'Pagar {a}', ck_secure: 'Pago procesado con seguridad por Stripe. Endeavor no ve ni guarda los datos de su tarjeta o cuenta.', ck_pdf: 'Descargar factura (PDF)', ck_hosted: 'Prefiero pagar en la página de Stripe', ck_back: 'Volver a las facturas', ck_ok: 'Pago recibido. ¡Gracias!', ck_okText: 'El recibo fue enviado por correo y la factura ya figura como pagada.', ck_processing: 'Pago en proceso. La transferencia bancaria y Pix pueden tardar un momento en confirmarse; la factura se actualiza sola.', ck_err: 'No se pudo completar el pago', ck_notReady: 'El pago en línea aún se está configurando. Use el enlace de Stripe enviado por correo o escriba a support@endeavorbiz.com.', ck_paidAlready: 'Esta factura ya está pagada.', ck_methods: 'Tarjeta, Pix, transferencia bancaria en EE. UU. (ACH), Apple Pay, Google Pay y otras formas habilitadas por Endeavor.', ck_qty: 'Cant.', ck_due: 'Vencimiento', ck_loading: 'Preparando el pago seguro…', invDetails: 'Pagar ahora', ck_billTo: 'Facturado a', ck_from: 'Emitido por',
       nav_invoices: 'Facturas', invLead: 'Facturas de Endeavor. Pague con seguridad con tarjeta o transferencia bancaria vía Stripe.', invNone: 'Aún no hay facturas.', invNo: 'Factura', invDate: 'Emisión', invDue: 'Vencimiento', invTotal: 'Total', invStatus: 'Estado', invPay: 'Pagar ahora', invPdf: 'PDF', inv_open: 'Esperando pago', inv_paid: 'Pagada', inv_uncollectible: 'Vencida', invOpenTotal: 'Saldo abierto', invPaidTotal: 'Pagado este año', p_partnerLead: 'Socio de referidos',
       enrollS1: 'Instale en su celular la app gratuita <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). El ícono es un asterisco de colores.', enrollS2: 'En la app, toque <strong>+</strong> y elija <strong>Escanear un código QR</strong>. Apunte la cámara al código de abajo.', enrollS3: 'Escriba el código de 6 dígitos que muestra la app (cambia cada 30 segundos) y haga clic en <strong>Activar y continuar</strong>.', mfaHint: 'Abra Google Authenticator y use el código que aparece en <strong>Endeavor Business Solutions</strong>. ¿Perdió su celular? Escriba a support@endeavorbiz.com y Endeavor restablecerá su verificación.',
       loading: 'Cargando…', signOut: 'Salir', menu: 'Menú', closeMenu: 'Cerrar menú',
@@ -3190,21 +3339,76 @@ window.ENDEAVOR_CFG = {
     };
   }
 
+  var money = function (c, cur) { return new Intl.NumberFormat(EP.locale, { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((c || 0) / 100); };
+  var stripeUrl = function (u) { return /^https:\/\/(invoice|pay)\.stripe\.com\//.test(u || '') ? u : null; };
+  async function payCall(payload) {
+    var sess = (await sb.auth.getSession()).data.session;
+    var r = await fetch(CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify(payload) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+    return j;
+  }
+  function loadStripeJs() {
+    if (window.Stripe) return Promise.resolve(window.Stripe);
+    return new Promise(function (res, rej) { var sc = document.createElement('script'); sc.src = 'https://js.stripe.com/v3/'; sc.onload = function () { res(window.Stripe); }; sc.onerror = rej; document.head.appendChild(sc); });
+  }
   async function vInvoices(view) {
+    var payId = param('pay'), paidId = param('paid');
+    if (payId) return vCheckout(view, payId);
+    if (paidId) { try { await payCall({ action: 'invoice_refresh', invoice_id: paidId }); } catch (e) { /* webhook will update */ } }
     var rows = await q(sb.from('invoices').select('id, number, created_at, due_date, total_cents, amount_paid_cents, currency, status, hosted_invoice_url, invoice_pdf, description').eq('client_id', S.client.id).order('created_at', { ascending: false }));
-    var money = function (c, cur) { return new Intl.NumberFormat(EP.locale, { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((c || 0) / 100); };
     var y = String(new Date().getFullYear());
     var open = rows.filter(function (r) { return r.status === 'open' || r.status === 'uncollectible'; }).reduce(function (s, r) { return s + r.total_cents - r.amount_paid_cents; }, 0);
     var paid = rows.filter(function (r) { return r.status === 'paid' && String(r.created_at).slice(0, 4) === y; }).reduce(function (s, r) { return s + r.amount_paid_cents; }, 0);
-    var safe = function (u) { return /^https:\/\/(invoice|pay)\.stripe\.com\//.test(u || '') ? u : null; };
-    view.innerHTML = head(t('nav_invoices'), t('invLead')) + '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(t('invOpenTotal'), money(open), true) + kpi(t('invPaidTotal'), money(paid), true) + '</div>' +
+    var done = paidId && rows.find(function (r) { return r.id === paidId; });
+    view.innerHTML = head(t('nav_invoices'), t('invLead')) +
+      (done ? '<div class="portal-alert portal-alert--' + (done.status === 'paid' ? 'ok' : 'info') + '" role="status" style="display:block;margin-bottom:1rem"><strong>' + esc(done.status === 'paid' ? t('ck_ok') : t('ck_processing')) + '</strong>' + (done.status === 'paid' ? ' ' + esc(t('ck_okText')) : '') + '</div>' : '') +
+      '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(t('invOpenTotal'), money(open), true) + kpi(t('invPaidTotal'), money(paid), true) + '</div>' +
       '<section class="portal-card">' + (rows.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>' + t('invNo') + '</th><th>' + t('invDate') + '</th><th>' + t('invDue') + '</th><th class="num">' + t('invTotal') + '</th><th>' + t('invStatus') + '</th><th><span class="sr-only">PDF</span></th></tr></thead><tbody>' +
         rows.map(function (r) {
-          var payUrl = safe(r.hosted_invoice_url), pdf = safe(r.invoice_pdf);
-          return '<tr><td><strong>' + esc(r.number || '—') + '</strong>' + (r.description ? '<div class="portal-muted" style="font-size:.85rem">' + esc(r.description) + '</div>' : '') + '</td><td>' + esc(fmtDate(r.created_at)) + '</td><td>' + esc(r.due_date ? fmtDate(r.due_date) : '—') + '</td>' +
+          var pdf = stripeUrl(r.invoice_pdf);
+          return '<tr><td><strong style="white-space:nowrap">' + esc(r.number || '—') + '</strong>' + (r.description ? '<div class="portal-muted" style="font-size:.85rem">' + esc(r.description) + '</div>' : '') + '</td><td>' + esc(fmtDate(r.created_at)) + '</td><td>' + esc(r.due_date ? fmtDate(r.due_date) : '—') + '</td>' +
             '<td class="num">' + esc(money(r.total_cents, r.currency)) + '</td><td><span class="inv-st inv-st--' + esc(r.status) + '">' + esc(t('inv_' + r.status)) + '</span></td>' +
-            '<td class="portal-btn-row">' + (r.status !== 'paid' && payUrl ? '<a class="btn btn--navy btn--xs" href="' + esc(payUrl) + '" target="_blank" rel="noopener">' + t('invPay') + '</a>' : '') + (pdf ? '<a class="btn btn--ghost btn--xs" href="' + esc(pdf) + '" target="_blank" rel="noopener">' + t('invPdf') + '</a>' : '') + '</td></tr>';
+            '<td><div class="portal-btn-row" style="flex-wrap:nowrap">' + (r.status === 'open' || r.status === 'uncollectible' ? '<a class="btn btn--navy btn--xs" href="#/invoices?pay=' + r.id + '">' + t('invPay') + '</a>' : '') + (pdf ? '<a class="btn btn--ghost btn--xs" href="' + esc(pdf) + '" target="_blank" rel="noopener">' + t('invPdf') + '</a>' : '') + '</div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty-state"><strong>' + t('invNone') + '</strong></div>') + '</section>';
+  }
+
+  /* Checkout inside the portal: invoice summary + Stripe Payment Element (card, Pix, ACH, wallets... as enabled in Stripe). */
+  async function vCheckout(view, id) {
+    var inv = (await q(sb.from('invoices').select('*').eq('id', id).eq('client_id', S.client.id)))[0];
+    if (!inv) { ERoute.set('#/invoices', true); return vInvoices(view); }
+    var pdf = stripeUrl(inv.invoice_pdf), hosted = stripeUrl(inv.hosted_invoice_url);
+    var items = Array.isArray(inv.items) ? inv.items : [];
+    view.innerHTML = '<p><a href="#/invoices">← ' + t('ck_back') + '</a></p>' + head(t('ck_title'), inv.number ? t('invNo') + ' ' + inv.number : '') +
+      '<div class="checkout"><section class="portal-card checkout__sum" aria-labelledby="ck-sum"><h2 class="portal-h2" id="ck-sum">' + t('ck_summary') + '</h2>' +
+        '<dl class="kv"><dt>' + t('ck_from') + '</dt><dd>Endeavor Business Solutions</dd><dt>' + t('ck_billTo') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('invNo') + '</dt><dd>' + esc(inv.number || '—') + '</dd><dt>' + t('ck_due') + '</dt><dd>' + esc(inv.due_date ? fmtDate(inv.due_date) : '—') + '</dd></dl>' +
+        '<ul class="cart">' + items.map(function (i) { return '<li><span><strong>' + esc(i.description) + '</strong>' + ((i.quantity || 1) > 1 ? '<small>' + t('ck_qty') + ' ' + i.quantity + ' × ' + esc(money(i.amount_cents, inv.currency)) + '</small>' : '') + '</span><span class="cart__amt">' + esc(money(i.amount_cents * (i.quantity || 1), inv.currency)) + '</span></li>'; }).join('') + '</ul>' +
+        '<div class="cart__total"><span>' + t('ck_total') + '</span><strong>' + esc(money(inv.total_cents - inv.amount_paid_cents, inv.currency)) + '</strong></div>' +
+        (pdf ? '<a class="btn btn--ghost btn--block" href="' + esc(pdf) + '" target="_blank" rel="noopener" style="margin-top:1rem"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg> ' + t('ck_pdf') + '</a>' : '') + '</section>' +
+      '<section class="portal-card checkout__pay" aria-labelledby="ck-pay"><h2 class="portal-h2" id="ck-pay">' + t('ck_method') + '</h2><p class="portal-muted" style="font-size:.88rem;margin-top:-.25rem">' + t('ck_methods') + '</p>' +
+        '<form id="ck-form" novalidate><div id="ck-element" class="ck-element"><p class="portal-muted">' + t('ck_loading') + '</p></div><div class="portal-alert" id="ck-msg" role="alert"></div>' +
+        '<button class="btn btn--navy btn--block" type="submit" id="ck-btn" disabled>' + esc(t('ck_pay', { a: money(inv.total_cents - inv.amount_paid_cents, inv.currency) })) + '</button></form>' +
+        '<p class="ck-secure"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>' + t('ck_secure') + '</p>' +
+        (hosted ? '<p style="text-align:center;font-size:.88rem"><a href="' + esc(hosted) + '" target="_blank" rel="noopener">' + t('ck_hosted') + '</a></p>' : '') + '</section></div>';
+    if (inv.status === 'paid') { $('#ck-element').innerHTML = '<div class="portal-alert portal-alert--ok" style="display:block">' + t('ck_paidAlready') + '</div>'; return; }
+    var cfg;
+    try { cfg = await payCall({ action: 'invoice_checkout', invoice_id: id }); }
+    catch (e) { $('#ck-element').innerHTML = '<div class="portal-alert portal-alert--error" style="display:block">' + esc(t('ck_notReady')) + '</div>'; return; }
+    if (cfg.status === 'paid') { ERoute.set('#/invoices?paid=' + id, true); return route(); }
+    if (!cfg.client_secret) { $('#ck-element').innerHTML = '<div class="portal-alert portal-alert--info" style="display:block">' + esc(t('ck_notReady')) + '</div>'; return; }
+    var StripeCtor = await loadStripeJs();
+    var stripe = StripeCtor(cfg.publishable_key, { locale: { pt: 'pt-BR', es: 'es', en: 'en' }[L] || 'auto' });
+    var elements = stripe.elements({ clientSecret: cfg.client_secret, appearance: { theme: 'stripe', variables: { colorPrimary: '#0b1f3a', colorText: '#14213d', borderRadius: '8px', fontFamily: 'Inter, system-ui, sans-serif' } } });
+    var pe = elements.create('payment', { layout: { type: 'tabs', defaultCollapsed: false }, defaultValues: { billingDetails: { name: S.client.name, email: S.client.primary_email } } });
+    $('#ck-element').innerHTML = ''; pe.mount('#ck-element');
+    pe.on('ready', function () { $('#ck-btn').disabled = false; });
+    $('#ck-form').onsubmit = async function (e) {
+      e.preventDefault();
+      var btn = $('#ck-btn'); btn.disabled = true; msg($('#ck-msg'), '', 'info');
+      var r = await stripe.confirmPayment({ elements: elements, redirect: 'if_required', confirmParams: { return_url: siteUrl('client.html') + '?lang=' + L + '#/invoices?paid=' + id } });
+      if (r.error) { btn.disabled = false; return msg($('#ck-msg'), t('ck_err') + ': ' + (r.error.message || ''), 'error'); }
+      ERoute.set('#/invoices?paid=' + id, true); route();
+    };
   }
 
   async function vSettings(view) {

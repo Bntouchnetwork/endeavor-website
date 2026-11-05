@@ -315,6 +315,8 @@
       '<aside class="portal-card"><h2 class="portal-h2">Como conectar</h2><ol class="steps-ol">' +
       '<li>No Stripe da Endeavor, abra <strong>Developers → API keys</strong> e copie a <strong>Secret key</strong> (comece pela de teste, <code>sk_test_…</code>).</li>' +
       '<li>No Supabase, em <strong>Edge Functions → Secrets</strong>, crie <code>STRIPE_SECRET_KEY</code> com essa chave. Ela fica só no servidor e nunca passa pelo navegador.</li>' +
+      '<li>Crie também <code>STRIPE_PUBLISHABLE_KEY</code> com a <strong>Publishable key</strong> (<code>pk_test_…</code>). Ela liga o checkout dentro do Portal do Cliente.</li>' +
+      '<li>Em <strong>Settings → Payment methods</strong>, ative as formas de pagamento: cartões, Apple Pay e Google Pay, Link, transferência bancária dos EUA (ACH) e <strong>Pix</strong> (para clientes no Brasil; o Stripe cobra o IOF do pagador por padrão). Confira também em <strong>Settings → Invoices</strong> as formas aceitas nas faturas.</li>' +
       '<li>No Stripe, ative o <strong>Connect</strong> (Settings → Connect) como plataforma, com contas <strong>Express</strong>.</li>' +
       '<li>Em <strong>Developers → Webhooks</strong>, crie um endpoint para <code>' + esc(hook) + '</code> com os eventos <code>invoice.*</code> e <code>transfer.reversed</code>. Salve o signing secret em <code>STRIPE_WEBHOOK_SECRET</code>.</li>' +
       '<li>Crie um segundo endpoint para o mesmo endereço marcando <strong>eventos de contas conectadas</strong>, com <code>account.updated</code>. Salve em <code>STRIPE_CONNECT_WEBHOOK_SECRET</code>.</li>' +
