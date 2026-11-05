@@ -1595,7 +1595,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     if (/formsubmit\.co/.test(u)) { toast('Demo: e-mail simulado (no site real ele é enviado e o suporte recebe cópia).'); return json({ success: 'true' }); }
     if (/\/functions\/v1\/qbo/.test(u)) {
       var b = {}; try { b = JSON.parse(opts.body); } catch (e) { /* ignore */ }
-      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: location.pathname + location.search + (MODE === 'client' ? '#/reports?company=' + b.company_id + '&qbo=connected' : location.hash) }); }
+      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: MODE === 'client' ? '#/reports?company=' + b.company_id + '&qbo=connected' : (window.ERoute ? ERoute.get() : location.hash) || '#/clientes' }); }
       if (b.action === 'disconnect') { delete QBO[b.company_id]; return json({ ok: true }); }
       if (b.action === 'generate') {
         var co = DB.companies.find(function (c) { return c.id === b.company_id; }), q = +b.quarter, label = q ? 'Q' + q + ' ' + b.year : b.year + ' (full year)';
@@ -1651,7 +1651,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
       if (window.ENDEAVOR_COMBINED) {
         // single-file preview: logo goes back to the homepage, language links reload this portal
         if (/^index\.html/.test(h) || a.closest('.portal-top__left')) { e.preventDefault(); try { sessionStorage.removeItem('endeavor-combined-open'); } catch (x) { /* ignore */ } location.reload(); return; }
-        if (a.closest('.lang-mini')) { e.preventDefault(); try { localStorage.setItem('endeavor-lang', JSON.stringify(a.dataset.lang)); } catch (x) { /* ignore */ } location.reload(); return; }
+        if (a.closest('.lang-mini')) { e.preventDefault(); try { localStorage.setItem('endeavor-lang', JSON.stringify(a.dataset.lang)); } catch (x) { /* ignore */ } if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN(MODE, a.dataset.lang); else location.reload(); return; }
       }
       if (/^(index|schedule|login|privacy-policy|terms-of-use)\.html/.test(h)) { a.setAttribute('href', LIVE + h); a.target = '_blank'; a.rel = 'noopener'; }
     }, true);
@@ -1670,6 +1670,44 @@ window.ENDEAVOR_CFG = {
   adminEmail: 'support@endeavorbiz.com',
   companyName: 'Endeavor Business Solutions'
 };
+
+</script>
+<script>
+/* Tiny hash router used by the admin console and the client portal.
+   Normally it reads and writes location.hash. In embedded previews (iframes rendered from a string, where
+   "#/..." links would navigate away), set window.ENDEAVOR_VIRTUAL_ROUTES = true and routes are kept in memory. */
+(function () {
+  'use strict';
+  var virtual = !!window.ENDEAVOR_VIRTUAL_ROUTES, cur = '';
+  function fire() { try { window.dispatchEvent(new HashChangeEvent('hashchange')); } catch (e) { window.dispatchEvent(new Event('hashchange')); } }
+  var R = {
+    virtual: virtual,
+    get: function () { return virtual ? cur : location.hash; },
+    set: function (h, replace) {
+      h = h || '';
+      if (!virtual) {
+        if (replace) { try { history.replaceState(null, '', h || location.pathname + location.search); } catch (e) { /* ignore */ } }
+        else location.hash = h;
+        return;
+      }
+      var changed = h !== cur; cur = h;
+      if (!replace && changed) fire();
+    },
+    go: function (url) { if (/^#/.test(url)) R.set(url); else location.href = url; }
+  };
+  if (virtual) {
+    document.addEventListener('click', function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey) return;
+      var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
+      var h = a.getAttribute('href');
+      e.preventDefault();
+      if (/^#\//.test(h)) { R.set(h); return; }
+      var t = h.length > 1 && document.getElementById(h.slice(1));
+      if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.scrollIntoView(); t.focus({ preventScroll: true }); }
+    });
+  }
+  window.ERoute = R;
+})();
 
 </script>
 <script>
@@ -1781,6 +1819,7 @@ window.ENDEAVOR_CFG = {
   'use strict';
   var KEY = 'endeavor-lang', LANGS = { en: 'en', pt: 'pt-BR', es: 'es' };
   function pick() {
+    if (window.DEMO_LANG && LANGS[window.DEMO_LANG]) return window.DEMO_LANG;
     var q = null;
     try { q = new URL(location.href).searchParams.get('lang'); } catch (e) { /* ignore */ }
     if (q && LANGS[q]) { try { localStorage.setItem(KEY, JSON.stringify(q)); } catch (e) { /* ignore */ } return q; }
@@ -2051,7 +2090,7 @@ window.ENDEAVOR_CFG = {
   function fmtDate(d) { if (!d) return ''; return new Intl.DateTimeFormat(EP.locale, { dateStyle: 'medium' }).format(new Date(d.length === 10 ? d + 'T12:00:00' : d)); }
   function fmtDT(d) { return d ? new Intl.DateTimeFormat(EP.locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : ''; }
   function daysUntil(d) { var n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((new Date(d + 'T00:00:00') - n) / 864e5); }
-  function siteUrl(f) { return new URL(f, location.href).href.split('#')[0]; }
+  function siteUrl(file) { try { if (/^(https?|file):/.test(location.protocol)) return new URL(file, location.href).href.split('#')[0]; } catch (e) { /* ignore */ } return 'https://endeavorbiz.com/' + file; }
   function download(name, blob) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
   function slug(s) { return String(s).normalize('NFKD').replace(/[^\w.\-]+/g, '-').replace(/-+/g, '-').slice(0, 80); }
   async function sha256Hex(buf) { var d = await crypto.subtle.digest('SHA-256', buf); return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, '0'); }).join(''); }
@@ -2074,7 +2113,7 @@ window.ENDEAVOR_CFG = {
   var S = { memberships: [], client: null, role: null, perms: {}, companies: [], user: null };
   var recovery = false;
   sb.auth.onAuthStateChange(function (ev) { if (ev === 'PASSWORD_RECOVERY') { recovery = true; renderNewPassword(); } });
-  $('#btn-signout').onclick = async function () { await sb.auth.signOut(); location.hash = ''; location.reload(); };
+  $('#btn-signout').onclick = async function () { await sb.auth.signOut(); ERoute.set('', true); location.reload(); };
 
   function authShell(html) {
     document.body.classList.remove('app-shell'); $('#topbar-user').hidden = true; $('#nav-toggle').hidden = true;
@@ -2196,7 +2235,7 @@ window.ENDEAVOR_CFG = {
     route();
   }
   function route() {
-    var h = location.hash.replace(/^#\/?/, ''), v = h.split('?')[0] || 'overview';
+    var h = ERoute.get().replace(/^#\/?/, ''), v = h.split('?')[0] || 'overview';
     var allowed = navItems().map(function (n) { return n[0]; });
     if (allowed.indexOf(v) < 0) v = 'overview';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
@@ -2204,7 +2243,7 @@ window.ENDEAVOR_CFG = {
     var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: vUpload, collaborators: vCollab, settings: vSettings };
     V[v](view).catch(function (e) { view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>'; console.error(e); });
   }
-  function param(k) { var m = location.hash.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; }
+  function param(k) { var m = ERoute.get().match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; }
   function head(title, lead, actions) { return '<div class="console__head"><div><h1>' + esc(title) + '</h1>' + (lead ? '<p class="portal-muted">' + esc(lead) + '</p>' : '') + '</div>' + (actions || '') + '</div>'; }
   function coById(id) { return S.companies.find(function (c) { return c.id === id; }); }
 
@@ -2384,7 +2423,7 @@ window.ENDEAVOR_CFG = {
       }).join('');
     wireDocs(body, docs);
     var fail = function (id, e) { msg($('#qm-' + id), D.en[e.message] ? t(e.message) : t('generic'), 'error'); };
-    $$('[data-conn]', body).forEach(function (b) { b.onclick = async function () { try { var j = await qboCall({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); location.href = j.url; } catch (e) { fail(b.dataset.conn, e); } }; });
+    $$('[data-conn]', body).forEach(function (b) { b.onclick = async function () { try { var j = await qboCall({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); ERoute.go(j.url); } catch (e) { fail(b.dataset.conn, e); } }; });
     $$('[data-disc]', body).forEach(function (b) { b.onclick = async function () { if (!confirm(t('confirmDisconnect'))) return; try { await qboCall({ action: 'disconnect', company_id: b.dataset.disc }); route(); } catch (e) { fail(b.dataset.disc, e); } }; });
     $$('[data-gen]', body).forEach(function (b) { b.onclick = async function () {
       var id = b.dataset.gen; b.disabled = true; msg($('#qm-' + id), t('generating'), 'info');
@@ -2475,7 +2514,7 @@ window.ENDEAVOR_CFG = {
       var r = await sb.from('client_users').insert({ client_id: S.client.id, email: email, name: name, role: 'collaborator', collab_type: $('#iv-type').value, can_view: $('#iv-view').checked, can_upload: $('#iv-up').checked });
       if (r.error) return msg($('#iv-msg'), /unique|duplicate/i.test(r.error.message) ? t('inviteDup') : errText(r.error), 'error');
       await sendInvite(email, name);
-      closeOverlay(); history.replaceState(null, '', '#/collaborators'); route();
+      closeOverlay(); ERoute.set('#/collaborators', true); route();
     };
   }
 

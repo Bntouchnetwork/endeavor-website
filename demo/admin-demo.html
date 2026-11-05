@@ -1593,7 +1593,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     if (/formsubmit\.co/.test(u)) { toast('Demo: e-mail simulado (no site real ele é enviado e o suporte recebe cópia).'); return json({ success: 'true' }); }
     if (/\/functions\/v1\/qbo/.test(u)) {
       var b = {}; try { b = JSON.parse(opts.body); } catch (e) { /* ignore */ }
-      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: location.pathname + location.search + (MODE === 'client' ? '#/reports?company=' + b.company_id + '&qbo=connected' : location.hash) }); }
+      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: MODE === 'client' ? '#/reports?company=' + b.company_id + '&qbo=connected' : (window.ERoute ? ERoute.get() : location.hash) || '#/clientes' }); }
       if (b.action === 'disconnect') { delete QBO[b.company_id]; return json({ ok: true }); }
       if (b.action === 'generate') {
         var co = DB.companies.find(function (c) { return c.id === b.company_id; }), q = +b.quarter, label = q ? 'Q' + q + ' ' + b.year : b.year + ' (full year)';
@@ -1649,7 +1649,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
       if (window.ENDEAVOR_COMBINED) {
         // single-file preview: logo goes back to the homepage, language links reload this portal
         if (/^index\.html/.test(h) || a.closest('.portal-top__left')) { e.preventDefault(); try { sessionStorage.removeItem('endeavor-combined-open'); } catch (x) { /* ignore */ } location.reload(); return; }
-        if (a.closest('.lang-mini')) { e.preventDefault(); try { localStorage.setItem('endeavor-lang', JSON.stringify(a.dataset.lang)); } catch (x) { /* ignore */ } location.reload(); return; }
+        if (a.closest('.lang-mini')) { e.preventDefault(); try { localStorage.setItem('endeavor-lang', JSON.stringify(a.dataset.lang)); } catch (x) { /* ignore */ } if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN(MODE, a.dataset.lang); else location.reload(); return; }
       }
       if (/^(index|schedule|login|privacy-policy|terms-of-use)\.html/.test(h)) { a.setAttribute('href', LIVE + h); a.target = '_blank'; a.rel = 'noopener'; }
     }, true);
@@ -1669,6 +1669,44 @@ window.ENDEAVOR_CFG = {
   adminEmail: 'support@endeavorbiz.com',
   companyName: 'Endeavor Business Solutions'
 };
+
+</script>
+<script>
+/* Tiny hash router used by the admin console and the client portal.
+   Normally it reads and writes location.hash. In embedded previews (iframes rendered from a string, where
+   "#/..." links would navigate away), set window.ENDEAVOR_VIRTUAL_ROUTES = true and routes are kept in memory. */
+(function () {
+  'use strict';
+  var virtual = !!window.ENDEAVOR_VIRTUAL_ROUTES, cur = '';
+  function fire() { try { window.dispatchEvent(new HashChangeEvent('hashchange')); } catch (e) { window.dispatchEvent(new Event('hashchange')); } }
+  var R = {
+    virtual: virtual,
+    get: function () { return virtual ? cur : location.hash; },
+    set: function (h, replace) {
+      h = h || '';
+      if (!virtual) {
+        if (replace) { try { history.replaceState(null, '', h || location.pathname + location.search); } catch (e) { /* ignore */ } }
+        else location.hash = h;
+        return;
+      }
+      var changed = h !== cur; cur = h;
+      if (!replace && changed) fire();
+    },
+    go: function (url) { if (/^#/.test(url)) R.set(url); else location.href = url; }
+  };
+  if (virtual) {
+    document.addEventListener('click', function (e) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey) return;
+      var a = e.target.closest && e.target.closest('a[href^="#"]'); if (!a) return;
+      var h = a.getAttribute('href');
+      e.preventDefault();
+      if (/^#\//.test(h)) { R.set(h); return; }
+      var t = h.length > 1 && document.getElementById(h.slice(1));
+      if (t) { if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1'); t.scrollIntoView(); t.focus({ preventScroll: true }); }
+    });
+  }
+  window.ERoute = R;
+})();
 
 </script>
 <script>
@@ -2433,19 +2471,19 @@ window.ENDEAVOR_CFG = {
             '<td>' + (soon ? '<span class="pill pill--soon">' + soon + '</span>' : '0') + '</td><td>' + (c.status === 'active' ? '<span class="pill pill--done">Ativo</span>' : '<span class="pill">Arquivado</span>') + '</td></tr>';
         }).join('') : '<tr><td colspan="5"><div class="empty-state"><strong>Nenhum cliente ainda</strong>Crie o primeiro cliente para liberar o portal.</div></td></tr>';
         view.querySelectorAll('#cl-body tr[data-id]').forEach(function (tr) {
-          var go = function () { location.hash = '#/clientes?id=' + tr.dataset.id; };
+          var go = function () { ERoute.set('#/clientes?id=' + tr.dataset.id); };
           tr.onclick = go; tr.onkeydown = function (e) { if (e.key === 'Enter') go(); };
         });
       }
       view.querySelector('#cl-q').oninput = draw; draw();
       view.querySelector('#cl-new').onclick = function () { newClient(ctx); };
-      if (/novo=1/.test(location.hash)) newClient(ctx);
+      if (/novo=1/.test(ERoute.get())) newClient(ctx);
     },
 
     /* ---------- detail ---------- */
     detail: async function (view, ctx, id) {
       var esc = ctx.esc, sb = ctx.sb;
-      var tab = (location.hash.match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
+      var tab = (ERoute.get().match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
       var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
@@ -2498,7 +2536,7 @@ window.ENDEAVOR_CFG = {
         if ($('#nc-lead').value) await ctx.sb.from('leads').update({ status: 'client' }).eq('id', $('#nc-lead').value);
         var sent = $('#nc-inv').checked ? await sendInvite(ctx, { email: email, name: name, clientName: name, role: 'owner', lang: $('#nc-lang').value }) : false;
         ctx.closeOverlay();
-        location.hash = '#/clientes?id=' + c.id + (sent ? '&convite=1' : '');
+        ERoute.set('#/clientes?id=' + c.id + (sent ? '&convite=1' : ''));
       } catch (err) { ctx.msg(m, ctx.errText(err), 'error'); }
     };
   }
@@ -2522,7 +2560,7 @@ window.ENDEAVOR_CFG = {
   /* ---------- companies ---------- */
   async function tabCompanies(body, ctx, c, companies) {
     var esc = ctx.esc;
-    if (/convite=1/.test(location.hash)) body.insertAdjacentHTML('beforebegin', '<div class="portal-alert portal-alert--ok">Cliente criado e convite enviado para ' + esc(c.primary_email) + '.</div>');
+    if (/convite=1/.test(ERoute.get())) body.insertAdjacentHTML('beforebegin', '<div class="portal-alert portal-alert--ok">Cliente criado e convite enviado para ' + esc(c.primary_email) + '.</div>');
     body.innerHTML = '<div class="portal-btn-row" style="justify-content:flex-end;margin-bottom:1rem"><button class="btn btn--navy btn--xs" type="button" id="co-new">Adicionar empresa</button></div>' +
       (companies.length ? '<div class="cards">' + companies.map(function (co) {
         return '<div class="co-card"><h3>' + esc(co.legal_name) + '</h3><div class="meta">' + esc(ENTITY[co.entity_type] || co.entity_type || '') + ' · ' + esc(co.state || '') + (co.formation_date ? ' · constituída em ' + fmtD(co.formation_date) : '') + '</div>' +
@@ -2575,7 +2613,7 @@ window.ENDEAVOR_CFG = {
     var r = await ctx.sb.from('compliance_items').insert(items);
     if (r.error) return alert(ctx.errText(r.error));
     alert(items.length + ' prazos criados. Confira as datas com o contador, principalmente extensões e anos fiscais diferentes do calendário.');
-    location.hash = location.hash.replace(/&tab=[a-z]+/, '') + '&tab=prazos';
+    ERoute.set(ERoute.get().replace(/&tab=[a-z]+/, '') + '&tab=prazos');
   }
 
   /* ---------- documents ---------- */
@@ -2755,7 +2793,7 @@ window.ENDEAVOR_CFG = {
     var QERR = { qbo_not_configured: 'A integração com o QuickBooks ainda não foi configurada (Client ID e Secret da Intuit).', qbo_reconnect_required: 'A conexão expirou. É preciso reconectar o QuickBooks.', qbo_not_connected: 'QuickBooks não conectado.', future_period: 'Esse período ainda não começou.' };
     var err = function (id, e) { ctx.msg(body.querySelector('#qm-' + id), QERR[e.message] || ctx.errText(e), 'error'); };
     body.querySelectorAll('[data-conn]').forEach(function (b) { b.onclick = async function () {
-      try { var j = await call({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); location.href = j.url; } catch (e) { err(b.dataset.conn, e); }
+      try { var j = await call({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); ERoute.go(j.url); } catch (e) { err(b.dataset.conn, e); }
     }; });
     body.querySelectorAll('[data-disc]').forEach(function (b) { b.onclick = async function () {
       if (!confirm('Desconectar o QuickBooks desta empresa?')) return;
@@ -2816,7 +2854,7 @@ window.ENDEAVOR_CFG = {
     var d = await crypto.subtle.digest('SHA-256', buf);
     return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
   }
-  function siteUrl(file) { return new URL(file, location.href).href.split('#')[0]; }
+  function siteUrl(file) { try { if (/^(https?|file):/.test(location.protocol)) return new URL(file, location.href).href.split('#')[0]; } catch (e) { /* ignore */ } return 'https://endeavorbiz.com/' + file; }
   function copy(text, btn) {
     (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
       if (btn) { var t = btn.textContent; btn.textContent = 'Copiado ✓'; setTimeout(function () { btn.textContent = t; }, 1600); }
@@ -2829,7 +2867,7 @@ window.ENDEAVOR_CFG = {
     if (ev === 'PASSWORD_RECOVERY') { recoveryMode = true; renderNewPassword(); }
     if (ev === 'SIGNED_OUT') { renderLogin(); }
   });
-  document.getElementById('btn-signout').addEventListener('click', async function () { await sb.auth.signOut(); location.hash = ''; renderLogin(); });
+  document.getElementById('btn-signout').addEventListener('click', async function () { await sb.auth.signOut(); ERoute.set('', true); renderLogin(); });
 
   async function boot() {
     if (recoveryMode) return;
@@ -2967,7 +3005,7 @@ window.ENDEAVOR_CFG = {
   async function loadSettings() { var r = await sb.from('booking_settings').select('*').eq('id', 1).single(); if (!r.error) state.settings = r.data; }
 
   function route() {
-    var v = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('?')[0];
+    var v = (ERoute.get().replace(/^#\/?/, '') || 'dashboard').split('?')[0];
     if (!NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
@@ -3076,7 +3114,7 @@ window.ENDEAVOR_CFG = {
     $('#crm-csv').addEventListener('click', exportCsv);
     $('#crm-new').addEventListener('click', function () { openLead(null); });
     draw();
-    if (/novo=1/.test(location.hash)) openLead(null);
+    if (/novo=1/.test(ERoute.get())) openLead(null);
   }
 
   async function openLead(id) {
@@ -3109,7 +3147,7 @@ window.ENDEAVOR_CFG = {
       if (row.name.length < 2 || row.email.indexOf('@') < 1) return msg($('#ld-msg'), 'Preencha nome e e-mail.', 'error');
       var r = id ? await sb.from('leads').update(row).eq('id', id) : await sb.from('leads').insert(Object.assign(row, { source: 'manual' }));
       if (r.error) return msg($('#ld-msg'), errText(r.error), 'error');
-      closeOverlay(); if (/novo=1/.test(location.hash)) location.hash = '#/crm'; else route();
+      closeOverlay(); if (/novo=1/.test(ERoute.get())) ERoute.set('#/crm'); else route();
     });
   }
   function fld(id, label, val, type, req) {
@@ -3118,7 +3156,7 @@ window.ENDEAVOR_CFG = {
 
   /* ---------- Agenda ---------- */
   async function viewAgenda(view) {
-    var tab = /tab=disp/.test(location.hash) ? 'disp' : 'prox';
+    var tab = /tab=disp/.test(ERoute.get()) ? 'disp' : 'prox';
     view.innerHTML = '<div class="console__head"><div><h1>Agenda</h1><p class="portal-muted">Horários no fuso ' + esc(tz()) + '.</p></div>' +
       '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="ag-copy">Copiar link público</button><a class="btn btn--ghost btn--xs" href="schedule.html" target="_blank" rel="noopener">Abrir página</a></div></div>' +
       '<div class="tabs" role="tablist"><button role="tab" type="button" data-tab="prox" aria-selected="' + (tab === 'prox') + '">Próximos</button><button role="tab" type="button" data-tab="hist" aria-selected="false">Histórico</button><button role="tab" type="button" data-tab="disp" aria-selected="' + (tab === 'disp') + '">Disponibilidade</button></div>' +
@@ -3214,7 +3252,7 @@ window.ENDEAVOR_CFG = {
 
   /* ---------- E-signature ---------- */
   async function viewEnvelopes(view) {
-    if (/novo=1/.test(location.hash)) return viewEditor(view);
+    if (/novo=1/.test(ERoute.get())) return viewEditor(view);
     state.envelopes = await q(sb.from('envelopes').select('*').order('created_at', { ascending: false }).limit(500));
     view.innerHTML = '<div class="console__head"><div><h1>Assinaturas</h1><p class="portal-muted">Prepare documentos, posicione os campos de assinatura e acompanhe tudo por aqui.</p></div>' +
       '<a class="btn btn--navy btn--xs" href="#/assinaturas?novo=1" id="env-new">Novo documento</a></div>' +
@@ -3262,7 +3300,7 @@ window.ENDEAVOR_CFG = {
 
   async function viewEditor(view) {
     var leads = await q(sb.from('leads').select('id,name,email').order('created_at', { ascending: false }).limit(500));
-    var pre = (location.hash.match(/lead=([0-9a-f-]{36})/) || [])[1];
+    var pre = (ERoute.get().match(/lead=([0-9a-f-]{36})/) || [])[1];
     view.innerHTML = '<p class="portal-muted">Carregando editor…</p>';
     if (!window.EPdf || !window.pdfjsLib || !window.PDFLib || !window.EndeavorEditor) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">Não foi possível carregar o editor de PDF. Verifique a conexão e recarregue a página.</div>'; return;
@@ -3271,9 +3309,9 @@ window.ENDEAVOR_CFG = {
     EndeavorEditor.mount(view, {
       sb: sb, CFG: CFG, esc: esc, msg: msg, errText: errText, sha256Hex: sha256Hex, leads: leads, preLeadId: pre,
       preLead: leads.find(function (l) { return l.id === pre; }), emailSigner: emailSigner,
-      onCancel: function () { location.hash = '#/assinaturas'; },
+      onCancel: function () { ERoute.set('#/assinaturas'); },
       onDone: function (e, mailed) {
-        history.replaceState(null, '', '#/assinaturas');
+        ERoute.set('#/assinaturas', true);
         view.classList.remove('is-editor');
         view.innerHTML = '<div class="console__head"><h1>Documento enviado</h1></div><section class="portal-card esx-done">' +
           '<p class="portal-alert portal-alert--ok">' + (mailed ? 'O link de assinatura foi enviado para <strong>' + esc(e.signer_email) + '</strong> e uma cópia foi para ' + esc(CFG.adminEmail) + '.' : 'Documento criado. Copie o link abaixo e envie ao signatário.') + '</p>' +
@@ -3296,7 +3334,7 @@ window.ENDEAVOR_CFG = {
   }
   async function viewClients(view) {
     if (!window.AdminClients) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de clientes não carregou. Recarregue a página.</div>'; return; }
-    var id = (location.hash.match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
+    var id = (ERoute.get().match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
     return id ? AdminClients.detail(view, clientsCtx(), id) : AdminClients.list(view, clientsCtx());
   }
 

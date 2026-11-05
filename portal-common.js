@@ -3,6 +3,7 @@
   'use strict';
   var KEY = 'endeavor-lang', LANGS = { en: 'en', pt: 'pt-BR', es: 'es' };
   function pick() {
+    if (window.DEMO_LANG && LANGS[window.DEMO_LANG]) return window.DEMO_LANG;
     var q = null;
     try { q = new URL(location.href).searchParams.get('lang'); } catch (e) { /* ignore */ }
     if (q && LANGS[q]) { try { localStorage.setItem(KEY, JSON.stringify(q)); } catch (e) { /* ignore */ } return q; }

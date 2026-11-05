@@ -154,7 +154,7 @@
   function fmtDate(d) { if (!d) return ''; return new Intl.DateTimeFormat(EP.locale, { dateStyle: 'medium' }).format(new Date(d.length === 10 ? d + 'T12:00:00' : d)); }
   function fmtDT(d) { return d ? new Intl.DateTimeFormat(EP.locale, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d)) : ''; }
   function daysUntil(d) { var n = new Date(); n.setHours(0, 0, 0, 0); return Math.round((new Date(d + 'T00:00:00') - n) / 864e5); }
-  function siteUrl(f) { return new URL(f, location.href).href.split('#')[0]; }
+  function siteUrl(file) { try { if (/^(https?|file):/.test(location.protocol)) return new URL(file, location.href).href.split('#')[0]; } catch (e) { /* ignore */ } return 'https://endeavorbiz.com/' + file; }
   function download(name, blob) { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
   function slug(s) { return String(s).normalize('NFKD').replace(/[^\w.\-]+/g, '-').replace(/-+/g, '-').slice(0, 80); }
   async function sha256Hex(buf) { var d = await crypto.subtle.digest('SHA-256', buf); return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, '0'); }).join(''); }
@@ -177,7 +177,7 @@
   var S = { memberships: [], client: null, role: null, perms: {}, companies: [], user: null };
   var recovery = false;
   sb.auth.onAuthStateChange(function (ev) { if (ev === 'PASSWORD_RECOVERY') { recovery = true; renderNewPassword(); } });
-  $('#btn-signout').onclick = async function () { await sb.auth.signOut(); location.hash = ''; location.reload(); };
+  $('#btn-signout').onclick = async function () { await sb.auth.signOut(); ERoute.set('', true); location.reload(); };
 
   function authShell(html) {
     document.body.classList.remove('app-shell'); $('#topbar-user').hidden = true; $('#nav-toggle').hidden = true;
@@ -299,7 +299,7 @@
     route();
   }
   function route() {
-    var h = location.hash.replace(/^#\/?/, ''), v = h.split('?')[0] || 'overview';
+    var h = ERoute.get().replace(/^#\/?/, ''), v = h.split('?')[0] || 'overview';
     var allowed = navItems().map(function (n) { return n[0]; });
     if (allowed.indexOf(v) < 0) v = 'overview';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
@@ -307,7 +307,7 @@
     var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: vUpload, collaborators: vCollab, settings: vSettings };
     V[v](view).catch(function (e) { view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>'; console.error(e); });
   }
-  function param(k) { var m = location.hash.match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; }
+  function param(k) { var m = ERoute.get().match(new RegExp('[?&]' + k + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : null; }
   function head(title, lead, actions) { return '<div class="console__head"><div><h1>' + esc(title) + '</h1>' + (lead ? '<p class="portal-muted">' + esc(lead) + '</p>' : '') + '</div>' + (actions || '') + '</div>'; }
   function coById(id) { return S.companies.find(function (c) { return c.id === id; }); }
 
@@ -487,7 +487,7 @@
       }).join('');
     wireDocs(body, docs);
     var fail = function (id, e) { msg($('#qm-' + id), D.en[e.message] ? t(e.message) : t('generic'), 'error'); };
-    $$('[data-conn]', body).forEach(function (b) { b.onclick = async function () { try { var j = await qboCall({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); location.href = j.url; } catch (e) { fail(b.dataset.conn, e); } }; });
+    $$('[data-conn]', body).forEach(function (b) { b.onclick = async function () { try { var j = await qboCall({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); ERoute.go(j.url); } catch (e) { fail(b.dataset.conn, e); } }; });
     $$('[data-disc]', body).forEach(function (b) { b.onclick = async function () { if (!confirm(t('confirmDisconnect'))) return; try { await qboCall({ action: 'disconnect', company_id: b.dataset.disc }); route(); } catch (e) { fail(b.dataset.disc, e); } }; });
     $$('[data-gen]', body).forEach(function (b) { b.onclick = async function () {
       var id = b.dataset.gen; b.disabled = true; msg($('#qm-' + id), t('generating'), 'info');
@@ -578,7 +578,7 @@
       var r = await sb.from('client_users').insert({ client_id: S.client.id, email: email, name: name, role: 'collaborator', collab_type: $('#iv-type').value, can_view: $('#iv-view').checked, can_upload: $('#iv-up').checked });
       if (r.error) return msg($('#iv-msg'), /unique|duplicate/i.test(r.error.message) ? t('inviteDup') : errText(r.error), 'error');
       await sendInvite(email, name);
-      closeOverlay(); history.replaceState(null, '', '#/collaborators'); route();
+      closeOverlay(); ERoute.set('#/collaborators', true); route();
     };
   }
 

@@ -89,19 +89,19 @@
             '<td>' + (soon ? '<span class="pill pill--soon">' + soon + '</span>' : '0') + '</td><td>' + (c.status === 'active' ? '<span class="pill pill--done">Ativo</span>' : '<span class="pill">Arquivado</span>') + '</td></tr>';
         }).join('') : '<tr><td colspan="5"><div class="empty-state"><strong>Nenhum cliente ainda</strong>Crie o primeiro cliente para liberar o portal.</div></td></tr>';
         view.querySelectorAll('#cl-body tr[data-id]').forEach(function (tr) {
-          var go = function () { location.hash = '#/clientes?id=' + tr.dataset.id; };
+          var go = function () { ERoute.set('#/clientes?id=' + tr.dataset.id); };
           tr.onclick = go; tr.onkeydown = function (e) { if (e.key === 'Enter') go(); };
         });
       }
       view.querySelector('#cl-q').oninput = draw; draw();
       view.querySelector('#cl-new').onclick = function () { newClient(ctx); };
-      if (/novo=1/.test(location.hash)) newClient(ctx);
+      if (/novo=1/.test(ERoute.get())) newClient(ctx);
     },
 
     /* ---------- detail ---------- */
     detail: async function (view, ctx, id) {
       var esc = ctx.esc, sb = ctx.sb;
-      var tab = (location.hash.match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
+      var tab = (ERoute.get().match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
       var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
@@ -154,7 +154,7 @@
         if ($('#nc-lead').value) await ctx.sb.from('leads').update({ status: 'client' }).eq('id', $('#nc-lead').value);
         var sent = $('#nc-inv').checked ? await sendInvite(ctx, { email: email, name: name, clientName: name, role: 'owner', lang: $('#nc-lang').value }) : false;
         ctx.closeOverlay();
-        location.hash = '#/clientes?id=' + c.id + (sent ? '&convite=1' : '');
+        ERoute.set('#/clientes?id=' + c.id + (sent ? '&convite=1' : ''));
       } catch (err) { ctx.msg(m, ctx.errText(err), 'error'); }
     };
   }
@@ -178,7 +178,7 @@
   /* ---------- companies ---------- */
   async function tabCompanies(body, ctx, c, companies) {
     var esc = ctx.esc;
-    if (/convite=1/.test(location.hash)) body.insertAdjacentHTML('beforebegin', '<div class="portal-alert portal-alert--ok">Cliente criado e convite enviado para ' + esc(c.primary_email) + '.</div>');
+    if (/convite=1/.test(ERoute.get())) body.insertAdjacentHTML('beforebegin', '<div class="portal-alert portal-alert--ok">Cliente criado e convite enviado para ' + esc(c.primary_email) + '.</div>');
     body.innerHTML = '<div class="portal-btn-row" style="justify-content:flex-end;margin-bottom:1rem"><button class="btn btn--navy btn--xs" type="button" id="co-new">Adicionar empresa</button></div>' +
       (companies.length ? '<div class="cards">' + companies.map(function (co) {
         return '<div class="co-card"><h3>' + esc(co.legal_name) + '</h3><div class="meta">' + esc(ENTITY[co.entity_type] || co.entity_type || '') + ' · ' + esc(co.state || '') + (co.formation_date ? ' · constituída em ' + fmtD(co.formation_date) : '') + '</div>' +
@@ -231,7 +231,7 @@
     var r = await ctx.sb.from('compliance_items').insert(items);
     if (r.error) return alert(ctx.errText(r.error));
     alert(items.length + ' prazos criados. Confira as datas com o contador, principalmente extensões e anos fiscais diferentes do calendário.');
-    location.hash = location.hash.replace(/&tab=[a-z]+/, '') + '&tab=prazos';
+    ERoute.set(ERoute.get().replace(/&tab=[a-z]+/, '') + '&tab=prazos');
   }
 
   /* ---------- documents ---------- */
@@ -411,7 +411,7 @@
     var QERR = { qbo_not_configured: 'A integração com o QuickBooks ainda não foi configurada (Client ID e Secret da Intuit).', qbo_reconnect_required: 'A conexão expirou. É preciso reconectar o QuickBooks.', qbo_not_connected: 'QuickBooks não conectado.', future_period: 'Esse período ainda não começou.' };
     var err = function (id, e) { ctx.msg(body.querySelector('#qm-' + id), QERR[e.message] || ctx.errText(e), 'error'); };
     body.querySelectorAll('[data-conn]').forEach(function (b) { b.onclick = async function () {
-      try { var j = await call({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); location.href = j.url; } catch (e) { err(b.dataset.conn, e); }
+      try { var j = await call({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); ERoute.go(j.url); } catch (e) { err(b.dataset.conn, e); }
     }; });
     body.querySelectorAll('[data-disc]').forEach(function (b) { b.onclick = async function () {
       if (!confirm('Desconectar o QuickBooks desta empresa?')) return;

@@ -40,7 +40,7 @@
     var d = await crypto.subtle.digest('SHA-256', buf);
     return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, '0'); }).join('');
   }
-  function siteUrl(file) { return new URL(file, location.href).href.split('#')[0]; }
+  function siteUrl(file) { try { if (/^(https?|file):/.test(location.protocol)) return new URL(file, location.href).href.split('#')[0]; } catch (e) { /* ignore */ } return 'https://endeavorbiz.com/' + file; }
   function copy(text, btn) {
     (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
       if (btn) { var t = btn.textContent; btn.textContent = 'Copiado ✓'; setTimeout(function () { btn.textContent = t; }, 1600); }
@@ -53,7 +53,7 @@
     if (ev === 'PASSWORD_RECOVERY') { recoveryMode = true; renderNewPassword(); }
     if (ev === 'SIGNED_OUT') { renderLogin(); }
   });
-  document.getElementById('btn-signout').addEventListener('click', async function () { await sb.auth.signOut(); location.hash = ''; renderLogin(); });
+  document.getElementById('btn-signout').addEventListener('click', async function () { await sb.auth.signOut(); ERoute.set('', true); renderLogin(); });
 
   async function boot() {
     if (recoveryMode) return;
@@ -191,7 +191,7 @@
   async function loadSettings() { var r = await sb.from('booking_settings').select('*').eq('id', 1).single(); if (!r.error) state.settings = r.data; }
 
   function route() {
-    var v = (location.hash.replace(/^#\/?/, '') || 'dashboard').split('?')[0];
+    var v = (ERoute.get().replace(/^#\/?/, '') || 'dashboard').split('?')[0];
     if (!NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
@@ -300,7 +300,7 @@
     $('#crm-csv').addEventListener('click', exportCsv);
     $('#crm-new').addEventListener('click', function () { openLead(null); });
     draw();
-    if (/novo=1/.test(location.hash)) openLead(null);
+    if (/novo=1/.test(ERoute.get())) openLead(null);
   }
 
   async function openLead(id) {
@@ -333,7 +333,7 @@
       if (row.name.length < 2 || row.email.indexOf('@') < 1) return msg($('#ld-msg'), 'Preencha nome e e-mail.', 'error');
       var r = id ? await sb.from('leads').update(row).eq('id', id) : await sb.from('leads').insert(Object.assign(row, { source: 'manual' }));
       if (r.error) return msg($('#ld-msg'), errText(r.error), 'error');
-      closeOverlay(); if (/novo=1/.test(location.hash)) location.hash = '#/crm'; else route();
+      closeOverlay(); if (/novo=1/.test(ERoute.get())) ERoute.set('#/crm'); else route();
     });
   }
   function fld(id, label, val, type, req) {
@@ -342,7 +342,7 @@
 
   /* ---------- Agenda ---------- */
   async function viewAgenda(view) {
-    var tab = /tab=disp/.test(location.hash) ? 'disp' : 'prox';
+    var tab = /tab=disp/.test(ERoute.get()) ? 'disp' : 'prox';
     view.innerHTML = '<div class="console__head"><div><h1>Agenda</h1><p class="portal-muted">Horários no fuso ' + esc(tz()) + '.</p></div>' +
       '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="ag-copy">Copiar link público</button><a class="btn btn--ghost btn--xs" href="schedule.html" target="_blank" rel="noopener">Abrir página</a></div></div>' +
       '<div class="tabs" role="tablist"><button role="tab" type="button" data-tab="prox" aria-selected="' + (tab === 'prox') + '">Próximos</button><button role="tab" type="button" data-tab="hist" aria-selected="false">Histórico</button><button role="tab" type="button" data-tab="disp" aria-selected="' + (tab === 'disp') + '">Disponibilidade</button></div>' +
@@ -438,7 +438,7 @@
 
   /* ---------- E-signature ---------- */
   async function viewEnvelopes(view) {
-    if (/novo=1/.test(location.hash)) return viewEditor(view);
+    if (/novo=1/.test(ERoute.get())) return viewEditor(view);
     state.envelopes = await q(sb.from('envelopes').select('*').order('created_at', { ascending: false }).limit(500));
     view.innerHTML = '<div class="console__head"><div><h1>Assinaturas</h1><p class="portal-muted">Prepare documentos, posicione os campos de assinatura e acompanhe tudo por aqui.</p></div>' +
       '<a class="btn btn--navy btn--xs" href="#/assinaturas?novo=1" id="env-new">Novo documento</a></div>' +
@@ -486,7 +486,7 @@
 
   async function viewEditor(view) {
     var leads = await q(sb.from('leads').select('id,name,email').order('created_at', { ascending: false }).limit(500));
-    var pre = (location.hash.match(/lead=([0-9a-f-]{36})/) || [])[1];
+    var pre = (ERoute.get().match(/lead=([0-9a-f-]{36})/) || [])[1];
     view.innerHTML = '<p class="portal-muted">Carregando editor…</p>';
     if (!window.EPdf || !window.pdfjsLib || !window.PDFLib || !window.EndeavorEditor) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">Não foi possível carregar o editor de PDF. Verifique a conexão e recarregue a página.</div>'; return;
@@ -495,9 +495,9 @@
     EndeavorEditor.mount(view, {
       sb: sb, CFG: CFG, esc: esc, msg: msg, errText: errText, sha256Hex: sha256Hex, leads: leads, preLeadId: pre,
       preLead: leads.find(function (l) { return l.id === pre; }), emailSigner: emailSigner,
-      onCancel: function () { location.hash = '#/assinaturas'; },
+      onCancel: function () { ERoute.set('#/assinaturas'); },
       onDone: function (e, mailed) {
-        history.replaceState(null, '', '#/assinaturas');
+        ERoute.set('#/assinaturas', true);
         view.classList.remove('is-editor');
         view.innerHTML = '<div class="console__head"><h1>Documento enviado</h1></div><section class="portal-card esx-done">' +
           '<p class="portal-alert portal-alert--ok">' + (mailed ? 'O link de assinatura foi enviado para <strong>' + esc(e.signer_email) + '</strong> e uma cópia foi para ' + esc(CFG.adminEmail) + '.' : 'Documento criado. Copie o link abaixo e envie ao signatário.') + '</p>' +
@@ -520,7 +520,7 @@
   }
   async function viewClients(view) {
     if (!window.AdminClients) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de clientes não carregou. Recarregue a página.</div>'; return; }
-    var id = (location.hash.match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
+    var id = (ERoute.get().match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
     return id ? AdminClients.detail(view, clientsCtx(), id) : AdminClients.list(view, clientsCtx());
   }
 
