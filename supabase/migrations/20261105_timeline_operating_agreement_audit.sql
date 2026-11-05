@@ -358,3 +358,7 @@ do $$ begin
   begin alter publication supabase_realtime add table public.companies; exception when duplicate_object then null; end;
   begin alter publication supabase_realtime add table public.oa_comments; exception when duplicate_object then null; end;
 end $$;
+
+/* ---------- oa_4: reviewer RPCs, oa_5: hardening (applied as separate migrations) ---------- */
+-- set_legal_reviewer(p_email, p_on), approve_rule_set(p_id, p_note), retire_rule_set(p_id, p_note): SECURITY DEFINER, checked with is_admin()/is_legal_reviewer(), audited.
+-- Trigger functions and req_meta(): EXECUTE revoked from public/anon/authenticated; audit_immutable/company_stage_at: search_path pinned.
