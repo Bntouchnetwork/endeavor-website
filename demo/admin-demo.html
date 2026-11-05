@@ -1382,6 +1382,31 @@ table.inv-table tbody tr { cursor: default; }
 .ck-secure { display: flex; gap: .5rem; align-items: flex-start; font-size: .82rem; color: var(--muted); margin: 1rem 0 .5rem; }
 .ck-secure .icon { width: 1rem; height: 1rem; flex: none; margin-top: .1rem; color: #1e6b3a; }
 
+/* ---------- public proposal ---------- */
+.prop-hero { padding: 1.5rem 0 .5rem; }
+.prop-eyebrow { font-size: .78rem; letter-spacing: .12em; text-transform: uppercase; color: #8a6a2a; font-weight: 600; margin: 0 0 .5rem; }
+.prop-intro { font-size: 1.05rem; color: var(--muted); max-width: 46rem; }
+.prop-check { list-style: none; margin: 0; padding: 0; display: grid; gap: .55rem; }
+.prop-check li { position: relative; padding-left: 1.7rem; }
+.prop-check li::before { content: ""; position: absolute; left: 0; top: .2rem; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #e9f6ee url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 3.5 8-8' fill='none' stroke='%231e6b3a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/70% no-repeat; }
+.prop-ok { display: grid; gap: .6rem; justify-items: start; }
+.prop-ok__ico { width: 2.5rem; height: 2.5rem; }
+.notif-btn { position: relative; display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 10px; border: 1px solid #e3e7ee; background: #fff; cursor: pointer; color: var(--navy-900); }
+.notif-btn .icon { width: 1.2rem; height: 1.2rem; }
+.notif-btn__n { position: absolute; top: -.35rem; right: -.35rem; min-width: 1.2rem; height: 1.2rem; padding: 0 .3rem; border-radius: 999px; background: #b42318; color: #fff; font: 700 .7rem/1.2rem Inter, system-ui, sans-serif; text-align: center; }
+.notif-pop { position: absolute; right: 1rem; top: 3.9rem; z-index: 60; width: min(24rem, calc(100vw - 2rem)); background: #fff; border: 1px solid #e3e7ee; border-radius: 14px; box-shadow: 0 18px 40px rgb(11 31 58 / .16); padding: .75rem; }
+.notif-pop h2 { font-size: .95rem; margin: .25rem .4rem .6rem; display: flex; justify-content: space-between; align-items: center; }
+.notif-list { list-style: none; margin: 0; padding: 0; max-height: 60vh; overflow: auto; }
+.notif-list li a { display: grid; gap: .15rem; padding: .6rem .5rem; border-radius: 8px; text-decoration: none; color: var(--ink); }
+.notif-list li a:hover { background: #f5f7fa; }
+.notif-list li.is-new a { background: #fbf6ea; }
+.notif-list small { color: var(--muted); }
+.ev-k { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: #8a6a2a; }
+.ev-k--payment_received { color: #1e6b3a; } .ev-k--payment_failed { color: #b42318; }
+table.inv-table .btn { white-space: nowrap; }
+table.prop-table { min-width: 72rem; }
+table.prop-table td:nth-child(5) { min-width: 14rem; }
+
 </style>
 </head>
 <body class="portal">
@@ -1536,6 +1561,56 @@ table.inv-table tbody tr { cursor: default; }
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
   var PME = MODE === 'partner' ? DB.partners[0] : null;
+  var DEMO_TOKEN = 'demo4f9c2a7b1e8d6c3f0a5b9e2d7c4f1a8b6e3d0c9f';
+  window.DEMO_PROPOSAL_TOKEN = DEMO_TOKEN;
+  var PROP_ITEMS = [{ description: 'Abertura da LLC na Flórida (Lima Real Estate LLC)', amount_cents: 120000, quantity: 1 }, { description: 'EIN no IRS', amount_cents: 25000, quantity: 1 }, { description: 'Registered Agent - 12 meses', amount_cents: 30000, quantity: 1 }];
+  DB.proposals = [
+    { id: 'f1000000-0000-4000-8000-000000000001', created_at: iso(-2), updated_at: iso(-2), client_id: C1, title: 'Pacote Abertura de LLC - Lima Real Estate', intro: 'Proposta para abrir a segunda empresa do Carlos na Flórida, já com EIN e Registered Agent, pronta para comprar imóveis em Orlando.',
+      included: ['Registro da LLC na Sunbiz (Articles of Organization)', 'Operating Agreement para vários sócios', 'EIN emitido pelo IRS', 'Registered Agent na Flórida por 12 meses', 'Calendário de obrigações fiscais no portal'],
+      items: PROP_ITEMS, total_cents: 175000, currency: 'usd', terms: 'Pagamento pelo portal do cliente (cartão, Pix ou transferência bancária). Taxas do governo incluídas. Os serviços começam após a confirmação do pagamento.', language: 'pt', days_until_due: 7,
+      partner_id: P1, partner_pct: 15, referral_id: R1, status: 'sent', token: DEMO_TOKEN, valid_until: day(28), sent_at: iso(-2), viewed_at: null, accepted_at: null, accepted_name: null, invoice_id: null, created_by: ADMIN.email },
+    { id: 'f2000000-0000-4000-8000-000000000002', created_at: iso(-21), updated_at: iso(-16), client_id: C3, title: 'Imposto corporativo 2025 (Form 1120 + F-1120)', intro: null, included: ['Form 1120 federal', 'Florida F-1120', 'Revisão contábil'], items: [{ description: 'Preparação Form 1120 + F-1120', amount_cents: 200000, quantity: 1 }],
+      total_cents: 200000, currency: 'usd', terms: null, language: 'en', days_until_due: 7, partner_id: P2, partner_pct: 10, referral_id: R7, status: 'accepted', token: 'demo0accepted0000000000000000000000000000', valid_until: day(9), sent_at: iso(-21), viewed_at: iso(-20), accepted_at: iso(-17), accepted_name: 'Michael Turner',
+      invoice_id: DB.invoices[3].id, created_by: ADMIN.email },
+    { id: 'f3000000-0000-4000-8000-000000000003', created_at: iso(0), updated_at: iso(0), client_id: C2, title: 'Contabilidade mensal 2027', intro: null, included: ['Bookkeeping mensal', 'Relatórios trimestrais no portal'], items: [{ description: 'Contabilidade mensal (12 meses)', amount_cents: 45000, quantity: 12 }],
+      total_cents: 540000, currency: 'usd', terms: null, language: 'es', days_until_due: 7, partner_id: null, partner_pct: null, referral_id: null, status: 'draft', token: null, valid_until: null, sent_at: null, viewed_at: null, accepted_at: null, accepted_name: null, invoice_id: null, created_by: ADMIN.email }
+  ];
+  DB.invoices[3].proposal_id = 'f2000000-0000-4000-8000-000000000002';
+  DB.admin_events = [
+    { id: 3, at: iso(0, 9, 12), kind: 'referral_new', title: 'Nova indicação: Juliana Rocha', body: 'Parceiro: Ana Ribeiro · Start a U.S. Company', link: '#/parceiros?id=' + P1, read_at: null },
+    { id: 2, at: iso(-15), kind: 'payment_received', title: 'Pagamento recebido: US$ 2,000.00 · Sunshine Ventures', body: 'Fatura EBS-' + Y + '-0004 paga pelo portal (mturner@example.com).', link: '#/pagamentos?tab=faturas', read_at: iso(-14) },
+    { id: 1, at: iso(-17), kind: 'proposal_accepted', title: 'Proposta aceita: Imposto corporativo 2025 · Sunshine Ventures', body: 'Michael Turner aceitou (US$ 2,000.00).', link: '#/pagamentos?tab=propostas', read_at: iso(-16) }
+  ];
+  // the single-file preview carries what happened in another demo (accept proposal -> pay in portal -> admin sees it)
+  var FLOW_KEY = 'endeavor-demo-flow';
+  function flowGet() { try { return JSON.parse(sessionStorage.getItem(FLOW_KEY) || '{}'); } catch (e) { return {}; } }
+  function flowSet(o) { try { sessionStorage.setItem(FLOW_KEY, JSON.stringify(Object.assign(flowGet(), o))); } catch (e) { /* ignore */ } }
+  function acceptProposal(pr, name, at) {
+    pr.status = 'accepted'; pr.accepted_name = name; pr.accepted_at = at; pr.viewed_at = pr.viewed_at || at;
+    if (!pr.invoice_id) {
+      var n = DB.invoices.length + 1, tot = pr.total_cents, share = pr.partner_id ? Math.round(tot * pr.partner_pct / 100) : 0, pp = DB.partners.find(function (x) { return x.id === pr.partner_id; });
+      var inv = { id: 'f9000000-0000-4000-8000-00000000000' + (DB.proposals.indexOf(pr) + 1), created_at: at, updated_at: at, client_id: pr.client_id, referral_id: pr.referral_id, partner_id: pr.partner_id, partner_pct: pr.partner_pct, partner_amount_cents: share,
+        transfer_status: pr.partner_id ? (pp && pp.stripe_transfers_active ? 'scheduled' : 'pending') : 'none', stripe_transfer_id: null, stripe_invoice_id: 'in_demo_prop_' + pr.id.slice(0, 2), number: 'EBS-' + Y + '-' + String(n).padStart(4, '0'), status: 'open', currency: 'usd',
+        items: pr.items, description: pr.title, total_cents: tot, amount_paid_cents: 0, due_date: day(pr.days_until_due), customer_email: (DB.clients.find(function (c) { return c.id === pr.client_id; }) || {}).primary_email,
+        hosted_invoice_url: 'https://invoice.stripe.com/i/demo_p' + n, invoice_pdf: 'https://pay.stripe.com/invoice/demo_p' + n + '/pdf', sent_at: at, paid_at: null, created_by: 'proposal', proposal_id: pr.id };
+      DB.invoices.unshift(inv); pr.invoice_id = inv.id;
+      DB.admin_events.unshift({ id: 100, at: at, kind: 'proposal_accepted', title: 'Proposta aceita: ' + pr.title + ' · ' + (DB.clients.find(function (c) { return c.id === pr.client_id; }) || {}).name, body: name + ' aceitou (US$ ' + (tot / 100).toLocaleString('en-US', { minimumFractionDigits: 2 }) + '). Fatura ' + inv.number + ' criada e aguardando pagamento no portal.', link: '#/pagamentos?tab=propostas', read_at: null });
+    }
+    return DB.invoices.find(function (i) { return i.id === pr.invoice_id; });
+  }
+  function markPaid(inv, at, quiet) {
+    if (inv.status === 'paid') return;
+    Object.assign(inv, { status: 'paid', amount_paid_cents: inv.total_cents, paid_at: at });
+    if (inv.transfer_status === 'scheduled') inv.transfer_status = 'paid';
+    var cl = DB.clients.find(function (c) { return c.id === inv.client_id; }) || {};
+    DB.admin_events.unshift({ id: 200 + DB.admin_events.length, at: at, kind: 'payment_received', title: 'Pagamento recebido: US$ ' + (inv.total_cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' · ' + cl.name, body: 'Fatura ' + inv.number + ' paga pelo portal (' + cl.primary_email + ').', link: '#/pagamentos?tab=faturas', read_at: null });
+    if (!quiet) { var f = flowGet(); f.paid = (f.paid || []).concat([inv.stripe_invoice_id]); flowSet({ paid: f.paid }); }
+  }
+  (function () {
+    var f = flowGet();
+    if (f.accepted) acceptProposal(DB.proposals[0], f.accepted.name, f.accepted.at);
+    (f.paid || []).forEach(function (sid) { var inv = DB.invoices.find(function (i) { return i.stripe_invoice_id === sid; }); if (inv) markPaid(inv, f.paidAt || new Date().toISOString(), true); });
+  })();
   function doc(company, client, cat, title, year, d, by) {
     var id = uuid();
     DB.company_documents.push({ id: id, company_id: company, client_id: client, created_at: iso(-d), category: cat, title: title, year: year, path: client + '/' + company + '/' + cat + '/' + id.slice(0, 8) + '-' + title.replace(/[^\w]+/g, '-') + '.pdf', mime: 'application/pdf', size_bytes: 48213, sha256: null, visible_to_client: true, uploaded_by: by === CLIENT_USER.email ? CLIENT_USER.id : by ? 'u-cpa' : null, uploaded_by_email: by || 'support@endeavorbiz.com', note: null });
@@ -1622,12 +1697,14 @@ table.inv-table tbody tr { cursor: default; }
       case 'referrals': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
       case 'referral_items': case 'referral_events': return rows.filter(function (r) { var ref = DB.referrals.find(function (x) { return x.id === r.referral_id; }); return PME && ref && ref.partner_id === PME.id && (table === 'referral_items' || r.visible_to_partner); });
       case 'invoices': return rows.filter(function (r) { return r.status !== 'draft' && r.status !== 'void' && role(r.client_id) === 'owner'; });
+      case 'proposals': return rows.filter(function (r) { return (r.status === 'sent' || r.status === 'accepted') && role(r.client_id) === 'owner'; });
       default: return [];
     }
   }
   function Q(table) { this.t = table; this.f = []; this.o = []; this.lim = null; this.op = 'select'; this.one = false; this.ret = false; this.opts = {}; }
   Q.prototype.select = function (cols, opts) { if (this.op === 'select') { this.opts = opts || {}; this.cols = cols || '*'; } else this.ret = true; return this; };
   Q.prototype.not = function (c, op, v) { this.f.push(['not', c, v]); return this; };
+  Q.prototype.is = function (c, v) { this.f.push(['is', c, v]); return this; };
   ['eq', 'neq', 'gte', 'lte', 'gt', 'lt', 'in'].forEach(function (k) { Q.prototype[k] = function (c, v) { this.f.push([k, c, v]); return this; }; });
   Q.prototype.order = function (c, o) { this.o.push([c, !(o && o.ascending === false)]); return this; };
   Q.prototype.limit = function (n) { this.lim = n; return this; };
@@ -1644,6 +1721,7 @@ table.inv-table tbody tr { cursor: default; }
       case 'gte': return v != null && v >= x; case 'lte': return v != null && v <= x; case 'gt': return v != null && v > x; case 'lt': return v != null && v < x;
       case 'in': return x.map(String).indexOf(String(v)) > -1;
       case 'not': return x === null ? v != null : String(v) !== String(x);
+      case 'is': return x === null ? v == null : v === x;
     } return true;
   }
   Q.prototype.run = function () {
@@ -1657,9 +1735,9 @@ table.inv-table tbody tr { cursor: default; }
       if (this.lim != null) out = out.slice(0, this.lim);
       if (this.opts.head) return { data: null, count: count, error: null };
       out = JSON.parse(JSON.stringify(out));
-      var joins = String(this.cols || '').match(/(\w+)\(([^)]*)\)/g) || [];
+      var joins = String(this.cols || '').match(/(\w+)(![\w]+)?\(([^)]*)\)/g) || [];
       joins.forEach(function (j) {
-        var t = j.split('(')[0], key = t.replace(/s$/, '') + '_id';
+        var t = j.split('(')[0].split('!')[0], key = t.replace(/s$/, '') + '_id';
         out.forEach(function (r) { var x = (DB[t] || []).find(function (y) { return y.id === r[key]; }); r[t] = x ? JSON.parse(JSON.stringify(x)) : null; });
       });
       if (this.one) return out.length ? { data: out[0], error: null } : (this.maybe ? { data: null, error: null } : { data: null, error: { message: 'Row not found' } });
@@ -1796,7 +1874,7 @@ table.inv-table tbody tr { cursor: default; }
   window.fetch = function (url, opts) {
     var u = String(url && url.url || url);
     var json = function (b, s) { return Promise.resolve(new Response(JSON.stringify(b), { status: s || 200, headers: { 'Content-Type': 'application/json' } })); };
-    if (/formsubmit\.co/.test(u)) { toast('Demo: e-mail simulado (no site real ele é enviado e o suporte recebe cópia).'); return json({ success: 'true' }); }
+    if (/formsubmit\.co/.test(u)) { var fb = {}; try { fb = JSON.parse(opts.body); } catch (e) { /* ignore */ } mailPreview(fb); return json({ success: 'true' }); }
     if (/\/functions\/v1\/qbo/.test(u)) {
       var b = {}; try { b = JSON.parse(opts.body); } catch (e) { /* ignore */ }
       if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: PORTAL ? '#/reports?company=' + b.company_id + '&qbo=connected' : (window.ERoute ? ERoute.get() : location.hash) || '#/clientes' }); }
@@ -1839,9 +1917,27 @@ table.inv-table tbody tr { cursor: default; }
           return later({ status: invRow.status, client_secret: invRow.status === 'open' || invRow.status === 'uncollectible' ? 'pi_demo_' + invRow.id.slice(0, 8) + '_secret_demo' : undefined, publishable_key: 'pk_test_demo',
             amount_due: invRow.total_cents - invRow.amount_paid_cents, currency: invRow.currency, hosted_invoice_url: invRow.hosted_invoice_url, invoice_pdf: invRow.invoice_pdf });
         case 'invoice_refresh': return later({ ok: true, status: invRow && invRow.status });
+        case 'invoice_archive': return later({ url: invRow ? invRow.invoice_pdf : '' });
+        case 'proposal_send':
+          var ps = DB.proposals.find(function (x) { return x.id === pb.proposal_id; });
+          ps.token = ps.token || (ps.id === DB.proposals[0].id ? DEMO_TOKEN : 'demo' + ps.id.replace(/-/g, '').slice(0, 36));
+          Object.assign(ps, { status: 'sent', sent_at: new Date().toISOString(), valid_until: ps.valid_until || day(30) });
+          return later({ ok: true, url: 'https://endeavorbiz.com/proposal.html?t=' + ps.token + '&lang=' + ps.language });
+        case 'proposal_invoice':
+          var pi2 = DB.proposals.find(function (x) { return x.id === pb.proposal_id; }); acceptProposal(pi2, pi2.accepted_name, pi2.accepted_at); return later({ ok: true });
+        case 'proposal_get': case 'proposal_accept':
+          var pp2 = DB.proposals.find(function (x) { return x.token === pb.token; });
+          if (!pp2) return json({ error: 'not_found' }, 404);
+          var cl2 = DB.clients.find(function (c) { return c.id === pp2.client_id; });
+          var pub = function () { return { title: pp2.title, intro: pp2.intro, included: pp2.included, items: pp2.items, total_cents: pp2.total_cents, currency: pp2.currency, terms: pp2.terms, language: pp2.language, valid_until: pp2.valid_until, status: pp2.status, client_name: cl2.name, accepted_at: pp2.accepted_at, accepted_name: pp2.accepted_name }; };
+          if (pb.action === 'proposal_get') { pp2.viewed_at = pp2.viewed_at || new Date().toISOString(); return later(pub()); }
+          var portalUrl = 'https://endeavorbiz.com/client.html?lang=' + pp2.language + '#/invoices';
+          if (pp2.status === 'accepted') return later(Object.assign(pub(), { portal_url: portalUrl, already: true }));
+          var at = new Date().toISOString(), newInv = acceptProposal(pp2, pb.name, at);
+          if (pp2.id === DB.proposals[0].id) flowSet({ accepted: { name: pb.name, at: at } });
+          return later(Object.assign(pub(), { portal_url: portalUrl, first_access: true, email: cl2.primary_email, invoice: { number: newInv.number, total_cents: newInv.total_cents, currency: 'usd', due_date: newInv.due_date } }));
         case 'invoice_sync':
-          Object.assign(invRow, { status: 'paid', amount_paid_cents: invRow.total_cents, paid_at: new Date().toISOString() });
-          if (invRow.transfer_status === 'scheduled') invRow.transfer_status = 'paid';
+          markPaid(invRow, new Date().toISOString());
           toast('Demo: pagamento simulado. ' + (invRow.transfer_status === 'paid' ? 'A comissão foi repassada automaticamente ao parceiro.' : invRow.transfer_status === 'pending' ? 'O parceiro ainda não conectou o Stripe: repasse pendente.' : ''));
           return later({ ok: true });
         case 'transfer':
@@ -1869,7 +1965,7 @@ table.inv-table tbody tr { cursor: default; }
     document.head.appendChild(css);
     var pill = document.createElement('aside'); pill.className = 'demo-pill'; pill.setAttribute('aria-label', 'Demo');
     pill.innerHTML = '<button type="button" aria-label="Fechar aviso">×</button><b>MODO DEMONSTRAÇÃO</b> · dados fictícios<span class="demo-pill__more">, nada é salvo.<br>' +
-      'Login: <code>' + (MODE === 'admin' ? ADMIN.email : ME.email) + '</code> · qualquer senha · código <code>123456</code>' + '</span>';
+      (MODE === 'proposal' ? 'Página pública da proposta: é o link que o cliente recebe por e-mail.' : 'Login: <code>' + (MODE === 'admin' ? ADMIN.email : ME.email) + '</code> · qualquer senha · código <code>123456</code>') + '</span>';
     document.body.appendChild(pill);
     pill.querySelector('button').onclick = function () { pill.remove(); };
     var badge = document.createElement('span'); badge.className = 'demo-badge'; badge.textContent = 'DEMO'; badge.title = 'Modo demonstração: dados fictícios, nada é salvo';
@@ -1899,6 +1995,8 @@ table.inv-table tbody tr { cursor: default; }
         if (/^index\.html/.test(h) || a.closest('.portal-top__left')) { e.preventDefault(); try { sessionStorage.removeItem('endeavor-combined-open'); } catch (x) { /* ignore */ } location.reload(); return; }
         if (a.closest('.lang-mini')) { e.preventDefault(); try { localStorage.setItem('endeavor-lang', JSON.stringify(a.dataset.lang)); } catch (x) { /* ignore */ } if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN(MODE, a.dataset.lang); else location.reload(); return; }
       }
+      if (/client\.html/.test(h) && MODE === 'proposal') { e.preventDefault(); if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN('client'); else location.href = 'client-demo.html'; return; }
+      if (/proposal\.html\?t=/.test(h) || a.hasAttribute('data-open-proposal')) { e.preventDefault(); if (window.ENDEAVOR_REOPEN) window.ENDEAVOR_REOPEN('proposal'); else window.open('proposal-demo.html', '_blank'); return; }
       if (/^https:\/\/pay\.stripe\.com\/invoice\/.+\/pdf$/.test(h)) { e.preventDefault(); var ir = DB.invoices.find(function (x) { return x.invoice_pdf === h; }); if (ir) showInvoicePdf(ir); return; }
       if (/^https:\/\/(invoice|pay|connect)\.stripe\.com\//.test(h)) { e.preventDefault(); toast('Demo: abriria a página segura do Stripe (pagamento com cartão, Pix ou transferência).'); return; }
       if (/^(index|schedule|login|privacy-policy|terms-of-use)\.html/.test(h)) { a.setAttribute('href', LIVE + h); a.target = '_blank'; a.rel = 'noopener'; }
@@ -1956,8 +2054,7 @@ table.inv-table tbody tr { cursor: default; }
     var inv = DB.invoices.find(function (i) { return secret.indexOf('pi_demo_' + i.id.slice(0, 8)) === 0; });
     if (!inv) return;
     if (how === 'ach') { toast('Demo: débito ACH iniciado. Ele leva de 1 a 4 dias úteis para compensar.'); return 'processing'; }
-    Object.assign(inv, { status: 'paid', amount_paid_cents: inv.total_cents, paid_at: new Date().toISOString() });
-    if (inv.transfer_status === 'scheduled') inv.transfer_status = 'paid';
+    markPaid(inv, new Date().toISOString());
     toast('Demo: pagamento aprovado' + (inv.partner_id ? ' e comissão do parceiro repassada automaticamente.' : '.'));
     return 'succeeded';
   }
@@ -2028,6 +2125,30 @@ table.inv-table tbody tr { cursor: default; }
       }
     };
   };
+
+  /* ---------------- demo e-mail preview (FormSubmit is simulated) ---------------- */
+  function mailPreview(b) {
+    var old = document.getElementById('demo-mail'); if (old) old.remove();
+    var el = document.createElement('aside'); el.id = 'demo-mail'; el.setAttribute('role', 'status'); el.setAttribute('aria-label', 'E-mail automático (demo)');
+    el.style.cssText = 'position:fixed;right:12px;bottom:12px;z-index:10001;width:min(26rem,calc(100vw - 24px));max-height:70vh;display:grid;grid-template-rows:auto 1fr;background:#fff;border:1px solid #e3e7ee;border-radius:14px;box-shadow:0 18px 40px rgba(11,31,58,.22);font:400 13px/1.45 Inter,system-ui,sans-serif;color:#14213d;overflow:hidden';
+    var esc2 = function (x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+    var body = b._autoresponse ? esc2(b._autoresponse).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>') : '';
+    el.innerHTML = '<div style="background:#0b1f3a;color:#fff;padding:.65rem .85rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem"><strong style="font-size:13px">✉ E-mail automático enviado (demo)</strong><button type="button" aria-label="Fechar" style="background:none;border:0;color:#cbd5e1;font-size:18px;cursor:pointer;line-height:1">×</button></div>' +
+      '<div style="overflow:auto;padding:.75rem .85rem;display:grid;gap:.5rem">' +
+      (b._autoresponse ? '<div><b>Para:</b> ' + esc2(b.email) + '</div><pre style="white-space:pre-wrap;margin:0;font:inherit;background:#f6f8fb;border-radius:8px;padding:.6rem">' + body + '</pre>' : '') +
+      '<div style="color:#55627a"><b>Cópia para a equipe:</b> support@endeavorbiz.com · ' + esc2(b._subject || '') + '</div></div>';
+    document.body.appendChild(el);
+    el.querySelector('button').onclick = function () { el.remove(); };
+    if (window.innerWidth < 700) el.style.maxHeight = '45vh';
+    setTimeout(function () { if (!el.isConnected) return; var body2 = el.lastChild; body2.hidden = true; el.style.width = 'auto'; el.firstChild.style.cursor = 'pointer';
+      el.firstChild.onclick = function (e) { if (e.target.tagName === 'BUTTON') return; body2.hidden = !body2.hidden; el.style.width = body2.hidden ? 'auto' : 'min(26rem,calc(100vw - 24px))'; }; }, 12000);
+  }
+  var realOpen = window.open;
+  window.open = function (u) {
+    if (/^https:\/\/pay\.stripe\.com\/invoice\/.+\/pdf$/.test(String(u || ''))) { var ir = DB.invoices.find(function (x) { return x.invoice_pdf === u; }); if (ir) showInvoicePdf(ir); return null; }
+    if (/^https:\/\/(invoice|pay|connect)\.stripe\.com\//.test(String(u || ''))) { toast('Demo: abriria a página segura do Stripe.'); return null; }
+    return realOpen.apply(window, arguments);
+  };
 })();
 
 </script>
@@ -2097,11 +2218,13 @@ window.ENDEAVOR_CFG = {
       return [
         'Olá ' + o.name + ',',
         '',
-        o.referral ? 'A Endeavor Business Solutions convidou você para o Programa de Parceiros. Pelo Portal do Parceiro você indica clientes, acompanha cada etapa e recebe as suas comissões pela sua conta Stripe.'
+        o.accepted ? 'Recebemos o seu aceite da proposta "' + o.accepted + '". Obrigado pela confiança!' + (o.invoiceLine ? ' ' + o.invoiceLine : '')
+        : o.referral ? 'A Endeavor Business Solutions convidou você para o Programa de Parceiros. Pelo Portal do Parceiro você indica clientes, acompanha cada etapa e recebe as suas comissões pela sua conta Stripe.'
         : o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Solutions, para acessar os documentos que compartilhou com você.'
         : o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'A Endeavor Business Solutions criou o seu acesso ao portal do cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        o.referral ? 'Por segurança, o acesso usa senha e um código do celular.' : 'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
+        o.accepted ? 'O próximo passo é o pagamento pelo portal do cliente: ao entrar, você vai direto para a página de faturas e pode pagar com cartão, Pix ou transferência bancária. Por segurança, o acesso usa senha e um código do celular.'
+        : o.referral ? 'Por segurança, o acesso usa senha e um código do celular.' : 'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
         '',
         'PRIMEIRO ACESSO (leva uns 5 minutos)',
         '1. Instale no celular o app gratuito "Google Authenticator". O ícone é um asterisco colorido.',
@@ -2126,11 +2249,13 @@ window.ENDEAVOR_CFG = {
       return [
         'Hello ' + o.name + ',',
         '',
-        o.referral ? 'Endeavor Business Solutions invited you to its Partner Program. In the Partner Portal you refer clients, follow every step and receive your commissions through your own Stripe account.'
+        o.accepted ? 'We received your acceptance of the proposal "' + o.accepted + '". Thank you for your trust!' + (o.invoiceLine ? ' ' + o.invoiceLine : '')
+        : o.referral ? 'Endeavor Business Solutions invited you to its Partner Program. In the Partner Portal you refer clients, follow every step and receive your commissions through your own Stripe account.'
         : o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Solutions Partner Portal to access the documents they shared with you.'
         : o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Solutions client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions created your access to the client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        o.referral ? 'For security, access uses a password and a code from your phone.' : 'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
+        o.accepted ? 'The next step is payment in the client portal: after you sign in you go straight to the invoices page and can pay by card, Pix or bank transfer. For security, access uses a password and a code from your phone.'
+        : o.referral ? 'For security, access uses a password and a code from your phone.' : 'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
         '',
         'FIRST ACCESS (about 5 minutes)',
         '1. Install the free "Google Authenticator" app on your phone. The icon is a colorful asterisk.',
@@ -2155,11 +2280,13 @@ window.ENDEAVOR_CFG = {
       return [
         'Hola ' + o.name + ',',
         '',
-        o.referral ? 'Endeavor Business Solutions lo invitó a su Programa de Socios. En el Portal de Socios usted refiere clientes, sigue cada etapa y recibe sus comisiones en su propia cuenta Stripe.'
+        o.accepted ? 'Recibimos su aceptación de la propuesta "' + o.accepted + '". ¡Gracias por su confianza!' + (o.invoiceLine ? ' ' + o.invoiceLine : '')
+        : o.referral ? 'Endeavor Business Solutions lo invitó a su Programa de Socios. En el Portal de Socios usted refiere clientes, sigue cada etapa y recibe sus comisiones en su propia cuenta Stripe.'
         : o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Solutions para acceder a los documentos que compartió con usted.'
         : o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions creó su acceso al portal del cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        o.referral ? 'Por seguridad, el acceso usa contraseña y un código del celular.' : 'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
+        o.accepted ? 'El siguiente paso es el pago en el portal del cliente: al ingresar irá directo a la página de facturas y podrá pagar con tarjeta, Pix o transferencia bancaria. Por seguridad, el acceso usa contraseña y un código del celular.'
+        : o.referral ? 'Por seguridad, el acceso usa contraseña y un código del celular.' : 'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
         '',
         'PRIMER ACCESO (unos 5 minutos)',
         '1. Instale en su celular la app gratuita "Google Authenticator". El ícono es un asterisco de colores.',
@@ -2934,7 +3061,7 @@ window.ENDEAVOR_CFG = {
       var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
       view.innerHTML = '<p class="crumbs"><a href="#/clientes">Clientes</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
-        '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
+        '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
         '<nav class="subtabs" aria-label="Seções do cliente">' + TABS.map(function (t) { return '<a href="#/clientes?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>' +
         '<div id="c-body"></div>';
       view.querySelector('#c-edit').onclick = function () { editClient(ctx, c); };
@@ -3496,11 +3623,13 @@ window.ENDEAVOR_CFG = {
 
   async function payments(view, ctx) {
     var esc = ctx.esc, tab = param('tab') || 'faturas';
-    var tabs = [['faturas', 'Faturas'], ['nova', 'Nova fatura'], ['stripe', 'Conta Stripe']];
-    view.innerHTML = head(esc, 'Pagamentos', 'Faturas pelo Stripe, com repasse automático da comissão para o parceiro via Stripe Connect.', '<a class="btn btn--navy" href="#/pagamentos?tab=nova">Nova fatura</a>') +
+    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['nova', 'Nova fatura'], ['stripe', 'Conta Stripe']];
+    view.innerHTML = head(esc, 'Pagamentos', 'Propostas, faturas pelo Stripe e repasse automático da comissão para o parceiro via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/pagamentos?tab=nova-proposta">Nova proposta</a><a class="btn btn--navy" href="#/pagamentos?tab=nova">Nova fatura</a></div>') +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/pagamentos?tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pg-body"></div>';
     var body = ctx.$('#pg-body');
     if (tab === 'nova') return newInvoice(body, ctx);
+    if (tab === 'propostas') return proposalsTab(body, ctx);
+    if (tab === 'nova-proposta') return proposalForm(body, ctx, null);
     if (tab === 'stripe') return stripeTab(body, ctx);
     var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active)').order('created_at', { ascending: false }));
     var st = param('status') || '';
@@ -3577,6 +3706,179 @@ window.ENDEAVOR_CFG = {
     };
   }
 
+
+  /* ================= Propostas ================= */
+  var PS = { draft: 'Rascunho', sent: 'Enviada', accepted: 'Aceita', declined: 'Recusada', expired: 'Expirada', void: 'Anulada' };
+  var PS_B = { draft: 'new', sent: 'contacted', accepted: 'client', declined: 'lost', expired: 'lost', void: 'lost' };
+  var DEF_TERMS = { pt: 'Pagamento pelo portal do cliente (cartão, Pix ou transferência bancária). Taxas do governo incluídas quando indicado. Os serviços começam após a confirmação do pagamento.',
+    en: 'Payment through the client portal (card, Pix or bank transfer). Government fees included where indicated. Work starts once payment is confirmed.',
+    es: 'Pago en el portal del cliente (tarjeta, Pix o transferencia bancaria). Tasas del gobierno incluidas cuando se indica. Los servicios comienzan tras la confirmación del pago.' };
+  function proposalEmail(lang, o) {
+    var M = {
+      pt: ['Olá ' + o.first + ',', '', 'Conforme conversamos, segue a proposta da Endeavor Business Solutions: "' + o.title + '".', '', 'O QUE ESTÁ INCLUSO', o.included.map(function (x) { return '- ' + x; }).join('\n'), '', 'INVESTIMENTO: ' + o.total, o.items, '',
+        'Para aprovar, abra o link abaixo, confira os detalhes e clique em "Aceitar proposta":', o.link, '', 'A proposta vale até ' + o.valid + '.', 'Assim que você aceitar, enviamos automaticamente o link para criar o seu acesso ao portal do cliente e pagar a fatura (cartão, Pix ou transferência).', '', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702', 'Endeavor Business Solutions'],
+      en: ['Hello ' + o.first + ',', '', 'As discussed, here is the Endeavor Business Solutions proposal: "' + o.title + '".', '', "WHAT'S INCLUDED", o.included.map(function (x) { return '- ' + x; }).join('\n'), '', 'INVESTMENT: ' + o.total, o.items, '',
+        'To approve, open the link below, review the details and click "Accept proposal":', o.link, '', 'The proposal is valid until ' + o.valid + '.', 'As soon as you accept, we automatically send the link to create your client portal access and pay the invoice (card, Pix or bank transfer).', '', 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702', 'Endeavor Business Solutions'],
+      es: ['Hola ' + o.first + ',', '', 'Como conversamos, le enviamos la propuesta de Endeavor Business Solutions: "' + o.title + '".', '', 'QUÉ INCLUYE', o.included.map(function (x) { return '- ' + x; }).join('\n'), '', 'INVERSIÓN: ' + o.total, o.items, '',
+        'Para aprobar, abra el enlace, revise los detalles y haga clic en "Aceptar propuesta":', o.link, '', 'La propuesta es válida hasta ' + o.valid + '.', 'En cuanto acepte, le enviamos automáticamente el enlace para crear su acceso al portal del cliente y pagar la factura (tarjeta, Pix o transferencia).', '', '¿Dudas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702', 'Endeavor Business Solutions']
+    };
+    return (M[lang] || M.pt).filter(function (x, i, a) { return !(x === '' && a[i - 1] === ''); }).join('\n');
+  }
+  async function sendProposal(ctx, p, client) {
+    var j = await call(ctx, { action: 'proposal_send', proposal_id: p.id });
+    var lang = p.language || client.language || 'pt';
+    var fresh = await ctx.q(ctx.sb.from('proposals').select('*').eq('id', p.id).single());
+    var items = (p.items || []).map(function (i) { return '  ' + i.description + ((i.quantity || 1) > 1 ? ' (x' + i.quantity + ')' : '') + ': ' + money(i.amount_cents * (i.quantity || 1), p.currency); }).join('\n');
+    var text = proposalEmail(lang, { first: (client.name || '').split(' ')[0], title: p.title, included: p.included || [], total: money(p.total_cents, p.currency), items: items, link: j.url, valid: fmtD(fresh.valid_until) });
+    var subj = { pt: 'Proposta Endeavor: ', en: 'Endeavor proposal: ', es: 'Propuesta Endeavor: ' }[lang] + p.title;
+    try {
+      var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ _subject: 'Proposta enviada: ' + p.title + ' (' + client.name + ')', _template: 'table', _captcha: 'false', name: client.name, email: client.primary_email, proposta: p.title,
+          total: money(p.total_cents, p.currency), link: j.url, _autoresponse: subj + '\n\n' + text }) });
+      var k = await r.json().catch(function () { return {}; });
+      return { url: j.url, mailed: r.ok && String(k.success) !== 'false' };
+    } catch (e) { return { url: j.url, mailed: false }; }
+  }
+
+  async function proposalsTab(body, ctx) {
+    var esc = ctx.esc;
+    var rows = await ctx.q(ctx.sb.from('proposals').select('*, clients(name, primary_email, language), invoices!proposals_invoice_id_fkey(number, status)').order('created_at', { ascending: false }));
+    body.innerHTML = '<p class="portal-muted">Fluxo: <strong>enviar a proposta</strong> → o cliente <strong>aceita pelo link</strong> → o sistema <strong>cria a fatura</strong>, libera o acesso ao portal e <strong>envia o e-mail</strong> com o link para criar o login e pagar → você recebe a confirmação do pagamento aqui e por e-mail.</p>' +
+      (rows.length ? '<div class="table-wrap"><table class="data inv-table prop-table"><thead><tr><th>Proposta</th><th>Cliente</th><th class="num">Total</th><th>Status</th><th>Andamento</th><th>Ações</th></tr></thead><tbody>' +
+        rows.map(function (p) {
+          var prog = [p.sent_at ? 'Enviada ' + fmtD(p.sent_at) : '', p.viewed_at ? 'Vista ' + fmtD(p.viewed_at) : '', p.accepted_at ? 'Aceita ' + fmtD(p.accepted_at) + ' por ' + (p.accepted_name || '') : '', p.invoices ? 'Fatura ' + (p.invoices.number || '') + ' · ' + (IS[p.invoices.status] || '') : ''].filter(Boolean).join('<br>');
+          var acts = [];
+          if (p.status === 'draft' || p.status === 'sent' || p.status === 'expired') acts.push('<button class="btn btn--navy btn--xs" data-psend="' + p.id + '">' + (p.status === 'draft' ? 'Enviar' : 'Reenviar') + '</button>');
+          if (p.token && p.status !== 'void') acts.push('<button class="btn btn--ghost btn--xs" data-plink="' + p.id + '">Link do cliente</button>');
+          if (p.status === 'draft') acts.push('<a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova-proposta&id=' + p.id + '">Editar</a>');
+          if (p.status === 'accepted' && !p.invoice_id) acts.push('<button class="btn btn--navy btn--xs" data-pinv="' + p.id + '">Gerar fatura</button>');
+          if (p.status !== 'accepted' && p.status !== 'void') acts.push('<button class="btn btn--danger btn--xs" data-pvoid="' + p.id + '">Anular</button>');
+          return '<tr><td><strong>' + esc(p.title) + '</strong><span class="sub">' + esc(fmtD(p.created_at)) + '</span></td><td>' + esc(p.clients ? p.clients.name : '') + '<span class="sub">' + esc(p.clients ? p.clients.primary_email : '') + '</span></td>' +
+            '<td class="num">' + esc(money(p.total_cents, p.currency)) + '</td><td><span class="badge badge--' + PS_B[p.status] + '">' + PS[p.status] + '</span></td><td style="font-size:.85rem">' + prog + '</td>' +
+            '<td><div class="portal-btn-row" style="flex-wrap:nowrap">' + acts.join('') + '</div><div class="portal-alert" id="pa-' + p.id + '" role="status"></div></td></tr>';
+        }).join('') + '</tbody></table></div>' : '<div class="empty-state portal-card"><strong>Nenhuma proposta ainda</strong><p>Crie a proposta do pacote para o cliente em "Nova proposta".</p></div>');
+    var find = function (id) { return rows.find(function (p) { return p.id === id; }); };
+    body.querySelectorAll('[data-psend]').forEach(function (b) { b.onclick = async function () {
+      var p = find(b.dataset.psend); b.disabled = true;
+      try { var r = await sendProposal(ctx, p, p.clients); ctx.route(); if (!r.mailed) alert('A proposta foi marcada como enviada, mas o e-mail não saiu. Use "Link do cliente" para enviar manualmente.'); }
+      catch (e) { b.disabled = false; ctx.msg(ctx.$('#pa-' + p.id), errMsg(ctx, e), 'error'); }
+    }; });
+    body.querySelectorAll('[data-plink]').forEach(function (b) { b.onclick = function () {
+      var p = find(b.dataset.plink), url = ctx.siteUrl('proposal.html') + '?t=' + p.token + '&lang=' + p.language, m = ctx.$('#pa-' + p.id);
+      m.className = 'portal-alert portal-alert--info'; m.innerHTML = '<a href="' + esc(url) + '" target="_blank" rel="noopener" data-open-proposal="' + esc(p.token) + '">Abrir</a> · <button class="btn btn--ghost btn--xs" type="button">Copiar</button>';
+      m.querySelector('button').onclick = function () { ctx.copy(url, this); };
+    }; });
+    body.querySelectorAll('[data-pinv]').forEach(function (b) { b.onclick = async function () {
+      b.disabled = true;
+      try { await call(ctx, { action: 'proposal_invoice', proposal_id: b.dataset.pinv }); ctx.route(); } catch (e) { b.disabled = false; ctx.msg(ctx.$('#pa-' + b.dataset.pinv), errMsg(ctx, e), 'error'); }
+    }; });
+    body.querySelectorAll('[data-pvoid]').forEach(function (b) { b.onclick = async function () {
+      if (!confirm('Anular esta proposta? O link deixa de funcionar.')) return;
+      await ctx.sb.from('proposals').update({ status: 'void' }).eq('id', b.dataset.pvoid); ctx.route();
+    }; });
+  }
+
+  async function proposalForm(body, ctx) {
+    var esc = ctx.esc, sb = ctx.sb, editId = param('id');
+    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').order('name')),
+      ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
+      editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null)]);
+    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], ed = res[4];
+    var pre = ed ? ed.client_id : param('client');
+    body.innerHTML = '<div class="dash"><section class="portal-card"><form class="portal-form" id="pp" novalidate>' +
+      '<div class="portal-grid2"><div class="field"><label for="pp-client">Cliente</label><select id="pp-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="pp-lang">Idioma da proposta</label><select id="pp-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
+      '<div class="field"><label for="pp-title">Título do pacote</label><input id="pp-title" maxlength="200" placeholder="Ex.: Pacote Abertura de LLC na Flórida" value="' + esc(ed ? ed.title : '') + '"></div>' +
+      '<div class="field"><label for="pp-intro">Apresentação (opcional)</label><textarea id="pp-intro" rows="3" maxlength="4000">' + esc(ed ? ed.intro || '' : '') + '</textarea></div>' +
+      '<div class="field"><label for="pp-inc">O que está incluso (um item por linha)</label><textarea id="pp-inc" rows="5" maxlength="4000" placeholder="Registro da LLC na Sunbiz&#10;EIN no IRS&#10;Registered Agent por 12 meses&#10;Operating Agreement">' + esc(ed ? (ed.included || []).join('\n') : '') + '</textarea></div>' +
+      '<fieldset class="perm-box"><legend>Valores</legend><div class="inv-items" id="pp-items"></div><button class="btn btn--ghost btn--xs" type="button" id="pp-add" style="justify-self:start;margin-top:.5rem">+ Item</button></fieldset>' +
+      '<div class="portal-grid2"><div class="field"><label for="pp-valid">Validade da proposta (dias)</label><input id="pp-valid" type="number" min="1" max="120" value="30"></div><div class="field"><label for="pp-days">Vencimento da fatura após o aceite (dias)</label><input id="pp-days" type="number" min="0" max="90" value="' + esc(String(ed ? ed.days_until_due : cfg.default_days_until_due)) + '"></div></div>' +
+      '<div class="field"><label for="pp-terms">Condições</label><textarea id="pp-terms" rows="3" maxlength="2000"></textarea></div>' +
+      '<fieldset class="perm-box"><legend>Parceiro (comissão na fatura)</legend><div class="portal-grid2"><div class="field"><label for="pp-partner">Parceiro</label><select id="pp-partner"><option value="">Sem parceiro</option>' + partners.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + (p.company ? ' · ' + esc(p.company) : '') + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="pp-pct">Comissão (%)</label><input id="pp-pct" type="number" min="0" max="100" step="0.5" disabled></div></div></fieldset>' +
+      '<div class="portal-alert" id="pp-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit" data-send="1">Salvar e enviar ao cliente</button><button class="btn btn--ghost" type="submit" data-send="0">Salvar rascunho</button></div></form></section>' +
+      '<aside class="portal-card"><h2 class="portal-h2">Resumo</h2><div class="split-box"><dl class="split-sum" id="pp-sum"></dl></div><h3 class="portal-h2" style="font-size:1rem;margin-top:1.25rem">O que acontece depois</h3><ol class="steps-ol" style="font-size:.88rem">' +
+      '<li>O cliente recebe o e-mail com a proposta e o link para aceitar.</li><li>Ao aceitar, o sistema cria a fatura no Stripe e libera o acesso ao portal.</li><li>O cliente recebe na hora o e-mail de confirmação com o link para criar login e senha.</li><li>Ele entra direto na página de faturas e paga (cartão, Pix ou transferência).</li><li>Você recebe o aviso do pagamento aqui no console e por e-mail; a cópia da fatura fica no histórico do cliente.</li></ol></aside></div>';
+    var box = ctx.$('#pp-items');
+    var addItem = function (d, amt, qty) {
+      var n = box.children.length, div = document.createElement('div'); div.className = 'inv-item';
+      div.innerHTML = '<div class="field"><label for="pi-d' + n + '">Descrição</label><input id="pi-d' + n + '" data-d maxlength="300" value="' + esc(d || '') + '"></div><div class="field"><label for="pi-q' + n + '">Qtd</label><input id="pi-q' + n + '" data-q type="number" min="1" max="1000" value="' + (qty || 1) + '"></div>' +
+        '<div class="field"><label for="pi-a' + n + '">Valor (US$)</label><input id="pi-a' + n + '" data-a type="number" min="0" step="0.01" value="' + (amt != null ? amt : '') + '"></div><button class="btn btn--ghost btn--xs" type="button" aria-label="Remover item" data-rm>×</button>';
+      box.appendChild(div); div.querySelector('[data-rm]').onclick = function () { if (box.children.length > 1) { div.remove(); calc(); } };
+      div.querySelectorAll('input').forEach(function (i) { i.oninput = calc; });
+    };
+    var items = function () { return Array.prototype.map.call(box.children, function (r) { return { description: r.querySelector('[data-d]').value.trim(), quantity: +r.querySelector('[data-q]').value || 1, amount_cents: Math.round((+r.querySelector('[data-a]').value || 0) * 100) }; }).filter(function (i) { return i.description || i.amount_cents; }); };
+    var calc = function () {
+      var tot = items().reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0), pid = ctx.$('#pp-partner').value, pct = pid ? +ctx.$('#pp-pct').value || 0 : 0;
+      ctx.$('#pp-sum').innerHTML = '<dt>Total da proposta</dt><dd class="is-total">' + money(tot) + '</dd>' + (pid ? '<dt>Comissão do parceiro (' + pct + '%)</dt><dd>' + money(Math.round(tot * pct / 100)) + '</dd>' : '');
+    };
+    var pickPartner = function (pid, pct) { var p = partners.find(function (x) { return x.id === pid; }); ctx.$('#pp-partner').value = p ? p.id : ''; ctx.$('#pp-pct').disabled = !p; ctx.$('#pp-pct').value = p ? (pct != null ? +pct : +p.default_share_pct) : ''; calc(); };
+    var setLang = function (cid) { var c = clients.find(function (x) { return x.id === cid; }); if (c && !ed) { ctx.$('#pp-lang').value = c.language || 'pt'; ctx.$('#pp-terms').value = DEF_TERMS[c.language] || DEF_TERMS.pt; } };
+    (ed && ed.items.length ? ed.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity); });
+    ctx.$('#pp-terms').value = ed ? ed.terms || '' : DEF_TERMS.pt;
+    if (ed) ctx.$('#pp-lang').value = ed.language;
+    ctx.$('#pp-add').onclick = function () { addItem(); box.lastChild.querySelector('input').focus(); };
+    ctx.$('#pp-partner').onchange = function () { pickPartner(this.value); };
+    ctx.$('#pp-pct').oninput = calc;
+    var refFor = function (cid) { return refs.find(function (r) { return r.client_id === cid; }); };
+    ctx.$('#pp-client').onchange = function () { setLang(this.value); var r = refFor(this.value); pickPartner(r ? r.partner_id : ''); };
+    if (ed) pickPartner(ed.partner_id, ed.partner_pct); else if (pre) { setLang(pre); var r0 = refFor(pre); if (r0) pickPartner(r0.partner_id); }
+    calc();
+    var sendFlag = true;
+    ctx.$('#pp').querySelectorAll('button[type=submit]').forEach(function (b) { b.onclick = function () { sendFlag = b.dataset.send === '1'; }; });
+    ctx.$('#pp').onsubmit = async function (e) {
+      e.preventDefault();
+      var cid = ctx.$('#pp-client').value, its = items(), title = ctx.$('#pp-title').value.trim(), m = ctx.$('#pp-m');
+      if (!cid) return ctx.msg(m, 'Selecione o cliente.', 'error');
+      if (title.length < 2) return ctx.msg(m, 'Dê um título ao pacote.', 'error');
+      if (!its.length || its.some(function (i) { return !i.description || i.amount_cents < 1; })) return ctx.msg(m, ERR.invalid_items, 'error');
+      var pid = ctx.$('#pp-partner').value, r = refFor(cid), total = its.reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0);
+      var valid = new Date(Date.now() + (+ctx.$('#pp-valid').value || 30) * 864e5).toISOString().slice(0, 10);
+      var row = { client_id: cid, title: title, intro: ctx.$('#pp-intro').value.trim() || null, included: ctx.$('#pp-inc').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean),
+        items: its, total_cents: total, terms: ctx.$('#pp-terms').value.trim() || null, language: ctx.$('#pp-lang').value, days_until_due: +ctx.$('#pp-days').value || 0, valid_until: valid,
+        partner_id: pid || null, partner_pct: pid ? +ctx.$('#pp-pct').value : null, referral_id: r && r.partner_id === pid ? r.id : null };
+      var btns = this.querySelectorAll('button'); btns.forEach(function (b) { b.disabled = true; });
+      var u = (await sb.auth.getUser()).data.user;
+      var saved = ed ? await sb.from('proposals').update(row).eq('id', ed.id).select('*').single() : await sb.from('proposals').insert(Object.assign({ created_by: u && u.email }, row)).select('*').single();
+      if (saved.error) { btns.forEach(function (b) { b.disabled = false; }); return ctx.msg(m, ctx.errText(saved.error), 'error'); }
+      if (sendFlag) {
+        ctx.msg(m, 'Enviando a proposta…', 'info');
+        try { var sr = await sendProposal(ctx, saved.data, clients.find(function (c) { return c.id === cid; })); if (!sr.mailed) alert('Proposta salva, mas o e-mail não saiu. Use "Link do cliente" na lista para enviar manualmente.'); }
+        catch (x) { btns.forEach(function (b) { b.disabled = false; }); return ctx.msg(m, errMsg(ctx, x), 'error'); }
+      }
+      ERoute.go('#/pagamentos?tab=propostas');
+    };
+  }
+
+  /* ================= notifications (bell in the top bar) ================= */
+  var EVK = { proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação' };
+  function bell(ctx) {
+    var host = document.getElementById('topbar-user'); if (!host || document.getElementById('notif-btn')) return;
+    var btn = document.createElement('button'); btn.type = 'button'; btn.id = 'notif-btn'; btn.className = 'notif-btn'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0112 0v5l1.5 2h-15L6 16zM10 20a2 2 0 004 0" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span class="sr-only">Notificações</span><span class="notif-btn__n" hidden></span>';
+    host.insertBefore(btn, host.firstChild);
+    var pop = null, events = [];
+    var load = async function () {
+      var r = await ctx.sb.from('admin_events').select('*').order('at', { ascending: false }).limit(15);
+      events = r.data || []; var n = events.filter(function (e) { return !e.read_at; }).length, b = btn.querySelector('.notif-btn__n');
+      b.hidden = !n; b.textContent = n > 9 ? '9+' : n; btn.querySelector('.sr-only').textContent = 'Notificações' + (n ? ' (' + n + ' novas)' : '');
+    };
+    var close = function () { if (pop) { pop.remove(); pop = null; btn.setAttribute('aria-expanded', 'false'); } };
+    btn.onclick = async function (e) {
+      e.stopPropagation(); if (pop) return close();
+      await load();
+      pop = document.createElement('div'); pop.className = 'notif-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Notificações');
+      pop.innerHTML = '<h2>Notificações <button class="btn btn--ghost btn--xs" type="button" data-readall>Marcar como lidas</button></h2><ul class="notif-list">' +
+        (events.length ? events.map(function (ev) { return '<li class="' + (ev.read_at ? '' : 'is-new') + '"><a href="' + ctx.esc(ev.link || '#/dashboard') + '" data-ev="' + ev.id + '"><span class="ev-k ev-k--' + ev.kind + '">' + EVK[ev.kind] + '</span><strong>' + ctx.esc(ev.title) + '</strong>' + (ev.body ? '<span>' + ctx.esc(ev.body) + '</span>' : '') + '<small>' + ctx.esc(ctx.fmtDT(ev.at)) + '</small></a></li>'; }).join('') : '<li class="portal-muted" style="padding:.75rem">Nada por aqui ainda.</li>') + '</ul>';
+      document.querySelector('.portal-top').appendChild(pop); btn.setAttribute('aria-expanded', 'true');
+      pop.onclick = function (x) { x.stopPropagation(); };
+      pop.querySelector('[data-readall]').onclick = async function () { await ctx.sb.from('admin_events').update({ read_at: new Date().toISOString() }).is('read_at', null); close(); load(); };
+      pop.querySelectorAll('[data-ev]').forEach(function (a) { a.addEventListener('click', function () { ctx.sb.from('admin_events').update({ read_at: new Date().toISOString() }).eq('id', a.dataset.ev).then(function () { load(); }); close(); }); });
+    };
+    document.addEventListener('click', close); document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && pop) { close(); btn.focus(); } });
+    load(); setInterval(load, 60000);
+  }
+
   async function stripeTab(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb;
     var s = await ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single());
@@ -3614,7 +3916,8 @@ window.ENDEAVOR_CFG = {
 
   window.AdminPayments = {
     partners: function (view, ctx) { var id = (ERoute.get().match(/[?&]id=([0-9a-f-]{36})/) || [])[1]; return id ? partnerDetail(view, ctx, id) : partnersList(view, ctx); },
-    payments: payments
+    payments: payments,
+    bell: bell
   };
 })();
 
@@ -3809,6 +4112,7 @@ window.ENDEAVOR_CFG = {
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && con.classList.contains('nav-open')) { setNav(false); tgl.focus(); } });
     window.addEventListener('hashchange', function () { setNav(false); route(); });
     loadSettings().then(route);
+    if (window.AdminPayments && AdminPayments.bell) AdminPayments.bell(clientsCtx());
   }
   async function loadSettings() { var r = await sb.from('booking_settings').select('*').eq('id', 1).single(); if (!r.error) state.settings = r.data; }
 

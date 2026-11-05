@@ -187,6 +187,7 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && con.classList.contains('nav-open')) { setNav(false); tgl.focus(); } });
     window.addEventListener('hashchange', function () { setNav(false); route(); });
     loadSettings().then(route);
+    if (window.AdminPayments && AdminPayments.bell) AdminPayments.bell(clientsCtx());
   }
   async function loadSettings() { var r = await sb.from('booking_settings').select('*').eq('id', 1).single(); if (!r.error) state.settings = r.data; }
 
