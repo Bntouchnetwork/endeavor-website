@@ -505,3 +505,13 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .nav-badge { margin-left: auto; min-width: 1.35rem; height: 1.35rem; padding: 0 .4rem; border-radius: 999px; background: #d92d20; color: #fff; font: 700 .72rem/1.35rem Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px rgb(217 45 32 / .25); }
 .nav-toggle { position: relative; }
 .nav-toggle.has-alert::after { content: ""; position: absolute; top: 4px; right: 4px; width: .6rem; height: .6rem; border-radius: 50%; background: #d92d20; box-shadow: 0 0 0 2px #fff; }
+.tpl-pick { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .6rem; align-items: end; padding: 1rem; margin-bottom: .75rem; border-radius: 12px; background: #f6f3ea; border: 1px solid #ebe1c8; }
+.tpl-pick .field { margin: 0; }
+@media (max-width: 640px) { .tpl-pick { grid-template-columns: 1fr 1fr; } .tpl-pick .field { grid-column: 1 / -1; } }
+.tpl-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.tpl-card { display: grid; gap: .6rem; align-content: space-between; background: #fff; border: 1px solid #e3e7ee; border-radius: 14px; padding: 1rem; }
+.tpl-card > div:first-child { display: grid; gap: .15rem; }
+.tpl-card > div:first-child span { font-size: .86rem; }
+.tpl-card ul { margin: 0; padding-left: 1.1rem; font-size: .86rem; color: var(--muted); display: grid; gap: .2rem; }
+.tpl-card__foot { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .85rem; border-top: 1px solid #edf0f4; padding-top: .6rem; }
+.tpl-chip { justify-self: start; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: #8a6a2a; background: #f6f3ea; border-radius: 999px; padding: .15rem .55rem; margin-bottom: .2rem; }

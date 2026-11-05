@@ -1410,6 +1410,16 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .nav-badge { margin-left: auto; min-width: 1.35rem; height: 1.35rem; padding: 0 .4rem; border-radius: 999px; background: #d92d20; color: #fff; font: 700 .72rem/1.35rem Inter, system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px rgb(217 45 32 / .25); }
 .nav-toggle { position: relative; }
 .nav-toggle.has-alert::after { content: ""; position: absolute; top: 4px; right: 4px; width: .6rem; height: .6rem; border-radius: 50%; background: #d92d20; box-shadow: 0 0 0 2px #fff; }
+.tpl-pick { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: .6rem; align-items: end; padding: 1rem; margin-bottom: .75rem; border-radius: 12px; background: #f6f3ea; border: 1px solid #ebe1c8; }
+.tpl-pick .field { margin: 0; }
+@media (max-width: 640px) { .tpl-pick { grid-template-columns: 1fr 1fr; } .tpl-pick .field { grid-column: 1 / -1; } }
+.tpl-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); }
+.tpl-card { display: grid; gap: .6rem; align-content: space-between; background: #fff; border: 1px solid #e3e7ee; border-radius: 14px; padding: 1rem; }
+.tpl-card > div:first-child { display: grid; gap: .15rem; }
+.tpl-card > div:first-child span { font-size: .86rem; }
+.tpl-card ul { margin: 0; padding-left: 1.1rem; font-size: .86rem; color: var(--muted); display: grid; gap: .2rem; }
+.tpl-card__foot { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; font-size: .85rem; border-top: 1px solid #edf0f4; padding-top: .6rem; }
+.tpl-chip { justify-self: start; font-size: .7rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: #8a6a2a; background: #f6f3ea; border-radius: 999px; padding: .15rem .55rem; margin-bottom: .2rem; }
 
 </style>
 </head>
@@ -1566,6 +1576,30 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       total_cents: 540000, currency: 'usd', terms: null, language: 'es', days_until_due: 7, partner_id: null, partner_pct: null, referral_id: null, status: 'draft', token: null, valid_until: null, sent_at: null, viewed_at: null, accepted_at: null, accepted_name: null, invoice_id: null, created_by: ADMIN.email }
   ];
   DB.invoices[3].proposal_id = 'f2000000-0000-4000-8000-000000000002';
+  var TPL = function (n, name, st, title, intro, inc, items, lang) { return { id: 'fa00000' + n + '-0000-4000-8000-00000000000' + n, created_at: iso(-60), updated_at: iso(-60), name: name, structure: st, language: lang || 'pt', title: title, intro: intro, included: inc,
+    items: items.map(function (i) { return { description: i[0], amount_cents: i[1] == null ? null : i[1] * 100, quantity: i[2] || 1 }; }), terms: 'Pagamento pelo portal do cliente (cartão, Pix ou transferência bancária). Taxas do governo incluídas. Os serviços começam após a confirmação do pagamento.',
+    days_until_due: 7, valid_days: 30, archived: false, created_by: ADMIN.email }; };
+  DB.proposal_templates = [
+    TPL(1, 'LLC Flórida - sócio estrangeiro', 'llc_foreign', 'Abertura de LLC na Flórida (sócio estrangeiro)', 'Abertura da sua empresa nos EUA, pronta para faturar em dólar e cumprir as obrigações do IRS para LLC de dono estrangeiro.',
+      ['Registro da LLC na Sunbiz (Articles of Organization)', 'Operating Agreement', 'EIN emitido pelo IRS', 'Registered Agent na Flórida por 12 meses', 'Orientação para abertura de conta bancária', 'Calendário de obrigações (Form 5472 e Annual Report) no portal'],
+      [['Abertura da LLC na Flórida (taxa estadual inclusa)', 1200], ['EIN no IRS', 250], ['Registered Agent - 12 meses', 300]]),
+    TPL(2, 'LLC Flórida - vários sócios', 'llc_multi', 'Abertura de LLC com vários sócios na Flórida', 'Estrutura para sócios que vão operar juntos nos EUA, com acordo entre sócios e obrigações fiscais organizadas.',
+      ['Registro da LLC na Sunbiz', 'Operating Agreement para vários sócios', 'EIN emitido pelo IRS', 'Registered Agent na Flórida por 12 meses', 'Calendário de obrigações (Form 1065 e K-1) no portal'],
+      [['Abertura da LLC na Flórida (taxa estadual inclusa)', 1200], ['Operating Agreement multi-member', 450], ['EIN no IRS', 250], ['Registered Agent - 12 meses', 300]]),
+    TPL(3, 'C-Corporation Flórida', 'c_corp', 'Abertura de C-Corporation na Flórida', 'Corporação para quem vai captar investidores ou reinvestir lucros nos EUA.',
+      ['Registro da corporação na Sunbiz (Articles of Incorporation)', 'Bylaws e emissão de ações', 'EIN emitido pelo IRS', 'Registered Agent na Flórida por 12 meses', 'Calendário de obrigações (Form 1120 e F-1120) no portal'],
+      [['Abertura da C-Corp na Flórida (taxa estadual inclusa)', 1500], ['Bylaws e ata de organização', 500], ['EIN no IRS', 250], ['Registered Agent - 12 meses', 300]]),
+    TPL(4, 'Registered Agent + Annual Report', 'registered_agent', 'Manutenção anual da empresa na Flórida', 'Mantém a sua empresa ativa e em dia com o estado da Flórida.',
+      ['Registered Agent na Flórida por 12 meses', 'Entrega do Annual Report na Sunbiz', 'Alertas de prazo no portal'], [['Registered Agent - 12 meses', 300], ['Annual Report Sunbiz (taxa estadual inclusa)', 250]]),
+    TPL(5, 'Imposto anual - LLC estrangeira (5472)', 'tax', 'Declaração anual: Form 5472 + pro forma 1120', 'Entrega obrigatória para LLC de dono estrangeiro, evitando a multa do IRS.',
+      ['Preparação do Form 5472 e pro forma 1120', 'Revisão das transações com o sócio', 'Envio ao IRS', 'Cópia da declaração no portal'], [['Form 5472 + pro forma 1120', 650]]),
+    TPL(6, 'Contabilidade mensal', 'bookkeeping', 'Contabilidade mensal (bookkeeping)', 'Livros em dia todo mês, com relatórios trimestrais no portal.',
+      ['Conciliação bancária mensal', 'Classificação das despesas', 'Relatórios P&L, balanço e fluxo de caixa no portal', 'Suporte por e-mail e WhatsApp'], [['Contabilidade mensal', 450, 12]]),
+    TPL(7, 'Estrutura para imóveis', 'real_estate', 'Estrutura para investir em imóveis nos EUA', 'Empresa e organização para comprar e alugar imóveis com proteção patrimonial.',
+      ['LLC dedicada ao imóvel', 'Operating Agreement com cláusulas de proteção', 'EIN emitido pelo IRS', 'Registered Agent na Flórida por 12 meses', 'Orientação sobre financiamento e seguro'],
+      [['Abertura da LLC para o imóvel (taxa estadual inclusa)', 1200], ['Operating Agreement', null], ['EIN no IRS', 250], ['Registered Agent - 12 meses', 300]])
+  ];
+
   DB.admin_events = [
     { id: 3, at: iso(0, 9, 12), kind: 'referral_new', title: 'Nova indicação: Juliana Rocha', body: 'Parceiro: Ana Ribeiro · Start a U.S. Company', link: '#/parceiros?id=' + P1, read_at: null },
     { id: 2, at: iso(-15), kind: 'payment_received', title: 'Pagamento recebido: US$ 2,000.00 · Sunshine Ventures', body: 'Fatura EBS-' + Y + '-0004 paga pelo portal (mturner@example.com).', link: '#/pagamentos?tab=faturas', read_at: iso(-14) },
@@ -1646,6 +1680,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     client_users: { status: 'invited', can_view: false, can_upload: true }, compliance_items: { status: 'pending', category: 'other' },
     partners: { status: 'invited', partner_type: 'referral', default_share_pct: 10, language: 'pt', stripe_details_submitted: false, stripe_charges_enabled: false, stripe_payouts_enabled: false, stripe_transfers_active: false, stripe_account_id: null, user_id: null },
     referral_items: { status: 'pending' }, referral_events: { kind: 'note', visible_to_partner: true },
+    proposal_templates: { archived: false, structure: 'other', language: 'pt', days_until_due: 7, valid_days: 30 },
     clients: { status: 'active', language: 'pt' }, companies: { status: 'in_formation', state: 'FL' }, company_documents: { visible_to_client: true }
   };
   function current() { return AUTH.user; }
@@ -1659,7 +1694,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     if (table === 'doc_access_log') { r.at = new Date().toISOString(); r.user_id = current() && current().id; r.email = current() && current().email; }
     if (table === 'client_users' || table === 'partners') r.invited_at = r.invited_at || new Date().toISOString();
     if (table === 'referral_events') r.at = r.at || new Date().toISOString();
-    if (/^(partners|referral_items)$/.test(table)) r.updated_at = new Date().toISOString();
+    if (/^(partners|referral_items|proposal_templates|proposals)$/.test(table)) r.updated_at = new Date().toISOString();
     if (table === 'company_documents') { r.uploaded_by = r.uploaded_by || (current() && current().id); r.uploaded_by_email = r.uploaded_by_email || (current() && current().email); }
     if (/^(company_documents|compliance_items|financial_reports)$/.test(table)) { var co = DB.companies.find(function (c) { return c.id === r.company_id; }); if (co) r.client_id = co.client_id; }
     if (table === 'envelopes' && !r.status) r.status = 'sent';

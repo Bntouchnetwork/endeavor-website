@@ -219,13 +219,14 @@
 
   async function payments(view, ctx) {
     var esc = ctx.esc, tab = param('tab') || 'faturas';
-    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['nova', 'Nova fatura'], ['stripe', 'Conta Stripe']];
+    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['modelos', 'Modelos de proposta'], ['nova', 'Nova fatura'], ['stripe', 'Conta Stripe']];
     view.innerHTML = head(esc, 'Pagamentos', 'Propostas, faturas pelo Stripe e repasse automático da comissão para o parceiro via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/pagamentos?tab=nova-proposta">Nova proposta</a><a class="btn btn--navy" href="#/pagamentos?tab=nova">Nova fatura</a></div>') +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/pagamentos?tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pg-body"></div>';
     var body = ctx.$('#pg-body');
     if (tab === 'nova') return newInvoice(body, ctx);
     if (tab === 'propostas') return proposalsTab(body, ctx);
     if (tab === 'nova-proposta') return proposalForm(body, ctx, null);
+    if (tab === 'modelos') return param('tpl') ? templateForm(body, ctx, param('tpl')) : templatesTab(body, ctx);
     if (tab === 'stripe') return stripeTab(body, ctx);
     var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active)').order('created_at', { ascending: false }));
     var st = param('status') || '';
@@ -378,10 +379,15 @@
     var esc = ctx.esc, sb = ctx.sb, editId = param('id');
     var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
-      editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null)]);
-    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], ed = res[4];
+      editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null),
+      ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name'))]);
+    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], ed = res[4], tpls = res[5];
     var pre = ed ? ed.client_id : param('client');
-    body.innerHTML = '<div class="dash"><section class="portal-card"><form class="portal-form" id="pp" novalidate>' +
+    body.innerHTML = '<div class="dash"><section class="portal-card"><div class="tpl-pick"><div class="field"><label for="pp-tpl">Começar de um modelo</label><select id="pp-tpl"><option value="">Selecione o modelo da proposta</option>' +
+        Object.keys(STRUCT).map(function (k) { var g = tpls.filter(function (t) { return t.structure === k; }); return g.length ? '<optgroup label="' + esc(STRUCT[k]) + '">' + g.map(function (t) { return '<option value="' + t.id + '">' + esc(t.name) + '</option>'; }).join('') + '</optgroup>' : ''; }).join('') +
+        '</select></div><button class="btn btn--navy" type="button" id="pp-apply">Usar modelo</button><a class="btn btn--ghost" href="#/pagamentos?tab=modelos">Gerenciar modelos</a></div>' +
+      '<p class="portal-muted" id="pp-tplmsg" style="font-size:.85rem;margin:-.25rem 0 1rem">O modelo preenche título, apresentação, o que está incluso, itens, valores e condições. Cliente e parceiro continuam como estão, e você pode ajustar tudo antes de enviar.</p>' +
+      '<form class="portal-form" id="pp" novalidate>' +
       '<div class="portal-grid2"><div class="field"><label for="pp-client">Cliente</label><select id="pp-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="pp-lang">Idioma da proposta</label><select id="pp-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
       '<div class="field"><label for="pp-title">Título do pacote</label><input id="pp-title" maxlength="200" placeholder="Ex.: Pacote Abertura de LLC na Flórida" value="' + esc(ed ? ed.title : '') + '"></div>' +
@@ -392,7 +398,7 @@
       '<div class="field"><label for="pp-terms">Condições</label><textarea id="pp-terms" rows="3" maxlength="2000"></textarea></div>' +
       '<fieldset class="perm-box"><legend>Parceiro (comissão na fatura)</legend><div class="portal-grid2"><div class="field"><label for="pp-partner">Parceiro</label><select id="pp-partner"><option value="">Sem parceiro</option>' + partners.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + (p.company ? ' · ' + esc(p.company) : '') + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="pp-pct">Comissão (%)</label><input id="pp-pct" type="number" min="0" max="100" step="0.5" disabled></div></div></fieldset>' +
-      '<div class="portal-alert" id="pp-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit" data-send="1">Salvar e enviar ao cliente</button><button class="btn btn--ghost" type="submit" data-send="0">Salvar rascunho</button></div></form></section>' +
+      '<div class="portal-alert" id="pp-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit" data-send="1">Salvar e enviar ao cliente</button><button class="btn btn--ghost" type="submit" data-send="0">Salvar rascunho</button><button class="btn btn--ghost" type="button" id="pp-savetpl">Salvar como modelo</button></div></form></section>' +
       '<aside class="portal-card"><h2 class="portal-h2">Resumo</h2><div class="split-box"><dl class="split-sum" id="pp-sum"></dl></div><h3 class="portal-h2" style="font-size:1rem;margin-top:1.25rem">O que acontece depois</h3><ol class="steps-ol" style="font-size:.88rem">' +
       '<li>O cliente recebe o e-mail com a proposta e o link para aceitar.</li><li>Ao aceitar, o sistema cria a fatura no Stripe e libera o acesso ao portal.</li><li>O cliente recebe na hora o e-mail de confirmação com o link para criar login e senha.</li><li>Ele entra direto na página de faturas e paga (cartão, Pix ou transferência).</li><li>Você recebe o aviso do pagamento aqui no console e por e-mail; a cópia da fatura fica no histórico do cliente.</li></ol></aside></div>';
     var box = ctx.$('#pp-items');
@@ -414,12 +420,38 @@
     ctx.$('#pp-terms').value = ed ? ed.terms || '' : DEF_TERMS.pt;
     if (ed) ctx.$('#pp-lang').value = ed.language;
     ctx.$('#pp-add').onclick = function () { addItem(); box.lastChild.querySelector('input').focus(); };
+    var applyTpl = function (t) {
+      ctx.$('#pp-title').value = t.title || ''; ctx.$('#pp-intro').value = t.intro || ''; ctx.$('#pp-inc').value = (t.included || []).join('\n'); ctx.$('#pp-terms').value = t.terms || '';
+      ctx.$('#pp-lang').value = t.language || 'pt'; ctx.$('#pp-days').value = t.days_until_due; ctx.$('#pp-valid').value = t.valid_days;
+      box.innerHTML = ''; (t.items && t.items.length ? t.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity); });
+      calc();
+      var empty = (t.items || []).some(function (i) { return i.amount_cents == null; });
+      ctx.msg(ctx.$('#pp-tplmsg'), 'Modelo "' + t.name + '" aplicado.' + (empty ? ' Preencha os valores que estão em branco.' : ' Confira os valores e ajuste o que precisar.'), 'ok');
+      var f = box.querySelector(empty ? '[data-a]' : '#pp-title'); if (empty) { var blank = Array.prototype.find.call(box.querySelectorAll('[data-a]'), function (x) { return !x.value; }); if (blank) blank.focus(); } else if (f) f.focus();
+    };
+    ctx.$('#pp-apply').onclick = function () {
+      var t = tpls.find(function (x) { return x.id === ctx.$('#pp-tpl').value; });
+      if (!t) return ctx.msg(ctx.$('#pp-tplmsg'), 'Selecione um modelo na lista.', 'error');
+      var dirty = ctx.$('#pp-title').value.trim() || items().some(function (i) { return i.amount_cents; });
+      if (dirty && !confirm('Substituir o conteúdo atual da proposta pelo modelo "' + t.name + '"?')) return;
+      applyTpl(t);
+    };
+    ctx.$('#pp-savetpl').onclick = async function () {
+      var name = prompt('Nome do modelo (ex.: LLC Flórida - sócio estrangeiro):', ctx.$('#pp-title').value.trim()); if (!name || name.trim().length < 2) return;
+      var u = (await sb.auth.getUser()).data.user;
+      var r = await sb.from('proposal_templates').insert({ name: name.trim(), structure: 'other', language: ctx.$('#pp-lang').value, title: ctx.$('#pp-title').value.trim() || name.trim(), intro: ctx.$('#pp-intro').value.trim() || null,
+        included: ctx.$('#pp-inc').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean), items: items().map(function (i) { return { description: i.description, quantity: i.quantity, amount_cents: i.amount_cents || null }; }),
+        terms: ctx.$('#pp-terms').value.trim() || null, days_until_due: +ctx.$('#pp-days').value || 0, valid_days: +ctx.$('#pp-valid').value || 30, created_by: u && u.email }).select('*').single();
+      if (r.error) return ctx.msg(ctx.$('#pp-m'), ctx.errText(r.error), 'error');
+      tpls.push(r.data); ctx.msg(ctx.$('#pp-m'), 'Modelo "' + r.data.name + '" salvo. Ajuste o tipo de estrutura em Modelos de proposta.', 'ok');
+    };
     ctx.$('#pp-partner').onchange = function () { pickPartner(this.value); };
     ctx.$('#pp-pct').oninput = calc;
     var refFor = function (cid) { return refs.find(function (r) { return r.client_id === cid; }); };
     ctx.$('#pp-client').onchange = function () { setLang(this.value); var r = refFor(this.value); pickPartner(r ? r.partner_id : ''); };
     if (ed) pickPartner(ed.partner_id, ed.partner_pct); else if (pre) { setLang(pre); var r0 = refFor(pre); if (r0) pickPartner(r0.partner_id); }
     calc();
+    var preTpl = param('template'); if (preTpl && !ed) { var t0 = tpls.find(function (x) { return x.id === preTpl; }); if (t0) { ctx.$('#pp-tpl').value = t0.id; applyTpl(t0); } }
     var sendFlag = true;
     ctx.$('#pp').querySelectorAll('button[type=submit]').forEach(function (b) { b.onclick = function () { sendFlag = b.dataset.send === '1'; }; });
     ctx.$('#pp').onsubmit = async function (e) {
@@ -443,6 +475,67 @@
         catch (x) { btns.forEach(function (b) { b.disabled = false; }); return ctx.msg(m, errMsg(ctx, x), 'error'); }
       }
       ERoute.go('#/pagamentos?tab=propostas');
+    };
+  }
+
+
+  /* ================= Modelos de proposta ================= */
+  var STRUCT = { llc_foreign: 'LLC - sócio estrangeiro', llc_single: 'LLC - sócio único (EUA)', llc_multi: 'LLC - vários sócios', c_corp: 'C-Corporation', s_corp: 'S-Corporation', registered_agent: 'Manutenção anual', tax: 'Impostos', bookkeeping: 'Contabilidade', real_estate: 'Imóveis', paraguay: 'Paraguai', other: 'Outros' };
+  async function templatesTab(body, ctx) {
+    var esc = ctx.esc;
+    var tpls = await ctx.q(ctx.sb.from('proposal_templates').select('*').eq('archived', false).order('name'));
+    var total = function (t) { var c = (t.items || []).reduce(function (s, i) { return s + (i.amount_cents || 0) * (i.quantity || 1); }, 0), blank = (t.items || []).some(function (i) { return i.amount_cents == null; }); return c ? money(c) + (blank ? ' + itens a definir' : '') : 'Valores a definir'; };
+    body.innerHTML = '<div class="toolbar" style="justify-content:space-between;align-items:center"><p class="portal-muted" style="margin:0">Modelos por tipo de estrutura. Ao criar a proposta, escolha o modelo e ele já sobe com o pacote completo.</p><a class="btn btn--navy" href="#/pagamentos?tab=modelos&tpl=novo">Novo modelo</a></div>' +
+      (tpls.length ? (function () {
+        var g = []; Object.keys(STRUCT).forEach(function (k) { g = g.concat(tpls.filter(function (t) { return t.structure === k; })); });
+        return '<div class="tpl-grid" style="margin-top:1rem">' + g.map(function (t) {
+          return '<article class="tpl-card"><div><span class="tpl-chip">' + esc(STRUCT[t.structure] || STRUCT.other) + '</span><strong>' + esc(t.name) + '</strong><span class="portal-muted">' + esc(t.title) + '</span></div>' +
+            '<ul>' + (t.included || []).slice(0, 4).map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + ((t.included || []).length > 4 ? '<li>+ ' + ((t.included || []).length - 4) + ((t.included || []).length - 4 === 1 ? ' item' : ' itens') + '</li>' : '') + '</ul>' +
+            '<div class="tpl-card__foot"><span><b>' + esc(total(t)) + '</b> · ' + esc((t.language || 'pt').toUpperCase()) + '</span><div class="portal-btn-row" style="flex-wrap:nowrap"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&template=' + t.id + '">Usar</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=modelos&tpl=' + t.id + '">Editar</a><button class="btn btn--ghost btn--xs" type="button" data-dup="' + t.id + '">Duplicar</button></div></div></article>';
+        }).join('') + '</div>';
+      })() : '<div class="empty-state portal-card"><strong>Nenhum modelo ainda</strong><p>Crie modelos para os pacotes que você mais vende.</p></div>');
+    body.querySelectorAll('[data-dup]').forEach(function (b) { b.onclick = async function () {
+      var t = tpls.find(function (x) { return x.id === b.dataset.dup; }), c = Object.assign({}, t); delete c.id; delete c.created_at; delete c.updated_at; c.name = (t.name + ' (cópia)').slice(0, 120);
+      var r = await ctx.sb.from('proposal_templates').insert(c).select('id').single(); if (!r.error) ERoute.go('#/pagamentos?tab=modelos&tpl=' + r.data.id);
+    }; });
+  }
+  async function templateForm(body, ctx, id) {
+    var esc = ctx.esc, sb = ctx.sb, isNew = id === 'novo';
+    var t = isNew ? { name: '', structure: 'llc_foreign', language: 'pt', title: '', intro: '', included: [], items: [{}], terms: DEF_TERMS.pt, days_until_due: 7, valid_days: 30 } : await ctx.q(sb.from('proposal_templates').select('*').eq('id', id).single());
+    body.innerHTML = '<p><a href="#/pagamentos?tab=modelos">← Modelos de proposta</a></p><section class="portal-card" style="max-width:52rem"><h2 class="portal-h2">' + (isNew ? 'Novo modelo' : 'Editar modelo') + '</h2><form class="portal-form" id="tf" novalidate>' +
+      '<div class="portal-grid2"><div class="field"><label for="tf-name">Nome do modelo</label><input id="tf-name" maxlength="120" value="' + esc(t.name) + '" placeholder="Ex.: LLC Flórida - sócio estrangeiro"></div>' +
+      '<div class="field"><label for="tf-struct">Tipo de estrutura</label><select id="tf-struct">' + Object.keys(STRUCT).map(function (k) { return '<option value="' + k + '"' + (t.structure === k ? ' selected' : '') + '>' + STRUCT[k] + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="tf-lang">Idioma</label><select id="tf-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div>' +
+      '<div class="field"><label for="tf-days">Vencimento da fatura (dias)</label><input id="tf-days" type="number" min="0" max="90" value="' + t.days_until_due + '"></div></div>' +
+      '<div class="field"><label for="tf-title">Título que o cliente vê</label><input id="tf-title" maxlength="200" value="' + esc(t.title) + '"></div>' +
+      '<div class="field"><label for="tf-intro">Apresentação</label><textarea id="tf-intro" rows="3" maxlength="4000">' + esc(t.intro || '') + '</textarea></div>' +
+      '<div class="field"><label for="tf-inc">O que está incluso (um item por linha)</label><textarea id="tf-inc" rows="6" maxlength="4000">' + esc((t.included || []).join('\n')) + '</textarea></div>' +
+      '<fieldset class="perm-box"><legend>Itens e valores (deixe o valor em branco para preencher em cada proposta)</legend><div class="inv-items" id="tf-items"></div><button class="btn btn--ghost btn--xs" type="button" id="tf-add" style="justify-self:start;margin-top:.5rem">+ Item</button></fieldset>' +
+      '<div class="portal-grid2"><div class="field"><label for="tf-valid">Validade padrão da proposta (dias)</label><input id="tf-valid" type="number" min="1" max="120" value="' + t.valid_days + '"></div></div>' +
+      '<div class="field"><label for="tf-terms">Condições</label><textarea id="tf-terms" rows="3" maxlength="2000">' + esc(t.terms || '') + '</textarea></div>' +
+      '<div class="portal-alert" id="tf-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar modelo</button>' + (isNew ? '' : '<a class="btn btn--ghost" href="#/pagamentos?tab=nova-proposta&template=' + t.id + '">Usar em nova proposta</a><button class="btn btn--danger" type="button" id="tf-arch">Excluir modelo</button>') + '</div></form></section>';
+    ctx.$('#tf-lang').value = t.language || 'pt';
+    var box = ctx.$('#tf-items');
+    var addItem = function (d, amt, qty) {
+      var n = box.children.length, div = document.createElement('div'); div.className = 'inv-item';
+      div.innerHTML = '<div class="field"><label for="ti-d' + n + '">Descrição</label><input id="ti-d' + n + '" data-d maxlength="300" value="' + esc(d || '') + '"></div><div class="field"><label for="ti-q' + n + '">Qtd</label><input id="ti-q' + n + '" data-q type="number" min="1" max="1000" value="' + (qty || 1) + '"></div>' +
+        '<div class="field"><label for="ti-a' + n + '">Valor (US$)</label><input id="ti-a' + n + '" data-a type="number" min="0" step="0.01" value="' + (amt != null ? amt : '') + '" placeholder="a definir"></div><button class="btn btn--ghost btn--xs" type="button" aria-label="Remover item" data-rm>×</button>';
+      box.appendChild(div); div.querySelector('[data-rm]').onclick = function () { if (box.children.length > 1) div.remove(); };
+    };
+    (t.items && t.items.length ? t.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity); });
+    ctx.$('#tf-add').onclick = function () { addItem(); box.lastChild.querySelector('input').focus(); };
+    if (ctx.$('#tf-arch')) ctx.$('#tf-arch').onclick = async function () { if (!confirm('Excluir este modelo? Propostas já criadas não mudam.')) return; await sb.from('proposal_templates').update({ archived: true }).eq('id', t.id); ERoute.go('#/pagamentos?tab=modelos'); };
+    ctx.$('#tf').onsubmit = async function (e) {
+      e.preventDefault();
+      var v = function (x) { return ctx.$('#' + x).value.trim(); }, m = ctx.$('#tf-m');
+      var its = Array.prototype.map.call(box.children, function (r) { var a = r.querySelector('[data-a]').value; return { description: r.querySelector('[data-d]').value.trim(), quantity: +r.querySelector('[data-q]').value || 1, amount_cents: a === '' ? null : Math.round(+a * 100) }; }).filter(function (i) { return i.description; });
+      if (v('tf-name').length < 2 || v('tf-title').length < 2) return ctx.msg(m, 'Dê um nome ao modelo e um título para o cliente.', 'error');
+      var row = { name: v('tf-name'), structure: v('tf-struct'), language: v('tf-lang'), title: v('tf-title'), intro: v('tf-intro') || null, included: ctx.$('#tf-inc').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean),
+        items: its, terms: v('tf-terms') || null, days_until_due: +v('tf-days') || 0, valid_days: +v('tf-valid') || 30 };
+      var u = (await sb.auth.getUser()).data.user;
+      var r = isNew ? await sb.from('proposal_templates').insert(Object.assign({ created_by: u && u.email }, row)) : await sb.from('proposal_templates').update(row).eq('id', t.id);
+      if (r.error) return ctx.msg(m, ctx.errText(r.error), 'error');
+      ERoute.go('#/pagamentos?tab=modelos');
     };
   }
 
