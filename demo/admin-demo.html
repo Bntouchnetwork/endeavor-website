@@ -1292,6 +1292,16 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
 .lang-dd .lang__menu { min-width: 14.5rem; }
 .lang-dd .lang__menu a { white-space: nowrap; }
 
+/* Partner permissions form */
+.perm-box { border: 1px solid #e3e7ee; border-radius: 12px; padding: .9rem 1rem 1rem; margin: 0; display: grid; gap: .9rem; }
+.perm-box legend { font-weight: 700; padding: 0 .35rem; color: var(--navy-900); }
+.perm-group { display: grid; gap: .35rem; }
+.perm-title { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.perm-cos { display: grid; gap: .35rem; padding-left: 1.5rem; }
+.perm-cos[hidden] { display: none; }
+.perm-hint { font-size: .8rem; color: var(--muted); margin: .15rem 0 0; }
+.perm-sum { font-size: .82rem; color: var(--muted); }
+
 </style>
 </head>
 <body class="portal">
@@ -1331,7 +1341,8 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
    loaded with fictitious sample data. Nothing leaves the browser and nothing is saved. */
 (function () {
   'use strict';
-  var MODE = window.DEMO_MODE || 'admin'; // 'admin' | 'client'
+  var MODE = window.DEMO_MODE || 'admin'; // 'admin' | 'client' | 'partner'
+  var PORTAL = MODE === 'client' || MODE === 'partner';
   var LIVE = 'https://endeavorbiz.com/';
   function uuid() { return (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); })); }
   var now = new Date();
@@ -1343,6 +1354,9 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   /* ---------------- sample data ---------------- */
   var ADMIN = { id: 'demo-admin', email: 'support@endeavorbiz.com' };
   var CLIENT_USER = { id: 'demo-client-user', email: 'carlos.lima@example.com' };
+  var PARTNER_USER = { id: 'u-cpa', email: 'ana.cpa@example.com' };
+  var ME = MODE === 'partner' ? PARTNER_USER : CLIENT_USER;
+  var ALLCATS = ['formation', 'tax_return', 'report', 'compliance', 'other'];
   var C1 = 'c1000000-0000-4000-8000-000000000001', C2 = 'c2000000-0000-4000-8000-000000000002', C3 = 'c3000000-0000-4000-8000-000000000003';
   var CO1 = 'a1000000-0000-4000-8000-000000000001', CO2 = 'a2000000-0000-4000-8000-000000000002', CO3 = 'a3000000-0000-4000-8000-000000000003', CO4 = 'a4000000-0000-4000-8000-000000000004';
   var L = function (id, name, email, phone, country, company, assistance, msg, source, status, d, lang) {
@@ -1378,8 +1392,9 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     ],
     client_users: [
       { id: uuid(), client_id: C1, user_id: CLIENT_USER.id, email: 'carlos.lima@example.com', name: 'Carlos Lima', role: 'owner', collab_type: null, can_view: true, can_upload: true, status: 'active', invited_by: 'support@endeavorbiz.com', invited_at: iso(-35), accepted_at: iso(-34) },
-      { id: uuid(), client_id: C1, user_id: 'u-cpa', email: 'ana.cpa@example.com', name: 'Ana Ribeiro, CPA', role: 'collaborator', collab_type: 'accountant', can_view: true, can_upload: true, status: 'active', invited_by: 'carlos.lima@example.com', invited_at: iso(-20), accepted_at: iso(-19) },
-      { id: uuid(), client_id: C1, user_id: null, email: 'books@example.com', name: 'João Bookkeeping', role: 'collaborator', collab_type: 'bookkeeping', can_view: false, can_upload: true, status: 'invited', invited_by: 'carlos.lima@example.com', invited_at: iso(-2), accepted_at: null },
+      { id: uuid(), client_id: C1, user_id: 'u-cpa', email: 'ana.cpa@example.com', name: 'Ana Ribeiro, CPA', role: 'collaborator', collab_type: 'accountant', can_view: true, can_upload: true, perm_companies: null, perm_doc_categories: ALLCATS.slice(), perm_deadlines: true, status: 'active', invited_by: 'carlos.lima@example.com', invited_at: iso(-20), accepted_at: iso(-19) },
+      { id: uuid(), client_id: C2, user_id: 'u-cpa', email: 'ana.cpa@example.com', name: 'Ana Ribeiro, CPA', role: 'collaborator', collab_type: 'accountant', can_view: true, can_upload: false, perm_companies: null, perm_doc_categories: ['tax_return', 'report'], perm_deadlines: false, status: 'active', invited_by: 'sofia@example.com', invited_at: iso(-12), accepted_at: iso(-11) },
+      { id: uuid(), client_id: C1, user_id: null, email: 'books@example.com', name: 'João Bookkeeping', role: 'collaborator', collab_type: 'bookkeeping', can_view: true, can_upload: true, perm_companies: null, perm_doc_categories: ['report', 'other'], perm_deadlines: true, status: 'invited', invited_by: 'carlos.lima@example.com', invited_at: iso(-2), accepted_at: null },
       { id: uuid(), client_id: C2, user_id: 'u-sofia', email: 'sofia@example.com', name: 'Sofía Martínez', role: 'owner', collab_type: null, can_view: true, can_upload: true, status: 'active', invited_by: 'support@endeavorbiz.com', invited_at: iso(-28), accepted_at: iso(-27) },
       { id: uuid(), client_id: C3, user_id: null, email: 'mturner@example.com', name: 'Michael Turner', role: 'owner', collab_type: null, can_view: true, can_upload: true, status: 'invited', invited_by: 'support@endeavorbiz.com', invited_at: iso(-20), accepted_at: null }
     ],
@@ -1402,7 +1417,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   var rep = function (co, cl, t, q) { var id = doc(co, cl, 'report', t + ' - Q' + q + ' ' + Y, Y, 5); DB.company_documents[DB.company_documents.length - 1].uploaded_by_email = 'QuickBooks'; return id; };
   rep(CO1, C1, 'Profit and Loss', 3); rep(CO1, C1, 'Balance Sheet', 3); rep(CO1, C1, 'Statement of Cash Flows', 3);
   doc(CO1, C1, 'uploaded', 'Extratos bancários jan-set', Y, 4, 'carlos.lima@example.com'); doc(CO1, C1, 'uploaded', '1099-NEC recebidos', Y - 1, 8, 'ana.cpa@example.com');
-  doc(CO3, C2, 'formation', 'Articles of Organization', Y, 26); doc(CO3, C2, 'formation', 'Operating Agreement', Y, 26);
+  doc(CO3, C2, 'formation', 'Articles of Organization', Y, 26); doc(CO3, C2, 'formation', 'Operating Agreement', Y, 26); doc(CO3, C2, 'tax_return', 'Form 5472 + pro forma 1120 (' + (Y - 1) + ')', Y - 1, 15); doc(CO3, C2, 'report', 'Profit and Loss - Q2 ' + Y, Y, 9);
   doc(CO4, C3, 'formation', 'Articles of Incorporation', Y - 3, 19); doc(CO4, C3, 'tax_return', 'Form 1120', Y - 1, 15);
   var DL = function (co, cl, title, cat, due, st) { DB.compliance_items.push({ id: uuid(), company_id: co, client_id: cl, created_at: iso(-30), title: title, category: cat, due_date: due, status: st || 'pending', completed_at: st === 'done' ? iso(-60) : null, notes: null }); };
   DL(CO1, C1, 'Florida Annual Report (Sunbiz)', 'annual_report', ymd(Y, 5, 1), 'done');
@@ -1452,18 +1467,23 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     return r;
   }
   function visible(table, rows) {
-    if (MODE !== 'client') return rows;
-    // emulate row-level security for the client portal
-    var mem = DB.client_users.filter(function (u) { return u.user_id === CLIENT_USER.id && u.status === 'active'; });
+    if (!PORTAL) return rows;
+    // emulate row-level security (with partner permissions) for the client and partner portals
+    var mem = DB.client_users.filter(function (u) { return u.user_id === ME.id && u.status === 'active'; });
     var ids = mem.map(function (m) { return m.client_id; });
-    var canView = function (cid) { var m = mem.find(function (x) { return x.client_id === cid; }); return m && (m.role === 'owner' || m.can_view); };
-    var role = function (cid) { var m = mem.find(function (x) { return x.client_id === cid; }); return m && m.role; };
+    var M = function (cid) { return mem.find(function (x) { return x.client_id === cid; }); };
+    var role = function (cid) { var m = M(cid); return m && m.role; };
+    var coOk = function (cid, co) { var m = M(cid); return !!m && (m.role === 'owner' || !m.perm_companies || m.perm_companies.indexOf(co) > -1); };
+    var can = function (cid, what) { var m = M(cid); if (!m) return false; if (m.role === 'owner') return true;
+      if (what === 'deadlines') return m.perm_deadlines !== false; if (what === 'upload') return !!m.can_upload;
+      var c = m.perm_doc_categories || []; return what === 'view' ? c.length > 0 : c.indexOf(what) > -1; };
     switch (table) {
       case 'clients': return rows.filter(function (r) { return ids.indexOf(r.id) > -1; });
-      case 'client_users': return rows.filter(function (r) { return r.user_id === CLIENT_USER.id || role(r.client_id) === 'owner'; });
-      case 'companies': case 'compliance_items': return rows.filter(function (r) { return ids.indexOf(r.client_id) > -1; });
-      case 'company_documents': return rows.filter(function (r) { return ids.indexOf(r.client_id) > -1 && ((r.visible_to_client && canView(r.client_id)) || r.uploaded_by === CLIENT_USER.id); });
-      case 'financial_reports': return rows.filter(function (r) { return canView(r.client_id); });
+      case 'client_users': return rows.filter(function (r) { return r.user_id === ME.id || role(r.client_id) === 'owner'; });
+      case 'companies': return rows.filter(function (r) { return coOk(r.client_id, r.id); });
+      case 'compliance_items': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'deadlines'); });
+      case 'company_documents': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && ((r.visible_to_client && can(r.client_id, r.category)) || r.uploaded_by === ME.id); });
+      case 'financial_reports': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'report'); });
       default: return [];
     }
   }
@@ -1527,8 +1547,8 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   /* ---------------- auth ---------------- */
   var AUTH = { user: null, aal: null, listeners: [] };
   var SKEY = 'endeavor-demo-auth-' + MODE;
-  try { var saved = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); if (saved) { AUTH.user = saved.u === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = saved.aal; } } catch (e) { /* ignore */ }
-  if (window.DEMO_AUTOLOGIN) { AUTH.user = MODE === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = 'aal2'; }
+  try { var saved = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); if (saved) { AUTH.user = saved.u === 'admin' ? ADMIN : ME; AUTH.aal = saved.aal; } } catch (e) { /* ignore */ }
+  if (window.DEMO_AUTOLOGIN) { AUTH.user = MODE === 'admin' ? ADMIN : ME; AUTH.aal = 'aal2'; }
   function persist() { try { if (AUTH.user) sessionStorage.setItem(SKEY, JSON.stringify({ u: AUTH.user === ADMIN ? 'admin' : 'client', aal: AUTH.aal })); else sessionStorage.removeItem(SKEY); } catch (e) { /* ignore */ } }
   function session() { return AUTH.user ? { access_token: 'demo', user: { id: AUTH.user.id, email: AUTH.user.email, last_sign_in_at: new Date().toISOString(), factors: [{ id: 'f1', factor_type: 'totp', status: 'verified' }] } } : null; }
   var ok = function (d) { return Promise.resolve({ data: d, error: null }); };
@@ -1539,8 +1559,8 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     signInWithPassword: function (o) {
       var email = String(o.email || '').trim().toLowerCase();
       if (MODE === 'admin' && email !== ADMIN.email) return Promise.resolve({ data: {}, error: { message: 'Demo: use support@endeavorbiz.com' } });
-      if (MODE === 'client' && email !== CLIENT_USER.email) return Promise.resolve({ data: {}, error: { message: 'Demo: use carlos.lima@example.com' } });
-      AUTH.user = MODE === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = 'aal1'; persist();
+      if (PORTAL && email !== ME.email) return Promise.resolve({ data: {}, error: { message: 'Demo: use ' + ME.email } });
+      AUTH.user = MODE === 'admin' ? ADMIN : ME; AUTH.aal = 'aal1'; persist();
       return ok({ session: session() });
     },
     signUp: function () { return Promise.resolve({ data: {}, error: { message: 'Demo: use the sample login shown at the bottom of the screen.' } }); },
@@ -1588,9 +1608,9 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     args = args || {};
     var r = null;
     if (name === 'is_admin' || name === 'is_admin_email') r = MODE === 'admin' && AUTH.user === ADMIN && (name === 'is_admin_email' || AUTH.aal === 'aal2');
-    else if (name === 'claim_invitations') r = DB.client_users.filter(function (u) { return u.user_id === CLIENT_USER.id && u.status === 'active'; }).map(function (u) { var c = DB.clients.find(function (x) { return x.id === u.client_id; }); return { client_id: u.client_id, client_name: c.name, role: u.role, status: u.status }; });
+    else if (name === 'claim_invitations') r = DB.client_users.filter(function (u) { return u.user_id === ME.id && u.status === 'active'; }).map(function (u) { var c = DB.clients.find(function (x) { return x.id === u.client_id; }); return { client_id: u.client_id, client_name: c.name, role: u.role, status: u.status }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
-    else if (name === 'my_client_role') r = 'owner';
+    else if (name === 'my_client_role') { var mm = DB.client_users.find(function (u) { return u.user_id === ME.id && u.client_id === args.p_client && u.status === 'active'; }); r = MODE === 'admin' ? 'owner' : mm ? mm.role : null; }
     return Promise.resolve({ data: r, error: null });
   }
 
@@ -1605,7 +1625,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     if (/formsubmit\.co/.test(u)) { toast('Demo: e-mail simulado (no site real ele é enviado e o suporte recebe cópia).'); return json({ success: 'true' }); }
     if (/\/functions\/v1\/qbo/.test(u)) {
       var b = {}; try { b = JSON.parse(opts.body); } catch (e) { /* ignore */ }
-      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: MODE === 'client' ? '#/reports?company=' + b.company_id + '&qbo=connected' : (window.ERoute ? ERoute.get() : location.hash) || '#/clientes' }); }
+      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: PORTAL ? '#/reports?company=' + b.company_id + '&qbo=connected' : (window.ERoute ? ERoute.get() : location.hash) || '#/clientes' }); }
       if (b.action === 'disconnect') { delete QBO[b.company_id]; return json({ ok: true }); }
       if (b.action === 'generate') {
         var co = DB.companies.find(function (c) { return c.id === b.company_id; }), q = +b.quarter, label = q ? 'Q' + q + ' ' + b.year : b.year + ' (full year)';
@@ -1632,8 +1652,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     document.head.appendChild(css);
     var pill = document.createElement('aside'); pill.className = 'demo-pill'; pill.setAttribute('aria-label', 'Demo');
     pill.innerHTML = '<button type="button" aria-label="Fechar aviso">×</button><b>MODO DEMONSTRAÇÃO</b> · dados fictícios<span class="demo-pill__more">, nada é salvo.<br>' +
-      (MODE === 'admin' ? 'Login: <code>support@endeavorbiz.com</code> · qualquer senha · código <code>123456</code>'
-                        : 'Login: <code>carlos.lima@example.com</code> · qualquer senha · código <code>123456</code>') + '</span>';
+      'Login: <code>' + (MODE === 'admin' ? ADMIN.email : ME.email) + '</code> · qualquer senha · código <code>123456</code>' + '</span>';
     document.body.appendChild(pill);
     pill.querySelector('button').onclick = function () { pill.remove(); };
     var badge = document.createElement('span'); badge.className = 'demo-badge'; badge.textContent = 'DEMO'; badge.title = 'Modo demonstração: dados fictícios, nada é salvo';
@@ -1648,7 +1667,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     // prefill sample login
     var tryFill = function () {
       var e = document.getElementById('l-email'), p = document.getElementById('l-pass'), c = document.getElementById('mfa-code');
-      if (e && !e.value) e.value = MODE === 'admin' ? ADMIN.email : CLIENT_USER.email;
+      if (e && !e.value) e.value = MODE === 'admin' ? ADMIN.email : ME.email;
       if (p && !p.value) p.value = 'demo-password';
       if (c && !c.value) c.value = '123456';
     };
@@ -1735,7 +1754,8 @@ window.ENDEAVOR_CFG = {
       return [
         'Olá ' + o.name + ',',
         '',
-        o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+        o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Solutions, para acessar os documentos que compartilhou com você.'
+        : o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'A Endeavor Business Solutions criou o seu acesso ao portal do cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
         '',
@@ -1762,7 +1782,8 @@ window.ENDEAVOR_CFG = {
       return [
         'Hello ' + o.name + ',',
         '',
-        o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Solutions client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+        o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Solutions Partner Portal to access the documents they shared with you.'
+        : o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Solutions client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions created your access to the client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
         '',
@@ -1789,7 +1810,8 @@ window.ENDEAVOR_CFG = {
       return [
         'Hola ' + o.name + ',',
         '',
-        o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+        o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Solutions para acceder a los documentos que compartió con usted.'
+        : o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions creó su acceso al portal del cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
         '',
@@ -2392,6 +2414,71 @@ window.ENDEAVOR_CFG = {
 
 </script>
 <script>
+/* Partner (collaborator) access permissions: form, defaults per partner type and summary.
+   Shared by the client portal (account owner) and the admin console. */
+(function () {
+  'use strict';
+  var CATS = ['formation', 'tax_return', 'report', 'compliance', 'other'];
+  var DEFAULTS = {
+    accountant: { cats: ['formation', 'tax_return', 'report', 'compliance', 'other'], deadlines: true, upload: true },
+    bookkeeping: { cats: ['report', 'other'], deadlines: true, upload: true },
+    property_management: { cats: ['formation', 'compliance', 'other'], deadlines: false, upload: true },
+    other: { cats: [], deadlines: false, upload: true }
+  };
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  /* L: labels { access, companies, allCompanies, docs, cat_formation..cat_other, deadlines, upload, docsHint } */
+  function html(prefix, L, companies, p) {
+    p = p || {};
+    var cats = p.perm_doc_categories || [], allCo = !p.perm_companies, coSel = p.perm_companies || [];
+    return '<fieldset class="perm-box"><legend>' + esc(L.access) + '</legend>' +
+      '<div class="perm-group"><span class="perm-title">' + esc(L.companies) + '</span>' +
+        '<div class="check-row"><input type="checkbox" id="' + prefix + '-allco"' + (allCo ? ' checked' : '') + '><label for="' + prefix + '-allco">' + esc(L.allCompanies) + '</label></div>' +
+        '<div class="perm-cos" id="' + prefix + '-cos"' + (allCo ? ' hidden' : '') + '>' + companies.map(function (c) {
+          return '<div class="check-row"><input type="checkbox" id="' + prefix + '-co-' + c.id + '" data-co="' + c.id + '"' + (coSel.indexOf(c.id) > -1 ? ' checked' : '') + '><label for="' + prefix + '-co-' + c.id + '">' + esc(c.legal_name) + '</label></div>';
+        }).join('') + '</div></div>' +
+      '<div class="perm-group"><span class="perm-title">' + esc(L.docs) + '</span>' + CATS.map(function (k) {
+        return '<div class="check-row"><input type="checkbox" id="' + prefix + '-cat-' + k + '" data-cat="' + k + '"' + (cats.indexOf(k) > -1 ? ' checked' : '') + '><label for="' + prefix + '-cat-' + k + '">' + esc(L['cat_' + k]) + '</label></div>';
+      }).join('') + (L.docsHint ? '<p class="perm-hint">' + esc(L.docsHint) + '</p>' : '') + '</div>' +
+      '<div class="perm-group"><span class="perm-title">' + esc(L.other) + '</span>' +
+        '<div class="check-row"><input type="checkbox" id="' + prefix + '-dl"' + (p.perm_deadlines !== false ? ' checked' : '') + '><label for="' + prefix + '-dl">' + esc(L.deadlines) + '</label></div>' +
+        '<div class="check-row"><input type="checkbox" id="' + prefix + '-up"' + (p.can_upload !== false ? ' checked' : '') + '><label for="' + prefix + '-up">' + esc(L.upload) + '</label></div>' +
+      '</div></fieldset>';
+  }
+  function apply(root, prefix, type) {
+    var d = DEFAULTS[type] || DEFAULTS.other;
+    CATS.forEach(function (k) { var c = root.querySelector('#' + prefix + '-cat-' + k); if (c) c.checked = d.cats.indexOf(k) > -1; });
+    root.querySelector('#' + prefix + '-dl').checked = d.deadlines;
+    root.querySelector('#' + prefix + '-up').checked = d.upload;
+  }
+  function wire(root, prefix, typeSelect, applyDefaultsNow) {
+    var all = root.querySelector('#' + prefix + '-allco'), box = root.querySelector('#' + prefix + '-cos');
+    all.onchange = function () { box.hidden = all.checked; };
+    if (typeSelect) typeSelect.addEventListener('change', function () { apply(root, prefix, typeSelect.value); });
+    if (applyDefaultsNow && typeSelect) apply(root, prefix, typeSelect.value);
+  }
+  function read(root, prefix) {
+    var cats = CATS.filter(function (k) { var c = root.querySelector('#' + prefix + '-cat-' + k); return c && c.checked; });
+    var all = root.querySelector('#' + prefix + '-allco').checked;
+    var cos = all ? null : Array.prototype.slice.call(root.querySelectorAll('#' + prefix + '-cos [data-co]')).filter(function (c) { return c.checked; }).map(function (c) { return c.dataset.co; });
+    return { perm_doc_categories: cats, perm_companies: cos, perm_deadlines: root.querySelector('#' + prefix + '-dl').checked,
+      can_upload: root.querySelector('#' + prefix + '-up').checked, can_view: cats.length > 0 };
+  }
+  function summary(u, L, companies) {
+    if (u.role === 'owner') return L.full;
+    var parts = [];
+    var cats = u.perm_doc_categories || [];
+    parts.push(cats.length ? L.docsShort + ': ' + cats.map(function (k) { return L['cat_' + k]; }).join(', ') : L.noDocs);
+    if (u.perm_deadlines) parts.push(L.deadlinesShort);
+    if (u.can_upload) parts.push(L.uploadShort);
+    if (u.perm_companies) parts.push(u.perm_companies.map(function (id) { var c = (companies || []).find(function (x) { return x.id === id; }); return c ? c.legal_name : ''; }).filter(Boolean).join(', ') || L.noCompanies);
+    return parts.join(' · ');
+  }
+  window.EPerms = { CATS: CATS, DEFAULTS: DEFAULTS, html: html, wire: wire, read: read, summary: summary, apply: apply };
+})();
+
+</script>
+<script>
 /* Admin console: client accounts, companies, documents, deadlines, users and QuickBooks reports. */
 (function () {
   'use strict';
@@ -2431,10 +2518,10 @@ window.ENDEAVOR_CFG = {
   }
 
   function inviteText(lang, name, clientName, link, role, email) {
-    return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName });
+    return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName, invitedBy: role === 'owner' ? '' : clientName, partner: role !== 'owner' });
   }
   async function sendInvite(ctx, o) {
-    var link = ctx.siteUrl('client.html') + '?lang=' + (o.lang || 'pt');
+    var link = ctx.siteUrl(o.role === 'owner' ? 'client.html' : 'partner.html') + '?lang=' + (o.lang || 'pt');
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao portal do cliente: ' + o.name + ' (' + o.clientName + ')', _template: 'table', _captcha: 'false',
@@ -2735,41 +2822,59 @@ window.ENDEAVOR_CFG = {
   }
 
   /* ---------- users ---------- */
-  async function tabUsers(body, ctx, c) {
+  var PERM_L = { access: 'Acesso do parceiro', companies: 'Empresas', allCompanies: 'Todas as empresas (inclusive novas)', docs: 'Documentos que pode ver', other: 'Outras permissões',
+    cat_formation: 'Formação', cat_tax_return: 'Imposto de renda', cat_report: 'Relatórios financeiros', cat_compliance: 'Compliance', cat_other: 'Outros',
+    deadlines: 'Pode ver os prazos fiscais', upload: 'Pode enviar documentos', docsHint: 'O parceiro sempre vê os documentos que ele mesmo enviou.', full: 'Acesso completo',
+    docsShort: 'Docs', noDocs: 'Sem documentos', deadlinesShort: 'Prazos', uploadShort: 'Envio', noCompanies: 'Nenhuma empresa' };
+  async function tabUsers(body, ctx, c, companies) {
     var esc = ctx.esc;
+    companies = companies || [];
     var users = await ctx.q(ctx.sb.from('client_users').select('*').eq('client_id', c.id).order('role', { ascending: false }).order('invited_at'));
     var ST = { invited: 'Convidado', active: 'Ativo', revoked: 'Revogado' };
     body.innerHTML = '<div class="portal-btn-row" style="justify-content:flex-end;margin-bottom:1rem"><button class="btn btn--navy btn--xs" type="button" id="u-new">Adicionar usuário</button></div>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Usuário</th><th>Perfil</th><th>Permissões</th><th>Status</th><th></th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Usuário</th><th>Perfil</th><th>Acesso</th><th>Status</th><th></th></tr></thead><tbody>' +
       users.map(function (u) {
-        return '<tr style="cursor:default"><td><strong>' + esc(u.name || u.email) + '</strong><span class="sub">' + esc(u.email) + '</span></td><td>' + (u.role === 'owner' ? 'Titular' : 'Colaborador · ' + esc(COLLAB[u.collab_type] || '')) + '</td>' +
-          '<td>' + (u.role === 'owner' ? 'Acesso completo' : [u.can_view ? 'Ver documentos' : 'Não vê documentos de terceiros', u.can_upload ? 'Enviar documentos' : ''].filter(Boolean).join(' · ')) + '</td>' +
+        return '<tr style="cursor:default"><td><strong>' + esc(u.name || u.email) + '</strong><span class="sub">' + esc(u.email) + '</span></td><td>' + (u.role === 'owner' ? 'Titular · Portal do Cliente' : 'Parceiro · ' + esc(COLLAB[u.collab_type] || '') + '<span class="sub">Portal do Parceiro</span>') + '</td>' +
+          '<td><span class="perm-sum">' + esc(EPerms.summary(u, PERM_L, companies)) + '</span></td>' +
           '<td><span class="pill' + (u.status === 'active' ? ' pill--done' : u.status === 'revoked' ? ' pill--overdue' : ' pill--soon') + '">' + ST[u.status] + '</span>' + (u.accepted_at ? '<span class="sub">desde ' + esc(ctx.fmtDT(u.accepted_at)) + '</span>' : '') + '</td>' +
-          '<td><div class="portal-btn-row">' + (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">Reenviar convite</button>' : '') +
+          '<td><div class="portal-btn-row">' + (u.role !== 'owner' && u.status !== 'revoked' ? '<button class="btn btn--ghost btn--xs" data-perm="' + u.id + '">Permissões</button>' : '') +
+          (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">Reenviar convite</button>' : '') +
           (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-revoke="' + u.id + '">Revogar</button>' : '<button class="btn btn--ghost btn--xs" data-restore="' + u.id + '">Reativar</button>') + '</div></td></tr>';
-      }).join('') + '</tbody></table></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">Os usuários entram pelo portal do cliente com o e-mail convidado e precisam ativar a verificação em duas etapas.</p>';
+      }).join('') + '</tbody></table></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">O titular entra pelo Portal do Cliente. Contadores, bookkeepers e administradores de imóveis entram pelo Portal do Parceiro e só veem o que estiver liberado. Todos precisam ativar a verificação em duas etapas.</p>';
     var find = function (id) { return users.find(function (x) { return x.id === id; }); };
     body.querySelectorAll('[data-resend]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); var ok = await sendInvite(ctx, { email: u.email, name: u.name || u.email, clientName: c.name, role: u.role, lang: c.language }); alert(ok ? 'Convite reenviado.' : 'Não foi possível enviar agora.'); }; });
     body.querySelectorAll('[data-revoke]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.revoke); if (!confirm('Revogar o acesso de ' + u.email + '?')) return; await ctx.sb.from('client_users').update({ status: 'revoked' }).eq('id', u.id); ctx.route(); }; });
     body.querySelectorAll('[data-restore]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.restore); var r = await ctx.sb.from('client_users').update({ status: u.user_id ? 'active' : 'invited' }).eq('id', u.id); if (r.error) alert(ctx.errText(r.error)); ctx.route(); }; });
-    body.querySelector('#u-new').onclick = function () {
-      ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Adicionar usuário</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
-        '<form class="portal-form" id="u-form">' + field('u-name', 'Nome', '', 'text', true) + field('u-email', 'E-mail', '', 'email', true) +
-        select('u-role', 'Perfil', { collaborator: 'Colaborador', owner: 'Titular (acesso completo)' }, 'collaborator') + select('u-type', 'Tipo de colaborador', COLLAB, 'accountant') +
-        '<div class="check-row"><input type="checkbox" id="u-view"><label for="u-view">Pode ver os documentos da empresa</label></div><div class="check-row"><input type="checkbox" id="u-up" checked><label for="u-up">Pode enviar documentos</label></div>' +
-        '<div class="check-row"><input type="checkbox" id="u-inv" checked><label for="u-inv">Enviar convite por e-mail</label></div>' +
-        '<div class="portal-alert" id="u-msg" role="alert"></div><button class="btn btn--navy" type="submit">Adicionar</button></form>');
-      $('#u-form').onsubmit = async function (e) {
+    body.querySelectorAll('[data-perm]').forEach(function (b) { b.onclick = function () { userForm(find(b.dataset.perm)); }; });
+    body.querySelector('#u-new').onclick = function () { userForm(null); };
+    function userForm(u) {
+      var edit = !!u;
+      ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (edit ? 'Permissões: ' + esc(u.name || u.email) : 'Adicionar usuário') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+        '<form class="portal-form" id="u-form" novalidate>' + (edit ? '' : field('u-name', 'Nome', '', 'text', true) + field('u-email', 'E-mail', '', 'email', true) +
+        select('u-role', 'Perfil', { collaborator: 'Parceiro (contador, bookkeeping, property management)', owner: 'Titular (acesso completo)' }, 'collaborator')) +
+        '<div id="u-collab">' + select('u-type', 'Tipo de parceiro', COLLAB, u ? u.collab_type || 'other' : 'accountant') + EPerms.html('up', PERM_L, companies, u) + '</div>' +
+        (edit ? '' : '<div class="check-row"><input type="checkbox" id="u-inv" checked><label for="u-inv">Enviar convite por e-mail</label></div>') +
+        '<div class="portal-alert" id="u-msg" role="alert"></div><button class="btn btn--navy" type="submit">' + (edit ? 'Salvar permissões' : 'Adicionar') + '</button></form>');
+      var form = $('#u-form');
+      EPerms.wire(form, 'up', $('#u-type'), !edit);
+      if ($('#u-role')) $('#u-role').onchange = function () { $('#u-collab').hidden = $('#u-role').value === 'owner'; };
+      form.onsubmit = async function (e) {
         e.preventDefault();
-        var email = $('#u-email').value.trim().toLowerCase(), name = $('#u-name').value.trim(), role = $('#u-role').value;
-        if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return ctx.msg($('#u-msg'), 'Preencha nome e e-mail válido.', 'error');
-        var r = await ctx.sb.from('client_users').insert({ client_id: c.id, email: email, name: name, role: role, collab_type: role === 'owner' ? null : $('#u-type').value,
-          can_view: role === 'owner' || $('#u-view').checked, can_upload: role === 'owner' || $('#u-up').checked });
-        if (r.error) return ctx.msg($('#u-msg'), /unique/i.test(r.error.message) ? 'Este e-mail já tem acesso a este cliente.' : ctx.errText(r.error), 'error');
-        if ($('#u-inv').checked) await sendInvite(ctx, { email: email, name: name, clientName: c.name, role: role, lang: c.language });
+        var role = edit ? u.role : $('#u-role').value, r;
+        var perms = role === 'owner' ? { can_view: true, can_upload: true, perm_doc_categories: EPerms.CATS.slice(), perm_companies: null, perm_deadlines: true } : EPerms.read(form, 'up');
+        if (perms.perm_companies && !perms.perm_companies.length) return ctx.msg($('#u-msg'), 'Escolha pelo menos uma empresa ou marque "Todas as empresas".', 'error');
+        var row = Object.assign({ collab_type: role === 'owner' ? null : $('#u-type').value }, perms);
+        if (edit) r = await ctx.sb.from('client_users').update(row).eq('id', u.id);
+        else {
+          var email = $('#u-email').value.trim().toLowerCase(), name = $('#u-name').value.trim();
+          if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return ctx.msg($('#u-msg'), 'Preencha nome e e-mail válido.', 'error');
+          r = await ctx.sb.from('client_users').insert(Object.assign({ client_id: c.id, email: email, name: name, role: role }, row));
+          if (!r.error && $('#u-inv').checked) await sendInvite(ctx, { email: email, name: name, clientName: c.name, role: role, lang: c.language });
+        }
+        if (r.error) return ctx.msg($('#u-msg'), /unique|duplicate/i.test(r.error.message) ? 'Este e-mail já tem acesso a este cliente.' : ctx.errText(r.error), 'error');
         ctx.closeOverlay(); ctx.route();
       };
-    };
+    }
   }
 
   /* ---------- QuickBooks & reports ---------- */

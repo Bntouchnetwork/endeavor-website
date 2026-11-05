@@ -1292,6 +1292,16 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
 .lang-dd .lang__menu { min-width: 14.5rem; }
 .lang-dd .lang__menu a { white-space: nowrap; }
 
+/* Partner permissions form */
+.perm-box { border: 1px solid #e3e7ee; border-radius: 12px; padding: .9rem 1rem 1rem; margin: 0; display: grid; gap: .9rem; }
+.perm-box legend { font-weight: 700; padding: 0 .35rem; color: var(--navy-900); }
+.perm-group { display: grid; gap: .35rem; }
+.perm-title { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.perm-cos { display: grid; gap: .35rem; padding-left: 1.5rem; }
+.perm-cos[hidden] { display: none; }
+.perm-hint { font-size: .8rem; color: var(--muted); margin: .15rem 0 0; }
+.perm-sum { font-size: .82rem; color: var(--muted); }
+
 </style>
 </head>
 <body class="portal">
@@ -1333,7 +1343,8 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
    loaded with fictitious sample data. Nothing leaves the browser and nothing is saved. */
 (function () {
   'use strict';
-  var MODE = window.DEMO_MODE || 'admin'; // 'admin' | 'client'
+  var MODE = window.DEMO_MODE || 'admin'; // 'admin' | 'client' | 'partner'
+  var PORTAL = MODE === 'client' || MODE === 'partner';
   var LIVE = 'https://endeavorbiz.com/';
   function uuid() { return (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); })); }
   var now = new Date();
@@ -1345,6 +1356,9 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   /* ---------------- sample data ---------------- */
   var ADMIN = { id: 'demo-admin', email: 'support@endeavorbiz.com' };
   var CLIENT_USER = { id: 'demo-client-user', email: 'carlos.lima@example.com' };
+  var PARTNER_USER = { id: 'u-cpa', email: 'ana.cpa@example.com' };
+  var ME = MODE === 'partner' ? PARTNER_USER : CLIENT_USER;
+  var ALLCATS = ['formation', 'tax_return', 'report', 'compliance', 'other'];
   var C1 = 'c1000000-0000-4000-8000-000000000001', C2 = 'c2000000-0000-4000-8000-000000000002', C3 = 'c3000000-0000-4000-8000-000000000003';
   var CO1 = 'a1000000-0000-4000-8000-000000000001', CO2 = 'a2000000-0000-4000-8000-000000000002', CO3 = 'a3000000-0000-4000-8000-000000000003', CO4 = 'a4000000-0000-4000-8000-000000000004';
   var L = function (id, name, email, phone, country, company, assistance, msg, source, status, d, lang) {
@@ -1380,8 +1394,9 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     ],
     client_users: [
       { id: uuid(), client_id: C1, user_id: CLIENT_USER.id, email: 'carlos.lima@example.com', name: 'Carlos Lima', role: 'owner', collab_type: null, can_view: true, can_upload: true, status: 'active', invited_by: 'support@endeavorbiz.com', invited_at: iso(-35), accepted_at: iso(-34) },
-      { id: uuid(), client_id: C1, user_id: 'u-cpa', email: 'ana.cpa@example.com', name: 'Ana Ribeiro, CPA', role: 'collaborator', collab_type: 'accountant', can_view: true, can_upload: true, status: 'active', invited_by: 'carlos.lima@example.com', invited_at: iso(-20), accepted_at: iso(-19) },
-      { id: uuid(), client_id: C1, user_id: null, email: 'books@example.com', name: 'João Bookkeeping', role: 'collaborator', collab_type: 'bookkeeping', can_view: false, can_upload: true, status: 'invited', invited_by: 'carlos.lima@example.com', invited_at: iso(-2), accepted_at: null },
+      { id: uuid(), client_id: C1, user_id: 'u-cpa', email: 'ana.cpa@example.com', name: 'Ana Ribeiro, CPA', role: 'collaborator', collab_type: 'accountant', can_view: true, can_upload: true, perm_companies: null, perm_doc_categories: ALLCATS.slice(), perm_deadlines: true, status: 'active', invited_by: 'carlos.lima@example.com', invited_at: iso(-20), accepted_at: iso(-19) },
+      { id: uuid(), client_id: C2, user_id: 'u-cpa', email: 'ana.cpa@example.com', name: 'Ana Ribeiro, CPA', role: 'collaborator', collab_type: 'accountant', can_view: true, can_upload: false, perm_companies: null, perm_doc_categories: ['tax_return', 'report'], perm_deadlines: false, status: 'active', invited_by: 'sofia@example.com', invited_at: iso(-12), accepted_at: iso(-11) },
+      { id: uuid(), client_id: C1, user_id: null, email: 'books@example.com', name: 'João Bookkeeping', role: 'collaborator', collab_type: 'bookkeeping', can_view: true, can_upload: true, perm_companies: null, perm_doc_categories: ['report', 'other'], perm_deadlines: true, status: 'invited', invited_by: 'carlos.lima@example.com', invited_at: iso(-2), accepted_at: null },
       { id: uuid(), client_id: C2, user_id: 'u-sofia', email: 'sofia@example.com', name: 'Sofía Martínez', role: 'owner', collab_type: null, can_view: true, can_upload: true, status: 'active', invited_by: 'support@endeavorbiz.com', invited_at: iso(-28), accepted_at: iso(-27) },
       { id: uuid(), client_id: C3, user_id: null, email: 'mturner@example.com', name: 'Michael Turner', role: 'owner', collab_type: null, can_view: true, can_upload: true, status: 'invited', invited_by: 'support@endeavorbiz.com', invited_at: iso(-20), accepted_at: null }
     ],
@@ -1404,7 +1419,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   var rep = function (co, cl, t, q) { var id = doc(co, cl, 'report', t + ' - Q' + q + ' ' + Y, Y, 5); DB.company_documents[DB.company_documents.length - 1].uploaded_by_email = 'QuickBooks'; return id; };
   rep(CO1, C1, 'Profit and Loss', 3); rep(CO1, C1, 'Balance Sheet', 3); rep(CO1, C1, 'Statement of Cash Flows', 3);
   doc(CO1, C1, 'uploaded', 'Extratos bancários jan-set', Y, 4, 'carlos.lima@example.com'); doc(CO1, C1, 'uploaded', '1099-NEC recebidos', Y - 1, 8, 'ana.cpa@example.com');
-  doc(CO3, C2, 'formation', 'Articles of Organization', Y, 26); doc(CO3, C2, 'formation', 'Operating Agreement', Y, 26);
+  doc(CO3, C2, 'formation', 'Articles of Organization', Y, 26); doc(CO3, C2, 'formation', 'Operating Agreement', Y, 26); doc(CO3, C2, 'tax_return', 'Form 5472 + pro forma 1120 (' + (Y - 1) + ')', Y - 1, 15); doc(CO3, C2, 'report', 'Profit and Loss - Q2 ' + Y, Y, 9);
   doc(CO4, C3, 'formation', 'Articles of Incorporation', Y - 3, 19); doc(CO4, C3, 'tax_return', 'Form 1120', Y - 1, 15);
   var DL = function (co, cl, title, cat, due, st) { DB.compliance_items.push({ id: uuid(), company_id: co, client_id: cl, created_at: iso(-30), title: title, category: cat, due_date: due, status: st || 'pending', completed_at: st === 'done' ? iso(-60) : null, notes: null }); };
   DL(CO1, C1, 'Florida Annual Report (Sunbiz)', 'annual_report', ymd(Y, 5, 1), 'done');
@@ -1454,18 +1469,23 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     return r;
   }
   function visible(table, rows) {
-    if (MODE !== 'client') return rows;
-    // emulate row-level security for the client portal
-    var mem = DB.client_users.filter(function (u) { return u.user_id === CLIENT_USER.id && u.status === 'active'; });
+    if (!PORTAL) return rows;
+    // emulate row-level security (with partner permissions) for the client and partner portals
+    var mem = DB.client_users.filter(function (u) { return u.user_id === ME.id && u.status === 'active'; });
     var ids = mem.map(function (m) { return m.client_id; });
-    var canView = function (cid) { var m = mem.find(function (x) { return x.client_id === cid; }); return m && (m.role === 'owner' || m.can_view); };
-    var role = function (cid) { var m = mem.find(function (x) { return x.client_id === cid; }); return m && m.role; };
+    var M = function (cid) { return mem.find(function (x) { return x.client_id === cid; }); };
+    var role = function (cid) { var m = M(cid); return m && m.role; };
+    var coOk = function (cid, co) { var m = M(cid); return !!m && (m.role === 'owner' || !m.perm_companies || m.perm_companies.indexOf(co) > -1); };
+    var can = function (cid, what) { var m = M(cid); if (!m) return false; if (m.role === 'owner') return true;
+      if (what === 'deadlines') return m.perm_deadlines !== false; if (what === 'upload') return !!m.can_upload;
+      var c = m.perm_doc_categories || []; return what === 'view' ? c.length > 0 : c.indexOf(what) > -1; };
     switch (table) {
       case 'clients': return rows.filter(function (r) { return ids.indexOf(r.id) > -1; });
-      case 'client_users': return rows.filter(function (r) { return r.user_id === CLIENT_USER.id || role(r.client_id) === 'owner'; });
-      case 'companies': case 'compliance_items': return rows.filter(function (r) { return ids.indexOf(r.client_id) > -1; });
-      case 'company_documents': return rows.filter(function (r) { return ids.indexOf(r.client_id) > -1 && ((r.visible_to_client && canView(r.client_id)) || r.uploaded_by === CLIENT_USER.id); });
-      case 'financial_reports': return rows.filter(function (r) { return canView(r.client_id); });
+      case 'client_users': return rows.filter(function (r) { return r.user_id === ME.id || role(r.client_id) === 'owner'; });
+      case 'companies': return rows.filter(function (r) { return coOk(r.client_id, r.id); });
+      case 'compliance_items': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'deadlines'); });
+      case 'company_documents': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && ((r.visible_to_client && can(r.client_id, r.category)) || r.uploaded_by === ME.id); });
+      case 'financial_reports': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'report'); });
       default: return [];
     }
   }
@@ -1529,8 +1549,8 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
   /* ---------------- auth ---------------- */
   var AUTH = { user: null, aal: null, listeners: [] };
   var SKEY = 'endeavor-demo-auth-' + MODE;
-  try { var saved = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); if (saved) { AUTH.user = saved.u === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = saved.aal; } } catch (e) { /* ignore */ }
-  if (window.DEMO_AUTOLOGIN) { AUTH.user = MODE === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = 'aal2'; }
+  try { var saved = JSON.parse(sessionStorage.getItem(SKEY) || 'null'); if (saved) { AUTH.user = saved.u === 'admin' ? ADMIN : ME; AUTH.aal = saved.aal; } } catch (e) { /* ignore */ }
+  if (window.DEMO_AUTOLOGIN) { AUTH.user = MODE === 'admin' ? ADMIN : ME; AUTH.aal = 'aal2'; }
   function persist() { try { if (AUTH.user) sessionStorage.setItem(SKEY, JSON.stringify({ u: AUTH.user === ADMIN ? 'admin' : 'client', aal: AUTH.aal })); else sessionStorage.removeItem(SKEY); } catch (e) { /* ignore */ } }
   function session() { return AUTH.user ? { access_token: 'demo', user: { id: AUTH.user.id, email: AUTH.user.email, last_sign_in_at: new Date().toISOString(), factors: [{ id: 'f1', factor_type: 'totp', status: 'verified' }] } } : null; }
   var ok = function (d) { return Promise.resolve({ data: d, error: null }); };
@@ -1541,8 +1561,8 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     signInWithPassword: function (o) {
       var email = String(o.email || '').trim().toLowerCase();
       if (MODE === 'admin' && email !== ADMIN.email) return Promise.resolve({ data: {}, error: { message: 'Demo: use support@endeavorbiz.com' } });
-      if (MODE === 'client' && email !== CLIENT_USER.email) return Promise.resolve({ data: {}, error: { message: 'Demo: use carlos.lima@example.com' } });
-      AUTH.user = MODE === 'admin' ? ADMIN : CLIENT_USER; AUTH.aal = 'aal1'; persist();
+      if (PORTAL && email !== ME.email) return Promise.resolve({ data: {}, error: { message: 'Demo: use ' + ME.email } });
+      AUTH.user = MODE === 'admin' ? ADMIN : ME; AUTH.aal = 'aal1'; persist();
       return ok({ session: session() });
     },
     signUp: function () { return Promise.resolve({ data: {}, error: { message: 'Demo: use the sample login shown at the bottom of the screen.' } }); },
@@ -1590,9 +1610,9 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     args = args || {};
     var r = null;
     if (name === 'is_admin' || name === 'is_admin_email') r = MODE === 'admin' && AUTH.user === ADMIN && (name === 'is_admin_email' || AUTH.aal === 'aal2');
-    else if (name === 'claim_invitations') r = DB.client_users.filter(function (u) { return u.user_id === CLIENT_USER.id && u.status === 'active'; }).map(function (u) { var c = DB.clients.find(function (x) { return x.id === u.client_id; }); return { client_id: u.client_id, client_name: c.name, role: u.role, status: u.status }; });
+    else if (name === 'claim_invitations') r = DB.client_users.filter(function (u) { return u.user_id === ME.id && u.status === 'active'; }).map(function (u) { var c = DB.clients.find(function (x) { return x.id === u.client_id; }); return { client_id: u.client_id, client_name: c.name, role: u.role, status: u.status }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
-    else if (name === 'my_client_role') r = 'owner';
+    else if (name === 'my_client_role') { var mm = DB.client_users.find(function (u) { return u.user_id === ME.id && u.client_id === args.p_client && u.status === 'active'; }); r = MODE === 'admin' ? 'owner' : mm ? mm.role : null; }
     return Promise.resolve({ data: r, error: null });
   }
 
@@ -1607,7 +1627,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     if (/formsubmit\.co/.test(u)) { toast('Demo: e-mail simulado (no site real ele é enviado e o suporte recebe cópia).'); return json({ success: 'true' }); }
     if (/\/functions\/v1\/qbo/.test(u)) {
       var b = {}; try { b = JSON.parse(opts.body); } catch (e) { /* ignore */ }
-      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: MODE === 'client' ? '#/reports?company=' + b.company_id + '&qbo=connected' : (window.ERoute ? ERoute.get() : location.hash) || '#/clientes' }); }
+      if (b.action === 'connect') { QBO[b.company_id] = { connected: true, qbo_company_name: (DB.companies.find(function (c) { return c.id === b.company_id; }) || {}).legal_name, connected_at: new Date().toISOString(), last_sync_at: null, last_error: null }; return json({ url: PORTAL ? '#/reports?company=' + b.company_id + '&qbo=connected' : (window.ERoute ? ERoute.get() : location.hash) || '#/clientes' }); }
       if (b.action === 'disconnect') { delete QBO[b.company_id]; return json({ ok: true }); }
       if (b.action === 'generate') {
         var co = DB.companies.find(function (c) { return c.id === b.company_id; }), q = +b.quarter, label = q ? 'Q' + q + ' ' + b.year : b.year + ' (full year)';
@@ -1634,8 +1654,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     document.head.appendChild(css);
     var pill = document.createElement('aside'); pill.className = 'demo-pill'; pill.setAttribute('aria-label', 'Demo');
     pill.innerHTML = '<button type="button" aria-label="Fechar aviso">×</button><b>MODO DEMONSTRAÇÃO</b> · dados fictícios<span class="demo-pill__more">, nada é salvo.<br>' +
-      (MODE === 'admin' ? 'Login: <code>support@endeavorbiz.com</code> · qualquer senha · código <code>123456</code>'
-                        : 'Login: <code>carlos.lima@example.com</code> · qualquer senha · código <code>123456</code>') + '</span>';
+      'Login: <code>' + (MODE === 'admin' ? ADMIN.email : ME.email) + '</code> · qualquer senha · código <code>123456</code>' + '</span>';
     document.body.appendChild(pill);
     pill.querySelector('button').onclick = function () { pill.remove(); };
     var badge = document.createElement('span'); badge.className = 'demo-badge'; badge.textContent = 'DEMO'; badge.title = 'Modo demonstração: dados fictícios, nada é salvo';
@@ -1650,7 +1669,7 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
     // prefill sample login
     var tryFill = function () {
       var e = document.getElementById('l-email'), p = document.getElementById('l-pass'), c = document.getElementById('mfa-code');
-      if (e && !e.value) e.value = MODE === 'admin' ? ADMIN.email : CLIENT_USER.email;
+      if (e && !e.value) e.value = MODE === 'admin' ? ADMIN.email : ME.email;
       if (p && !p.value) p.value = 'demo-password';
       if (c && !c.value) c.value = '123456';
     };
@@ -1723,6 +1742,71 @@ window.ENDEAVOR_CFG = {
 
 </script>
 <script>
+/* Partner (collaborator) access permissions: form, defaults per partner type and summary.
+   Shared by the client portal (account owner) and the admin console. */
+(function () {
+  'use strict';
+  var CATS = ['formation', 'tax_return', 'report', 'compliance', 'other'];
+  var DEFAULTS = {
+    accountant: { cats: ['formation', 'tax_return', 'report', 'compliance', 'other'], deadlines: true, upload: true },
+    bookkeeping: { cats: ['report', 'other'], deadlines: true, upload: true },
+    property_management: { cats: ['formation', 'compliance', 'other'], deadlines: false, upload: true },
+    other: { cats: [], deadlines: false, upload: true }
+  };
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  /* L: labels { access, companies, allCompanies, docs, cat_formation..cat_other, deadlines, upload, docsHint } */
+  function html(prefix, L, companies, p) {
+    p = p || {};
+    var cats = p.perm_doc_categories || [], allCo = !p.perm_companies, coSel = p.perm_companies || [];
+    return '<fieldset class="perm-box"><legend>' + esc(L.access) + '</legend>' +
+      '<div class="perm-group"><span class="perm-title">' + esc(L.companies) + '</span>' +
+        '<div class="check-row"><input type="checkbox" id="' + prefix + '-allco"' + (allCo ? ' checked' : '') + '><label for="' + prefix + '-allco">' + esc(L.allCompanies) + '</label></div>' +
+        '<div class="perm-cos" id="' + prefix + '-cos"' + (allCo ? ' hidden' : '') + '>' + companies.map(function (c) {
+          return '<div class="check-row"><input type="checkbox" id="' + prefix + '-co-' + c.id + '" data-co="' + c.id + '"' + (coSel.indexOf(c.id) > -1 ? ' checked' : '') + '><label for="' + prefix + '-co-' + c.id + '">' + esc(c.legal_name) + '</label></div>';
+        }).join('') + '</div></div>' +
+      '<div class="perm-group"><span class="perm-title">' + esc(L.docs) + '</span>' + CATS.map(function (k) {
+        return '<div class="check-row"><input type="checkbox" id="' + prefix + '-cat-' + k + '" data-cat="' + k + '"' + (cats.indexOf(k) > -1 ? ' checked' : '') + '><label for="' + prefix + '-cat-' + k + '">' + esc(L['cat_' + k]) + '</label></div>';
+      }).join('') + (L.docsHint ? '<p class="perm-hint">' + esc(L.docsHint) + '</p>' : '') + '</div>' +
+      '<div class="perm-group"><span class="perm-title">' + esc(L.other) + '</span>' +
+        '<div class="check-row"><input type="checkbox" id="' + prefix + '-dl"' + (p.perm_deadlines !== false ? ' checked' : '') + '><label for="' + prefix + '-dl">' + esc(L.deadlines) + '</label></div>' +
+        '<div class="check-row"><input type="checkbox" id="' + prefix + '-up"' + (p.can_upload !== false ? ' checked' : '') + '><label for="' + prefix + '-up">' + esc(L.upload) + '</label></div>' +
+      '</div></fieldset>';
+  }
+  function apply(root, prefix, type) {
+    var d = DEFAULTS[type] || DEFAULTS.other;
+    CATS.forEach(function (k) { var c = root.querySelector('#' + prefix + '-cat-' + k); if (c) c.checked = d.cats.indexOf(k) > -1; });
+    root.querySelector('#' + prefix + '-dl').checked = d.deadlines;
+    root.querySelector('#' + prefix + '-up').checked = d.upload;
+  }
+  function wire(root, prefix, typeSelect, applyDefaultsNow) {
+    var all = root.querySelector('#' + prefix + '-allco'), box = root.querySelector('#' + prefix + '-cos');
+    all.onchange = function () { box.hidden = all.checked; };
+    if (typeSelect) typeSelect.addEventListener('change', function () { apply(root, prefix, typeSelect.value); });
+    if (applyDefaultsNow && typeSelect) apply(root, prefix, typeSelect.value);
+  }
+  function read(root, prefix) {
+    var cats = CATS.filter(function (k) { var c = root.querySelector('#' + prefix + '-cat-' + k); return c && c.checked; });
+    var all = root.querySelector('#' + prefix + '-allco').checked;
+    var cos = all ? null : Array.prototype.slice.call(root.querySelectorAll('#' + prefix + '-cos [data-co]')).filter(function (c) { return c.checked; }).map(function (c) { return c.dataset.co; });
+    return { perm_doc_categories: cats, perm_companies: cos, perm_deadlines: root.querySelector('#' + prefix + '-dl').checked,
+      can_upload: root.querySelector('#' + prefix + '-up').checked, can_view: cats.length > 0 };
+  }
+  function summary(u, L, companies) {
+    if (u.role === 'owner') return L.full;
+    var parts = [];
+    var cats = u.perm_doc_categories || [];
+    parts.push(cats.length ? L.docsShort + ': ' + cats.map(function (k) { return L['cat_' + k]; }).join(', ') : L.noDocs);
+    if (u.perm_deadlines) parts.push(L.deadlinesShort);
+    if (u.can_upload) parts.push(L.uploadShort);
+    if (u.perm_companies) parts.push(u.perm_companies.map(function (id) { var c = (companies || []).find(function (x) { return x.id === id; }); return c ? c.legal_name : ''; }).filter(Boolean).join(', ') || L.noCompanies);
+    return parts.join(' · ');
+  }
+  window.EPerms = { CATS: CATS, DEFAULTS: DEFAULTS, html: html, wire: wire, read: read, summary: summary, apply: apply };
+})();
+
+</script>
+<script>
 /* Step-by-step invitation email for the client portal (plain text, EN/PT/ES).
    Sent as the FormSubmit auto-response, with a copy to support@endeavorbiz.com. */
 (function () {
@@ -1736,7 +1820,8 @@ window.ENDEAVOR_CFG = {
       return [
         'Olá ' + o.name + ',',
         '',
-        o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+        o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Solutions, para acessar os documentos que compartilhou com você.'
+        : o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'A Endeavor Business Solutions criou o seu acesso ao portal do cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
         '',
@@ -1763,7 +1848,8 @@ window.ENDEAVOR_CFG = {
       return [
         'Hello ' + o.name + ',',
         '',
-        o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Solutions client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+        o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Solutions Partner Portal to access the documents they shared with you.'
+        : o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Solutions client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions created your access to the client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
         '',
@@ -1790,7 +1876,8 @@ window.ENDEAVOR_CFG = {
       return [
         'Hola ' + o.name + ',',
         '',
-        o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+        o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Solutions para acceder a los documentos que compartió con usted.'
+        : o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Solutions creó su acceso al portal del cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
         '',
@@ -1995,6 +2082,12 @@ window.ENDEAVOR_CFG = {
   /* ---------------- i18n ---------------- */
   var D = {
     en: {
+      p_portal: 'Partner Portal', p_loginTitle: 'Partner portal', p_loginLead: 'For accountants, bookkeepers and property managers invited by Endeavor clients.',
+      p_overviewLead: 'Documents and deadlines {c} shared with you.', p_clients: 'Client', p_noAccess: 'No partner access', p_noAccessText: 'This account is not linked to any client as a partner. If a client invited you, confirm you used the same email. Questions: support@endeavorbiz.com.',
+      useClientPortal: 'This account is a client account. Open the Client Portal instead.', usePartnerPortal: 'This account has partner access only. Open the Partner Portal instead.', openClient: 'Open Client Portal', openPartner: 'Open Partner Portal',
+      access: 'Access', permCompanies: 'Companies', permAll: 'All companies (including new ones)', permDocs: 'Documents they can see', permOther: 'Other permissions',
+      permDeadlines: 'Can see tax deadlines', permUpload: 'Can upload documents', permDocsHint: 'They always see the documents they uploaded.', editPerms: 'Permissions', savePerms: 'Save permissions', permsSaved: 'Permissions updated.',
+      full: 'Full access', docsShort: 'Docs', noDocs: 'No documents', deadlinesShort: 'Deadlines', uploadShort: 'Upload', noCompanies: 'No companies', myAccess: 'My access', sharedBy: 'Shared by', yourRole: 'Your role',
       enrollS1: 'Install the free <strong>Google Authenticator</strong> app on your phone (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). The icon is a colorful asterisk.', enrollS2: 'In the app, tap <strong>+</strong> and choose <strong>Scan a QR code</strong>. Point the camera at the code below.', enrollS3: 'Type the 6-digit code the app shows (it changes every 30 seconds) and click <strong>Activate and continue</strong>.', mfaHint: 'Open Google Authenticator and use the code shown under <strong>Endeavor Business Solutions</strong>. Lost your phone? Write to support@endeavorbiz.com and we will reset your verification.',
       loading: 'Loading…', signOut: 'Sign out', menu: 'Menu', closeMenu: 'Close menu',
       portal: 'Client Portal', loginTitle: 'Client portal', loginLead: 'Access your companies, documents and deadlines.', email: 'Email', password: 'Password',
@@ -2036,6 +2129,12 @@ window.ENDEAVOR_CFG = {
       switchClient: 'Account', privacyNote: 'Access to every file is recorded for your security.', generic: 'Something went wrong. Please try again.'
     },
     pt: {
+      p_portal: 'Portal do Parceiro', p_loginTitle: 'Portal do parceiro', p_loginLead: 'Para contadores, bookkeepers e administradores de imóveis convidados por clientes da Endeavor.',
+      p_overviewLead: 'Documentos e prazos que {c} compartilhou com você.', p_clients: 'Cliente', p_noAccess: 'Sem acesso de parceiro', p_noAccessText: 'Esta conta não está ligada a nenhum cliente como parceiro. Se um cliente convidou você, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
+      useClientPortal: 'Esta é uma conta de cliente. Abra o Portal do Cliente.', usePartnerPortal: 'Esta conta tem só acesso de parceiro. Abra o Portal do Parceiro.', openClient: 'Abrir Portal do Cliente', openPartner: 'Abrir Portal do Parceiro',
+      access: 'Acesso', permCompanies: 'Empresas', permAll: 'Todas as empresas (inclusive novas)', permDocs: 'Documentos que pode ver', permOther: 'Outras permissões',
+      permDeadlines: 'Pode ver os prazos fiscais', permUpload: 'Pode enviar documentos', permDocsHint: 'Ele sempre vê os documentos que ele mesmo enviou.', editPerms: 'Permissões', savePerms: 'Salvar permissões', permsSaved: 'Permissões atualizadas.',
+      full: 'Acesso completo', docsShort: 'Docs', noDocs: 'Sem documentos', deadlinesShort: 'Prazos', uploadShort: 'Envio', noCompanies: 'Nenhuma empresa', myAccess: 'Meu acesso', sharedBy: 'Compartilhado por', yourRole: 'Seu perfil',
       enrollS1: 'Instale no celular o app gratuito <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). O ícone é um asterisco colorido.', enrollS2: 'No app, toque no <strong>+</strong> e escolha <strong>Ler código QR</strong>. Aponte a câmera para o código abaixo.', enrollS3: 'Digite o código de 6 dígitos que aparece no app (ele muda a cada 30 segundos) e clique em <strong>Ativar e continuar</strong>.', mfaHint: 'Abra o Google Authenticator e use o código que aparece em <strong>Endeavor Business Solutions</strong>. Perdeu o celular? Escreva para support@endeavorbiz.com que a Endeavor reseta a sua verificação.',
       loading: 'Carregando…', signOut: 'Sair', menu: 'Menu', closeMenu: 'Fechar menu',
       portal: 'Portal do Cliente', loginTitle: 'Portal do cliente', loginLead: 'Acesse suas empresas, documentos e prazos.', email: 'E-mail', password: 'Senha',
@@ -2077,6 +2176,12 @@ window.ENDEAVOR_CFG = {
       switchClient: 'Conta', privacyNote: 'O acesso a cada arquivo é registrado para a sua segurança.', generic: 'Algo deu errado. Tente de novo.'
     },
     es: {
+      p_portal: 'Portal de Socios', p_loginTitle: 'Portal de socios', p_loginLead: 'Para contadores, bookkeepers y administradores de propiedades invitados por clientes de Endeavor.',
+      p_overviewLead: 'Documentos y plazos que {c} compartió con usted.', p_clients: 'Cliente', p_noAccess: 'Sin acceso de socio', p_noAccessText: 'Esta cuenta no está vinculada a ningún cliente como socio. Si un cliente lo invitó, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
+      useClientPortal: 'Esta es una cuenta de cliente. Abra el Portal del Cliente.', usePartnerPortal: 'Esta cuenta solo tiene acceso de socio. Abra el Portal de Socios.', openClient: 'Abrir Portal del Cliente', openPartner: 'Abrir Portal de Socios',
+      access: 'Acceso', permCompanies: 'Empresas', permAll: 'Todas las empresas (incluso nuevas)', permDocs: 'Documentos que puede ver', permOther: 'Otros permisos',
+      permDeadlines: 'Puede ver los plazos fiscales', permUpload: 'Puede enviar documentos', permDocsHint: 'Siempre ve los documentos que él mismo envió.', editPerms: 'Permisos', savePerms: 'Guardar permisos', permsSaved: 'Permisos actualizados.',
+      full: 'Acceso completo', docsShort: 'Docs', noDocs: 'Sin documentos', deadlinesShort: 'Plazos', uploadShort: 'Envío', noCompanies: 'Ninguna empresa', myAccess: 'Mi acceso', sharedBy: 'Compartido por', yourRole: 'Su perfil',
       enrollS1: 'Instale en su celular la app gratuita <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). El ícono es un asterisco de colores.', enrollS2: 'En la app, toque <strong>+</strong> y elija <strong>Escanear un código QR</strong>. Apunte la cámara al código de abajo.', enrollS3: 'Escriba el código de 6 dígitos que muestra la app (cambia cada 30 segundos) y haga clic en <strong>Activar y continuar</strong>.', mfaHint: 'Abra Google Authenticator y use el código que aparece en <strong>Endeavor Business Solutions</strong>. ¿Perdió su celular? Escriba a support@endeavorbiz.com y Endeavor restablecerá su verificación.',
       loading: 'Cargando…', signOut: 'Salir', menu: 'Menú', closeMenu: 'Cerrar menú',
       portal: 'Portal del Cliente', loginTitle: 'Portal del cliente', loginLead: 'Acceda a sus empresas, documentos y plazos.', email: 'Correo', password: 'Contraseña',
@@ -2120,7 +2225,10 @@ window.ENDEAVOR_CFG = {
   };
   var L = EP.lang;
   EP.init({ en: {}, pt: {}, es: {} });
-  function t(k, vars) { var s = (D[L] && D[L][k] != null) ? D[L][k] : (D.en[k] != null ? D.en[k] : k); if (vars) Object.keys(vars).forEach(function (v) { s = s.replace('{' + v + '}', vars[v]); }); return s; }
+  var PARTNER = window.PORTAL_MODE === 'partner';
+  var PK = { portal: 'p_portal', loginTitle: 'p_loginTitle', loginLead: 'p_loginLead', noAccess: 'p_noAccess', noAccessText: 'p_noAccessText' };
+  function t(k, vars) {
+    if (PARTNER && PK[k]) k = PK[k]; var s = (D[L] && D[L][k] != null) ? D[L][k] : (D.en[k] != null ? D.en[k] : k); if (vars) Object.keys(vars).forEach(function (v) { s = s.replace('{' + v + '}', vars[v]); }); return s; }
   document.getElementById('btn-signout').textContent = t('signOut');
   document.title = t('portal') + ' | Endeavor Business Solutions';
 
@@ -2179,7 +2287,12 @@ window.ENDEAVOR_CFG = {
     var aal = (await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data;
     if (!aal || aal.currentLevel !== 'aal2') return renderMfa();
     var mem = await sb.rpc('claim_invitations');
-    S.memberships = mem.data || [];
+    var allMem = mem.data || [];
+    S.memberships = allMem.filter(function (x) { return PARTNER ? x.role === 'collaborator' : x.role === 'owner'; });
+    if (!S.memberships.length && allMem.length) {
+      var other = PARTNER ? 'client.html' : 'partner.html';
+      return authShell('<h1 class="portal-h1">' + t('noAccess') + '</h1><p>' + t(PARTNER ? 'useClientPortal' : 'usePartnerPortal') + '</p><a class="btn btn--navy" href="' + other + '?lang=' + L + '">' + t(PARTNER ? 'openClient' : 'openPartner') + '</a>');
+    }
     if (!S.memberships.length) return authShell('<h1 class="portal-h1">' + t('noAccess') + '</h1><p>' + t('noAccessText') + '</p><button class="btn btn--navy" id="na-out" type="button">' + t('signOut') + '</button>'), ($('#na-out').onclick = function () { $('#btn-signout').click(); });
     var saved = null; try { saved = localStorage.getItem('endeavor-client-id'); } catch (e) { /* ignore */ }
     var m = S.memberships.find(function (x) { return x.client_id === saved; }) || S.memberships[0];
@@ -2190,7 +2303,9 @@ window.ENDEAVOR_CFG = {
     S.client = (await q(sb.from('clients').select('*').eq('id', id).single()));
     var me = (await q(sb.from('client_users').select('*').eq('client_id', id).eq('user_id', S.user.id).eq('status', 'active')))[0] || {};
     S.role = me.role; S.me = me;
-    S.perms = { view: me.role === 'owner' || !!me.can_view, upload: me.role === 'owner' || !!me.can_upload, owner: me.role === 'owner' };
+    var own = me.role === 'owner', cats = own ? ['formation', 'tax_return', 'report', 'compliance', 'other'] : (me.perm_doc_categories || []);
+    S.perms = { owner: own, cats: cats, view: own || cats.length > 0, reports: own || cats.indexOf('report') > -1,
+      deadlines: own || me.perm_deadlines !== false, upload: own || !!me.can_upload };
     S.companies = await q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
     try { localStorage.setItem('endeavor-client-id', id); } catch (e) { /* ignore */ }
   }
@@ -2257,8 +2372,8 @@ window.ENDEAVOR_CFG = {
   function navItems() {
     var n = [['overview', 'nav_overview', 'i-grid'], ['companies', 'nav_companies', 'i-brief']];
     if (S.perms.view) n.push(['documents', 'nav_documents', 'i-file']);
-    n.push(['compliance', 'nav_compliance', 'i-cal']);
-    if (S.perms.view) n.push(['reports', 'nav_reports', 'i-chart']);
+    if (S.perms.deadlines) n.push(['compliance', 'nav_compliance', 'i-cal']);
+    if (S.perms.reports) n.push(['reports', 'nav_reports', 'i-chart']);
     if (S.perms.upload) n.push(['upload', 'nav_upload', 'i-up']);
     if (S.perms.owner) n.push(['collaborators', 'nav_collab', 'i-users']);
     n.push(['settings', 'nav_settings', 'i-gear']);
@@ -2269,7 +2384,7 @@ window.ENDEAVOR_CFG = {
     var multi = S.memberships.length > 1;
     app.innerHTML = '<div class="console" id="console"><nav class="console__nav" id="console-nav" aria-label="' + t('portal') + '">' +
       '<div class="console__nav-title">' + t('portal') + '</div>' +
-      (multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem">' +
+      (multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem;background:#fff;color:#0b1f3a;font:inherit;font-weight:600">' +
         S.memberships.map(function (m) { return '<option value="' + m.client_id + '"' + (m.client_id === S.client.id ? ' selected' : '') + '>' + esc(m.client_name) + '</option>'; }).join('') + '</select></div>'
         : '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.client.name) + '</div>') +
       '<ul>' + navItems().map(function (n) { return '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + t(n[1]) + '</a></li>'; }).join('') + '</ul>' +
@@ -2347,24 +2462,25 @@ window.ENDEAVOR_CFG = {
   async function vOverview(view) {
     var cid = S.client.id;
     var res = await Promise.all([
-      q(sb.from('compliance_items').select('*').eq('client_id', cid).in('status', ['pending', 'in_progress']).order('due_date').limit(6)),
+      S.perms.deadlines ? q(sb.from('compliance_items').select('*').eq('client_id', cid).in('status', ['pending', 'in_progress']).order('due_date').limit(6)) : Promise.resolve([]),
       S.perms.view ? q(sb.from('company_documents').select('*').eq('client_id', cid).order('created_at', { ascending: false }).limit(6)) : Promise.resolve([]),
       S.perms.view ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid) : Promise.resolve({ count: 0 }),
-      S.perms.view ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid).eq('category', 'report') : Promise.resolve({ count: 0 })
+      S.perms.reports ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid).eq('category', 'report') : Promise.resolve({ count: 0 })
     ]);
     var next = res[0][0];
     var first = (S.me && S.me.name ? S.me.name : S.client.name).split(' ')[0];
-    view.innerHTML = head(t('hello', { n: first }), t('overviewLead')) +
-      '<div class="dash"><div><div class="kpis">' +
-        kpi(t('k_companies'), S.companies.length) + kpi(t('k_next'), next ? fmtDate(next.due_date) : t('none'), true) + kpi(t('k_docs'), res[2].count || 0) + kpi(t('k_reports'), res[3].count || 0) + '</div>' +
-        '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('nextDeadlines') + '</h2><a href="#/compliance">' + t('seeAll') + '</a></div>' +
-          (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>' +
+    var kp = kpi(t('k_companies'), S.companies.length) + (S.perms.deadlines ? kpi(t('k_next'), next ? fmtDate(next.due_date) : t('none'), true) : '') +
+      (S.perms.view ? kpi(t('k_docs'), res[2].count || 0) : '') + (S.perms.reports ? kpi(t('k_reports'), res[3].count || 0) : '');
+    view.innerHTML = head(t('hello', { n: first }), PARTNER ? t('p_overviewLead', { c: S.client.name }) : t('overviewLead')) +
+      '<div class="dash"><div><div class="kpis">' + kp + '</div>' +
+        (!S.perms.deadlines ? '' : '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('nextDeadlines') + '</h2><a href="#/compliance">' + t('seeAll') + '</a></div>' +
+          (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>') +
         (S.perms.view ? '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('recentDocs') + '</h2><a href="#/documents">' + t('seeAll') + '</a></div>' + docItems(res[1], true) + '</section>' : '') +
       '</div><aside class="links-panel portal-card"><h2 class="portal-h2">' + t('quick') + '</h2><ul>' +
         (S.perms.upload ? '<li><a href="#/upload"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg>' + t('qUpload') + '</a></li>' : '') +
         (S.perms.owner ? '<li><a href="#/collaborators?invite=1"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>' + t('qInvite') + '</a></li><li><a href="#/reports"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>' + t('qQbo') + '</a></li>' : '') +
         '<li><a href="#/companies"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>' + t('nav_companies') + '</a></li>' +
-      '</ul><p class="portal-muted" style="font-size:.8rem;margin-top:1rem">' + t('privacyNote') + '</p></aside></div>';
+      '</ul>' + (PARTNER ? '<h3 class="portal-h2" style="margin-top:1.25rem;font-size:1rem">' + t('myAccess') + '</h3><p class="perm-sum">' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</p>' : '') + '<p class="portal-muted" style="font-size:.8rem;margin-top:1rem">' + t('privacyNote') + '</p></aside></div>';
     wireDocs(view, res[1]);
   }
   function kpi(l, v, small) { return '<div class="kpi"><div class="kpi__label">' + esc(l) + '</div><div class="kpi__value"' + (small ? ' style="font-size:1.35rem;padding-top:.35rem"' : '') + '>' + esc(v) + '</div></div>'; }
@@ -2378,11 +2494,11 @@ window.ENDEAVOR_CFG = {
     }).join('') + '</div>' : '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong>' + t('noCompaniesText') + '</div>');
   }
   async function companyDetail(view, co) {
-    var tab = param('tab') || (S.perms.view ? 'docs' : 'deadlines');
     var tabs = [];
     if (S.perms.view) tabs.push(['docs', t('tab_docs')]);
-    tabs.push(['deadlines', t('tab_deadlines')]);
-    if (S.perms.view) tabs.push(['finance', t('tab_finance')]);
+    if (S.perms.deadlines) tabs.push(['deadlines', t('tab_deadlines')]);
+    if (S.perms.reports) tabs.push(['finance', t('tab_finance')]);
+    var tab = param('tab') || (tabs[0] ? tabs[0][0] : 'none');
     var kv = [[t('docNumber'), co.document_number], [t('ein'), co.ein], [t('agent'), co.registered_agent], [t('fye'), co.fiscal_year_end], [t('address'), co.address]].filter(function (x) { return x[1]; });
     view.innerHTML = '<p class="crumbs"><a href="#/companies">' + t('back') + '</a> /</p>' + head(co.legal_name, (co.state || '') + (co.formation_date ? ' · ' + t('formed', { d: fmtDate(co.formation_date) }) : '') + ' · ' + t('st_' + co.status)) +
       (kv.length ? '<section class="portal-card"><dl class="kv">' + kv.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></section>' : '') +
@@ -2393,12 +2509,12 @@ window.ENDEAVOR_CFG = {
       var groups = ['formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].filter(function (c) { return docs.some(function (d) { return d.category === c; }); });
       body.innerHTML = groups.length ? groups.map(function (g) { return '<section class="portal-card"><h2 class="portal-h2">' + esc(t('cat_' + g)) + '</h2>' + docItems(docs.filter(function (d) { return d.category === g; }), false) + '</section>'; }).join('') : '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
       wireDocs(body, docs);
-    } else if (tab === 'finance' && S.perms.view) {
+    } else if (tab === 'finance' && S.perms.reports) {
       await reportsFor(body, [co]);
-    } else {
+    } else if (tab === 'deadlines' && S.perms.deadlines) {
       var items = await q(sb.from('compliance_items').select('*').eq('company_id', co.id).order('due_date'));
       body.innerHTML = '<section class="portal-card">' + (items.length ? items.map(function (i) { return deadlineRow(i, co); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>';
-    }
+    } else body.innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
   }
 
   async function vDocuments(view) {
@@ -2406,7 +2522,7 @@ window.ENDEAVOR_CFG = {
     view.innerHTML = head(t('nav_documents'), t('privacyNote')) +
       '<div class="toolbar"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
       '<select id="d-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
-      '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + ['formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select></div>' +
+      '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select></div>' +
       '<section class="portal-card" id="d-list"></section>';
     function draw() {
       var s = $('#d-q').value.trim().toLowerCase(), co = $('#d-co').value, cat = $('#d-cat').value;
@@ -2538,33 +2654,50 @@ window.ENDEAVOR_CFG = {
     view.innerHTML = head(t('nav_collab'), t('collabLead'), '<button class="btn btn--navy btn--xs" type="button" id="inv">' + t('invite') + '</button>') +
       '<section class="portal-card">' + (collabs.length ? '<ul class="doclist">' + collabs.map(function (u) {
         return '<li><span class="ficon" aria-hidden="true">' + esc((u.name || u.email).slice(0, 2).toUpperCase()) + '</span><div><div class="dname">' + esc(u.name || u.email) + ' · ' + esc(t('c_' + (u.collab_type || 'other'))) + '</div>' +
-          '<div class="dmeta">' + esc(u.email) + ' · ' + [u.can_view ? t('viewOnly') : '', u.can_upload ? t('uploadOnly') : ''].filter(Boolean).join(' + ') + ' · <span class="pill' + (u.status === 'active' ? ' pill--done' : u.status === 'revoked' ? ' pill--overdue' : ' pill--soon') + '">' + t('s_' + u.status) + '</span></div></div>' +
-          '<div class="portal-btn-row">' + (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">' + t('resend') + '</button>' : '') + (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-rev="' + u.id + '">' + t('revoke') + '</button>' : '') + '</div></li>';
+          '<div class="dmeta">' + esc(u.email) + ' · <span class="pill' + (u.status === 'active' ? ' pill--done' : u.status === 'revoked' ? ' pill--overdue' : ' pill--soon') + '">' + t('s_' + u.status) + '</span></div><div class="perm-sum">' + esc(EPerms.summary(u, permLabels(), S.companies)) + '</div></div>' +
+          '<div class="portal-btn-row">' + (u.status !== 'revoked' ? '<button class="btn btn--ghost btn--xs" data-perm="' + u.id + '">' + t('editPerms') + '</button>' : '') + (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">' + t('resend') + '</button>' : '') + (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-rev="' + u.id + '">' + t('revoke') + '</button>' : '') + '</div></li>';
       }).join('') + '</ul>' : '<div class="empty-state"><strong>' + t('noCollab') + '</strong>' + t('collabLead') + '</div>') + '</section>';
     var find = function (id) { return users.find(function (u) { return u.id === id; }); };
     $$('[data-rev]', view).forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.rev); if (!confirm(t('confirmRevoke', { e: u.email }))) return; await sb.from('client_users').update({ status: 'revoked' }).eq('id', u.id); route(); }; });
     $$('[data-resend]', view).forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); await sendInvite(u.email, u.name || u.email); alert(t('inviteSent', { e: u.email })); }; });
-    $('#inv').onclick = inviteForm;
-    if (param('invite')) inviteForm();
+    $$('[data-perm]', view).forEach(function (b) { b.onclick = function () { inviteForm(find(b.dataset.perm)); }; });
+    $('#inv').onclick = function () { inviteForm(null); };
+    if (param('invite')) inviteForm(null);
   }
   async function sendInvite(email, name) {
-    var link = siteUrl('client.html') + '?lang=' + L;
-    var txt = window.EndeavorInvite.text(L, { name: name, email: email, link: link, invitedBy: S.client.name });
+    var link = siteUrl('partner.html') + '?lang=' + L;
+    var txt = window.EndeavorInvite.text(L, { name: name, email: email, link: link, invitedBy: S.client.name, partner: true });
     try { await fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ _subject: 'Collaborator invited: ' + name + ' (' + S.client.name + ')', _template: 'table', _captcha: 'false', name: name, email: email, client: S.client.name, invited_by: S.user.email, _autoresponse: txt }) }); } catch (e) { /* best effort */ }
   }
-  function inviteForm() {
-    openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + t('invite') + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div>' +
-      '<form class="portal-form" id="iv-form" novalidate><div class="field"><label for="iv-name">' + t('name') + '</label><input id="iv-name" type="text" required></div><div class="field"><label for="iv-email">' + t('email') + '</label><input id="iv-email" type="email" required></div>' +
-      '<div class="field"><label for="iv-type">' + t('type') + '</label><select id="iv-type">' + ['accountant', 'bookkeeping', 'property_management', 'other'].map(function (k) { return '<option value="' + k + '">' + t('c_' + k) + '</option>'; }).join('') + '</select></div>' +
-      '<fieldset class="field" style="border:0;padding:0;margin:0"><legend style="font-weight:600;margin-bottom:.4rem">' + t('perms') + '</legend><div class="check-row"><input type="checkbox" id="iv-up" checked><label for="iv-up">' + t('canUpload') + '</label></div><div class="check-row"><input type="checkbox" id="iv-view"><label for="iv-view">' + t('canView') + '</label></div></fieldset>' +
-      '<div class="portal-alert" id="iv-msg" role="alert"></div><button class="btn btn--navy" type="submit">' + t('invite') + '</button></form>');
-    $('#iv-form').onsubmit = async function (e) {
+  function permLabels() {
+    return { access: t('access'), companies: t('permCompanies'), allCompanies: t('permAll'), docs: t('permDocs'), other: t('permOther'),
+      cat_formation: t('cat_formation'), cat_tax_return: t('cat_tax_return'), cat_report: t('cat_report'), cat_compliance: t('cat_compliance'), cat_other: t('cat_other'),
+      deadlines: t('permDeadlines'), upload: t('permUpload'), docsHint: t('permDocsHint'), full: t('full'), docsShort: t('docsShort'), noDocs: t('noDocs'),
+      deadlinesShort: t('deadlinesShort'), uploadShort: t('uploadShort'), noCompanies: t('noCompanies') };
+  }
+  function inviteForm(u) {
+    var edit = !!u;
+    openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (edit ? t('editPerms') + ': ' + esc(u.name || u.email) : t('invite')) + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div>' +
+      '<form class="portal-form" id="iv-form" novalidate>' +
+      (edit ? '' : '<div class="field"><label for="iv-name">' + t('name') + '</label><input id="iv-name" type="text" required></div><div class="field"><label for="iv-email">' + t('email') + '</label><input id="iv-email" type="email" required></div>') +
+      '<div class="field"><label for="iv-type">' + t('type') + '</label><select id="iv-type">' + ['accountant', 'bookkeeping', 'property_management', 'other'].map(function (k) { return '<option value="' + k + '"' + (u && u.collab_type === k ? ' selected' : '') + '>' + t('c_' + k) + '</option>'; }).join('') + '</select></div>' +
+      EPerms.html('iv', permLabels(), S.companies, u) +
+      '<div class="portal-alert" id="iv-msg" role="alert"></div><button class="btn btn--navy" type="submit">' + (edit ? t('savePerms') : t('invite')) + '</button></form>');
+    var form = $('#iv-form');
+    EPerms.wire(form, 'iv', $('#iv-type'), !edit);
+    form.onsubmit = async function (e) {
       e.preventDefault();
-      var name = $('#iv-name').value.trim(), email = $('#iv-email').value.trim().toLowerCase();
-      if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return msg($('#iv-msg'), t('fillNameEmail'), 'error');
-      var r = await sb.from('client_users').insert({ client_id: S.client.id, email: email, name: name, role: 'collaborator', collab_type: $('#iv-type').value, can_view: $('#iv-view').checked, can_upload: $('#iv-up').checked });
+      var perms = EPerms.read(form, 'iv');
+      if (perms.perm_companies && !perms.perm_companies.length) return msg($('#iv-msg'), t('noCompanies'), 'error');
+      var row = Object.assign({ collab_type: $('#iv-type').value }, perms), r;
+      if (edit) r = await sb.from('client_users').update(row).eq('id', u.id);
+      else {
+        var name = $('#iv-name').value.trim(), email = $('#iv-email').value.trim().toLowerCase();
+        if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return msg($('#iv-msg'), t('fillNameEmail'), 'error');
+        r = await sb.from('client_users').insert(Object.assign({ client_id: S.client.id, email: email, name: name, role: 'collaborator' }, row));
+        if (!r.error) await sendInvite(email, name);
+      }
       if (r.error) return msg($('#iv-msg'), /unique|duplicate/i.test(r.error.message) ? t('inviteDup') : errText(r.error), 'error');
-      await sendInvite(email, name);
       closeOverlay(); ERoute.set('#/collaborators', true); route();
     };
   }
@@ -2573,7 +2706,7 @@ window.ENDEAVOR_CFG = {
     var u = (await sb.auth.getUser()).data.user;
     view.innerHTML = head(t('nav_settings'), t('settingsLead')) +
       '<section class="portal-card"><h2 class="portal-h2">' + t('account') + '</h2><dl class="kv"><dt>' + t('email') + '</dt><dd>' + esc(u.email) + '</dd><dt>' + t('lastLogin') + '</dt><dd>' + esc(fmtDT(u.last_sign_in_at)) + '</dd>' +
-      '<dt>' + t('status') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : t('c_' + (S.me.collab_type || 'other'))) + '</dd><dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
+      '<dt>' + t('yourRole') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : t('c_' + (S.me.collab_type || 'other'))) + '</dd>' + (PARTNER ? '<dt>' + t('sharedBy') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('myAccess') + '</dt><dd>' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</dd>' : '') + '<dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
       '<section class="portal-card"><h2 class="portal-h2">' + t('changePass') + '</h2><form class="portal-form" id="pw"><div class="field"><label for="pw-n">' + t('newPass') + '</label><input id="pw-n" type="password" autocomplete="new-password" minlength="12" required></div>' +
       '<div class="portal-alert" id="pw-m" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('savePass') + '</button></form></section>';
     $('#pw').onsubmit = async function (e) {

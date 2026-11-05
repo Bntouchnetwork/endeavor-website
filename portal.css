@@ -387,3 +387,13 @@ a.co-card:hover { border-color: var(--navy-800); box-shadow: 0 6px 18px rgb(11 3
 .portal-top .lang-dd { order: 0 !important; }
 .lang-dd .lang__menu { min-width: 14.5rem; }
 .lang-dd .lang__menu a { white-space: nowrap; }
+
+/* Partner permissions form */
+.perm-box { border: 1px solid #e3e7ee; border-radius: 12px; padding: .9rem 1rem 1rem; margin: 0; display: grid; gap: .9rem; }
+.perm-box legend { font-weight: 700; padding: 0 .35rem; color: var(--navy-900); }
+.perm-group { display: grid; gap: .35rem; }
+.perm-title { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.perm-cos { display: grid; gap: .35rem; padding-left: 1.5rem; }
+.perm-cos[hidden] { display: none; }
+.perm-hint { font-size: .8rem; color: var(--muted); margin: .15rem 0 0; }
+.perm-sum { font-size: .82rem; color: var(--muted); }

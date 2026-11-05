@@ -37,10 +37,10 @@
   }
 
   function inviteText(lang, name, clientName, link, role, email) {
-    return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName });
+    return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName, invitedBy: role === 'owner' ? '' : clientName, partner: role !== 'owner' });
   }
   async function sendInvite(ctx, o) {
-    var link = ctx.siteUrl('client.html') + '?lang=' + (o.lang || 'pt');
+    var link = ctx.siteUrl(o.role === 'owner' ? 'client.html' : 'partner.html') + '?lang=' + (o.lang || 'pt');
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao portal do cliente: ' + o.name + ' (' + o.clientName + ')', _template: 'table', _captcha: 'false',
@@ -341,41 +341,59 @@
   }
 
   /* ---------- users ---------- */
-  async function tabUsers(body, ctx, c) {
+  var PERM_L = { access: 'Acesso do parceiro', companies: 'Empresas', allCompanies: 'Todas as empresas (inclusive novas)', docs: 'Documentos que pode ver', other: 'Outras permissões',
+    cat_formation: 'Formação', cat_tax_return: 'Imposto de renda', cat_report: 'Relatórios financeiros', cat_compliance: 'Compliance', cat_other: 'Outros',
+    deadlines: 'Pode ver os prazos fiscais', upload: 'Pode enviar documentos', docsHint: 'O parceiro sempre vê os documentos que ele mesmo enviou.', full: 'Acesso completo',
+    docsShort: 'Docs', noDocs: 'Sem documentos', deadlinesShort: 'Prazos', uploadShort: 'Envio', noCompanies: 'Nenhuma empresa' };
+  async function tabUsers(body, ctx, c, companies) {
     var esc = ctx.esc;
+    companies = companies || [];
     var users = await ctx.q(ctx.sb.from('client_users').select('*').eq('client_id', c.id).order('role', { ascending: false }).order('invited_at'));
     var ST = { invited: 'Convidado', active: 'Ativo', revoked: 'Revogado' };
     body.innerHTML = '<div class="portal-btn-row" style="justify-content:flex-end;margin-bottom:1rem"><button class="btn btn--navy btn--xs" type="button" id="u-new">Adicionar usuário</button></div>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Usuário</th><th>Perfil</th><th>Permissões</th><th>Status</th><th></th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Usuário</th><th>Perfil</th><th>Acesso</th><th>Status</th><th></th></tr></thead><tbody>' +
       users.map(function (u) {
-        return '<tr style="cursor:default"><td><strong>' + esc(u.name || u.email) + '</strong><span class="sub">' + esc(u.email) + '</span></td><td>' + (u.role === 'owner' ? 'Titular' : 'Colaborador · ' + esc(COLLAB[u.collab_type] || '')) + '</td>' +
-          '<td>' + (u.role === 'owner' ? 'Acesso completo' : [u.can_view ? 'Ver documentos' : 'Não vê documentos de terceiros', u.can_upload ? 'Enviar documentos' : ''].filter(Boolean).join(' · ')) + '</td>' +
+        return '<tr style="cursor:default"><td><strong>' + esc(u.name || u.email) + '</strong><span class="sub">' + esc(u.email) + '</span></td><td>' + (u.role === 'owner' ? 'Titular · Portal do Cliente' : 'Parceiro · ' + esc(COLLAB[u.collab_type] || '') + '<span class="sub">Portal do Parceiro</span>') + '</td>' +
+          '<td><span class="perm-sum">' + esc(EPerms.summary(u, PERM_L, companies)) + '</span></td>' +
           '<td><span class="pill' + (u.status === 'active' ? ' pill--done' : u.status === 'revoked' ? ' pill--overdue' : ' pill--soon') + '">' + ST[u.status] + '</span>' + (u.accepted_at ? '<span class="sub">desde ' + esc(ctx.fmtDT(u.accepted_at)) + '</span>' : '') + '</td>' +
-          '<td><div class="portal-btn-row">' + (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">Reenviar convite</button>' : '') +
+          '<td><div class="portal-btn-row">' + (u.role !== 'owner' && u.status !== 'revoked' ? '<button class="btn btn--ghost btn--xs" data-perm="' + u.id + '">Permissões</button>' : '') +
+          (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">Reenviar convite</button>' : '') +
           (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-revoke="' + u.id + '">Revogar</button>' : '<button class="btn btn--ghost btn--xs" data-restore="' + u.id + '">Reativar</button>') + '</div></td></tr>';
-      }).join('') + '</tbody></table></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">Os usuários entram pelo portal do cliente com o e-mail convidado e precisam ativar a verificação em duas etapas.</p>';
+      }).join('') + '</tbody></table></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">O titular entra pelo Portal do Cliente. Contadores, bookkeepers e administradores de imóveis entram pelo Portal do Parceiro e só veem o que estiver liberado. Todos precisam ativar a verificação em duas etapas.</p>';
     var find = function (id) { return users.find(function (x) { return x.id === id; }); };
     body.querySelectorAll('[data-resend]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); var ok = await sendInvite(ctx, { email: u.email, name: u.name || u.email, clientName: c.name, role: u.role, lang: c.language }); alert(ok ? 'Convite reenviado.' : 'Não foi possível enviar agora.'); }; });
     body.querySelectorAll('[data-revoke]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.revoke); if (!confirm('Revogar o acesso de ' + u.email + '?')) return; await ctx.sb.from('client_users').update({ status: 'revoked' }).eq('id', u.id); ctx.route(); }; });
     body.querySelectorAll('[data-restore]').forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.restore); var r = await ctx.sb.from('client_users').update({ status: u.user_id ? 'active' : 'invited' }).eq('id', u.id); if (r.error) alert(ctx.errText(r.error)); ctx.route(); }; });
-    body.querySelector('#u-new').onclick = function () {
-      ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Adicionar usuário</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
-        '<form class="portal-form" id="u-form">' + field('u-name', 'Nome', '', 'text', true) + field('u-email', 'E-mail', '', 'email', true) +
-        select('u-role', 'Perfil', { collaborator: 'Colaborador', owner: 'Titular (acesso completo)' }, 'collaborator') + select('u-type', 'Tipo de colaborador', COLLAB, 'accountant') +
-        '<div class="check-row"><input type="checkbox" id="u-view"><label for="u-view">Pode ver os documentos da empresa</label></div><div class="check-row"><input type="checkbox" id="u-up" checked><label for="u-up">Pode enviar documentos</label></div>' +
-        '<div class="check-row"><input type="checkbox" id="u-inv" checked><label for="u-inv">Enviar convite por e-mail</label></div>' +
-        '<div class="portal-alert" id="u-msg" role="alert"></div><button class="btn btn--navy" type="submit">Adicionar</button></form>');
-      $('#u-form').onsubmit = async function (e) {
+    body.querySelectorAll('[data-perm]').forEach(function (b) { b.onclick = function () { userForm(find(b.dataset.perm)); }; });
+    body.querySelector('#u-new').onclick = function () { userForm(null); };
+    function userForm(u) {
+      var edit = !!u;
+      ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (edit ? 'Permissões: ' + esc(u.name || u.email) : 'Adicionar usuário') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+        '<form class="portal-form" id="u-form" novalidate>' + (edit ? '' : field('u-name', 'Nome', '', 'text', true) + field('u-email', 'E-mail', '', 'email', true) +
+        select('u-role', 'Perfil', { collaborator: 'Parceiro (contador, bookkeeping, property management)', owner: 'Titular (acesso completo)' }, 'collaborator')) +
+        '<div id="u-collab">' + select('u-type', 'Tipo de parceiro', COLLAB, u ? u.collab_type || 'other' : 'accountant') + EPerms.html('up', PERM_L, companies, u) + '</div>' +
+        (edit ? '' : '<div class="check-row"><input type="checkbox" id="u-inv" checked><label for="u-inv">Enviar convite por e-mail</label></div>') +
+        '<div class="portal-alert" id="u-msg" role="alert"></div><button class="btn btn--navy" type="submit">' + (edit ? 'Salvar permissões' : 'Adicionar') + '</button></form>');
+      var form = $('#u-form');
+      EPerms.wire(form, 'up', $('#u-type'), !edit);
+      if ($('#u-role')) $('#u-role').onchange = function () { $('#u-collab').hidden = $('#u-role').value === 'owner'; };
+      form.onsubmit = async function (e) {
         e.preventDefault();
-        var email = $('#u-email').value.trim().toLowerCase(), name = $('#u-name').value.trim(), role = $('#u-role').value;
-        if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return ctx.msg($('#u-msg'), 'Preencha nome e e-mail válido.', 'error');
-        var r = await ctx.sb.from('client_users').insert({ client_id: c.id, email: email, name: name, role: role, collab_type: role === 'owner' ? null : $('#u-type').value,
-          can_view: role === 'owner' || $('#u-view').checked, can_upload: role === 'owner' || $('#u-up').checked });
-        if (r.error) return ctx.msg($('#u-msg'), /unique/i.test(r.error.message) ? 'Este e-mail já tem acesso a este cliente.' : ctx.errText(r.error), 'error');
-        if ($('#u-inv').checked) await sendInvite(ctx, { email: email, name: name, clientName: c.name, role: role, lang: c.language });
+        var role = edit ? u.role : $('#u-role').value, r;
+        var perms = role === 'owner' ? { can_view: true, can_upload: true, perm_doc_categories: EPerms.CATS.slice(), perm_companies: null, perm_deadlines: true } : EPerms.read(form, 'up');
+        if (perms.perm_companies && !perms.perm_companies.length) return ctx.msg($('#u-msg'), 'Escolha pelo menos uma empresa ou marque "Todas as empresas".', 'error');
+        var row = Object.assign({ collab_type: role === 'owner' ? null : $('#u-type').value }, perms);
+        if (edit) r = await ctx.sb.from('client_users').update(row).eq('id', u.id);
+        else {
+          var email = $('#u-email').value.trim().toLowerCase(), name = $('#u-name').value.trim();
+          if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return ctx.msg($('#u-msg'), 'Preencha nome e e-mail válido.', 'error');
+          r = await ctx.sb.from('client_users').insert(Object.assign({ client_id: c.id, email: email, name: name, role: role }, row));
+          if (!r.error && $('#u-inv').checked) await sendInvite(ctx, { email: email, name: name, clientName: c.name, role: role, lang: c.language });
+        }
+        if (r.error) return ctx.msg($('#u-msg'), /unique|duplicate/i.test(r.error.message) ? 'Este e-mail já tem acesso a este cliente.' : ctx.errText(r.error), 'error');
         ctx.closeOverlay(); ctx.route();
       };
-    };
+    }
   }
 
   /* ---------- QuickBooks & reports ---------- */

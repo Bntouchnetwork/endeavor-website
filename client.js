@@ -8,6 +8,12 @@
   /* ---------------- i18n ---------------- */
   var D = {
     en: {
+      p_portal: 'Partner Portal', p_loginTitle: 'Partner portal', p_loginLead: 'For accountants, bookkeepers and property managers invited by Endeavor clients.',
+      p_overviewLead: 'Documents and deadlines {c} shared with you.', p_clients: 'Client', p_noAccess: 'No partner access', p_noAccessText: 'This account is not linked to any client as a partner. If a client invited you, confirm you used the same email. Questions: support@endeavorbiz.com.',
+      useClientPortal: 'This account is a client account. Open the Client Portal instead.', usePartnerPortal: 'This account has partner access only. Open the Partner Portal instead.', openClient: 'Open Client Portal', openPartner: 'Open Partner Portal',
+      access: 'Access', permCompanies: 'Companies', permAll: 'All companies (including new ones)', permDocs: 'Documents they can see', permOther: 'Other permissions',
+      permDeadlines: 'Can see tax deadlines', permUpload: 'Can upload documents', permDocsHint: 'They always see the documents they uploaded.', editPerms: 'Permissions', savePerms: 'Save permissions', permsSaved: 'Permissions updated.',
+      full: 'Full access', docsShort: 'Docs', noDocs: 'No documents', deadlinesShort: 'Deadlines', uploadShort: 'Upload', noCompanies: 'No companies', myAccess: 'My access', sharedBy: 'Shared by', yourRole: 'Your role',
       enrollS1: 'Install the free <strong>Google Authenticator</strong> app on your phone (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). The icon is a colorful asterisk.', enrollS2: 'In the app, tap <strong>+</strong> and choose <strong>Scan a QR code</strong>. Point the camera at the code below.', enrollS3: 'Type the 6-digit code the app shows (it changes every 30 seconds) and click <strong>Activate and continue</strong>.', mfaHint: 'Open Google Authenticator and use the code shown under <strong>Endeavor Business Solutions</strong>. Lost your phone? Write to support@endeavorbiz.com and we will reset your verification.',
       loading: 'Loading…', signOut: 'Sign out', menu: 'Menu', closeMenu: 'Close menu',
       portal: 'Client Portal', loginTitle: 'Client portal', loginLead: 'Access your companies, documents and deadlines.', email: 'Email', password: 'Password',
@@ -49,6 +55,12 @@
       switchClient: 'Account', privacyNote: 'Access to every file is recorded for your security.', generic: 'Something went wrong. Please try again.'
     },
     pt: {
+      p_portal: 'Portal do Parceiro', p_loginTitle: 'Portal do parceiro', p_loginLead: 'Para contadores, bookkeepers e administradores de imóveis convidados por clientes da Endeavor.',
+      p_overviewLead: 'Documentos e prazos que {c} compartilhou com você.', p_clients: 'Cliente', p_noAccess: 'Sem acesso de parceiro', p_noAccessText: 'Esta conta não está ligada a nenhum cliente como parceiro. Se um cliente convidou você, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
+      useClientPortal: 'Esta é uma conta de cliente. Abra o Portal do Cliente.', usePartnerPortal: 'Esta conta tem só acesso de parceiro. Abra o Portal do Parceiro.', openClient: 'Abrir Portal do Cliente', openPartner: 'Abrir Portal do Parceiro',
+      access: 'Acesso', permCompanies: 'Empresas', permAll: 'Todas as empresas (inclusive novas)', permDocs: 'Documentos que pode ver', permOther: 'Outras permissões',
+      permDeadlines: 'Pode ver os prazos fiscais', permUpload: 'Pode enviar documentos', permDocsHint: 'Ele sempre vê os documentos que ele mesmo enviou.', editPerms: 'Permissões', savePerms: 'Salvar permissões', permsSaved: 'Permissões atualizadas.',
+      full: 'Acesso completo', docsShort: 'Docs', noDocs: 'Sem documentos', deadlinesShort: 'Prazos', uploadShort: 'Envio', noCompanies: 'Nenhuma empresa', myAccess: 'Meu acesso', sharedBy: 'Compartilhado por', yourRole: 'Seu perfil',
       enrollS1: 'Instale no celular o app gratuito <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). O ícone é um asterisco colorido.', enrollS2: 'No app, toque no <strong>+</strong> e escolha <strong>Ler código QR</strong>. Aponte a câmera para o código abaixo.', enrollS3: 'Digite o código de 6 dígitos que aparece no app (ele muda a cada 30 segundos) e clique em <strong>Ativar e continuar</strong>.', mfaHint: 'Abra o Google Authenticator e use o código que aparece em <strong>Endeavor Business Solutions</strong>. Perdeu o celular? Escreva para support@endeavorbiz.com que a Endeavor reseta a sua verificação.',
       loading: 'Carregando…', signOut: 'Sair', menu: 'Menu', closeMenu: 'Fechar menu',
       portal: 'Portal do Cliente', loginTitle: 'Portal do cliente', loginLead: 'Acesse suas empresas, documentos e prazos.', email: 'E-mail', password: 'Senha',
@@ -90,6 +102,12 @@
       switchClient: 'Conta', privacyNote: 'O acesso a cada arquivo é registrado para a sua segurança.', generic: 'Algo deu errado. Tente de novo.'
     },
     es: {
+      p_portal: 'Portal de Socios', p_loginTitle: 'Portal de socios', p_loginLead: 'Para contadores, bookkeepers y administradores de propiedades invitados por clientes de Endeavor.',
+      p_overviewLead: 'Documentos y plazos que {c} compartió con usted.', p_clients: 'Cliente', p_noAccess: 'Sin acceso de socio', p_noAccessText: 'Esta cuenta no está vinculada a ningún cliente como socio. Si un cliente lo invitó, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
+      useClientPortal: 'Esta es una cuenta de cliente. Abra el Portal del Cliente.', usePartnerPortal: 'Esta cuenta solo tiene acceso de socio. Abra el Portal de Socios.', openClient: 'Abrir Portal del Cliente', openPartner: 'Abrir Portal de Socios',
+      access: 'Acceso', permCompanies: 'Empresas', permAll: 'Todas las empresas (incluso nuevas)', permDocs: 'Documentos que puede ver', permOther: 'Otros permisos',
+      permDeadlines: 'Puede ver los plazos fiscales', permUpload: 'Puede enviar documentos', permDocsHint: 'Siempre ve los documentos que él mismo envió.', editPerms: 'Permisos', savePerms: 'Guardar permisos', permsSaved: 'Permisos actualizados.',
+      full: 'Acceso completo', docsShort: 'Docs', noDocs: 'Sin documentos', deadlinesShort: 'Plazos', uploadShort: 'Envío', noCompanies: 'Ninguna empresa', myAccess: 'Mi acceso', sharedBy: 'Compartido por', yourRole: 'Su perfil',
       enrollS1: 'Instale en su celular la app gratuita <strong>Google Authenticator</strong> (<a href="{ios}" target="_blank" rel="noopener">iPhone</a> · <a href="{and}" target="_blank" rel="noopener">Android</a>). El ícono es un asterisco de colores.', enrollS2: 'En la app, toque <strong>+</strong> y elija <strong>Escanear un código QR</strong>. Apunte la cámara al código de abajo.', enrollS3: 'Escriba el código de 6 dígitos que muestra la app (cambia cada 30 segundos) y haga clic en <strong>Activar y continuar</strong>.', mfaHint: 'Abra Google Authenticator y use el código que aparece en <strong>Endeavor Business Solutions</strong>. ¿Perdió su celular? Escriba a support@endeavorbiz.com y Endeavor restablecerá su verificación.',
       loading: 'Cargando…', signOut: 'Salir', menu: 'Menú', closeMenu: 'Cerrar menú',
       portal: 'Portal del Cliente', loginTitle: 'Portal del cliente', loginLead: 'Acceda a sus empresas, documentos y plazos.', email: 'Correo', password: 'Contraseña',
@@ -133,7 +151,10 @@
   };
   var L = EP.lang;
   EP.init({ en: {}, pt: {}, es: {} });
-  function t(k, vars) { var s = (D[L] && D[L][k] != null) ? D[L][k] : (D.en[k] != null ? D.en[k] : k); if (vars) Object.keys(vars).forEach(function (v) { s = s.replace('{' + v + '}', vars[v]); }); return s; }
+  var PARTNER = window.PORTAL_MODE === 'partner';
+  var PK = { portal: 'p_portal', loginTitle: 'p_loginTitle', loginLead: 'p_loginLead', noAccess: 'p_noAccess', noAccessText: 'p_noAccessText' };
+  function t(k, vars) {
+    if (PARTNER && PK[k]) k = PK[k]; var s = (D[L] && D[L][k] != null) ? D[L][k] : (D.en[k] != null ? D.en[k] : k); if (vars) Object.keys(vars).forEach(function (v) { s = s.replace('{' + v + '}', vars[v]); }); return s; }
   document.getElementById('btn-signout').textContent = t('signOut');
   document.title = t('portal') + ' | Endeavor Business Solutions';
 
@@ -192,7 +213,12 @@
     var aal = (await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data;
     if (!aal || aal.currentLevel !== 'aal2') return renderMfa();
     var mem = await sb.rpc('claim_invitations');
-    S.memberships = mem.data || [];
+    var allMem = mem.data || [];
+    S.memberships = allMem.filter(function (x) { return PARTNER ? x.role === 'collaborator' : x.role === 'owner'; });
+    if (!S.memberships.length && allMem.length) {
+      var other = PARTNER ? 'client.html' : 'partner.html';
+      return authShell('<h1 class="portal-h1">' + t('noAccess') + '</h1><p>' + t(PARTNER ? 'useClientPortal' : 'usePartnerPortal') + '</p><a class="btn btn--navy" href="' + other + '?lang=' + L + '">' + t(PARTNER ? 'openClient' : 'openPartner') + '</a>');
+    }
     if (!S.memberships.length) return authShell('<h1 class="portal-h1">' + t('noAccess') + '</h1><p>' + t('noAccessText') + '</p><button class="btn btn--navy" id="na-out" type="button">' + t('signOut') + '</button>'), ($('#na-out').onclick = function () { $('#btn-signout').click(); });
     var saved = null; try { saved = localStorage.getItem('endeavor-client-id'); } catch (e) { /* ignore */ }
     var m = S.memberships.find(function (x) { return x.client_id === saved; }) || S.memberships[0];
@@ -203,7 +229,9 @@
     S.client = (await q(sb.from('clients').select('*').eq('id', id).single()));
     var me = (await q(sb.from('client_users').select('*').eq('client_id', id).eq('user_id', S.user.id).eq('status', 'active')))[0] || {};
     S.role = me.role; S.me = me;
-    S.perms = { view: me.role === 'owner' || !!me.can_view, upload: me.role === 'owner' || !!me.can_upload, owner: me.role === 'owner' };
+    var own = me.role === 'owner', cats = own ? ['formation', 'tax_return', 'report', 'compliance', 'other'] : (me.perm_doc_categories || []);
+    S.perms = { owner: own, cats: cats, view: own || cats.length > 0, reports: own || cats.indexOf('report') > -1,
+      deadlines: own || me.perm_deadlines !== false, upload: own || !!me.can_upload };
     S.companies = await q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
     try { localStorage.setItem('endeavor-client-id', id); } catch (e) { /* ignore */ }
   }
@@ -270,8 +298,8 @@
   function navItems() {
     var n = [['overview', 'nav_overview', 'i-grid'], ['companies', 'nav_companies', 'i-brief']];
     if (S.perms.view) n.push(['documents', 'nav_documents', 'i-file']);
-    n.push(['compliance', 'nav_compliance', 'i-cal']);
-    if (S.perms.view) n.push(['reports', 'nav_reports', 'i-chart']);
+    if (S.perms.deadlines) n.push(['compliance', 'nav_compliance', 'i-cal']);
+    if (S.perms.reports) n.push(['reports', 'nav_reports', 'i-chart']);
     if (S.perms.upload) n.push(['upload', 'nav_upload', 'i-up']);
     if (S.perms.owner) n.push(['collaborators', 'nav_collab', 'i-users']);
     n.push(['settings', 'nav_settings', 'i-gear']);
@@ -282,7 +310,7 @@
     var multi = S.memberships.length > 1;
     app.innerHTML = '<div class="console" id="console"><nav class="console__nav" id="console-nav" aria-label="' + t('portal') + '">' +
       '<div class="console__nav-title">' + t('portal') + '</div>' +
-      (multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem">' +
+      (multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem;background:#fff;color:#0b1f3a;font:inherit;font-weight:600">' +
         S.memberships.map(function (m) { return '<option value="' + m.client_id + '"' + (m.client_id === S.client.id ? ' selected' : '') + '>' + esc(m.client_name) + '</option>'; }).join('') + '</select></div>'
         : '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.client.name) + '</div>') +
       '<ul>' + navItems().map(function (n) { return '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + t(n[1]) + '</a></li>'; }).join('') + '</ul>' +
@@ -360,24 +388,25 @@
   async function vOverview(view) {
     var cid = S.client.id;
     var res = await Promise.all([
-      q(sb.from('compliance_items').select('*').eq('client_id', cid).in('status', ['pending', 'in_progress']).order('due_date').limit(6)),
+      S.perms.deadlines ? q(sb.from('compliance_items').select('*').eq('client_id', cid).in('status', ['pending', 'in_progress']).order('due_date').limit(6)) : Promise.resolve([]),
       S.perms.view ? q(sb.from('company_documents').select('*').eq('client_id', cid).order('created_at', { ascending: false }).limit(6)) : Promise.resolve([]),
       S.perms.view ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid) : Promise.resolve({ count: 0 }),
-      S.perms.view ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid).eq('category', 'report') : Promise.resolve({ count: 0 })
+      S.perms.reports ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid).eq('category', 'report') : Promise.resolve({ count: 0 })
     ]);
     var next = res[0][0];
     var first = (S.me && S.me.name ? S.me.name : S.client.name).split(' ')[0];
-    view.innerHTML = head(t('hello', { n: first }), t('overviewLead')) +
-      '<div class="dash"><div><div class="kpis">' +
-        kpi(t('k_companies'), S.companies.length) + kpi(t('k_next'), next ? fmtDate(next.due_date) : t('none'), true) + kpi(t('k_docs'), res[2].count || 0) + kpi(t('k_reports'), res[3].count || 0) + '</div>' +
-        '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('nextDeadlines') + '</h2><a href="#/compliance">' + t('seeAll') + '</a></div>' +
-          (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>' +
+    var kp = kpi(t('k_companies'), S.companies.length) + (S.perms.deadlines ? kpi(t('k_next'), next ? fmtDate(next.due_date) : t('none'), true) : '') +
+      (S.perms.view ? kpi(t('k_docs'), res[2].count || 0) : '') + (S.perms.reports ? kpi(t('k_reports'), res[3].count || 0) : '');
+    view.innerHTML = head(t('hello', { n: first }), PARTNER ? t('p_overviewLead', { c: S.client.name }) : t('overviewLead')) +
+      '<div class="dash"><div><div class="kpis">' + kp + '</div>' +
+        (!S.perms.deadlines ? '' : '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('nextDeadlines') + '</h2><a href="#/compliance">' + t('seeAll') + '</a></div>' +
+          (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>') +
         (S.perms.view ? '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('recentDocs') + '</h2><a href="#/documents">' + t('seeAll') + '</a></div>' + docItems(res[1], true) + '</section>' : '') +
       '</div><aside class="links-panel portal-card"><h2 class="portal-h2">' + t('quick') + '</h2><ul>' +
         (S.perms.upload ? '<li><a href="#/upload"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg>' + t('qUpload') + '</a></li>' : '') +
         (S.perms.owner ? '<li><a href="#/collaborators?invite=1"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>' + t('qInvite') + '</a></li><li><a href="#/reports"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>' + t('qQbo') + '</a></li>' : '') +
         '<li><a href="#/companies"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>' + t('nav_companies') + '</a></li>' +
-      '</ul><p class="portal-muted" style="font-size:.8rem;margin-top:1rem">' + t('privacyNote') + '</p></aside></div>';
+      '</ul>' + (PARTNER ? '<h3 class="portal-h2" style="margin-top:1.25rem;font-size:1rem">' + t('myAccess') + '</h3><p class="perm-sum">' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</p>' : '') + '<p class="portal-muted" style="font-size:.8rem;margin-top:1rem">' + t('privacyNote') + '</p></aside></div>';
     wireDocs(view, res[1]);
   }
   function kpi(l, v, small) { return '<div class="kpi"><div class="kpi__label">' + esc(l) + '</div><div class="kpi__value"' + (small ? ' style="font-size:1.35rem;padding-top:.35rem"' : '') + '>' + esc(v) + '</div></div>'; }
@@ -391,11 +420,11 @@
     }).join('') + '</div>' : '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong>' + t('noCompaniesText') + '</div>');
   }
   async function companyDetail(view, co) {
-    var tab = param('tab') || (S.perms.view ? 'docs' : 'deadlines');
     var tabs = [];
     if (S.perms.view) tabs.push(['docs', t('tab_docs')]);
-    tabs.push(['deadlines', t('tab_deadlines')]);
-    if (S.perms.view) tabs.push(['finance', t('tab_finance')]);
+    if (S.perms.deadlines) tabs.push(['deadlines', t('tab_deadlines')]);
+    if (S.perms.reports) tabs.push(['finance', t('tab_finance')]);
+    var tab = param('tab') || (tabs[0] ? tabs[0][0] : 'none');
     var kv = [[t('docNumber'), co.document_number], [t('ein'), co.ein], [t('agent'), co.registered_agent], [t('fye'), co.fiscal_year_end], [t('address'), co.address]].filter(function (x) { return x[1]; });
     view.innerHTML = '<p class="crumbs"><a href="#/companies">' + t('back') + '</a> /</p>' + head(co.legal_name, (co.state || '') + (co.formation_date ? ' · ' + t('formed', { d: fmtDate(co.formation_date) }) : '') + ' · ' + t('st_' + co.status)) +
       (kv.length ? '<section class="portal-card"><dl class="kv">' + kv.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></section>' : '') +
@@ -406,12 +435,12 @@
       var groups = ['formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].filter(function (c) { return docs.some(function (d) { return d.category === c; }); });
       body.innerHTML = groups.length ? groups.map(function (g) { return '<section class="portal-card"><h2 class="portal-h2">' + esc(t('cat_' + g)) + '</h2>' + docItems(docs.filter(function (d) { return d.category === g; }), false) + '</section>'; }).join('') : '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
       wireDocs(body, docs);
-    } else if (tab === 'finance' && S.perms.view) {
+    } else if (tab === 'finance' && S.perms.reports) {
       await reportsFor(body, [co]);
-    } else {
+    } else if (tab === 'deadlines' && S.perms.deadlines) {
       var items = await q(sb.from('compliance_items').select('*').eq('company_id', co.id).order('due_date'));
       body.innerHTML = '<section class="portal-card">' + (items.length ? items.map(function (i) { return deadlineRow(i, co); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>';
-    }
+    } else body.innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
   }
 
   async function vDocuments(view) {
@@ -419,7 +448,7 @@
     view.innerHTML = head(t('nav_documents'), t('privacyNote')) +
       '<div class="toolbar"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
       '<select id="d-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
-      '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + ['formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select></div>' +
+      '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select></div>' +
       '<section class="portal-card" id="d-list"></section>';
     function draw() {
       var s = $('#d-q').value.trim().toLowerCase(), co = $('#d-co').value, cat = $('#d-cat').value;
@@ -551,33 +580,50 @@
     view.innerHTML = head(t('nav_collab'), t('collabLead'), '<button class="btn btn--navy btn--xs" type="button" id="inv">' + t('invite') + '</button>') +
       '<section class="portal-card">' + (collabs.length ? '<ul class="doclist">' + collabs.map(function (u) {
         return '<li><span class="ficon" aria-hidden="true">' + esc((u.name || u.email).slice(0, 2).toUpperCase()) + '</span><div><div class="dname">' + esc(u.name || u.email) + ' · ' + esc(t('c_' + (u.collab_type || 'other'))) + '</div>' +
-          '<div class="dmeta">' + esc(u.email) + ' · ' + [u.can_view ? t('viewOnly') : '', u.can_upload ? t('uploadOnly') : ''].filter(Boolean).join(' + ') + ' · <span class="pill' + (u.status === 'active' ? ' pill--done' : u.status === 'revoked' ? ' pill--overdue' : ' pill--soon') + '">' + t('s_' + u.status) + '</span></div></div>' +
-          '<div class="portal-btn-row">' + (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">' + t('resend') + '</button>' : '') + (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-rev="' + u.id + '">' + t('revoke') + '</button>' : '') + '</div></li>';
+          '<div class="dmeta">' + esc(u.email) + ' · <span class="pill' + (u.status === 'active' ? ' pill--done' : u.status === 'revoked' ? ' pill--overdue' : ' pill--soon') + '">' + t('s_' + u.status) + '</span></div><div class="perm-sum">' + esc(EPerms.summary(u, permLabels(), S.companies)) + '</div></div>' +
+          '<div class="portal-btn-row">' + (u.status !== 'revoked' ? '<button class="btn btn--ghost btn--xs" data-perm="' + u.id + '">' + t('editPerms') + '</button>' : '') + (u.status === 'invited' ? '<button class="btn btn--ghost btn--xs" data-resend="' + u.id + '">' + t('resend') + '</button>' : '') + (u.status !== 'revoked' ? '<button class="btn btn--danger btn--xs" data-rev="' + u.id + '">' + t('revoke') + '</button>' : '') + '</div></li>';
       }).join('') + '</ul>' : '<div class="empty-state"><strong>' + t('noCollab') + '</strong>' + t('collabLead') + '</div>') + '</section>';
     var find = function (id) { return users.find(function (u) { return u.id === id; }); };
     $$('[data-rev]', view).forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.rev); if (!confirm(t('confirmRevoke', { e: u.email }))) return; await sb.from('client_users').update({ status: 'revoked' }).eq('id', u.id); route(); }; });
     $$('[data-resend]', view).forEach(function (b) { b.onclick = async function () { var u = find(b.dataset.resend); await sendInvite(u.email, u.name || u.email); alert(t('inviteSent', { e: u.email })); }; });
-    $('#inv').onclick = inviteForm;
-    if (param('invite')) inviteForm();
+    $$('[data-perm]', view).forEach(function (b) { b.onclick = function () { inviteForm(find(b.dataset.perm)); }; });
+    $('#inv').onclick = function () { inviteForm(null); };
+    if (param('invite')) inviteForm(null);
   }
   async function sendInvite(email, name) {
-    var link = siteUrl('client.html') + '?lang=' + L;
-    var txt = window.EndeavorInvite.text(L, { name: name, email: email, link: link, invitedBy: S.client.name });
+    var link = siteUrl('partner.html') + '?lang=' + L;
+    var txt = window.EndeavorInvite.text(L, { name: name, email: email, link: link, invitedBy: S.client.name, partner: true });
     try { await fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ _subject: 'Collaborator invited: ' + name + ' (' + S.client.name + ')', _template: 'table', _captcha: 'false', name: name, email: email, client: S.client.name, invited_by: S.user.email, _autoresponse: txt }) }); } catch (e) { /* best effort */ }
   }
-  function inviteForm() {
-    openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + t('invite') + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div>' +
-      '<form class="portal-form" id="iv-form" novalidate><div class="field"><label for="iv-name">' + t('name') + '</label><input id="iv-name" type="text" required></div><div class="field"><label for="iv-email">' + t('email') + '</label><input id="iv-email" type="email" required></div>' +
-      '<div class="field"><label for="iv-type">' + t('type') + '</label><select id="iv-type">' + ['accountant', 'bookkeeping', 'property_management', 'other'].map(function (k) { return '<option value="' + k + '">' + t('c_' + k) + '</option>'; }).join('') + '</select></div>' +
-      '<fieldset class="field" style="border:0;padding:0;margin:0"><legend style="font-weight:600;margin-bottom:.4rem">' + t('perms') + '</legend><div class="check-row"><input type="checkbox" id="iv-up" checked><label for="iv-up">' + t('canUpload') + '</label></div><div class="check-row"><input type="checkbox" id="iv-view"><label for="iv-view">' + t('canView') + '</label></div></fieldset>' +
-      '<div class="portal-alert" id="iv-msg" role="alert"></div><button class="btn btn--navy" type="submit">' + t('invite') + '</button></form>');
-    $('#iv-form').onsubmit = async function (e) {
+  function permLabels() {
+    return { access: t('access'), companies: t('permCompanies'), allCompanies: t('permAll'), docs: t('permDocs'), other: t('permOther'),
+      cat_formation: t('cat_formation'), cat_tax_return: t('cat_tax_return'), cat_report: t('cat_report'), cat_compliance: t('cat_compliance'), cat_other: t('cat_other'),
+      deadlines: t('permDeadlines'), upload: t('permUpload'), docsHint: t('permDocsHint'), full: t('full'), docsShort: t('docsShort'), noDocs: t('noDocs'),
+      deadlinesShort: t('deadlinesShort'), uploadShort: t('uploadShort'), noCompanies: t('noCompanies') };
+  }
+  function inviteForm(u) {
+    var edit = !!u;
+    openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (edit ? t('editPerms') + ': ' + esc(u.name || u.email) : t('invite')) + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div>' +
+      '<form class="portal-form" id="iv-form" novalidate>' +
+      (edit ? '' : '<div class="field"><label for="iv-name">' + t('name') + '</label><input id="iv-name" type="text" required></div><div class="field"><label for="iv-email">' + t('email') + '</label><input id="iv-email" type="email" required></div>') +
+      '<div class="field"><label for="iv-type">' + t('type') + '</label><select id="iv-type">' + ['accountant', 'bookkeeping', 'property_management', 'other'].map(function (k) { return '<option value="' + k + '"' + (u && u.collab_type === k ? ' selected' : '') + '>' + t('c_' + k) + '</option>'; }).join('') + '</select></div>' +
+      EPerms.html('iv', permLabels(), S.companies, u) +
+      '<div class="portal-alert" id="iv-msg" role="alert"></div><button class="btn btn--navy" type="submit">' + (edit ? t('savePerms') : t('invite')) + '</button></form>');
+    var form = $('#iv-form');
+    EPerms.wire(form, 'iv', $('#iv-type'), !edit);
+    form.onsubmit = async function (e) {
       e.preventDefault();
-      var name = $('#iv-name').value.trim(), email = $('#iv-email').value.trim().toLowerCase();
-      if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return msg($('#iv-msg'), t('fillNameEmail'), 'error');
-      var r = await sb.from('client_users').insert({ client_id: S.client.id, email: email, name: name, role: 'collaborator', collab_type: $('#iv-type').value, can_view: $('#iv-view').checked, can_upload: $('#iv-up').checked });
+      var perms = EPerms.read(form, 'iv');
+      if (perms.perm_companies && !perms.perm_companies.length) return msg($('#iv-msg'), t('noCompanies'), 'error');
+      var row = Object.assign({ collab_type: $('#iv-type').value }, perms), r;
+      if (edit) r = await sb.from('client_users').update(row).eq('id', u.id);
+      else {
+        var name = $('#iv-name').value.trim(), email = $('#iv-email').value.trim().toLowerCase();
+        if (name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return msg($('#iv-msg'), t('fillNameEmail'), 'error');
+        r = await sb.from('client_users').insert(Object.assign({ client_id: S.client.id, email: email, name: name, role: 'collaborator' }, row));
+        if (!r.error) await sendInvite(email, name);
+      }
       if (r.error) return msg($('#iv-msg'), /unique|duplicate/i.test(r.error.message) ? t('inviteDup') : errText(r.error), 'error');
-      await sendInvite(email, name);
       closeOverlay(); ERoute.set('#/collaborators', true); route();
     };
   }
@@ -586,7 +632,7 @@
     var u = (await sb.auth.getUser()).data.user;
     view.innerHTML = head(t('nav_settings'), t('settingsLead')) +
       '<section class="portal-card"><h2 class="portal-h2">' + t('account') + '</h2><dl class="kv"><dt>' + t('email') + '</dt><dd>' + esc(u.email) + '</dd><dt>' + t('lastLogin') + '</dt><dd>' + esc(fmtDT(u.last_sign_in_at)) + '</dd>' +
-      '<dt>' + t('status') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : t('c_' + (S.me.collab_type || 'other'))) + '</dd><dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
+      '<dt>' + t('yourRole') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : t('c_' + (S.me.collab_type || 'other'))) + '</dd>' + (PARTNER ? '<dt>' + t('sharedBy') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('myAccess') + '</dt><dd>' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</dd>' : '') + '<dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
       '<section class="portal-card"><h2 class="portal-h2">' + t('changePass') + '</h2><form class="portal-form" id="pw"><div class="field"><label for="pw-n">' + t('newPass') + '</label><input id="pw-n" type="password" autocomplete="new-password" minlength="12" required></div>' +
       '<div class="portal-alert" id="pw-m" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('savePass') + '</button></form></section>';
     $('#pw').onsubmit = async function (e) {
