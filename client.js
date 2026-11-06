@@ -369,10 +369,12 @@
     for (var i = 0; i < (f.all || []).length; i++) if (f.all[i].status !== 'verified') await sb.auth.mfa.unenroll({ factorId: f.all[i].id });
     var en = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Endeavor Business Solutions', friendlyName: 'Endeavor Portal ' + new Date().toISOString().slice(0, 10) });
     if (en.error) return authShell('<div class="portal-alert portal-alert--error">' + esc(errText(en.error)) + '</div>');
-    authShell('<h1 class="portal-h1">' + t('enrollTitle') + '</h1><p class="portal-muted">' + t('enrollLead').split('. ')[0] + '.</p>' +
-      '<ol class="mfa-steps"><li>' + t('enrollS1').replace('{ios}', EndeavorInvite.IOS).replace('{and}', EndeavorInvite.AND) + '</li><li>' + t('enrollS2') + '</li><li>' + t('enrollS3') + '</li></ol><div class="auth__qr"><img alt="QR code" src="' + esc(en.data.totp.qr_code) + '"></div>' +
-      '<p class="portal-muted">' + t('noCamera') + ' <span class="mono">' + esc(en.data.totp.secret) + '</span></p><form class="portal-form" id="f-en"><div class="field"><label for="en-code">' + t('code') + '</label><input id="en-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>' +
-      '<div class="portal-alert" id="en-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">' + t('activate') + '</button></form>');
+    authShell('<div class="enroll"><div class="enroll__info"><h1 class="portal-h1">' + t('enrollTitle') + '</h1><p class="portal-muted">' + t('enrollLead').split('. ')[0] + '.</p>' +
+      '<ol class="mfa-steps"><li>' + t('enrollS1').replace('{ios}', EndeavorInvite.IOS).replace('{and}', EndeavorInvite.AND) + '</li><li>' + t('enrollS2') + '</li><li>' + t('enrollS3') + '</li></ol>' +
+      '<p class="portal-muted enroll__key">' + t('noCamera') + ' <span class="mono">' + esc(en.data.totp.secret) + '</span></p></div>' +
+      '<div class="enroll__act"><div class="auth__qr"><img alt="QR code" src="' + esc(en.data.totp.qr_code) + '"></div><form class="portal-form" id="f-en"><div class="field"><label for="en-code">' + t('code') + '</label><input id="en-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>' +
+      '<div class="portal-alert" id="en-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">' + t('activate') + '</button></form></div></div>');
+    $('.auth').classList.add('auth--wide');
     $('#f-en').onsubmit = async function (e) { e.preventDefault(); var r = await sb.auth.mfa.challengeAndVerify({ factorId: en.data.id, code: $('#en-code').value.trim() }); if (r.error) return msg($('#en-msg'), errText(r.error), 'error'); boot(); };
   }
 

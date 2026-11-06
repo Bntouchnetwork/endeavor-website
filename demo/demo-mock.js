@@ -460,9 +460,9 @@
       if (window.ENDEAVOR_COMBINED) { try { sessionStorage.removeItem('endeavor-combined-open'); } catch (e) { /* ignore */ } location.reload(); return new Promise(function () {}); } AUTH.listeners.forEach(function (cb) { try { cb('SIGNED_OUT'); } catch (e) { /* ignore */ } }); return ok({}); },
     mfa: {
       getAuthenticatorAssuranceLevel: function () { return ok({ currentLevel: AUTH.aal, nextLevel: 'aal2' }); },
-      listFactors: function () { return ok({ totp: [{ id: 'f1', status: 'verified', factor_type: 'totp' }], all: [{ id: 'f1', status: 'verified' }] }); },
+      listFactors: function () { return /[?&]enroll=1/.test(location.search) ? ok({ totp: [], all: [] }) : ok({ totp: [{ id: 'f1', status: 'verified', factor_type: 'totp' }], all: [{ id: 'f1', status: 'verified' }] }); },
       challengeAndVerify: function (o) { if (String(o.code) === '123456') { AUTH.aal = 'aal2'; persist(); return ok({}); } return Promise.resolve({ data: null, error: { message: 'Invalid TOTP code entered' } }); },
-      enroll: function () { return ok({ id: 'f1', totp: { qr_code: '', secret: 'DEMO' } }); }, unenroll: function () { return ok({}); }
+      enroll: function () { return ok({ id: 'f1', totp: { qr_code: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 21 21"><rect width="21" height="21" fill="#fff"/><path d="M1 1h7v7H1zM13 1h7v7h-7zM1 13h7v7H1zM10 3h2v2h-2zM10 9h3v3h-3zM15 12h3v2h-3zM12 16h2v3h-2zM17 16h3v3h-3z" fill="#0b1f3a"/></svg>'), secret: 'DEMO7XQ2LMNP4RSTUVWX' } }); }, unenroll: function () { return ok({}); }
     }
   };
 

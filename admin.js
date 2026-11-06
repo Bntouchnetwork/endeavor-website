@@ -188,15 +188,16 @@
     for (var i = 0; i < (f.all || []).length; i++) { if (f.all[i].status !== 'verified') await sb.auth.mfa.unenroll({ factorId: f.all[i].id }); }
     var en = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Endeavor Business Solutions', friendlyName: 'Endeavor Console ' + new Date().toISOString().slice(0, 10) });
     if (en.error) { authShell('<div class="portal-alert portal-alert--error">' + esc(errText(en.error)) + '</div>'); return; }
-    authShell('<h1 class="portal-h1">Ative a verificação em duas etapas</h1>' +
+    authShell('<div class="enroll"><div class="enroll__info"><h1 class="portal-h1">Ative a verificação em duas etapas</h1>' +
       '<p class="portal-muted">Obrigatória para acessar o console.</p>' +
       '<ol class="mfa-steps"><li>Instale no celular o app gratuito <strong>Google Authenticator</strong> (<a href="' + EndeavorInvite.IOS + '" target="_blank" rel="noopener">iPhone</a> · <a href="' + EndeavorInvite.AND + '" target="_blank" rel="noopener">Android</a>). O ícone é um asterisco colorido.</li>' +
       '<li>No app, toque no <strong>+</strong> e escolha <strong>Ler código QR</strong>. Aponte a câmera para o código abaixo.</li>' +
       '<li>Digite o código de 6 dígitos que aparece no app (muda a cada 30 segundos) e clique em <strong>Ativar e entrar</strong>.</li></ol>' +
-      '<div class="auth__qr"><img alt="QR code para o aplicativo autenticador" src="' + esc(en.data.totp.qr_code) + '"></div>' +
-      '<p class="portal-muted">Sem câmera? Digite esta chave no app: <span class="mono">' + esc(en.data.totp.secret) + '</span></p>' +
+      '<p class="portal-muted enroll__key">Sem câmera? Digite esta chave no app: <span class="mono">' + esc(en.data.totp.secret) + '</span></p></div>' +
+      '<div class="enroll__act"><div class="auth__qr"><img alt="QR code para o aplicativo autenticador" src="' + esc(en.data.totp.qr_code) + '"></div>' +
       '<form class="portal-form" id="f-enroll"><div class="field"><label for="en-code">Código de 6 dígitos</label><input id="en-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>' +
-      '<div class="portal-alert" id="en-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Ativar e entrar</button></form>');
+      '<div class="portal-alert" id="en-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Ativar e entrar</button></form></div></div>');
+    $('.auth').classList.add('auth--wide');
     $('#f-enroll').addEventListener('submit', async function (e) {
       e.preventDefault();
       var r = await sb.auth.mfa.challengeAndVerify({ factorId: en.data.id, code: $('#en-code').value.trim() });
