@@ -28,7 +28,7 @@
       loginHelp: 'First access? Use the link in the invitation email to create your password.', forgotTitle: 'Reset password', forgotLead: 'Enter your email. We will send a link to create a new password.', sendLink: 'Send link', backLogin: 'Back to sign in', inviteTitle: 'Create your password', inviteLead: 'Welcome to the Endeavor portal. Create your password to continue; next you will activate the code on your phone.', resetTitle: 'Create a new password', resetLead: 'Choose a new password for your account.', confirmPass: 'Confirm the password', passMismatch: 'The passwords do not match.', linkExpired: 'This link has expired or was already used. Enter your email below to receive a new one.', passSaved: 'Password saved.', passRules: 'At least 12 characters. Use a phrase or a mix of words and numbers.', showPass: 'Show password',
       badLogin: 'Incorrect email or password.', notConfirmed: 'Confirm your email using the link we sent, then sign in.', noInvite: 'This email does not have an invitation. Please contact Endeavor at support@endeavorbiz.com.',
       passShort: 'Use at least 12 characters in the Password field.', created: 'Account created. Open the confirmation email sent to {e}, click the link and then sign in here.',
-      resetSent: 'If {e} is registered, you will receive a link to create a new password in a few minutes. Check the spelling of the address and your spam folder. You can ask again in 60 seconds.', mfaTitle: 'Two-step verification', mfaLead: 'Enter the 6-digit code from your authenticator app.',
+      resetSent: 'If {e} is registered, you will receive a link to create a new password in a few minutes. Check the spelling of the address and your spam folder. You can ask again in 60 seconds.', passMfa: 'Your account uses two-step verification. Enter the 6-digit code shown in Google Authenticator under "Endeavor Business Solutions".', passMfaNeed: 'Enter the authenticator code to confirm the new password.', mfaTitle: 'Two-step verification', mfaLead: 'Enter the 6-digit code from your authenticator app.',
       code: 'Code', verify: 'Verify', badCode: 'Invalid code. Check your phone time and try again.', enrollTitle: 'Turn on two-step verification',
       enrollLead: 'Required to protect your tax and company documents. Scan the QR code with Google Authenticator, Microsoft Authenticator or 1Password and enter the code.',
       noCamera: 'No camera? Enter this key in the app:', activate: 'Activate and continue', noAccess: 'No active access', noAccessText: 'Your account is not linked to an active client portal. If you received an invitation, confirm you used the same email. Questions: support@endeavorbiz.com.',
@@ -79,7 +79,7 @@
       loginHelp: 'Primeiro acesso? Use o link do e-mail de convite para criar a sua senha.', forgotTitle: 'Redefinir senha', forgotLead: 'Digite o seu e-mail. Vamos enviar um link para você criar uma nova senha.', sendLink: 'Enviar link', backLogin: 'Voltar ao login', inviteTitle: 'Crie a sua senha', inviteLead: 'Bem-vindo ao portal da Endeavor. Crie a sua senha para continuar; em seguida você ativa o código do celular.', resetTitle: 'Crie uma nova senha', resetLead: 'Escolha uma nova senha para a sua conta.', confirmPass: 'Confirme a senha', passMismatch: 'As senhas não são iguais.', linkExpired: 'Este link expirou ou já foi usado. Digite o seu e-mail abaixo para receber um novo.', passSaved: 'Senha salva.', passRules: 'Pelo menos 12 caracteres. Use uma frase ou uma mistura de palavras e números.', showPass: 'Mostrar senha',
       badLogin: 'E-mail ou senha incorretos.', notConfirmed: 'Confirme o seu e-mail pelo link que enviamos e depois entre.', noInvite: 'Este e-mail não tem convite. Fale com a Endeavor pelo support@endeavorbiz.com.',
       passShort: 'Use pelo menos 12 caracteres no campo Senha.', created: 'Conta criada. Abra o e-mail de confirmação enviado para {e}, clique no link e depois entre aqui.',
-      resetSent: 'Se {e} estiver cadastrado, você vai receber em alguns minutos um link para criar uma nova senha. Confira se o endereço está certo e olhe também o spam. Você pode pedir de novo em 60 segundos.', mfaTitle: 'Verificação em duas etapas', mfaLead: 'Digite o código de 6 dígitos do seu aplicativo autenticador.',
+      resetSent: 'Se {e} estiver cadastrado, você vai receber em alguns minutos um link para criar uma nova senha. Confira se o endereço está certo e olhe também o spam. Você pode pedir de novo em 60 segundos.', passMfa: 'Sua conta usa verificação em duas etapas. Digite o código de 6 dígitos que aparece no Google Authenticator em "Endeavor Business Solutions".', passMfaNeed: 'Digite o código do autenticador para confirmar a nova senha.', mfaTitle: 'Verificação em duas etapas', mfaLead: 'Digite o código de 6 dígitos do seu aplicativo autenticador.',
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Confira o horário do celular e tente de novo.', enrollTitle: 'Ative a verificação em duas etapas',
       enrollLead: 'Obrigatória para proteger seus documentos fiscais e da empresa. Escaneie o QR code com Google Authenticator, Microsoft Authenticator ou 1Password e digite o código.',
       noCamera: 'Sem câmera? Digite esta chave no app:', activate: 'Ativar e continuar', noAccess: 'Sem acesso ativo', noAccessText: 'Sua conta não está ligada a um portal de cliente ativo. Se você recebeu um convite, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
@@ -130,7 +130,7 @@
       loginHelp: '¿Primer acceso? Use el enlace del correo de invitación para crear su contraseña.', forgotTitle: 'Restablecer contraseña', forgotLead: 'Ingrese su correo. Le enviaremos un enlace para crear una nueva contraseña.', sendLink: 'Enviar enlace', backLogin: 'Volver al ingreso', inviteTitle: 'Cree su contraseña', inviteLead: 'Bienvenido al portal de Endeavor. Cree su contraseña para continuar; luego activará el código del celular.', resetTitle: 'Cree una nueva contraseña', resetLead: 'Elija una nueva contraseña para su cuenta.', confirmPass: 'Confirme la contraseña', passMismatch: 'Las contraseñas no coinciden.', linkExpired: 'Este enlace venció o ya fue usado. Ingrese su correo abajo para recibir uno nuevo.', passSaved: 'Contraseña guardada.', passRules: 'Al menos 12 caracteres. Use una frase o una mezcla de palabras y números.', showPass: 'Mostrar contraseña',
       badLogin: 'Correo o contraseña incorrectos.', notConfirmed: 'Confirme su correo con el enlace que enviamos y luego ingrese.', noInvite: 'Este correo no tiene invitación. Contacte a Endeavor en support@endeavorbiz.com.',
       passShort: 'Use al menos 12 caracteres en el campo Contraseña.', created: 'Cuenta creada. Abra el correo de confirmación enviado a {e}, haga clic en el enlace y luego ingrese aquí.',
-      resetSent: 'Si {e} está registrado, recibirá en unos minutos un enlace para crear una nueva contraseña. Revise que la dirección esté bien escrita y la carpeta de spam. Puede pedirlo de nuevo en 60 segundos.', mfaTitle: 'Verificación en dos pasos', mfaLead: 'Ingrese el código de 6 dígitos de su app autenticadora.',
+      resetSent: 'Si {e} está registrado, recibirá en unos minutos un enlace para crear una nueva contraseña. Revise que la dirección esté bien escrita y la carpeta de spam. Puede pedirlo de nuevo en 60 segundos.', passMfa: 'Su cuenta usa verificación en dos pasos. Escriba el código de 6 dígitos que aparece en Google Authenticator en "Endeavor Business Solutions".', passMfaNeed: 'Escriba el código del autenticador para confirmar la nueva contraseña.', mfaTitle: 'Verificación en dos pasos', mfaLead: 'Ingrese el código de 6 dígitos de su app autenticadora.',
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Revise la hora del celular e intente de nuevo.', enrollTitle: 'Active la verificación en dos pasos',
       enrollLead: 'Obligatoria para proteger sus documentos fiscales y de la empresa. Escanee el código QR con Google Authenticator, Microsoft Authenticator o 1Password e ingrese el código.',
       noCamera: '¿Sin cámara? Ingrese esta clave en la app:', activate: 'Activar y continuar', noAccess: 'Sin acceso activo', noAccessText: 'Su cuenta no está vinculada a un portal de cliente activo. Si recibió una invitación, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
@@ -325,18 +325,33 @@
     authShell('<h1 class="portal-h1">' + t(mode === 'invite' ? 'inviteTitle' : 'resetTitle') + '</h1><p class="portal-muted">' + t(mode === 'invite' ? 'inviteLead' : 'resetLead') + '</p>' +
       '<form class="portal-form" id="f-np" novalidate>' + pwField('np', t('newPass'), 'new-password') + pwField('np2', t('confirmPass'), 'new-password') +
       '<p class="portal-muted" style="font-size:.85rem;margin:-.25rem 0 0">' + t('passRules') + '</p>' +
+      '<div class="field" id="np-code-wrap" hidden><label for="np-code">' + t('code') + '</label><input id="np-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6">' +
+      '<p class="portal-muted" style="font-size:.85rem;margin:.35rem 0 0">' + t('passMfa') + '</p></div>' +
       '<div class="portal-alert" id="np-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">' + t('savePass') + '</button></form>');
     wireEyes();
+    var showCode = function () { $('#np-code-wrap').hidden = false; };
+    // accounts with two-step verification must confirm the code (AAL2) before Supabase accepts a new password
+    sb.auth.mfa.getAuthenticatorAssuranceLevel().then(function (r) { var a = r.data; if (a && a.nextLevel === 'aal2' && a.currentLevel !== 'aal2') showCode(); }, function () {});
     $('#f-np').onsubmit = async function (e) {
       e.preventDefault(); var p = $('#np').value, m = $('#np-msg');
       if (p.length < 12) return msg(m, t('passShort'), 'error');
       if (p !== $('#np2').value) return msg(m, t('passMismatch'), 'error');
-      var btn = this.querySelector('button'); btn.disabled = true;
-      var r = await sb.auth.updateUser({ password: p });
-      btn.disabled = false;
-      if (r.error) return msg(m, errText(r.error), 'error');
-      msg(m, t('passSaved'), 'ok');
-      recovery = false; history.replaceState(null, '', location.pathname + location.search); boot();
+      var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+      try {
+        if (!$('#np-code-wrap').hidden) {
+          var code = $('#np-code').value.replace(/\D/g, '');
+          if (code.length !== 6) { $('#np-code').focus(); return msg(m, t('passMfaNeed'), 'error'); }
+          var f = ((await sb.auth.mfa.listFactors()).data || {}).totp || [], v = f.filter(function (x) { return x.status === 'verified'; })[0];
+          if (v) { var cv = await sb.auth.mfa.challengeAndVerify({ factorId: v.id, code: code }); if (cv.error) return msg(m, errText(cv.error), 'error'); }
+        }
+        var r = await sb.auth.updateUser({ password: p });
+        if (r.error) {
+          if (/aal2/i.test(r.error.message)) { showCode(); $('#np-code').focus(); return msg(m, t('passMfaNeed'), 'error'); }
+          return msg(m, errText(r.error), 'error');
+        }
+        msg(m, t('passSaved'), 'ok');
+        recovery = false; history.replaceState(null, '', location.pathname + location.search); boot();
+      } finally { btn.disabled = false; }
     };
   }
   async function renderMfa() {

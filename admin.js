@@ -131,15 +131,32 @@
   function renderNewPassword(invite) {
     authShell('<h1 class="portal-h1">' + (invite ? 'Crie a sua senha' : 'Crie uma nova senha') + '</h1><p class="portal-muted">' + (invite ? 'Bem-vindo ao console da Endeavor. Depois da senha você ativa o código do celular.' : 'Escolha uma nova senha para a sua conta.') + '</p>' +
       '<form class="portal-form" id="f-np" novalidate>' + pwField('np', 'Nova senha (mín. 12 caracteres)', 'new-password') + pwField('np2', 'Confirme a senha', 'new-password') +
+      '<div class="field" id="np-code-wrap" hidden><label for="np-code">Código do autenticador</label><input id="np-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6">' +
+      '<p class="portal-muted" style="font-size:.85rem;margin:.35rem 0 0">Sua conta usa verificação em duas etapas. Digite o código de 6 dígitos que aparece no Google Authenticator em "Endeavor Business Solutions".</p></div>' +
       '<div class="portal-alert" id="np-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Salvar senha</button></form>');
     wireEyes();
+    var showCode = function () { $('#np-code-wrap').hidden = false; };
+    // accounts with two-step verification must confirm the code (AAL2) before Supabase accepts a new password
+    sb.auth.mfa.getAuthenticatorAssuranceLevel().then(function (r) { var a = r.data; if (a && a.nextLevel === 'aal2' && a.currentLevel !== 'aal2') showCode(); }, function () {});
     $('#f-np').addEventListener('submit', async function (e) {
       e.preventDefault();
-      var p = $('#np').value; if (p.length < 12) return msg($('#np-msg'), 'Use pelo menos 12 caracteres.', 'error');
-      if (p !== $('#np2').value) return msg($('#np-msg'), 'As senhas não são iguais.', 'error');
-      var r = await sb.auth.updateUser({ password: p });
-      if (r.error) return msg($('#np-msg'), errText(r.error), 'error');
-      recoveryMode = false; history.replaceState(null, '', location.pathname); boot();
+      var m = $('#np-msg'), p = $('#np').value; if (p.length < 12) return msg(m, 'Use pelo menos 12 caracteres.', 'error');
+      if (p !== $('#np2').value) return msg(m, 'As senhas não são iguais.', 'error');
+      var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+      try {
+        if (!$('#np-code-wrap').hidden) {
+          var code = $('#np-code').value.replace(/\D/g, '');
+          if (code.length !== 6) { $('#np-code').focus(); return msg(m, 'Digite o código de 6 dígitos do autenticador.', 'error'); }
+          var f = ((await sb.auth.mfa.listFactors()).data || {}).totp || [], v = f.filter(function (x) { return x.status === 'verified'; })[0];
+          if (v) { var cv = await sb.auth.mfa.challengeAndVerify({ factorId: v.id, code: code }); if (cv.error) return msg(m, errText(cv.error), 'error'); }
+        }
+        var r = await sb.auth.updateUser({ password: p });
+        if (r.error) {
+          if (/aal2/i.test(r.error.message)) { showCode(); $('#np-code').focus(); return msg(m, 'Digite o código do autenticador para confirmar a troca de senha.', 'error'); }
+          return msg(m, errText(r.error), 'error');
+        }
+        recoveryMode = false; history.replaceState(null, '', location.pathname); boot();
+      } finally { btn.disabled = false; }
     });
   }
 
