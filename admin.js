@@ -31,6 +31,8 @@
     if (/Invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
     if (/Email not confirmed/i.test(m)) return 'Confirme seu e-mail pelo link enviado pelo Supabase antes de entrar.';
     if (/Invalid TOTP|invalid.*code/i.test(m)) return 'Código inválido. Confira o horário do celular e tente de novo.';
+    if (/Password should|weak.?password|pwned|leaked/i.test(m)) return 'Senha fraca. Use pelo menos 8 caracteres, com letras maiúsculas e minúsculas, números e um símbolo.';
+    if (/same.?password|different from the old/i.test(m)) return 'A nova senha precisa ser diferente da atual.';
     if (/row-level security|permission denied/i.test(m)) return 'Sem permissão. Entre novamente com verificação em duas etapas.';
     return m;
   }
@@ -130,7 +132,7 @@
 
   function renderNewPassword(invite) {
     authShell('<h1 class="portal-h1">' + (invite ? 'Crie a sua senha' : 'Crie uma nova senha') + '</h1><p class="portal-muted">' + (invite ? 'Bem-vindo ao console da Endeavor. Depois da senha você ativa o código do celular.' : 'Escolha uma nova senha para a sua conta.') + '</p>' +
-      '<form class="portal-form" id="f-np" novalidate>' + pwField('np', 'Nova senha (mín. 12 caracteres)', 'new-password') + pwField('np2', 'Confirme a senha', 'new-password') +
+      '<form class="portal-form" id="f-np" novalidate>' + pwField('np', 'Nova senha (mín. 8 caracteres)', 'new-password') + pwField('np2', 'Confirme a senha', 'new-password') +
       '<div class="field" id="np-code-wrap" hidden><label for="np-code">Código do autenticador</label><input id="np-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6">' +
       '<p class="portal-muted" style="font-size:.85rem;margin:.35rem 0 0">Sua conta usa verificação em duas etapas. Digite o código de 6 dígitos que aparece no Google Authenticator em "Endeavor Business Solutions".</p></div>' +
       '<div class="portal-alert" id="np-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Salvar senha</button></form>');
@@ -140,7 +142,7 @@
     sb.auth.mfa.getAuthenticatorAssuranceLevel().then(function (r) { var a = r.data; if (a && a.nextLevel === 'aal2' && a.currentLevel !== 'aal2') showCode(); }, function () {});
     $('#f-np').addEventListener('submit', async function (e) {
       e.preventDefault();
-      var m = $('#np-msg'), p = $('#np').value; if (p.length < 12) return msg(m, 'Use pelo menos 12 caracteres.', 'error');
+      var m = $('#np-msg'), p = $('#np').value; if (p.length < 8) return msg(m, 'Use pelo menos 8 caracteres.', 'error');
       if (p !== $('#np2').value) return msg(m, 'As senhas não são iguais.', 'error');
       var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
       try {
@@ -684,14 +686,14 @@
     view.innerHTML = '<div class="console__head"><h1>Configurações</h1></div>' +
       '<section class="portal-card"><h2 class="portal-h2">Conta</h2><dl class="kv"><dt>E-mail</dt><dd>' + esc(u.email) + '</dd><dt>Último acesso</dt><dd>' + esc(fmtDT(u.last_sign_in_at)) + '</dd>' +
       '<dt>Duas etapas</dt><dd>' + ((f.totp || []).filter(function (x) { return x.status === 'verified'; }).length ? 'Ativa (aplicativo autenticador)' : 'Inativa') + '</dd></dl></section>' +
-      '<section class="portal-card"><h2 class="portal-h2">Alterar senha</h2><form class="portal-form" id="pw-form"><div class="field"><label for="pw-new">Nova senha (mín. 12 caracteres)</label><input id="pw-new" type="password" autocomplete="new-password" minlength="12" required></div>' +
+      '<section class="portal-card"><h2 class="portal-h2">Alterar senha</h2><form class="portal-form" id="pw-form"><div class="field"><label for="pw-new">Nova senha (mín. 8 caracteres)</label><input id="pw-new" type="password" autocomplete="new-password" minlength="8" required></div>' +
       '<div class="portal-alert" id="pw-msg" role="status"></div><button class="btn btn--navy" type="submit">Salvar nova senha</button></form></section>' +
       '<section class="portal-card"><h2 class="portal-h2">Segurança</h2><ul class="list"><li><div class="list__main"><strong>Acesso restrito</strong><span>Só o e-mail autorizado, com verificação em duas etapas, consegue ver os dados. As regras ficam no banco de dados.</span></div></li>' +
       '<li><div class="list__main"><strong>Documentos privados</strong><span>Os PDFs ficam em armazenamento privado e só abrem por links temporários.</span></div></li>' +
       '<li><div class="list__main"><strong>Notificações</strong><span>Novos contatos e agendamentos também chegam em ' + esc(CFG.adminEmail) + '.</span></div></li></ul></section>';
     $('#pw-form').addEventListener('submit', async function (e) {
       e.preventDefault();
-      var p = $('#pw-new').value; if (p.length < 12) return msg($('#pw-msg'), 'Use pelo menos 12 caracteres.', 'error');
+      var p = $('#pw-new').value; if (p.length < 8) return msg($('#pw-msg'), 'Use pelo menos 8 caracteres.', 'error');
       var r = await sb.auth.updateUser({ password: p });
       msg($('#pw-msg'), r.error ? errText(r.error) : 'Senha alterada.', r.error ? 'error' : 'ok');
     });
