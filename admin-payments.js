@@ -34,6 +34,14 @@
   function kpi(esc, l, v) { return '<div class="kpi"><div class="kpi__label">' + esc(l) + '</div><div class="kpi__value" style="font-size:1.35rem;padding-top:.35rem">' + esc(v) + '</div></div>'; }
 
   async function sendInvite(ctx, p) {
+    // branded invitation (one e-mail with the password link) sent by the support Gmail
+    try {
+      var sess = (await ctx.sb.auth.getSession()).data.session;
+      var rr = await fetch(ctx.CFG.functionsUrl + '/partner-invite', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + (sess ? sess.access_token : ctx.CFG.supabaseKey) }, body: JSON.stringify({ partner_id: p.id }) });
+      var jj = await rr.json().catch(function () { return {}; });
+      if (rr.ok && jj && jj.ok) return true;
+    } catch (e) { /* fall back below */ }
+    // fallback: Supabase access e-mail + instructions by FormSubmit
     var link = ctx.siteUrl('partner.html') + '?lang=' + (p.language || 'pt');
     try { await call(ctx, { action: 'send_access', partner_id: p.id }); } catch (e) { return false; }
     try {
