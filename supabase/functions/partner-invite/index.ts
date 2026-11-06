@@ -6,7 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
-import "./partner-contract.js";
+import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@f127635aa2d4f6b62fb5cec9e7b4cb0467ebcfef/supabase/functions/partner-invite/partner-contract.js";
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
@@ -234,9 +234,9 @@ async function signup(req: Request, b: Row) {
     db.from("partner_signups").select("id", { count: "exact", head: true }).gte("created_at", dayAgo)]);
   if ((r1.count ?? 0) >= 5 || (r2.count ?? 0) >= 60) throw new Fail("rate_limited", 429);
   await db.from("partner_signups").insert({ ip_hash: ipHash, email });
-  const { data: dup } = await db.from("partners").select("id").ilike("email", email).limit(1);
+  const { data: dup } = await db.from("partners").select("id").eq("email", email).limit(1);
   if (dup?.length) throw new Fail("already_registered", 409);
-  const { data: adm } = await db.from("admins").select("email").ilike("email", email).limit(1);
+  const { data: adm } = await db.from("admins").select("email").eq("email", email).limit(1);
   if (adm?.length) throw new Fail("email_in_use", 409);
   // onboarding call (the booking sends its own confirmation and reminders)
   const bk = await db.rpc("book_slot_v2", { p_starts_at: slot.toISOString(), p_name: name, p_email: email, p_phone: phone, p_topic: "Partner onboarding",
