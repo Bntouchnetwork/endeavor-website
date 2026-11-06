@@ -322,7 +322,7 @@
   function orMatch(r, expr, and) {
     var parts = splitTop(expr).map(function (p) {
       var m = p.match(/^(and|or)\((.*)\)$/); if (m) return orMatch(r, m[2], m[1] === 'and');
-      var q = p.match(/^(\w+)\.(eq|neq|like|ilike|gte|lte)\.(.*)$/); if (!q) return false;
+      var q = p.match(/^(\w+)\.(eq|neq|like|ilike|gte|lte|gt|lt)\.(.*)$/); if (!q) return false;
       return match(r, [q[2], q[1], q[3]]);
     });
     return and ? parts.every(Boolean) : parts.some(Boolean);

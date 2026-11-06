@@ -504,7 +504,9 @@
     if (tab === 'disp') return drawAvailability(body);
     var nowIso = new Date().toISOString();
     var query = sb.from('bookings').select('*');
-    query = tab === 'prox' ? query.gte('ends_at', nowIso).order('starts_at') : query.lt('ends_at', nowIso).order('starts_at', { ascending: false }).limit(200);
+    // Upcoming: only confirmed calls still ahead. History: past calls plus any call cancelled, completed or marked no-show (even if its date is ahead)
+    query = tab === 'prox' ? query.eq('status', 'confirmed').gte('ends_at', nowIso).order('starts_at')
+      : query.or('ends_at.lt.' + nowIso + ',status.neq.confirmed').order('starts_at', { ascending: false }).limit(200);
     var rows = await q(query);
     if (!rows.length) { body.innerHTML = '<p class="empty">Nenhum agendamento.</p>'; return; }
     var msgs = await q(sb.from('booking_messages').select('booking_id, version, kind, offset_min, channel, audience, status').in('booking_id', rows.map(function (b) { return b.id; })).eq('audience', 'client'));
