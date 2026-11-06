@@ -14,7 +14,7 @@
       lead: 'Escolha o dia e o horário para uma conversa inicial gratuita. Uma consulta não cria relação de cliente.',
       pickDay: '1. Escolha o dia', pickTime: '2. Escolha o horário', pickDayFirst: 'Selecione um dia disponível no calendário.', yourDetails: '3. Seus dados',
       prevMonth: 'Mês anterior', nextMonth: 'Próximo mês', name: 'Nome completo', email: 'E-mail', phone: 'Telefone / WhatsApp', topic: 'Assunto',
-      o1: 'Abertura de empresa', o2: 'Compliance', o3: 'Coordenação fiscal', o4: 'Brasil para os EUA', o5: 'Operações no Paraguai', o6: 'Financiamento empresarial', o7: 'Imóveis', o8: 'Family Office', o9: 'Outro',
+      o1: 'Abertura de empresa', o10: 'Programa de Parceiros', o2: 'Compliance', o3: 'Coordenação fiscal', o4: 'Brasil para os EUA', o5: 'Operações no Paraguai', o6: 'Financiamento empresarial', o7: 'Imóveis', o8: 'Family Office', o9: 'Outro',
       meetType: 'Como prefere conversar?', video: 'Videochamada', phoneCall: 'Telefone', notes: 'Algo que devemos saber antes da chamada?',
       noSensitive: 'Não informe SSN, ITIN, passaporte ou números de conta bancária.', confirm: 'Confirmar agendamento',
       privacy: 'Ao agendar, você concorda que usemos seus dados para contatá-lo sobre esta chamada, conforme a nossa', pp: 'Política de Privacidade',
@@ -32,7 +32,7 @@
       lead: 'Elija el día y la hora para una conversación inicial gratuita. Una consulta no crea una relación de cliente.',
       pickDay: '1. Elija el día', pickTime: '2. Elija la hora', pickDayFirst: 'Seleccione un día disponible en el calendario.', yourDetails: '3. Sus datos',
       prevMonth: 'Mes anterior', nextMonth: 'Mes siguiente', name: 'Nombre completo', email: 'Correo electrónico', phone: 'Teléfono / WhatsApp', topic: 'Tema',
-      o1: 'Constitución de empresas', o2: 'Cumplimiento', o3: 'Coordinación fiscal', o4: 'Brasil a EE. UU.', o5: 'Operaciones en Paraguay', o6: 'Financiamiento empresarial', o7: 'Bienes raíces', o8: 'Family Office', o9: 'Otro',
+      o1: 'Constitución de empresas', o10: 'Programa de Socios', o2: 'Cumplimiento', o3: 'Coordinación fiscal', o4: 'Brasil a EE. UU.', o5: 'Operaciones en Paraguay', o6: 'Financiamiento empresarial', o7: 'Bienes raíces', o8: 'Family Office', o9: 'Otro',
       meetType: '¿Cómo prefiere reunirse?', video: 'Videollamada', phoneCall: 'Teléfono', notes: '¿Algo que debamos saber antes de la llamada?',
       noSensitive: 'No incluya SSN, ITIN, pasaporte ni números de cuenta bancaria.', confirm: 'Confirmar cita',
       privacy: 'Al agendar, acepta que usemos sus datos para contactarlo sobre esta llamada, según nuestra', pp: 'Política de Privacidad',
@@ -48,6 +48,9 @@
       doneText2: 'Enviamos la confirmación a su correo y WhatsApp, con enlaces para reprogramar o cancelar. También recibirá recordatorios antes de la llamada.' }
   };
   var t = EP.init(DICT);
+  // ?topic=partner (Partner Program pages) preselects the topic
+  (function () { var m = /[?&]topic=([a-z_]+)/.exec(location.search), map = { partner: 'Partner Program', formation: 'Business Formation', brazil: 'Brazil to USA', paraguay: 'Paraguay Operations' };
+    if (m && map[m[1]]) { var sel = document.getElementById('b-topic'); if (sel) sel.value = map[m[1]]; } })();
   var userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   var info = { timezone: 'America/New_York', slot_minutes: 30, max_days_ahead: 30, meeting_note: '' };
   var byDay = {}, selectedDay = null, selectedSlot = null, view = new Date(); view.setDate(1);

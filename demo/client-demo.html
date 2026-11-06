@@ -1828,6 +1828,10 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   .enroll__act .field input { min-height: 2.6rem; }
   .enroll__act .portal-alert:empty { display: none; }
 }
+.pp-book { display: grid; gap: 1.25rem 2rem; grid-template-columns: minmax(0, 1fr); align-items: center; border-left: 4px solid var(--gold); }
+@media (min-width: 860px) { .pp-book { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); } .pp-book__cta { text-align: center; } }
+.pp-book__list { margin: .8rem 0 0; padding-left: 1.2rem; display: grid; gap: .35rem; color: var(--muted); }
+#cadastro:focus { outline: none; }
 
 </style>
 </head>
