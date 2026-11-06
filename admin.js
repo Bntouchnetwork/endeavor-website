@@ -207,7 +207,7 @@
 
   /* ---------- console shell ---------- */
   var NAV = [
-    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM e clientes', 'i-users'], ['agenda', 'Agenda', 'i-cal'],
+    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'],
     ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
@@ -339,24 +339,17 @@
     })).sort(function (x, y) { return String(y.at || '').localeCompare(String(x.at || '')); });
 
     var ST = ['new', 'contacted', 'qualified', 'proposal', 'client', 'lost'];
-    view.innerHTML = '<div class="console__head"><div><h1>CRM e clientes</h1><p class="portal-muted">Leads do site, dos agendamentos e de parceiros, e as contas de clientes do portal, numa lista só. Mude o status para <strong>Cliente</strong> para abrir a conta do portal.</p></div>' +
+    view.innerHTML = '<div class="console__head"><div><h1>CRM</h1><p class="portal-muted">Leads e clientes. Mude o status do lead para <strong>Cliente</strong> para abrir a conta do portal.</p></div>' +
       '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--ghost btn--xs" type="button" id="crm-new">Novo lead</button><button class="btn btn--navy btn--xs" type="button" id="cl-new">Novo cliente</button></div></div>' +
-      '<div class="crm-seg" role="group" aria-label="Mostrar">' + [['', 'Todos'], ['leads', 'Leads em aberto'], ['client', 'Clientes'], ['lost', 'Perdidos']].map(function (x, i) { return '<button type="button" data-seg="' + x[0] + '" aria-pressed="' + (i === 0) + '">' + x[1] + ' <span class="crm-seg__n"></span></button>'; }).join('') + '</div>' +
       '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar">' +
       '<select id="crm-status" aria-label="Filtrar por status"><option value="">Todos os status</option>' + ST.map(function (k) { return '<option value="' + k + '">' + STATUS_PT[k] + '</option>'; }).join('') + '</select>' +
       '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="partner">Parceiro</option></select></div>' +
       '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência / empresas</th><th>Origem</th><th>Status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
-    var seg = (ERoute.get().match(/[?&]ver=(leads|client|lost)/) || [])[1] || '';
-    var inSeg = function (r, sg) { return !sg || (sg === 'leads' ? r.kind === 'lead' && r.status !== 'lost' && r.status !== 'client' : sg === 'client' ? r.status === 'client' : r.status === sg); };
-    $$('.crm-seg button', view).forEach(function (b) {
-      b.querySelector('.crm-seg__n').textContent = rows.filter(function (r) { return inSeg(r, b.dataset.seg); }).length;
-      b.onclick = function () { seg = b.dataset.seg; draw(); };
-    });
+    var pre = (ERoute.get().match(/[?&]status=([a-z]+)/) || [])[1]; if (pre && ST.indexOf(pre) > -1) $('#crm-status').value = pre;
     function draw() {
-      $$('.crm-seg button', view).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.seg === seg)); });
       var term = $('#crm-q').value.trim().toLowerCase(), st = $('#crm-status').value, so = $('#crm-source').value;
       var list = rows.filter(function (r) {
-        return inSeg(r, seg) && (!st || r.status === st) && (!so || r.source === so) &&
+        return (!st || r.status === st) && (!so || r.source === so) &&
           (!term || [r.name, r.email, r.sub, r.phone, r.country].join(' ').toLowerCase().indexOf(term) > -1);
       });
       $('#crm-body').innerHTML = list.length ? list.map(function (r) {
@@ -619,7 +612,7 @@
     if (!window.AdminClients) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de clientes não carregou. Recarregue a página.</div>'; return; }
     var id = (ERoute.get().match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
     if (id) return AdminClients.detail(view, clientsCtx(), id);
-    ERoute.set('#/crm?ver=client' + (/novo=1/.test(ERoute.get()) ? '&cliente=1' : ''), true); // the client list now lives in the CRM
+    ERoute.set('#/crm?status=client' + (/novo=1/.test(ERoute.get()) ? '&cliente=1' : ''), true); // the client list now lives in the CRM
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === 'crm') a.setAttribute('aria-current', 'page'); });
     return viewCrm(view);
   }

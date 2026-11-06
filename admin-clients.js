@@ -116,7 +116,7 @@
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
       var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
-      view.innerHTML = '<p class="crumbs"><a href="#/crm?ver=client">CRM e clientes</a> /</p>' +
+      view.innerHTML = '<p class="crumbs"><a href="#/crm?status=client">CRM</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
         '<nav class="subtabs" aria-label="Seções do cliente">' + TABS.map(function (t) { return '<a href="#/clientes?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>' +
