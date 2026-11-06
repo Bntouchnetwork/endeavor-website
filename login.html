@@ -25,6 +25,7 @@
 <main class="portal-main" id="main" style="max-width:64rem">
   <h1 class="portal-h1" data-t="title">Sign in</h1>
   <p class="portal-muted" data-t="lead" style="margin-bottom:1.5rem">Choose how you want to access Endeavor.</p>
+  <div class="portal-alert portal-alert--info" id="tok-note" hidden></div>
   <div class="choice">
     <a href="client.html" data-keep-lang>
       <span class="choice__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 7V5.5A1.5 1.5 0 0110 4h4a1.5 1.5 0 011.5 1.5V7M3 12.5h18" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
@@ -47,15 +48,24 @@
 <script src="app-config.js"></script>
 <script src="portal-common.js"></script>
 <script>
-  EP.init({
-    en: {},
+  var T = EP.init({
+    en: { tokNote: 'Choose your portal to create your new password.' },
     pt: { docTitle: 'Entrar | Endeavor Business Solutions', title: 'Entrar', lead: 'Escolha como você quer acessar a Endeavor.', client: 'Portal do cliente',
       clientText: 'Suas empresas, documentos de formação, prazos fiscais, relatórios financeiros e envio de documentos.', admin: 'Equipe Endeavor',
-      adminText: 'Console administrativo da equipe Endeavor.', partner: 'Portal do parceiro', partnerText: 'Para parceiros de indicação e para contadores, bookkeepers e administradores de imóveis convidados por um cliente.', help: 'Precisa de acesso? Escreva para support@endeavorbiz.com.' },
+      adminText: 'Console administrativo da equipe Endeavor.', tokNote: 'Escolha o seu portal para criar a nova senha.', partner: 'Portal do parceiro', partnerText: 'Para parceiros de indicação e para contadores, bookkeepers e administradores de imóveis convidados por um cliente.', help: 'Precisa de acesso? Escreva para support@endeavorbiz.com.' },
     es: { docTitle: 'Ingresar | Endeavor Business Solutions', title: 'Ingresar', lead: 'Elija cómo quiere acceder a Endeavor.', client: 'Portal del cliente',
       clientText: 'Sus empresas, documentos de constitución, plazos fiscales, reportes financieros y envío de documentos.', admin: 'Equipo Endeavor',
-      adminText: 'Consola administrativa del equipo Endeavor.', partner: 'Portal de socios', partnerText: 'Para socios de referidos y para contadores, bookkeepers y administradores de propiedades invitados por un cliente.', help: '¿Necesita acceso? Escriba a support@endeavorbiz.com.' }
+      adminText: 'Consola administrativa del equipo Endeavor.', tokNote: 'Elija su portal para crear la nueva contraseña.', partner: 'Portal de socios', partnerText: 'Para socios de referidos y para contadores, bookkeepers y administradores de propiedades invitados por un cliente.', help: '¿Necesita acceso? Escriba a support@endeavorbiz.com.' }
   });
+  // a password/invitation link arrived here: keep its token when the person picks a portal
+  (function () {
+    var h = location.hash;
+    if (!/[#&](access_token|error_code)=/.test(h)) return;
+    var n = document.getElementById('tok-note'); n.hidden = false; n.style.display = 'block'; n.textContent = T('tokNote');
+    Array.prototype.forEach.call(document.querySelectorAll('.choice a'), function (a) {
+      a.addEventListener('click', function (e) { e.preventDefault(); location.href = a.href.split('#')[0] + h; });
+    });
+  })();
 </script>
 </body>
 </html>

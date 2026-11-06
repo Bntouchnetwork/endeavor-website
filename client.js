@@ -28,7 +28,7 @@
       loginHelp: 'First access? Use the link in the invitation email to create your password.', forgotTitle: 'Reset password', forgotLead: 'Enter your email. We will send a link to create a new password.', sendLink: 'Send link', backLogin: 'Back to sign in', inviteTitle: 'Create your password', inviteLead: 'Welcome to the Endeavor portal. Create your password to continue; next you will activate the code on your phone.', resetTitle: 'Create a new password', resetLead: 'Choose a new password for your account.', confirmPass: 'Confirm the password', passMismatch: 'The passwords do not match.', linkExpired: 'This link has expired or was already used. Enter your email below to receive a new one.', passSaved: 'Password saved.', passRules: 'At least 12 characters. Use a phrase or a mix of words and numbers.', showPass: 'Show password',
       badLogin: 'Incorrect email or password.', notConfirmed: 'Confirm your email using the link we sent, then sign in.', noInvite: 'This email does not have an invitation. Please contact Endeavor at support@endeavorbiz.com.',
       passShort: 'Use at least 12 characters in the Password field.', created: 'Account created. Open the confirmation email sent to {e}, click the link and then sign in here.',
-      resetSent: 'If this email is registered, you will receive a link to create a new password.', mfaTitle: 'Two-step verification', mfaLead: 'Enter the 6-digit code from your authenticator app.',
+      resetSent: 'If {e} is registered, you will receive a link to create a new password in a few minutes. Check the spelling of the address and your spam folder. You can ask again in 60 seconds.', mfaTitle: 'Two-step verification', mfaLead: 'Enter the 6-digit code from your authenticator app.',
       code: 'Code', verify: 'Verify', badCode: 'Invalid code. Check your phone time and try again.', enrollTitle: 'Turn on two-step verification',
       enrollLead: 'Required to protect your tax and company documents. Scan the QR code with Google Authenticator, Microsoft Authenticator or 1Password and enter the code.',
       noCamera: 'No camera? Enter this key in the app:', activate: 'Activate and continue', noAccess: 'No active access', noAccessText: 'Your account is not linked to an active client portal. If you received an invitation, confirm you used the same email. Questions: support@endeavorbiz.com.',
@@ -79,7 +79,7 @@
       loginHelp: 'Primeiro acesso? Use o link do e-mail de convite para criar a sua senha.', forgotTitle: 'Redefinir senha', forgotLead: 'Digite o seu e-mail. Vamos enviar um link para você criar uma nova senha.', sendLink: 'Enviar link', backLogin: 'Voltar ao login', inviteTitle: 'Crie a sua senha', inviteLead: 'Bem-vindo ao portal da Endeavor. Crie a sua senha para continuar; em seguida você ativa o código do celular.', resetTitle: 'Crie uma nova senha', resetLead: 'Escolha uma nova senha para a sua conta.', confirmPass: 'Confirme a senha', passMismatch: 'As senhas não são iguais.', linkExpired: 'Este link expirou ou já foi usado. Digite o seu e-mail abaixo para receber um novo.', passSaved: 'Senha salva.', passRules: 'Pelo menos 12 caracteres. Use uma frase ou uma mistura de palavras e números.', showPass: 'Mostrar senha',
       badLogin: 'E-mail ou senha incorretos.', notConfirmed: 'Confirme o seu e-mail pelo link que enviamos e depois entre.', noInvite: 'Este e-mail não tem convite. Fale com a Endeavor pelo support@endeavorbiz.com.',
       passShort: 'Use pelo menos 12 caracteres no campo Senha.', created: 'Conta criada. Abra o e-mail de confirmação enviado para {e}, clique no link e depois entre aqui.',
-      resetSent: 'Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', mfaTitle: 'Verificação em duas etapas', mfaLead: 'Digite o código de 6 dígitos do seu aplicativo autenticador.',
+      resetSent: 'Se {e} estiver cadastrado, você vai receber em alguns minutos um link para criar uma nova senha. Confira se o endereço está certo e olhe também o spam. Você pode pedir de novo em 60 segundos.', mfaTitle: 'Verificação em duas etapas', mfaLead: 'Digite o código de 6 dígitos do seu aplicativo autenticador.',
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Confira o horário do celular e tente de novo.', enrollTitle: 'Ative a verificação em duas etapas',
       enrollLead: 'Obrigatória para proteger seus documentos fiscais e da empresa. Escaneie o QR code com Google Authenticator, Microsoft Authenticator ou 1Password e digite o código.',
       noCamera: 'Sem câmera? Digite esta chave no app:', activate: 'Ativar e continuar', noAccess: 'Sem acesso ativo', noAccessText: 'Sua conta não está ligada a um portal de cliente ativo. Se você recebeu um convite, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
@@ -130,7 +130,7 @@
       loginHelp: '¿Primer acceso? Use el enlace del correo de invitación para crear su contraseña.', forgotTitle: 'Restablecer contraseña', forgotLead: 'Ingrese su correo. Le enviaremos un enlace para crear una nueva contraseña.', sendLink: 'Enviar enlace', backLogin: 'Volver al ingreso', inviteTitle: 'Cree su contraseña', inviteLead: 'Bienvenido al portal de Endeavor. Cree su contraseña para continuar; luego activará el código del celular.', resetTitle: 'Cree una nueva contraseña', resetLead: 'Elija una nueva contraseña para su cuenta.', confirmPass: 'Confirme la contraseña', passMismatch: 'Las contraseñas no coinciden.', linkExpired: 'Este enlace venció o ya fue usado. Ingrese su correo abajo para recibir uno nuevo.', passSaved: 'Contraseña guardada.', passRules: 'Al menos 12 caracteres. Use una frase o una mezcla de palabras y números.', showPass: 'Mostrar contraseña',
       badLogin: 'Correo o contraseña incorrectos.', notConfirmed: 'Confirme su correo con el enlace que enviamos y luego ingrese.', noInvite: 'Este correo no tiene invitación. Contacte a Endeavor en support@endeavorbiz.com.',
       passShort: 'Use al menos 12 caracteres en el campo Contraseña.', created: 'Cuenta creada. Abra el correo de confirmación enviado a {e}, haga clic en el enlace y luego ingrese aquí.',
-      resetSent: 'Si el correo está registrado, recibirá un enlace para crear una nueva contraseña.', mfaTitle: 'Verificación en dos pasos', mfaLead: 'Ingrese el código de 6 dígitos de su app autenticadora.',
+      resetSent: 'Si {e} está registrado, recibirá en unos minutos un enlace para crear una nueva contraseña. Revise que la dirección esté bien escrita y la carpeta de spam. Puede pedirlo de nuevo en 60 segundos.', mfaTitle: 'Verificación en dos pasos', mfaLead: 'Ingrese el código de 6 dígitos de su app autenticadora.',
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Revise la hora del celular e intente de nuevo.', enrollTitle: 'Active la verificación en dos pasos',
       enrollLead: 'Obligatoria para proteger sus documentos fiscales y de la empresa. Escanee el código QR con Google Authenticator, Microsoft Authenticator o 1Password e ingrese el código.',
       noCamera: '¿Sin cámara? Ingrese esta clave en la app:', activate: 'Activar y continuar', noAccess: 'Sin acceso activo', noAccessText: 'Su cuenta no está vinculada a un portal de cliente activo. Si recibió una invitación, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
@@ -313,11 +313,12 @@
       e.preventDefault();
       var em = $('#fg-email').value.trim().toLowerCase(), m = $('#fg-msg');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return msg(m, t('fillNameEmail'), 'error');
-      var btn = this.querySelector('button'); btn.disabled = true;
+      var btn = this.querySelector('button'); if (btn.disabled) return; btn.disabled = true;
       var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl(PAGE) + '?lang=' + L });
-      btn.disabled = false;
-      // same message whether or not the e-mail exists (no account enumeration)
-      msg(m, r.error && !/rate|limit|seconds/i.test(r.error.message) ? t('resetSent') : r.error ? errText(r.error) : t('resetSent'), r.error && /rate|limit|seconds/i.test(r.error.message) ? 'error' : 'ok');
+      var limited = r.error && /rate|limit|seconds/i.test(r.error.message);
+      // same message whether or not the e-mail exists (no account enumeration); the address is echoed so typos are visible
+      msg(m, limited ? errText(r.error) : t('resetSent').replace('{e}', em), limited ? 'error' : 'ok');
+      setTimeout(function () { btn.disabled = false; }, limited ? 5000 : 60000);
     };
   }
   function renderNewPassword(mode) {

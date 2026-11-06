@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script>/* password links sent from the Supabase dashboard land here: forward them (with the token) to the portal chooser */
+    (function () { var h = location.hash; if (/[#&](access_token|error_code)=/.test(h) && /type=(recovery|invite|magiclink)|error_code=/.test(h)) location.replace('login.html' + location.search + h); })();</script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Endeavor Business Solutions | Business Formation, Registered Agent &amp; U.S. Expansion | Orlando, FL</title>

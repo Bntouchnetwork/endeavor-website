@@ -119,9 +119,12 @@
       e.preventDefault();
       var em = $('#fg-email').value.trim().toLowerCase(), m = $('#fg-msg');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return msg(m, 'Digite um e-mail válido.', 'error');
+      var btn = this.querySelector('button[type=submit]'); if (btn.disabled) return; btn.disabled = true;
       var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl('admin.html') });
       var limited = r.error && /rate|limit|seconds/i.test(r.error.message);
-      msg(m, limited ? errText(r.error) : 'Se o e-mail estiver cadastrado, você vai receber um link para criar uma nova senha.', limited ? 'error' : 'ok');
+      // same message whether or not the e-mail exists (no account enumeration); the address is echoed so typos are visible
+      msg(m, limited ? errText(r.error) : 'Se ' + em + ' estiver cadastrado, você vai receber em alguns minutos um link para criar uma nova senha. Confira se o endereço está certo e olhe também o spam. Você pode pedir de novo em 60 segundos.', limited ? 'error' : 'ok');
+      setTimeout(function () { btn.disabled = false; }, limited ? 5000 : 60000);
     });
   }
 
