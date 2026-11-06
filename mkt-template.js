@@ -46,6 +46,7 @@
     return String(s || '').replace(/\{\{?\s*(nome|name|nombre)\s*\}?\}/gi, n).replace(/\{\{?\s*(empresa|company)\s*\}?\}/gi, co)
       .replace(/^\s*,\s*/, '').replace(/\s+,/g, ',').replace(/,\s*([!?.:])/g, '$1');
   }
+  function withLang(u, lang) { if (!u || u === '#') return u || '#'; return /[?&]lang=/.test(u) ? u : u + (u.indexOf('?') > -1 ? '&' : '?') + 'lang=' + lang; }
   function langOf(c, ct) { var l = c.language === 'auto' ? (ct && ct.language) : c.language; return l === 'en' || l === 'es' ? l : 'pt'; }
 
   function button(href, label, bg, fg) {
@@ -103,14 +104,14 @@
     }
     var foot = CUSTOM_FOOT[lang];
     var html = shell({ lang: lang, subject: subject, pre: pre, body: body, site: site, why: foot.why, unsub: foot.unsub, address: o.address || 'Endeavor Business Solutions · Orlando, FL, USA',
-      replyTo: o.replyTo || 'support@endeavorbiz.com', unsubUrl: o.unsubUrl || '#', pixel: o.pixel });
+      replyTo: o.replyTo || 'support@endeavorbiz.com', unsubUrl: withLang(o.unsubUrl, lang), pixel: o.pixel });
     // click tracking: every https link except the unsubscribe link goes through the tracker (by position)
     var urls = [];
     html = html.replace(/<a href="(https:\/\/[^"]+)"(?![^>]*data-unsub)/g, function (m, href) {
       var raw = href.replace(/&amp;/g, '&'), i = urls.indexOf(raw); if (i < 0) { urls.push(raw); i = urls.length - 1; }
       return o.track ? '<a href="' + esc(o.track(i, raw)) + '"' : m;
     });
-    var text = textParts.join('\n') + '\n\n--\n' + foot.why + '\n' + (o.address || '') + '\n' + foot.unsub + ': ' + (o.unsubUrl || '');
+    var text = textParts.join('\n') + '\n\n--\n' + foot.why + '\n' + (o.address || '') + '\n' + foot.unsub + ': ' + withLang(o.unsubUrl, lang);
     return { subject: subject, html: html, text: text, urls: urls, language: lang };
   }
   G.EMkt = { render: render, texts: T, langOf: langOf };

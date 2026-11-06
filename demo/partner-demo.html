@@ -1649,6 +1649,28 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   .week__slot input[type="time"] { flex: 1 1 0; min-width: 0; width: auto; padding: .3rem .3rem; font-size: .92rem; }
 }
 
+/* marketing */
+.mk-editor { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1150px) { .mk-editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } .mk-preview { position: sticky; top: 5rem; } }
+.mk-form .field + .field { margin-top: .2rem; }
+.mk-preview iframe { width: 100%; height: 70vh; min-height: 32rem; border: 1px solid var(--line); border-radius: 10px; background: #eef1f6; }
+.mk-lists { display: grid; gap: .25rem; margin-top: .35rem; max-height: 12rem; overflow: auto; }
+.mk-box { border: 1px solid var(--line); border-radius: 10px; padding: .9rem 1rem; margin-top: 1rem; }
+.mk-inline { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.mk-inline input, .mk-inline select { min-height: 2.4rem; padding: .3rem .6rem; border: 1.5px solid #8a95a8; border-radius: 6px; font: inherit; }
+.mk-inline input[type=email] { flex: 1 1 14rem; }
+.mk-kpis { grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); margin-bottom: .8rem; }
+.mk-kpis .kpi small { display: block; margin-top: .2rem; font-size: .8rem; }
+.mk-contacts { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1000px) { .mk-contacts { grid-template-columns: 15rem minmax(0, 1fr); align-items: start; } }
+.mk-listbar { display: grid; gap: .5rem; }
+.mk-listnav { list-style: none; margin: 0; padding: 0; display: grid; gap: .15rem; }
+.mk-listnav a { display: flex; justify-content: space-between; gap: .5rem; padding: .45rem .6rem; border-radius: 7px; text-decoration: none; color: var(--ink); font-size: .92rem; }
+.mk-listnav a span { color: var(--muted); }
+.mk-listnav a[aria-current="page"] { background: var(--navy-900); color: #fff; }
+.mk-listnav a[aria-current="page"] span { color: #cfd8e6; }
+.mk-steps { margin: .6rem 0 0; padding-left: 1.2rem; display: grid; gap: .45rem; font-size: .93rem; }
+
 </style>
 </head>
 <body class="portal">
@@ -1770,6 +1792,20 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   };
   // agenda: messages already sent for the first two calls
   [0, 1].forEach(function (i) { var b = DB.bookings[i]; [['confirmation', 0, 'email', 'sent'], ['confirmation', 0, 'whatsapp', i ? 'failed' : 'sent'], ['reminder', 1440, 'email', 'sent']].forEach(function (m, j) { if (i === 1 && j === 2) return; DB.booking_messages.push({ id: i * 10 + j, booking_id: b.id, version: 1, kind: m[0], offset_min: m[1], channel: m[2], audience: 'client', status: m[3] }); }); });
+  // marketing sample data
+  (function () {
+    DB.mkt_settings = [{ id: 1, from_name: 'Endeavor Business Solutions', from_email: 'partners@endeavorbiz.com', reply_to: 'support@endeavorbiz.com', postal_address: 'Endeavor Business Solutions · Orlando, FL, USA', daily_limit: 2000, per_minute: 50, ses_connected: false }];
+    var L1 = uuid(), L2 = uuid(); DB.mkt_lists = [{ id: L1, name: 'Corretores Orlando', created_at: iso(-12) }, { id: L2, name: 'Contadores Brasil', created_at: iso(-6) }];
+    var P = [['ana.realty@example.com', 'Ana Martins', 'Martins Realty', 'realtor', 'pt', L1], ['john@sunbelt.example.com', 'John Miller', 'Sunbelt Homes', 'realtor', 'en', L1], ['lucia@casasfl.example.com', 'Lucía Torres', 'Casas FL', 'realtor', 'es', L1],
+      ['paulo@contabil.example.com', 'Paulo Reis', 'Reis Contabilidade', 'accountant', 'pt', L2], ['marina@cpa.example.com', 'Marina Costa', 'Costa CPA', 'accountant', 'pt', L2], ['old@example.com', 'Rafael Dias', 'Dias Imóveis', 'realtor', 'pt', L1]];
+    DB.mkt_contacts = P.map(function (x, i) { return { id: uuid(), created_at: iso(-10 + i), email: x[0], name: x[1], company: x[2], kind: x[3], language: x[4], status: i === 5 ? 'unsubscribed' : 'subscribed', unsubscribed_at: i === 5 ? iso(-2) : null, source: 'Feira imobiliária out/2026' }; });
+    DB.mkt_list_members = DB.mkt_contacts.map(function (c, i) { return { list_id: P[i][5], contact_id: c.id, added_at: iso(-10) }; });
+    var C1 = uuid();
+    DB.mkt_campaigns = [{ id: C1, created_at: iso(-3), name: 'Parceiros - corretores Orlando', template: 'partners', language: 'auto', list_ids: [L1], status: 'sent', scheduled_at: iso(-2, 10), started_at: iso(-2, 10), finished_at: iso(-2, 10, 5) }];
+    DB.mkt_sends = DB.mkt_contacts.filter(function (c, i) { return P[i][5] === L1; }).map(function (c, i) { return { id: i + 1, campaign_id: C1, contact_id: c.id, email: c.email, name: c.name, language: c.language, token: uuid(), status: 'sent', sent_at: iso(-2, 10, 1),
+      opened_at: i < 3 ? iso(-2, 11 + i) : null, open_count: i < 3 ? i + 1 : 0, clicked_at: i === 0 ? iso(-2, 11, 5) : null, click_count: i === 0 ? 1 : 0, unsubscribed_at: i === 3 ? iso(-2) : null }; });
+    DB.mkt_events = [];
+  })();
   DB.partners = [PART(P1, 'Ana Ribeiro', 'ana.cpa@example.com', 'Ribeiro Contabilidade', 'accountant', 15, 'active', 'u-cpa', true, 60),
     PART(P2, 'Marcos Tavares', 'marcos@example.com', 'Tavares Realty', 'realtor', 10, 'active', 'u-marcos', false, 40),
     PART(P3, 'Bruno Castro', 'bruno@example.com', 'Castro Law', 'attorney', 12, 'invited', null, false, 3)];
@@ -1936,6 +1972,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     partners: { status: 'invited', partner_type: 'referral', default_share_pct: 10, language: 'pt', stripe_details_submitted: false, stripe_charges_enabled: false, stripe_payouts_enabled: false, stripe_transfers_active: false, stripe_account_id: null, user_id: null },
     referral_items: { status: 'pending' }, referral_events: { kind: 'note', visible_to_partner: true },
     proposal_templates: { archived: false, structure: 'other', language: 'pt', days_until_due: 7, valid_days: 30 },
+    mkt_campaigns: { status: 'draft', template: 'partners', language: 'auto', list_ids: [] }, mkt_contacts: { status: 'subscribed', kind: 'other', language: 'pt' },
     clients: { status: 'active', language: 'pt' }, companies: { status: 'in_formation', state: 'FL' }, company_documents: { visible_to_client: true }
   };
   function current() { return AUTH.user; }
@@ -1991,10 +2028,11 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   ['eq', 'neq', 'gte', 'lte', 'gt', 'lt', 'in'].forEach(function (k) { Q.prototype[k] = function (c, v) { this.f.push([k, c, v]); return this; }; });
   Q.prototype.order = function (c, o) { this.o.push([c, !(o && o.ascending === false)]); return this; };
   Q.prototype.limit = function (n) { this.lim = n; return this; };
+  Q.prototype.range = function (a, z) { this.rng = [a, z]; return this; };
   Q.prototype.single = function () { this.one = true; return this; };
   Q.prototype.maybeSingle = function () { this.one = true; this.maybe = true; return this; };
   Q.prototype.insert = function (rows) { this.op = 'insert'; this.rows = rows; return this; };
-  Q.prototype.upsert = function (rows) { this.op = 'upsert'; this.rows = rows; return this; };
+  Q.prototype.upsert = function (rows, o) { this.op = 'upsert'; this.rows = rows; this.uopt = o || {}; return this; };
   Q.prototype.update = function (v) { this.op = 'update'; this.vals = v; return this; };
   Q.prototype.delete = function () { this.op = 'delete'; return this; };
   function match(r, f) {
@@ -2027,12 +2065,14 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       out = filt(visible(this.t, tbl)).slice();
       if (this.o.length) out.sort(function (a, b) { for (var i = 0; i < self.o.length; i++) { var c = self.o[i][0], A = a[c], B = b[c]; if (A === B) continue; if (A == null) return 1; if (B == null) return -1; return (A > B ? 1 : -1) * (self.o[i][1] ? 1 : -1); } return 0; });
       var count = out.length;
+      if (this.rng) out = out.slice(this.rng[0], this.rng[1] + 1);
       if (this.lim != null) out = out.slice(0, this.lim);
       if (this.opts.head) return { data: null, count: count, error: null };
       out = JSON.parse(JSON.stringify(out));
       var joins = String(this.cols || '').match(/(\w+)(![\w]+)?\(([^)]*)\)/g) || [];
       joins.forEach(function (j) {
-        var t = j.split('(')[0].split('!')[0], key = t === 'companies' ? 'company_id' : t.replace(/s$/, '') + '_id';
+        var t = j.split('(')[0].split('!')[0], key = t === 'companies' ? 'company_id' : t === 'mkt_contacts' ? 'contact_id' : t === 'mkt_campaigns' ? 'campaign_id' : t.replace(/s$/, '') + '_id';
+        if (t === 'mkt_list_members') { out.forEach(function (r) { r[t] = JSON.parse(JSON.stringify(DB.mkt_list_members.filter(function (m) { return m.contact_id === r.id; }))); }); return; }
         out.forEach(function (r) { var x = (DB[t] || []).find(function (y) { return y.id === r[key]; }); r[t] = x ? JSON.parse(JSON.stringify(x)) : null; });
       });
       if (this.one) return out.length ? { data: out[0], error: null } : (this.maybe ? { data: null, error: null } : { data: null, error: { message: 'Row not found' } });
@@ -2042,6 +2082,15 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       var rows = (Array.isArray(this.rows) ? this.rows : [this.rows]).map(function (r) { return prepare(self.t, r); });
       if (this.t === 'client_users') {
         for (var i = 0; i < rows.length; i++) if (tbl.some(function (u) { return u.client_id === rows[i].client_id && u.email.toLowerCase() === rows[i].email.toLowerCase() && u.status !== 'revoked'; })) return { data: null, error: { message: 'duplicate key value violates unique constraint' } };
+      }
+      if (this.op === 'upsert' && this.uopt && this.uopt.onConflict) {
+        var ks = this.uopt.onConflict.split(','), added = [];
+        rows.forEach(function (r) {
+          var ix = tbl.findIndex(function (x) { return ks.every(function (k) { return x[k] === r[k]; }); });
+          if (ix > -1) { if (!self.uopt.ignoreDuplicates) Object.assign(tbl[ix], r); } else { tbl.push(r); added.push(r); }
+        });
+        out = JSON.parse(JSON.stringify(this.uopt.ignoreDuplicates ? added : rows));
+        return { data: this.ret ? out : null, error: null };
       }
       rows.forEach(function (r) {
         var key = self.t === 'blackout_dates' ? 'day' : self.t === 'company_documents' && self.op === 'upsert' ? 'path' : 'id';
@@ -2146,6 +2195,9 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     var r = null;
     if (name === 'is_admin' || name === 'is_admin_email') r = MODE === 'admin' && AUTH.user === ADMIN && (name === 'is_admin_email' || AUTH.aal === 'aal2');
     else if (name === 'claim_invitations') r = DB.client_users.filter(function (u) { return u.user_id === ME.id && u.status === 'active'; }).map(function (u) { var c = DB.clients.find(function (x) { return x.id === u.client_id; }); return { client_id: u.client_id, client_name: c.name, role: u.role, status: u.status }; });
+    else if (name === 'mkt_list_counts') r = DB.mkt_lists.map(function (l) { var m = DB.mkt_list_members.filter(function (x) { return x.list_id === l.id; }); return { list_id: l.id, total: m.length, subscribed: m.filter(function (x) { var c = DB.mkt_contacts.find(function (y) { return y.id === x.contact_id; }); return c && c.status === 'subscribed'; }).length }; });
+    else if (name === 'mkt_campaign_stats') r = (args.p_ids || []).map(function (id) { var ss = DB.mkt_sends.filter(function (x) { return x.campaign_id === id; }); var n = function (f) { return ss.filter(f).length; };
+      return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
     else if (name === 'partner_commissions') r = !PME ? [] : DB.invoices.filter(function (i) { return i.partner_id === PME.id && i.status !== 'draft'; }).sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; }).map(function (i) {

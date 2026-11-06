@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Email preferences | Endeavor Business Solutions</title>
+  <meta name="robots" content="noindex">
+  <meta name="description" content="Manage your Endeavor Business Solutions email preferences.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="portal.css">
+</head>
+<body class="portal">
+<a class="skip-link" href="#main" data-t="skip">Skip to content</a>
+<header class="portal-top">
+  <div class="portal-top__inner">
+    <a href="index.html" data-keep-lang aria-label="Endeavor Business Solutions, home"><img class="portal-top__logo" src="logo-endeavor.svg" alt="" width="950" height="180"></a>
+    <nav class="lang-mini" aria-label="Language">
+      <a href="?lang=en" hreflang="en" data-lang="en">EN</a>
+      <a href="?lang=pt" hreflang="pt-BR" data-lang="pt">PT</a>
+      <a href="?lang=es" hreflang="es" data-lang="es">ES</a>
+    </nav>
+  </div>
+</header>
+
+<main class="portal-main" id="main" tabindex="-1" style="max-width:40rem">
+  <section class="portal-card" style="margin-top:2rem">
+    <h1 class="portal-h1" id="u-title" data-t="title">Email preferences</h1>
+    <p id="u-text" class="portal-muted" data-t="loading">Loading…</p>
+    <div class="portal-alert" id="u-msg" role="alert"></div>
+    <div class="portal-btn-row" id="u-actions" hidden>
+      <button class="btn btn--navy" type="button" id="u-yes" data-t="yes">Unsubscribe</button>
+      <a class="btn btn--ghost" href="index.html" data-keep-lang data-t="no">Keep receiving</a>
+    </div>
+    <div class="portal-btn-row" id="u-after" hidden>
+      <button class="btn btn--ghost" type="button" id="u-undo" data-t="undo">It was a mistake, subscribe me again</button>
+      <a class="btn btn--ghost" href="index.html" data-keep-lang data-t="site">Back to site</a>
+    </div>
+  </section>
+</main>
+<script src="app-config.js"></script>
+<script src="portal-common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var t = EP.init({
+    en: { title: 'Email preferences', loading: 'Loading…', ask: 'Do you want to stop receiving Endeavor Business Solutions marketing emails at {e}?', yes: 'Unsubscribe', no: 'Keep receiving',
+      done: 'Done. {e} will no longer receive our marketing emails. Messages about services you hire from us are not affected.', already: '{e} is already unsubscribed from our marketing emails.',
+      undo: 'It was a mistake, subscribe me again', back: 'You are subscribed again. Thank you!', site: 'Back to site', bad: 'This link is incomplete or has expired. Reply to the email you received with the word "unsubscribe" and we will remove you.', err: 'Something went wrong. Please try again.' },
+    pt: { title: 'Preferências de e-mail', loading: 'Carregando…', ask: 'Você quer deixar de receber os e-mails de marketing da Endeavor Business Solutions em {e}?', yes: 'Descadastrar', no: 'Continuar recebendo',
+      done: 'Pronto. {e} não vai mais receber os nossos e-mails de marketing. Mensagens sobre serviços que você contratar não são afetadas.', already: '{e} já está descadastrado dos nossos e-mails de marketing.',
+      undo: 'Foi engano, quero voltar a receber', back: 'Você voltou a receber os nossos e-mails. Obrigado!', site: 'Voltar ao site', bad: 'Este link está incompleto ou expirou. Responda o e-mail que você recebeu com a palavra "descadastrar" que nós removemos você.', err: 'Algo deu errado. Tente de novo.' },
+    es: { title: 'Preferencias de correo', loading: 'Cargando…', ask: '¿Desea dejar de recibir los correos de marketing de Endeavor Business Solutions en {e}?', yes: 'Darme de baja', no: 'Seguir recibiendo',
+      done: 'Listo. {e} ya no recibirá nuestros correos de marketing. Los mensajes sobre servicios que contrate no se ven afectados.', already: '{e} ya está dado de baja de nuestros correos de marketing.',
+      undo: 'Fue un error, quiero volver a recibir', back: 'Volvió a recibir nuestros correos. ¡Gracias!', site: 'Volver al sitio', bad: 'Este enlace está incompleto o venció. Responda el correo que recibió con la palabra "baja" y lo quitaremos.', err: 'Algo salió mal. Intente de nuevo.' }
+  });
+  var $ = function (id) { return document.getElementById(id); };
+  var token = new URLSearchParams(location.search).get('t') || '', email = '';
+  function call(action) { return EP.fn('marketing', { action: action, token: token }); }
+  function show(st) {
+    $('u-actions').hidden = st !== 'subscribed'; $('u-after').hidden = st !== 'unsubscribed';
+    $('u-text').textContent = t(st === 'subscribed' ? 'ask' : 'already').replace('{e}', email);
+  }
+  if (!/^[0-9a-f-]{36}$/i.test(token)) { $('u-text').textContent = t('bad'); return; }
+  call('unsub_info').then(function (r) { email = r.email; show(r.status === 'subscribed' ? 'subscribed' : 'unsubscribed'); }, function () { $('u-text').textContent = t('bad'); });
+  $('u-yes').onclick = function () { this.disabled = true; call('unsub').then(function () { $('u-actions').hidden = true; $('u-after').hidden = false; $('u-text').textContent = t('done').replace('{e}', email); }, function () { $('u-yes').disabled = false; $('u-msg').className = 'portal-alert portal-alert--error'; $('u-msg').textContent = t('err'); }); };
+  $('u-undo').onclick = function () { this.disabled = true; call('resub').then(function () { $('u-after').hidden = true; $('u-text').textContent = t('back'); }, function () { $('u-undo').disabled = false; }); };
+})();
+</script>
+</body>
+</html>
