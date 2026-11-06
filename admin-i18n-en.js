@@ -242,6 +242,7 @@ window.ADMIN_EN = {
   'Mensagem (opcional)': 'Message (optional)', 'Parceiro (contador, bookkeeping, property management)': 'Partner (accountant, bookkeeping, property management)', 'Parceiro recebe (': 'Partner receives (', 'Selecione o cliente.': 'Select the client.', 'Senha alterada.': 'Password changed.', 'Titular (acesso completo)': 'Owner (full access)', 'Vencimento (dias)': 'Due in (days)', 'a definir': 'to be set', '+ itens a definir': '+ items to be set', '+ Item': '+ Item', 'A conta': 'The account',
   'Cancelado pelo cliente': 'Cancelled by the client', 'Cancelado pela Endeavor': 'Cancelled by Endeavor', 'Motivo não informado': 'No reason given',
   'Excluir este agendamento do histórico? Nenhum e-mail é enviado. Esta ação não pode ser desfeita.': 'Delete this booking from the history? No email is sent. This action cannot be undone.',
+  'Este parceiro tem indicações ou comissões registradas. Use Suspender.': 'This partner has referrals or commissions on record. Use Suspend.',
   'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
 };
 // Dynamic messages (regular expressions applied to whole texts)

@@ -3214,6 +3214,7 @@ window.ADMIN_EN = {
   'Mensagem (opcional)': 'Message (optional)', 'Parceiro (contador, bookkeeping, property management)': 'Partner (accountant, bookkeeping, property management)', 'Parceiro recebe (': 'Partner receives (', 'Selecione o cliente.': 'Select the client.', 'Senha alterada.': 'Password changed.', 'Titular (acesso completo)': 'Owner (full access)', 'Vencimento (dias)': 'Due in (days)', 'a definir': 'to be set', '+ itens a definir': '+ items to be set', '+ Item': '+ Item', 'A conta': 'The account',
   'Cancelado pelo cliente': 'Cancelled by the client', 'Cancelado pela Endeavor': 'Cancelled by Endeavor', 'Motivo não informado': 'No reason given',
   'Excluir este agendamento do histórico? Nenhum e-mail é enviado. Esta ação não pode ser desfeita.': 'Delete this booking from the history? No email is sent. This action cannot be undone.',
+  'Este parceiro tem indicações ou comissões registradas. Use Suspender.': 'This partner has referrals or commissions on record. Use Suspend.',
   'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
 };
 // Dynamic messages (regular expressions applied to whole texts)
@@ -5723,6 +5724,15 @@ window.ADMIN_EN_RX = [
       if (counts.refs || counts.invs) return confirmBox(ctx, 'Não é possível excluir', '<strong>' + esc(p.name) + '</strong> tem ' + [counts.refs ? counts.refs + ' indicação(ões)' : '', counts.invs ? counts.invs + ' comissão(ões)' : ''].filter(Boolean).join(' e ') +
         ' registradas. Para não apagar esse histórico, use <strong>Suspender</strong>: o parceiro perde o acesso e os registros ficam guardados.', p.status === 'suspended' ? 'Ok' : 'Suspender', p.status !== 'suspended', p.status === 'suspended' ? async function () { return null; } : set('suspended'));
       return confirmBox(ctx, 'Excluir parceiro', 'Excluir <strong>' + esc(p.name) + '</strong> (' + esc(p.email) + ')? O cadastro é apagado e o parceiro perde o acesso ao portal. Isso não pode ser desfeito.', 'Excluir', true, async function () {
+        // the server also removes the partner's login (unless the e-mail is an admin, a client or another partner),
+        // so the same e-mail can be invited again as a new partner
+        try {
+          var sess = (await ctx.sb.auth.getSession()).data.session;
+          var rr = await fetch(ctx.CFG.functionsUrl + '/partner-invite', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + (sess ? sess.access_token : ctx.CFG.supabaseKey) }, body: JSON.stringify({ action: 'delete', partner_id: p.id }) });
+          var jj = await rr.json().catch(function () { return null; });
+          if (jj && jj.error === 'has_history') return 'Este parceiro tem indicações ou comissões registradas. Use Suspender.';
+          if (rr.ok && jj && jj.ok) { if (/[?&]id=/.test(location.hash)) ERoute.go('#/parceiros'); return null; }
+        } catch (e) { /* fall back below */ }
         var r = await ctx.sb.from('partners').delete().eq('id', p.id);
         if (r.error) return ctx.errText(r.error);
         if (/[?&]id=/.test(location.hash)) ERoute.go('#/parceiros');

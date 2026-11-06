@@ -148,6 +148,15 @@
       if (counts.refs || counts.invs) return confirmBox(ctx, 'Não é possível excluir', '<strong>' + esc(p.name) + '</strong> tem ' + [counts.refs ? counts.refs + ' indicação(ões)' : '', counts.invs ? counts.invs + ' comissão(ões)' : ''].filter(Boolean).join(' e ') +
         ' registradas. Para não apagar esse histórico, use <strong>Suspender</strong>: o parceiro perde o acesso e os registros ficam guardados.', p.status === 'suspended' ? 'Ok' : 'Suspender', p.status !== 'suspended', p.status === 'suspended' ? async function () { return null; } : set('suspended'));
       return confirmBox(ctx, 'Excluir parceiro', 'Excluir <strong>' + esc(p.name) + '</strong> (' + esc(p.email) + ')? O cadastro é apagado e o parceiro perde o acesso ao portal. Isso não pode ser desfeito.', 'Excluir', true, async function () {
+        // the server also removes the partner's login (unless the e-mail is an admin, a client or another partner),
+        // so the same e-mail can be invited again as a new partner
+        try {
+          var sess = (await ctx.sb.auth.getSession()).data.session;
+          var rr = await fetch(ctx.CFG.functionsUrl + '/partner-invite', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + (sess ? sess.access_token : ctx.CFG.supabaseKey) }, body: JSON.stringify({ action: 'delete', partner_id: p.id }) });
+          var jj = await rr.json().catch(function () { return null; });
+          if (jj && jj.error === 'has_history') return 'Este parceiro tem indicações ou comissões registradas. Use Suspender.';
+          if (rr.ok && jj && jj.ok) { if (/[?&]id=/.test(location.hash)) ERoute.go('#/parceiros'); return null; }
+        } catch (e) { /* fall back below */ }
         var r = await ctx.sb.from('partners').delete().eq('id', p.id);
         if (r.error) return ctx.errText(r.error);
         if (/[?&]id=/.test(location.hash)) ERoute.go('#/parceiros');
