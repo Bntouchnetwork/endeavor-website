@@ -905,6 +905,39 @@ html.a11y-contrast .wa-float { background: #000; border: 2px solid #fff; }
 .header__partners { background: var(--white); color: var(--navy-900); border: 1.5px solid var(--navy-900); }
 .header__partners:hover { background: var(--navy-900); color: var(--white); }
 
+/* ---------- Hero fills the first screen ---------- */
+.hero { min-height: calc(100vh - var(--header-h)); min-height: calc(100svh - var(--header-h)); display: flex; flex-direction: column; }
+.hero > .hero__grid { flex: 1 0 auto; align-content: center; width: 100%; }
+.hero > .trustbar { flex: none; }
+
+/* ---------- Partner Program on the home page ---------- */
+.ph-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
+@media (min-width: 640px) { .ph-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .ph-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.ph-card { background: rgb(255 255 255 / 0.06); border: 1px solid rgb(255 255 255 / 0.14); border-top: 3px solid var(--gold); border-radius: var(--radius-lg); padding: clamp(1.2rem, 1rem + 1vw, 1.6rem); }
+.ph-card__icon { width: 2.2rem; height: 2.2rem; padding: 0.45rem; color: var(--gold); background: rgb(255 255 255 / 0.08); border-radius: var(--radius); margin-bottom: 0.6rem; }
+.ph-card h3 { color: var(--white); font-size: 1.12rem; margin-bottom: 0.35rem; }
+.ph-card p { color: var(--on-dark-muted); font-size: 0.95rem; margin: 0; }
+.ph-steps { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); margin-top: clamp(1.5rem, 1rem + 2vw, 2.5rem); }
+@media (min-width: 860px) { .ph-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ph-steps li { display: flex; gap: 0.9rem; align-items: flex-start; }
+.ph-steps__num { flex: none; width: 2.1rem; height: 2.1rem; border-radius: 50%; background: var(--gold); color: var(--navy-950); font-weight: 700; display: grid; place-items: center; }
+.ph-steps strong { display: block; color: var(--white); font-family: var(--font-serif); font-size: 1.15rem; }
+.ph-steps span { color: var(--on-dark-muted); font-size: 0.95rem; }
+.ph-cta { margin-top: clamp(1.5rem, 1rem + 2vw, 2.5rem); }
+@media (min-width: 1360px) {
+  html:not(.a11y-large) .nav__list a.nav__partner { border: 1.5px solid var(--navy-900); border-radius: var(--radius); padding: 0.45rem 0.8rem; color: var(--navy-900); font-weight: 600; white-space: nowrap; }
+  html:not(.a11y-large) .nav__list a.nav__partner::after { display: none; }
+  html:not(.a11y-large) .nav__list a.nav__partner:hover { background: var(--navy-900); color: var(--white); }
+}
+@media (min-width: 1360px) { html:not(.a11y-large) .nav__list > li:first-child { display: none; } }
+@media (min-width: 1360px) and (max-width: 1749.98px) {
+  html:not(.a11y-large) .nav { gap: 0.75rem; }
+  html:not(.a11y-large) .nav__list a { padding: 0 0.4rem; font-size: 0.86rem; }
+  html:not(.a11y-large) .nav__list a.nav__partner { padding: 0.4rem 0.6rem; }
+  html:not(.a11y-large) .login__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
+
 /* Endeavor portal (admin console, scheduling, e-signature). Builds on the tokens in styles.css. */
 body.portal { background: var(--gray-50); min-height: 100vh; }
 .portal-top {
@@ -1740,6 +1773,28 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .pw-need { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .9rem; color: var(--muted); }
 #pf .chosen:empty { display: none; }
 .pw-steps .pw-need li { display: list-item; }
+
+/* ---------- login / MFA / password screens: one screen, centred, no scrolling ---------- */
+.portal-main--auth {
+  min-height: calc(100vh - 4rem - 1px); min-height: calc(100svh - 4rem - 1px);
+  display: flex; align-items: center; justify-content: center;
+  padding: clamp(.75rem, .5rem + 1.5vh, 2rem) var(--gutter);
+}
+.portal-main--auth .auth { margin: 0 auto; width: 100%; }
+.portal-main--auth .portal-h1 { margin-bottom: .35rem; }
+.portal-main--auth .portal-form .field { margin-bottom: .8rem; }
+@media (max-height: 820px) {
+  .portal-main--auth .auth { padding: 1.25rem 1.5rem; }
+  .portal-main--auth .portal-h1 { font-size: clamp(1.5rem, 1.2rem + 1.4vh, 2rem); }
+  .portal-main--auth .portal-muted { margin-bottom: .6rem; }
+  .portal-main--auth .portal-form .field { margin-bottom: .6rem; }
+  .portal-main--auth .auth__qr { padding: .5rem; }
+  .portal-main--auth .auth__qr img { width: 9.5rem; height: 9.5rem; }
+}
+@media (max-height: 640px) {
+  .portal-main--auth .auth__qr img { width: 8rem; height: 8rem; }
+  .portal-main--auth .auth { padding: 1rem 1.25rem; }
+}
 
 </style>
 </head>
@@ -7494,7 +7549,7 @@ window.ADMIN_EN_RX = [
 
   function authShell(inner) {
     $('#topbar-user').hidden = true;
-    app.innerHTML = '<main class="portal-main"><div class="auth portal-card">' + inner + '</div></main>';
+    app.innerHTML = '<main class="portal-main portal-main--auth"><div class="auth portal-card">' + inner + '</div></main>';
   }
 
   function pwField(id, label, auto) {

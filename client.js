@@ -226,7 +226,7 @@
 
   function authShell(html) {
     document.body.classList.remove('app-shell'); $('#topbar-user').hidden = true; $('#nav-toggle').hidden = true;
-    app.innerHTML = '<main class="portal-main"><div class="auth portal-card">' + html + '</div></main>';
+    app.innerHTML = '<main class="portal-main portal-main--auth"><div class="auth portal-card">' + html + '</div></main>';
   }
   async function boot() {
     if (recovery) return;

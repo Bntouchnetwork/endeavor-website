@@ -80,7 +80,7 @@
 
   function authShell(inner) {
     $('#topbar-user').hidden = true;
-    app.innerHTML = '<main class="portal-main"><div class="auth portal-card">' + inner + '</div></main>';
+    app.innerHTML = '<main class="portal-main portal-main--auth"><div class="auth portal-card">' + inner + '</div></main>';
   }
 
   function pwField(id, label, auto) {

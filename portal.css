@@ -833,3 +833,25 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .pw-need { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .9rem; color: var(--muted); }
 #pf .chosen:empty { display: none; }
 .pw-steps .pw-need li { display: list-item; }
+
+/* ---------- login / MFA / password screens: one screen, centred, no scrolling ---------- */
+.portal-main--auth {
+  min-height: calc(100vh - 4rem - 1px); min-height: calc(100svh - 4rem - 1px);
+  display: flex; align-items: center; justify-content: center;
+  padding: clamp(.75rem, .5rem + 1.5vh, 2rem) var(--gutter);
+}
+.portal-main--auth .auth { margin: 0 auto; width: 100%; }
+.portal-main--auth .portal-h1 { margin-bottom: .35rem; }
+.portal-main--auth .portal-form .field { margin-bottom: .8rem; }
+@media (max-height: 820px) {
+  .portal-main--auth .auth { padding: 1.25rem 1.5rem; }
+  .portal-main--auth .portal-h1 { font-size: clamp(1.5rem, 1.2rem + 1.4vh, 2rem); }
+  .portal-main--auth .portal-muted { margin-bottom: .6rem; }
+  .portal-main--auth .portal-form .field { margin-bottom: .6rem; }
+  .portal-main--auth .auth__qr { padding: .5rem; }
+  .portal-main--auth .auth__qr img { width: 9.5rem; height: 9.5rem; }
+}
+@media (max-height: 640px) {
+  .portal-main--auth .auth__qr img { width: 8rem; height: 8rem; }
+  .portal-main--auth .auth { padding: 1rem 1.25rem; }
+}
