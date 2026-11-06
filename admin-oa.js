@@ -3,7 +3,7 @@
    (validated + audited); stage changes are table updates audited by database triggers. Sets window.AdminOA. */
 (function () {
   'use strict';
-  var U = window.EOAUI, L = 'pt';
+  var U = window.EOAUI, L = window.ADMIN_LANG === 'en' ? 'en' : 'pt';
   var ST_PILL = { pending_generation: '', questionnaire: '', drafting: 'pill--info', in_review: 'pill--warn', client_review: 'pill--info', approved: 'pill--done', signing: 'pill--info', signed: 'pill--done', archived: 'pill--done', cancelled: '' };
   var ROLE = { admin: 'Admin', client_owner: 'Cliente (titular)', collaborator: 'Colaborador', partner: 'Parceiro', signer: 'Signatário', system: 'Sistema', user: 'Usuário' };
   var ACTIONS = [['', 'Todas as ações'], ['portal.', 'Acesso aos portais'], ['doc.', 'Documentos'], ['timeline.', 'Timeline'], ['oa.', 'Operating Agreement'], ['esign.', 'Assinatura eletrônica'], ['rules.', 'Regras jurídicas'], ['compliance.', 'Configurações de compliance'], ['audit.', 'Relatórios de auditoria']];

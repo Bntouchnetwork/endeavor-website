@@ -12,8 +12,8 @@
     invalid_share: 'Percentual ou valor do parceiro inválido.', invoice_not_paid: 'A fatura ainda não foi paga.', nothing_to_transfer: 'Não há repasse pendente nesta fatura.', partner_not_ready: 'O parceiro ainda não concluiu o cadastro no Stripe.', bad_return_url: 'Endereço de retorno não permitido.' };
   var DOC_TEMPLATES = ['Passaporte do(s) sócio(s)', 'Comprovante de endereço', 'Nome e atividade da empresa', 'Formulário de cadastro (KYC)', 'Contrato de serviços assinado'];
 
-  var money = function (c, cur) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((c || 0) / 100); };
-  var fmtD = function (d) { if (!d) return ''; var x = new Date(d.length === 10 ? d + 'T12:00:00' : d); return x.toLocaleDateString('pt-BR'); };
+  var money = function (c, cur) { return new Intl.NumberFormat((window.ADMIN_LOCALE || 'pt-BR'), { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((c || 0) / 100); };
+  var fmtD = function (d) { if (!d) return ''; var x = new Date(d.length === 10 ? d + 'T12:00:00' : d); return x.toLocaleDateString((window.ADMIN_LOCALE || 'pt-BR')); };
   var pill = function (cls, s, label) { return '<span class="' + cls + ' ' + cls + '--' + s + '">' + label + '</span>'; };
   function stripeOf(p) {
     if (!p.stripe_account_id) return pill('stripe-st', 'none', 'Stripe não conectado');

@@ -52,6 +52,7 @@
   var lang = pick();
   var CFG = window.ENDEAVOR_CFG;
   window.EP = {
+    langMenu: buildLangDropdowns,
     lang: lang,
     locale: LANGS[lang],
     init: function (dict) {

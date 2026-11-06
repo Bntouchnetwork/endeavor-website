@@ -22,9 +22,9 @@
   function tz() { return (state.settings && state.settings.timezone) || 'America/New_York'; }
   function fmtDT(iso, opts) {
     if (!iso) return '';
-    return new Intl.DateTimeFormat('pt-BR', Object.assign({ timeZone: tz(), dateStyle: 'short', timeStyle: 'short' }, opts || {})).format(new Date(iso));
+    return new Intl.DateTimeFormat((window.ADMIN_LOCALE || 'pt-BR'), Object.assign({ timeZone: tz(), dateStyle: 'short', timeStyle: 'short' }, opts || {})).format(new Date(iso));
   }
-  function fmtDay(iso) { return new Intl.DateTimeFormat('pt-BR', { timeZone: tz(), weekday: 'long', day: '2-digit', month: 'long' }).format(new Date(iso)); }
+  function fmtDay(iso) { return new Intl.DateTimeFormat((window.ADMIN_LOCALE || 'pt-BR'), { timeZone: tz(), weekday: 'long', day: '2-digit', month: 'long' }).format(new Date(iso)); }
   function msg(el, text, kind) { if (!el) return; el.className = 'portal-alert portal-alert--' + (kind || 'info'); el.textContent = text || ''; }
   function errText(e) {
     var m = (e && (e.message || e.error_description || e.msg)) || String(e);
@@ -273,7 +273,7 @@
     var signed30 = envs.filter(function (e) { return e.status === 'signed' && e.signed_at >= month; }).length;
     var schedUrl = siteUrl('schedule.html');
     view.innerHTML =
-      '<div class="console__head"><div><h1>Dashboard</h1><p class="portal-muted">' + esc(new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(now)) + '</p></div></div>' +
+      '<div class="console__head"><div><h1>Dashboard</h1><p class="portal-muted">' + esc(new Intl.DateTimeFormat((window.ADMIN_LOCALE || 'pt-BR'), { dateStyle: 'full' }).format(now)) + '</p></div></div>' +
       '<div class="dash"><div>' +
         '<div class="kpis">' +
           kpi('Novos leads (7 dias)', newLeads) + kpi('Próximos agendamentos', upcoming) + kpi('Assinaturas pendentes', pending) + kpi('Assinados (30 dias)', signed30) +

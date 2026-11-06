@@ -73,6 +73,11 @@ const T: Record<Lang, Record<string, string>> = {
     tomorrow: "mañana", in_d: "en {x} días", in_h: "en {x} horas", in_1h: "en 1 hora", in_m: "en {x} minutos", your: "su horario",
   },
 };
+const ADM: Record<Lang, Record<string, string>> = {
+  pt: { confirmation: "Novo agendamento", reminder: "Lembrete", cancelled: "Agendamento cancelado", rescheduled: "Agendamento remarcado", clientTime: "Horário do cliente", notes: "Observações", reason: "Motivo", open: "Abrir a Agenda" },
+  en: { confirmation: "New booking", reminder: "Reminder", cancelled: "Booking cancelled", rescheduled: "Booking rescheduled", clientTime: "Client's time", notes: "Notes", reason: "Reason", open: "Open the Calendar" },
+  es: { confirmation: "Nueva cita", reminder: "Recordatorio", cancelled: "Cita cancelada", rescheduled: "Cita reprogramada", clientTime: "Hora del cliente", notes: "Notas", reason: "Motivo", open: "Abrir la Agenda" },
+};
 const L = (l: string | null): Lang => (l === "pt" || l === "es" ? l : "en");
 const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -84,7 +89,6 @@ function rel(lang: Lang, min: number) {
   if (min >= 60) { const h = Math.round(min / 60); return h === 1 ? t.in_1h : fill(t.in_h, { x: String(h) }); }
   return fill(t.in_m, { x: String(min) });
 }
-function relPt(min: number) { return rel("pt", min).replace(/^em /, "").replace("amanhã", "1 dia"); }
 function when(b: Row, lang: Lang, orgTz: string) {
   const tz = b.timezone || orgTz, s = new Date(b.starts_at), e = new Date(b.ends_at);
   const d = new Intl.DateTimeFormat(LOC[lang], { timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(s);
@@ -94,8 +98,8 @@ function when(b: Row, lang: Lang, orgTz: string) {
   if (tz !== orgTz) out += ` · ${h(s, orgTz)} ET`;
   return out;
 }
-function whenEt(b: Row, orgTz: string) {
-  return new Intl.DateTimeFormat("pt-BR", { timeZone: orgTz, dateStyle: "full", timeStyle: "short" }).format(new Date(b.starts_at)) + " ET";
+function whenOrg(b: Row, orgTz: string, lang: Lang) {
+  return new Intl.DateTimeFormat(LOC[lang], { timeZone: orgTz, dateStyle: "full", timeStyle: "short" }).format(new Date(b.starts_at)) + " ET";
 }
 
 /* ---------------- calendar ---------------- */
@@ -182,16 +186,17 @@ ${btn(gcalUrl(b, title, details), t.gcal, true)}<p style="font-size:13px;color:#
     } catch (e) { await mark(b, kind, off, "email", "client", "failed", String((e as Error).message)); out.client_email = "failed"; }
   }
 
-  // admin e-mail (always Portuguese)
+  // admin e-mail: in the language the client used to book
   if (emailOn() && s.notify_email && await claim(b, kind, off, "email", "admin")) {
     try {
-      const lbl = { confirmation: "Novo agendamento", reminder: "Lembrete (" + relPt(off) + ")", cancelled: "Agendamento cancelado", rescheduled: "Agendamento remarcado" }[kind];
-      const subj = `${lbl}: ${b.name} – ${whenEt(b, org)}`;
+      const A = ADM[lang], lbl = kind === "reminder" ? A.reminder + " (" + rel(lang, off) + ")" : A[kind];
+      const wEt = whenOrg(b, org, lang);
+      const subj = `${lbl}: ${b.name} – ${wEt}`;
       const html = layout(`<h1 style="font:700 20px/1.35 Georgia,serif;color:#0b1f3a;margin:0 0 14px">${esc(lbl)}</h1>
 <p style="margin:0 0 14px"><strong>${esc(b.name)}</strong><br>${esc(b.email)}${b.phone ? " · WhatsApp " + esc(b.phone) : ""}</p>
-<p style="margin:0 0 14px"><strong>Quando:</strong> ${esc(whenEt(b, org))}${b.timezone && b.timezone !== org ? `<br><span style="color:#6b7280">Horário do cliente: ${esc(when(b, "pt", org))}</span>` : ""}<br><strong>Formato:</strong> ${esc(T.pt[b.meeting_type] || b.meeting_type)}${b.topic ? `<br><strong>Assunto:</strong> ${esc(b.topic)}` : ""}${b.notes ? `<br><strong>Observações:</strong> ${esc(b.notes)}` : ""}${b.cancel_reason ? `<br><strong>Motivo:</strong> ${esc(b.cancel_reason)}` : ""}</p>
-${kind !== "cancelled" ? btn(gcalUrl(b, "Endeavor · " + b.name, details), "Adicionar ao Google Calendar", true) : ""}${btn(SITE + "/admin.html#/agenda", "Abrir a Agenda")}`);
-      await sendEmail(s.notify_email, subj, html, `${lbl}\n${b.name} · ${b.email} · ${b.phone ?? ""}\n${whenEt(b, org)}\n${b.topic ?? ""}`,
+<p style="margin:0 0 14px"><strong>${esc(t.when)}:</strong> ${esc(wEt)}${b.timezone && b.timezone !== org ? `<br><span style="color:#6b7280">${esc(A.clientTime)}: ${esc(when(b, lang, org))}</span>` : ""}<br><strong>${esc(t.type)}:</strong> ${esc(typ)}${b.topic ? `<br><strong>${esc(t.topic)}:</strong> ${esc(b.topic)}` : ""}${b.notes ? `<br><strong>${esc(A.notes)}:</strong> ${esc(b.notes)}` : ""}${b.cancel_reason ? `<br><strong>${esc(A.reason)}:</strong> ${esc(b.cancel_reason)}` : ""}</p>
+${kind !== "cancelled" ? btn(gcalUrl(b, "Endeavor · " + b.name, details), t.gcal, true) : ""}${btn(SITE + "/admin.html?lang=" + (lang === "pt" ? "pt" : "en") + "#/agenda", A.open)}`);
+      await sendEmail(s.notify_email, subj, html, `${lbl}\n${b.name} · ${b.email} · ${b.phone ?? ""}\n${wEt}\n${b.topic ?? ""}`,
         kind === "reminder" ? undefined : { name: "endeavor-call.ics", content: ics(b, "Endeavor · " + b.name, details, kind === "cancelled"), cancel: kind === "cancelled" });
       await mark(b, kind, off, "email", "admin", "sent"); out.admin_email = "sent";
     } catch (e) { await mark(b, kind, off, "email", "admin", "failed", String((e as Error).message)); out.admin_email = "failed"; }
@@ -213,8 +218,8 @@ ${kind !== "cancelled" ? btn(gcalUrl(b, "Endeavor · " + b.name, details), "Adic
   // WhatsApp (admin)
   if (waOn() && s.notify_whatsapp && await claim(b, kind, off, "whatsapp", "admin")) {
     try {
-      const lbl = { confirmation: "Novo agendamento", reminder: "Lembrete (" + relPt(off) + ")", cancelled: "Cancelado", rescheduled: "Remarcado" }[kind];
-      await sendWhatsApp(s.notify_whatsapp, WA_TPL.admin, "pt", [lbl, b.name, whenEt(b, org), [b.phone, b.email].filter(Boolean).join(" · ")]);
+      const A = ADM[lang], lbl = kind === "reminder" ? A.reminder + " (" + rel(lang, off) + ")" : A[kind];
+      await sendWhatsApp(s.notify_whatsapp, WA_TPL.admin, lang, [lbl, b.name, whenOrg(b, org, lang), [b.phone, b.email].filter(Boolean).join(" · ")]);
       await mark(b, kind, off, "whatsapp", "admin", "sent"); out.admin_whatsapp = "sent";
     } catch (e) { await mark(b, kind, off, "whatsapp", "admin", "failed", String((e as Error).message)); out.admin_whatsapp = "failed"; }
   }

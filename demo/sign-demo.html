@@ -1628,6 +1628,15 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .rm-row input, .rm-row select { min-height: 2.5rem; }
 .sent-line { font-size: .82rem; color: var(--muted); }
 
+/* agenda list lines; compact header on phones */
+.list__main .sent-line { display: block; margin-top: .15rem; }
+@media (max-width: 480px) {
+  #admin-lang .lang__code { display: none; }
+  .portal-top__right .btn { white-space: nowrap; }
+  .portal-top__right { gap: .4rem; }
+}
+#ag-body .list__main > span { display: block; }
+
 </style>
 </head>
 <body class="portal">
@@ -3125,6 +3134,7 @@ window.ENDEAVOR_CFG = {
   var lang = pick();
   var CFG = window.ENDEAVOR_CFG;
   window.EP = {
+    langMenu: buildLangDropdowns,
     lang: lang,
     locale: LANGS[lang],
     init: function (dict) {
