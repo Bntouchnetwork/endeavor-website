@@ -92,10 +92,23 @@
       if (edit) row.status = v('pf-status');
       if (row.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(row.email)) return ctx.msg(ctx.$('#pf-msg', o), 'Informe nome e e-mail válidos.', 'error');
       if (!(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
+      var form = this, btn = form.querySelector('button[type=submit]'), m = ctx.$('#pf-msg', o), label = btn.textContent;
+      btn.disabled = true; btn.textContent = edit ? 'Salvando…' : 'Enviando convite…';
+      if (!edit) ctx.msg(m, 'Criando o parceiro e enviando o convite para ' + row.email + '. Aguarde alguns segundos…', 'info');
       var r = edit ? await ctx.sb.from('partners').update(row).eq('id', p.id) : await ctx.sb.from('partners').insert(row).select('id').single();
-      if (r.error) return ctx.msg(ctx.$('#pf-msg', o), /duplicate|unique/i.test(r.error.message) ? 'Já existe um parceiro com este e-mail.' : ctx.errText(r.error), 'error');
-      if (!edit) { var ok = await sendInvite(ctx, Object.assign({ id: r.data.id }, row)); ctx.closeOverlay(); ERoute.go('#/parceiros?id=' + r.data.id + (ok ? '' : '&invite=erro')); return; }
-      ctx.closeOverlay(); ctx.route();
+      if (r.error) { btn.disabled = false; btn.textContent = label; return ctx.msg(m, /duplicate|unique/i.test(r.error.message) ? 'Já existe um parceiro com este e-mail.' : ctx.errText(r.error), 'error'); }
+      if (edit) { ctx.closeOverlay(); ctx.route(); return; }
+      var id = r.data.id, ok = await sendInvite(ctx, Object.assign({ id: id }, row));
+      var dest = '#/parceiros?id=' + id + '&invite=' + (ok ? 'ok' : 'erro'), gone = false;
+      var finish = function () { if (gone) return; gone = true; clearTimeout(timer); ctx.closeOverlay(); ERoute.go(dest); };
+      // replace the form with a clear confirmation; the card closes by itself or with the button
+      form.innerHTML = '<div class="portal-alert portal-alert--' + (ok ? 'ok' : 'error') + '" role="status" style="display:block">' +
+        (ok ? '<strong>Convite enviado.</strong> ' + ctx.esc(row.name) + ' vai receber em ' + ctx.esc(row.email) + ' o link para criar a senha. Peça para olhar também o spam.'
+            : '<strong>O parceiro foi criado, mas o e-mail de convite não saiu.</strong> Use "Reenviar convite" na página do parceiro.') + '</div>' +
+        '<p class="portal-muted" style="font-size:.88rem">Esta janela fecha sozinha em alguns segundos.</p><button class="btn btn--navy" type="button" id="pf-done">Fechar</button>';
+      ctx.$('#pf-done', o).onclick = finish; ctx.$('#pf-done', o).focus();
+      o.querySelectorAll('.close-x').forEach(function (b) { b.onclick = finish; });
+      var timer = setTimeout(finish, ok ? 4000 : 8000);
     };
   }
 
@@ -106,11 +119,14 @@
     var tabs = [['indicacoes', 'Indicações'], ['comissoes', 'Comissões'], ['stripe', 'Stripe'], ['dados', 'Dados']];
     view.innerHTML = '<p><a href="#/parceiros">← Parceiros</a></p>' + head(esc, p.name, [TYPE[p.partner_type], p.company, p.email].filter(Boolean).join(' · '),
       '<div class="portal-btn-row">' + (p.status === 'invited' ? '<button class="btn btn--ghost" type="button" id="pd-resend">Reenviar convite</button>' : '') + '<button class="btn btn--ghost" type="button" id="pd-edit">Editar</button></div>') +
-      (param('invite') === 'erro' ? '<div class="portal-alert portal-alert--error">O parceiro foi criado, mas o e-mail de convite não saiu. Use "Reenviar convite".</div>' : '') +
+      (param('invite') === 'erro' ? '<div class="portal-alert portal-alert--error" style="display:block">O parceiro foi criado, mas o e-mail de convite não saiu. Use "Reenviar convite".</div>' : '') +
+      (param('invite') === 'ok' ? '<div class="portal-alert portal-alert--ok" style="display:block" role="status">Convite enviado para ' + esc(p.email) + '.</div>' : '') +
+      '<div class="portal-alert" id="pd-msg" role="status"></div>' +
       '<p style="display:flex;gap:.5rem;flex-wrap:wrap"><span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span>' + stripeOf(p) + '<span class="badge badge--new">Comissão padrão ' + esc(String(+p.default_share_pct)) + '%</span></p>' +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/parceiros?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pd-body"></div>';
     ctx.$('#pd-edit').onclick = function () { partnerForm(ctx, p); };
-    if (ctx.$('#pd-resend')) ctx.$('#pd-resend').onclick = async function () { this.disabled = true; var ok = await sendInvite(ctx, p); this.textContent = ok ? 'Convite reenviado' : 'Falhou, tente de novo'; this.disabled = false; };
+    if (ctx.$('#pd-resend')) ctx.$('#pd-resend').onclick = async function () { var b = this; b.disabled = true; b.textContent = 'Enviando…'; var ok = await sendInvite(ctx, p); b.textContent = ok ? 'Convite reenviado' : 'Falhou, tente de novo'; b.disabled = false;
+      ctx.msg(ctx.$('#pd-msg'), ok ? 'Convite reenviado para ' + p.email + '. Peça para olhar também o spam.' : 'O e-mail de convite não saiu. Tente de novo em alguns segundos.', ok ? 'ok' : 'error'); };
     var body = ctx.$('#pd-body');
     if (tab === 'indicacoes') return tabReferrals(body, ctx, p);
     if (tab === 'comissoes') return tabCommissions(body, ctx, p);
