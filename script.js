@@ -64,6 +64,7 @@
     if (typeof toggleLabel !== 'undefined' && toggleLabel) toggleLabel.textContent = nav.classList.contains('is-open') ? ui('close') : ui('menu');
     // WhatsApp links carry a greeting in the current language
     document.querySelectorAll('.js-sched').forEach(function (l) { l.href = 'schedule.html?lang=' + lang; });
+    document.querySelectorAll('.js-partners').forEach(function (l) { l.href = 'partners.html?lang=' + lang; });
     document.querySelectorAll('.js-client').forEach(function (l) { l.href = 'client.html?lang=' + lang; });
     document.querySelectorAll('.js-partner').forEach(function (l) { l.href = 'partner.html?lang=' + lang; });
     document.querySelectorAll('#wa-float, .js-wa').forEach(function (l) {

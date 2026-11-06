@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Partner Program | Endeavor Business Solutions</title>
+  <meta name="description" content="Refer clients to Endeavor Business Solutions, follow every step in your own portal and receive your commission automatically through Stripe.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="portal.css">
+</head>
+<body class="portal">
+<a class="skip-link" href="#main" data-t="skip">Skip to content</a>
+<header class="portal-top">
+  <div class="portal-top__inner">
+    <a href="index.html" data-keep-lang aria-label="Endeavor Business Solutions, home"><img class="portal-top__logo" src="logo-endeavor.svg" alt="" width="950" height="180"></a>
+    <div class="pp-top-right">
+      <a class="pp-login" href="partner.html" data-keep-lang data-t="login">Partner login</a>
+      <nav class="lang-mini" aria-label="Language">
+        <a href="?lang=en" hreflang="en" data-lang="en">EN</a>
+        <a href="?lang=pt" hreflang="pt-BR" data-lang="pt">PT</a>
+        <a href="?lang=es" hreflang="es" data-lang="es">ES</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="portal-main pp" id="main" tabindex="-1">
+  <section class="pp-hero">
+    <p class="pp-kicker" data-t="kicker">PARTNER PROGRAM</p>
+    <h1 data-t="title">Grow with Endeavor Business Solutions</h1>
+    <p class="pp-lead" data-t="lead">Refer clients who need a company in the United States. We handle everything, you follow every step in your own portal and receive your commission automatically.</p>
+    <div class="portal-btn-row"><a class="btn btn--gold" href="#cadastro" data-t="cta">I want to be a partner</a><a class="btn pp-ghost" href="#como" data-t="howBtn">How it works</a></div>
+  </section>
+
+  <section aria-labelledby="ben-title" class="pp-sec">
+    <h2 class="portal-h2" id="ben-title" data-t="benTitle">Why partner with us</h2>
+    <div class="pp-cards">
+      <article class="portal-card pp-card"><span class="pp-bar" aria-hidden="true"></span><h3 data-t="b1t">A commission on every referral</h3><p data-t="b1">You earn on the services bought by the clients you refer. No cost to join and no minimum targets.</p></article>
+      <article class="portal-card pp-card"><span class="pp-bar" aria-hidden="true"></span><h3 data-t="b2t">Automatic payouts</h3><p data-t="b2">Connect your Stripe account once and your share goes straight to you when the client pays. Stripe also handles your tax forms.</p></article>
+      <article class="portal-card pp-card"><span class="pp-bar" aria-hidden="true"></span><h3 data-t="b3t">Your own portal</h3><p data-t="b3">Send referrals, follow each client step by step and see what you have earned and what is coming.</p></article>
+      <article class="portal-card pp-card"><span class="pp-bar" aria-hidden="true"></span><h3 data-t="b4t">Full-service support</h3><p data-t="b4">Our team handles company formation, compliance, tax coordination, banking and real estate, in English, Portuguese or Spanish.</p></article>
+    </div>
+  </section>
+
+  <section aria-labelledby="how-title" class="pp-sec" id="como">
+    <h2 class="portal-h2" id="how-title" data-t="howTitle">How it works</h2>
+    <ol class="pp-steps">
+      <li><strong data-t="s1t">Sign up</strong><span data-t="s1">Fill in the form below and pick a time for the onboarding call. Your portal access is created right away.</span></li>
+      <li><strong data-t="s2t">Connect Stripe</strong><span data-t="s2">In the portal, create your Stripe account to receive your commissions. It takes a few minutes.</span></li>
+      <li><strong data-t="s3t">Onboarding call</strong><span data-t="s3">We get to know your work, agree on your commission and you sign the partner agreement online.</span></li>
+      <li><strong data-t="s4t">Refer and get paid</strong><span data-t="s4">Refer clients in the portal and receive your share with every payment.</span></li>
+    </ol>
+  </section>
+
+  <section class="pp-sec" id="cadastro" aria-labelledby="form-title" tabindex="-1">
+    <h2 class="portal-h1" id="form-title" data-t="formTitle">Become a partner</h2>
+    <p class="portal-muted" data-t="formLead">It takes about 2 minutes. Your registration is reviewed by our team on the onboarding call.</p>
+    <form class="portal-form" id="pf" novalidate>
+      <div class="sched">
+        <section class="portal-card" aria-labelledby="d-title">
+          <h3 class="portal-h2" id="d-title" data-t="yourDetails">1. Your details</h3>
+          <div class="portal-grid2">
+            <div class="field"><label for="p-name"><span data-t="name">Full name</span> <span class="req" aria-hidden="true">*</span></label><input id="p-name" autocomplete="name" required maxlength="120"><p class="field__error" id="p-name-err"></p></div>
+            <div class="field"><label for="p-email"><span data-t="email">Email</span> <span class="req" aria-hidden="true">*</span></label><input id="p-email" type="email" autocomplete="email" required maxlength="200"><p class="field__error" id="p-email-err"></p></div>
+            <div class="field field--wide"><label for="p-phone"><span>WhatsApp</span> <span class="req" aria-hidden="true">*</span></label><div id="p-phone-box"></div><p class="field__error" id="p-phone-err"></p></div>
+            <div class="field"><label for="p-company" data-t="company">Company (if any)</label><input id="p-company" autocomplete="organization" maxlength="200"></div>
+            <div class="field"><label for="p-type"><span data-t="profession">Profession</span> <span class="req" aria-hidden="true">*</span></label>
+              <select id="p-type">
+                <option value="" data-t="select">Select</option>
+                <option value="accountant" data-t="t_accountant">Accountant</option>
+                <option value="realtor" data-t="t_realtor">Realtor</option>
+                <option value="attorney" data-t="t_attorney">Attorney</option>
+                <option value="bookkeeping" data-t="t_bookkeeping">Bookkeeping</option>
+                <option value="property_management" data-t="t_pm">Property management</option>
+                <option value="referral" data-t="t_consultant">Consultant / advisor</option>
+                <option value="other" data-t="t_other">Other</option>
+              </select><p class="field__error" id="p-type-err"></p></div>
+            <div class="field"><label for="p-country" data-t="country">Country where you work</label><input id="p-country" autocomplete="country-name" maxlength="100"></div>
+            <div class="field"><label for="p-lang" data-t="plang">Preferred language</label><select id="p-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div>
+          </div>
+          <div class="field"><label for="p-notes" data-t="notes">Tell us about your clients (optional)</label><textarea id="p-notes" rows="3" maxlength="1500"></textarea>
+            <p class="portal-muted" style="font-size:.85rem" data-t="noSensitive">Please do not include SSN, ITIN, passport or bank account numbers. Your tax details are entered later, directly with Stripe.</p></div>
+          <div class="pp-hp" aria-hidden="true"><label for="p-web">Website</label><input id="p-web" tabindex="-1" autocomplete="off"></div>
+        </section>
+
+        <section class="portal-card" aria-labelledby="c-title">
+          <h3 class="portal-h2" id="c-title" data-t="pickCall">2. Onboarding call</h3>
+          <p class="portal-muted" style="margin-top:0" data-t="callLead">Pick a day and time for a 30-minute conversation with our team.</p>
+          <div class="cal__head">
+            <button type="button" id="cal-prev" data-t-aria="prevMonth" aria-label="Previous month">‹</button>
+            <strong id="cal-month" aria-live="polite"></strong>
+            <button type="button" id="cal-next" data-t-aria="nextMonth" aria-label="Next month">›</button>
+          </div>
+          <div class="cal__grid" id="cal-grid" role="group" aria-labelledby="cal-month"></div>
+          <p class="portal-muted" id="slot-hint"></p>
+          <div class="slots" id="slots" role="group" aria-labelledby="c-title"></div>
+          <p class="chosen" id="chosen" aria-live="polite"></p>
+          <p class="field__error" id="slot-err"></p>
+          <fieldset class="field" style="border:0;padding:0;margin:.6rem 0 0">
+            <legend data-t="meetType" style="font-weight:600;margin-bottom:.4rem">How should we meet?</legend>
+            <div class="radio-row">
+              <label><input type="radio" name="mt" value="video" checked> <span data-t="video">Video call</span></label>
+              <label><input type="radio" name="mt" value="phone"> <span data-t="phoneCall">Phone</span></label>
+              <label><input type="radio" name="mt" value="whatsapp"> <span>WhatsApp</span></label>
+            </div>
+          </fieldset>
+          <p class="portal-muted" id="tz-note" style="font-size:.85rem"></p>
+        </section>
+      </div>
+
+      <section class="portal-card pp-submit">
+        <div class="check-row"><input type="checkbox" id="p-ok"><label for="p-ok" data-t="consent">I understand that my registration is reviewed by Endeavor, that the commission and the partner agreement are defined on the onboarding call, and that I may receive emails about the Partner Program (I can unsubscribe at any time).</label></div>
+        <p class="field__error" id="p-ok-err"></p>
+        <div class="portal-alert" id="p-msg" role="alert"></div>
+        <button class="btn btn--navy" type="submit" id="p-submit" data-t="submit">Create my partner account</button>
+        <p class="portal-muted" style="font-size:.85rem"><span data-t="privacy">We use your details to run the Partner Program, as described in our</span> <a href="privacy-policy.html" data-keep-lang data-t="pp">Privacy Policy</a>.</p>
+      </section>
+    </form>
+
+    <section class="portal-card" id="done" hidden tabindex="-1" aria-labelledby="done-title">
+      <h2 class="portal-h1" id="done-title" data-t="doneTitle">Welcome to the Partner Program!</h2>
+      <p id="done-text"></p>
+      <p class="chosen" id="done-when"></p>
+      <ol class="pp-next">
+        <li data-t="n1">Open the email we just sent and create your password (it also turns on two-step verification).</li>
+        <li data-t="n2">In the portal, go to "Stripe payouts" and create your Stripe account. Have your ID, your bank details and your tax number (SSN, ITIN or EIN if you are in the U.S.) at hand. You enter them directly with Stripe.</li>
+        <li data-t="n3">Join the onboarding call. After it, we approve your account, set your commission and send the partner agreement for your electronic signature.</li>
+      </ol>
+      <div class="portal-btn-row">
+        <a class="btn btn--navy" href="partner.html" data-keep-lang data-t="openPortal">Open the Partner Portal</a>
+        <button class="btn btn--ghost" type="button" id="ics" data-t="addCal">Add the call to my calendar</button>
+      </div>
+    </section>
+  </section>
+</main>
+
+<script src="app-config.js"></script>
+<script src="portal-common.js"></script>
+<script src="phone-intl.js"></script>
+<script src="partners.js"></script>
+</body>
+</html>

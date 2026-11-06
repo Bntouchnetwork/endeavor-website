@@ -21,6 +21,42 @@
     if (p.stripe_details_submitted) return pill('stripe-st', 'review', 'Stripe em análise');
     return pill('stripe-st', 'incomplete', 'Cadastro Stripe incompleto');
   }
+  function pBadge(p) {
+    if (p.program_status === 'pending') return '<span class="badge badge--contacted">Aguardando aprovação</span>';
+    return '<span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span>';
+  }
+  var pctOf = function (p) { return p.default_share_pct == null ? 'A definir' : String(+p.default_share_pct) + '%'; };
+  var CTS = { none: 'Sem contrato', sent: 'Enviado ao parceiro', partner_signed: 'Parceiro assinou: falta a Endeavor', signed: 'Assinado pelas duas partes' };
+  async function piCall(ctx, payload) {
+    var sess = (await ctx.sb.auth.getSession()).data.session;
+    var r = await fetch(ctx.CFG.functionsUrl + '/partner-invite', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + (sess ? sess.access_token : ctx.CFG.supabaseKey) }, body: JSON.stringify(payload) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+    return j;
+  }
+  function approveForm(ctx, p) {
+    var esc = ctx.esc;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Aprovar parceiro</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<p><strong>' + esc(p.name) + '</strong>' + (p.company ? ' · ' + esc(p.company) : '') + '<br><span class="portal-muted">' + esc(p.email) + '</span></p>' +
+      '<form class="portal-form" id="ap" novalidate><div class="field"><label for="ap-pct">Comissão combinada (%)</label><input id="ap-pct" type="number" min="0" max="100" step="0.5" required value="' + (p.default_share_pct != null ? esc(String(+p.default_share_pct)) : '') + '"></div>' +
+      '<div class="check-row"><input type="checkbox" id="ap-send" checked><label for="ap-send">Enviar agora o contrato de parceria para assinatura eletrônica</label></div>' +
+      '<p class="portal-muted" style="font-size:.86rem">O contrato sai preenchido com os dados do parceiro e a comissão. Ele assina primeiro; depois chega para você assinar pela Endeavor. A cópia final fica no portal dele e aqui.</p>' +
+      '<div class="portal-alert portal-alert--info" style="display:block;font-size:.86rem">O modelo do contrato (Referral Partner Agreement) é um rascunho: peça a revisão de um advogado antes de usar com parceiros reais.</div>' +
+      '<div class="portal-alert" id="ap-msg" role="alert"></div><button class="btn btn--navy" type="submit">Aprovar</button></form>', true);
+    ctx.$('#ap', o).onsubmit = async function (e) {
+      e.preventDefault();
+      var pct = Number(ctx.$('#ap-pct', o).value), m = ctx.$('#ap-msg', o), b = this.querySelector('button[type=submit]');
+      if (ctx.$('#ap-pct', o).value === '' || !(pct >= 0 && pct <= 100)) return ctx.msg(m, 'Informe a comissão entre 0 e 100%.', 'error');
+      b.disabled = true; b.textContent = 'Aprovando…';
+      try {
+        var j = await piCall(ctx, { action: 'approve', partner_id: p.id, pct: pct, send_contract: ctx.$('#ap-send', o).checked });
+        ctx.$('#ap', o).innerHTML = '<div class="portal-alert portal-alert--ok" style="display:block"><strong>Parceiro aprovado com ' + esc(String(pct)) + '% de comissão.</strong> ' +
+          (j.version ? (j.mailed ? 'O contrato foi enviado para ' + esc(p.email) + '.' : 'O contrato foi criado, mas o e-mail não saiu: use "Reenviar link" na aba Contrato.') : '') + '</div><button class="btn btn--navy" type="button" id="ap-done">Fechar</button>';
+        var fin = function () { ctx.closeOverlay(); ERoute.go('#/parceiros?id=' + p.id + '&tab=contrato'); };
+        ctx.$('#ap-done', o).onclick = fin; o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = fin; });
+      } catch (err) { b.disabled = false; b.textContent = 'Aprovar'; ctx.msg(m, ctx.errText(err), 'error'); }
+    };
+  }
   async function call(ctx, payload) {
     var sess = (await ctx.sb.auth.getSession()).data.session;
     var r = await fetch(ctx.CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify(payload) });
@@ -61,13 +97,13 @@
     var total = function (pid, f) { return invs.filter(function (i) { return i.partner_id === pid && f(i); }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0); };
     var pendingAll = invs.filter(function (i) { return i.status === 'paid' && i.transfer_status === 'pending'; }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0);
     view.innerHTML = head(esc, 'Parceiros', 'Programa de indicações: convide parceiros, acompanhe as indicações e os repasses de comissão via Stripe Connect.', '<button class="btn btn--navy" type="button" id="pt-new">Novo parceiro</button>') +
-      '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Parceiros ativos', parts.filter(function (p) { return p.status === 'active'; }).length) + kpi(esc, 'Indicações', refs.length) +
+      '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Parceiros ativos', parts.filter(function (p) { return p.status === 'active' && p.program_status !== 'pending'; }).length) + kpi(esc, 'Aguardando aprovação', parts.filter(function (p) { return p.program_status === 'pending'; }).length) + kpi(esc, 'Indicações', refs.length) +
       kpi(esc, 'Viraram clientes', refs.filter(function (r) { return ['onboarding', 'in_process', 'completed'].indexOf(r.status) > -1; }).length) + kpi(esc, 'Repasses pendentes', money(pendingAll)) + '</div>' +
       (parts.length ? '<div class="table-wrap"><table class="data data--partners"><thead><tr><th>Parceiro</th><th>Tipo</th><th>Status</th><th class="num">Comissão</th><th>Stripe</th><th class="num">Indicações</th><th class="num">Repassado</th><th class="num">A repassar</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody>' +
         parts.map(function (p) {
           var n = refs.filter(function (r) { return r.partner_id === p.id; }).length;
           return '<tr data-id="' + p.id + '" tabindex="0"><td><strong>' + esc(p.name) + '</strong><span class="sub">' + esc([p.company, p.email].filter(Boolean).join(' · ')) + '</span></td><td>' + esc(TYPE[p.partner_type]) + '</td>' +
-            '<td><span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span></td><td class="num">' + esc(String(+p.default_share_pct)) + '%</td><td>' + stripeOf(p) + '</td>' +
+            '<td>' + pBadge(p) + '</td><td class="num">' + esc(pctOf(p)) + '</td><td>' + stripeOf(p) + '</td>' +
             '<td class="num">' + n + '</td><td class="num">' + esc(money(total(p.id, function (i) { return i.transfer_status === 'paid'; }))) + '</td><td class="num">' + esc(money(total(p.id, function (i) { return ['scheduled', 'pending', 'failed'].indexOf(i.transfer_status) > -1 && i.status !== 'void'; }))) + '</td>' +
             '<td class="row-actions"><button type="button" class="btn btn--ghost btn--xs act-dots" data-menu="' + p.id + '" aria-haspopup="menu" aria-expanded="false" aria-label="Ações do parceiro" title="Ações">⋯</button></td></tr>';
         }).join('') + '</tbody></table></div>'
@@ -85,7 +121,7 @@
         var open = btn.getAttribute('aria-expanded') === 'true'; closeMenu(); if (open) return;
         var p = parts.find(function (x) { return x.id === btn.dataset.menu; });
         var m = document.createElement('div'); m.id = 'pt-menu'; m.className = 'act-menu'; m.setAttribute('role', 'menu');
-        m.innerHTML = rowActions(esc, p).replace(/btn--ghost btn--xs|btn--danger btn--xs/g, function (c) { return c.indexOf('danger') > -1 ? 'act-item act-item--danger' : 'act-item'; }).replace(/class="btn /g, 'role="menuitem" class="');
+        m.innerHTML = rowActions(esc, p).replace(/btn--ghost btn--xs|btn--danger btn--xs|btn--navy btn--xs/g, function (c) { return c.indexOf('danger') > -1 ? 'act-item act-item--danger' : 'act-item'; }).replace(/class="btn /g, 'role="menuitem" class="');
         document.body.appendChild(m);
         m._place = function () {
           var r = btn.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
@@ -113,7 +149,7 @@
   /* row actions: Abrir, Editar, Reenviar convite, Suspender/Reativar, Excluir */
   function rowActions(esc, p) {
     var b = function (act, label, cls) { return '<button type="button" class="btn ' + (cls || 'btn--ghost') + ' btn--xs" data-act="' + act + '" data-pid="' + p.id + '">' + label + '</button>'; };
-    return b('open', 'Abrir') + b('edit', 'Editar') + (p.status !== 'active' || !p.user_id ? b('resend', 'Reenviar convite') : '') +
+    return (p.program_status === 'pending' ? b('approve', 'Aprovar', 'btn--navy') : '') + b('open', 'Abrir') + b('edit', 'Editar') + (p.status !== 'active' || !p.user_id ? b('resend', 'Reenviar convite') : '') +
       (p.status === 'suspended' ? b('reactivate', 'Reativar') : b('suspend', 'Suspender')) + b('delete', 'Excluir', 'btn--danger');
   }
   function confirmBox(ctx, title, text, okLabel, danger, run) {
@@ -131,6 +167,7 @@
     var esc = ctx.esc;
     if (act === 'open') return ERoute.go('#/parceiros?id=' + p.id);
     if (act === 'edit') return partnerForm(ctx, p);
+    if (act === 'approve') return approveForm(ctx, p);
     if (act === 'resend') {
       btn.disabled = true; btn.textContent = 'Enviando…';
       return sendInvite(ctx, p).then(function (ok) {
@@ -181,7 +218,7 @@
       '<div class="field"><label for="pf-email">E-mail (login do parceiro)</label><input id="pf-email" type="email" required value="' + esc(p.email || '') + '"' + (edit && p.user_id ? ' readonly' : '') + '></div>' +
       '<div class="portal-grid2"><div class="field"><label for="pf-company">Empresa</label><input id="pf-company" maxlength="200" value="' + esc(p.company || '') + '"></div><div class="field"><label for="pf-phone">Telefone</label><input id="pf-phone" maxlength="50" value="' + esc(p.phone || '') + '"></div>' +
       '<div class="field"><label for="pf-type">Tipo</label><select id="pf-type">' + Object.keys(TYPE).map(function (k) { return '<option value="' + k + '"' + (p.partner_type === k ? ' selected' : '') + '>' + TYPE[k] + '</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label for="pf-pct">Comissão padrão (%)</label><input id="pf-pct" type="number" min="0" max="100" step="0.5" value="' + esc(String(+p.default_share_pct)) + '"></div>' +
+      '<div class="field"><label for="pf-pct">Comissão padrão (%)</label><input id="pf-pct" type="number" min="0" max="100" step="0.5" value="' + (p.default_share_pct == null ? '' : esc(String(+p.default_share_pct))) + '"' + (p.program_status === 'pending' ? ' placeholder="A definir na aprovação"' : '') + '></div>' +
       '<div class="field"><label for="pf-lang">Idioma</label><select id="pf-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div>' +
       (edit ? '<div class="field"><label for="pf-status">Status</label><select id="pf-status">' + Object.keys(PSTATUS).map(function (k) { return '<option value="' + k + '"' + (p.status === k ? ' selected' : '') + '>' + PSTATUS[k] + '</option>'; }).join('') + '</select></div>' : '') + '</div>' +
       '<div class="field"><label for="pf-notes">Notas internas (o parceiro não vê)</label><textarea id="pf-notes" rows="3" maxlength="5000">' + esc(p.notes || '') + '</textarea></div>' +
@@ -191,10 +228,10 @@
     ctx.$('#pf', o).onsubmit = async function (e) {
       e.preventDefault();
       var v = function (id) { return ctx.$('#' + id, o).value.trim(); };
-      var row = { name: v('pf-name'), email: v('pf-email').toLowerCase(), company: v('pf-company') || null, phone: v('pf-phone') || null, partner_type: v('pf-type'), default_share_pct: Number(v('pf-pct')), language: v('pf-lang'), notes: v('pf-notes') || null };
+      var row = { name: v('pf-name'), email: v('pf-email').toLowerCase(), company: v('pf-company') || null, phone: v('pf-phone') || null, partner_type: v('pf-type'), default_share_pct: v('pf-pct') === '' && p.program_status === 'pending' ? null : Number(v('pf-pct')), language: v('pf-lang'), notes: v('pf-notes') || null };
       if (edit) row.status = v('pf-status');
       if (row.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(row.email)) return ctx.msg(ctx.$('#pf-msg', o), 'Informe nome e e-mail válidos.', 'error');
-      if (!(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
+      if (row.default_share_pct !== null && !(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
       var form = this, btn = form.querySelector('button[type=submit]'), m = ctx.$('#pf-msg', o), label = btn.textContent;
       btn.disabled = true; btn.textContent = edit ? 'Salvando…' : 'Enviando convite…';
       var r = edit ? await ctx.sb.from('partners').update(row).eq('id', p.id) : await ctx.sb.from('partners').insert(row).select('id').single();
@@ -218,11 +255,12 @@
     var esc = ctx.esc, sb = ctx.sb;
     var p = await ctx.q(sb.from('partners').select('*').eq('id', id).single());
     var tab = param('tab') || 'indicacoes';
-    var tabs = [['indicacoes', 'Indicações'], ['comissoes', 'Comissões'], ['stripe', 'Stripe'], ['dados', 'Dados']];
+    var tabs = [['indicacoes', 'Indicações'], ['comissoes', 'Comissões'], ['stripe', 'Stripe'], ['contrato', 'Contrato'], ['dados', 'Dados']];
+    if (p.program_status === 'pending' && !param('tab')) tab = 'contrato';
     view.innerHTML = '<p><a href="#/parceiros">← Parceiros</a></p>' + head(esc, p.name, [TYPE[p.partner_type], p.company, p.email].filter(Boolean).join(' · '),
       '<div class="portal-btn-row row-actions--head">' + rowActions(esc, p).replace(/<button[^>]*data-act="open"[^>]*>Abrir<\/button>/, '') + '</div>') +
       (param('invite') === 'erro' ? '<div class="portal-alert portal-alert--error" style="display:block">O parceiro foi criado, mas o e-mail de convite não saiu. Use "Reenviar convite".</div>' : '') +
-      '<p style="display:flex;gap:.5rem;flex-wrap:wrap"><span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span>' + stripeOf(p) + '<span class="badge badge--new">Comissão padrão ' + esc(String(+p.default_share_pct)) + '%</span></p>' +
+      '<p style="display:flex;gap:.5rem;flex-wrap:wrap">' + pBadge(p) + stripeOf(p) + '<span class="badge badge--new">Comissão ' + esc(pctOf(p)) + '</span>' + (p.contract_status !== 'none' ? '<span class="badge badge--' + (p.contract_status === 'signed' ? 'client' : 'contacted') + '">Contrato: ' + CTS[p.contract_status] + '</span>' : '') + '</p>' +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/parceiros?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pd-body"></div>';
     var counts = await Promise.all([sb.from('referrals').select('id', { count: 'exact', head: true }).eq('partner_id', id), sb.from('invoices').select('id', { count: 'exact', head: true }).eq('partner_id', id)]);
     view.querySelectorAll('.row-actions--head [data-act]').forEach(function (b) {
@@ -232,10 +270,43 @@
     if (tab === 'indicacoes') return tabReferrals(body, ctx, p);
     if (tab === 'comissoes') return tabCommissions(body, ctx, p);
     if (tab === 'stripe') return tabStripe(body, ctx, p);
+    if (tab === 'contrato') return tabContract(body, ctx, p);
     body.innerHTML = '<section class="portal-card"><dl class="kv"><dt>E-mail</dt><dd>' + esc(p.email) + '</dd><dt>Telefone</dt><dd>' + esc(p.phone || '—') + '</dd><dt>Empresa</dt><dd>' + esc(p.company || '—') + '</dd><dt>Idioma</dt><dd>' + esc(p.language) + '</dd>' +
+      '<dt>País</dt><dd>' + esc(p.country || '—') + '</dd><dt>Origem</dt><dd>' + (p.signup_source === 'site' ? 'Cadastro pelo site' : 'Convite do admin') + '</dd>' +
+      '<dt>Conversa de onboarding</dt><dd>' + (p.onboarding_at ? '<a href="#/agenda">' + esc(ctx.fmtDT(p.onboarding_at)) + '</a>' : '—') + '</dd><dt>Aprovado em</dt><dd>' + esc(p.approved_at ? ctx.fmtDT(p.approved_at) + (p.approved_by ? ' · ' + p.approved_by : '') : (p.program_status === 'pending' ? 'Aguardando' : '—')) + '</dd>' +
       '<dt>Convidado em</dt><dd>' + esc(ctx.fmtDT(p.invited_at)) + '</dd><dt>Aceitou em</dt><dd>' + esc(p.accepted_at ? ctx.fmtDT(p.accepted_at) : '—') + '</dd><dt>Notas</dt><dd>' + esc(p.notes || '—') + '</dd></dl></section>';
   }
 
+  async function tabContract(body, ctx, p) {
+    var esc = ctx.esc, sb = ctx.sb, st = p.contract_status || 'none';
+    var envE = null; if (p.contract_endeavor_env) envE = (await sb.from('envelopes').select('token, status').eq('id', p.contract_endeavor_env).maybeSingle()).data;
+    var step = function (done, now, title, text) { return '<li class="' + (done ? 'is-done' : now ? 'is-now' : '') + '"><span class="pw-dot" aria-hidden="true">' + (done ? '✓' : '•') + '</span><div><strong>' + title + '</strong><p>' + text + '</p></div></li>'; };
+    body.innerHTML = '<section class="portal-card pw"><h2 class="portal-h2" style="margin:0">Aprovação e contrato</h2><ol class="pw-steps">' +
+      step(true, false, 'Cadastro', p.signup_source === 'site' ? 'Feito pelo site em ' + esc(ctx.fmtDT(p.created_at)) + '.' : 'Criado pelo admin.') +
+      step(!!p.onboarding_at && new Date(p.onboarding_at) < new Date(), !!p.onboarding_at && new Date(p.onboarding_at) >= new Date(), 'Conversa de onboarding', p.onboarding_at ? esc(ctx.fmtDT(p.onboarding_at)) : 'Sem horário marcado.') +
+      step(p.program_status === 'approved', p.program_status === 'pending', 'Aprovação e comissão', p.program_status === 'pending' ? 'Aguardando a sua aprovação. A comissão fica "a definir" até lá e as indicações ficam bloqueadas.' : 'Aprovado' + (p.approved_at ? ' em ' + esc(ctx.fmtDT(p.approved_at)) : '') + ' · comissão ' + esc(pctOf(p)) + '.') +
+      step(st === 'partner_signed' || st === 'signed', st === 'sent', 'Assinatura do parceiro', st === 'none' ? 'Contrato ainda não enviado.' : st === 'sent' ? 'Enviado em ' + esc(ctx.fmtDT(p.contract_sent_at)) + ' (' + esc(String(+p.contract_pct)) + '%). Aguardando o parceiro.' : 'Assinado pelo parceiro.') +
+      step(st === 'signed', st === 'partner_signed', 'Assinatura da Endeavor', st === 'signed' ? 'Concluído em ' + esc(ctx.fmtDT(p.contract_signed_at)) + '. Cópia no portal do parceiro e em Assinaturas.' : st === 'partner_signed' ? 'Falta você assinar pela Endeavor.' : '—') +
+      '</ol><div class="portal-alert" id="ct-msg" role="status"></div><div class="portal-btn-row" style="margin-top:1rem">' +
+      (p.program_status === 'pending' ? '<button class="btn btn--navy" type="button" id="ct-approve">Aprovar e definir comissão</button>' : '') +
+      (st === 'partner_signed' && envE && envE.status !== 'signed' ? '<a class="btn btn--navy" href="sign.html?t=' + esc(envE.token) + '&lang=pt&ret=admin">Assinar pela Endeavor</a>' : '') +
+      (st === 'sent' || st === 'partner_signed' ? '<button class="btn btn--ghost" type="button" id="ct-resend">Reenviar link' + (st === 'sent' ? ' ao parceiro' : ' para o support@') + '</button>' : '') +
+      (st === 'partner_signed' || st === 'signed' ? '<button class="btn btn--ghost" type="button" id="ct-dl">Baixar contrato' + (st === 'signed' ? ' assinado' : '') + '</button>' : '') +
+      (p.program_status === 'approved' && st !== 'partner_signed' ? '<button class="btn btn--ghost" type="button" id="ct-new">' + (st === 'none' ? 'Enviar contrato' : 'Gerar novo contrato') + '</button>' : '') +
+      '</div><p class="portal-muted" style="font-size:.85rem;margin-top:1rem">Modelo: Referral Partner Agreement v2026-11-06 (em inglês). Precisa da revisão de um advogado antes do uso com parceiros reais. Os dados fiscais (W-9/W-8) e o 1099 ficam com o Stripe.</p></section>';
+    var m = ctx.$('#ct-msg');
+    if (ctx.$('#ct-approve')) ctx.$('#ct-approve').onclick = function () { approveForm(ctx, p); };
+    if (ctx.$('#ct-resend')) ctx.$('#ct-resend').onclick = async function () { this.disabled = true; try { var j = await piCall(ctx, { action: 'contract_resend', partner_id: p.id }); ctx.msg(m, 'Link enviado para ' + j.to + '.', 'ok'); } catch (e) { ctx.msg(m, ctx.errText(e), 'error'); } this.disabled = false; };
+    if (ctx.$('#ct-dl')) ctx.$('#ct-dl').onclick = async function () { try { var j = await piCall(ctx, { action: 'contract_url', partner_id: p.id }); window.open(j.url, '_blank', 'noopener'); } catch (e) { ctx.msg(m, ctx.errText(e), 'error'); } };
+    if (ctx.$('#ct-new')) ctx.$('#ct-new').onclick = async function () {
+      var v = prompt('Comissão do contrato (%):', p.default_share_pct != null ? String(+p.default_share_pct) : ''); if (v == null) return;
+      var pct = Number(v); if (v === '' || !(pct >= 0 && pct <= 100)) return ctx.msg(m, 'Informe a comissão entre 0 e 100%.', 'error');
+      if (st !== 'none' && !confirm('Gerar um novo contrato? O link anterior deixa de valer.')) return;
+      this.disabled = true;
+      try { var j = await piCall(ctx, { action: 'contract_send', partner_id: p.id, pct: pct }); if (pct !== +p.default_share_pct) await sb.from('partners').update({ default_share_pct: pct }).eq('id', p.id); ctx.msg(m, j.mailed ? 'Contrato enviado para ' + p.email + '.' : 'Contrato criado, mas o e-mail não saiu. Use "Reenviar link".', j.mailed ? 'ok' : 'error'); setTimeout(ctx.route, 1200); }
+      catch (e) { this.disabled = false; ctx.msg(m, ctx.errText(e), 'error'); }
+    };
+  }
   async function tabReferrals(body, ctx, p) {
     var esc = ctx.esc;
     var refs = await ctx.q(ctx.sb.from('referrals').select('*').eq('partner_id', p.id).order('created_at', { ascending: false }));
@@ -362,7 +433,7 @@
 
   async function newInvoice(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb;
-    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').order('name')),
+    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id, name').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single())]);
     var clients = res[0], partners = res[1], refs = res[2], cfg = res[3];
     var pre = param('client');
@@ -495,7 +566,7 @@
 
   async function proposalForm(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb, editId = param('id');
-    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').order('name')),
+    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
       editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null),
       ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name'))]);
@@ -658,7 +729,7 @@
   }
 
   /* ================= notifications (bell in the top bar) ================= */
-  var EVK = { proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda' };
+  var EVK = { proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda', partner_new: 'Parceiros', partner_contract: 'Contrato' };
   function bell(ctx) {
     var host = document.getElementById('topbar-user'); if (!host || document.getElementById('notif-btn')) return;
     var btn = document.createElement('button'); btn.type = 'button'; btn.id = 'notif-btn'; btn.className = 'notif-btn'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');

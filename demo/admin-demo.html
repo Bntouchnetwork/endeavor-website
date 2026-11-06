@@ -1700,6 +1700,44 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .mk-listnav a[aria-current="page"] span { color: #cfd8e6; }
 .mk-steps { margin: .6rem 0 0; padding-left: 1.2rem; display: grid; gap: .45rem; font-size: .93rem; }
 
+/* ---------- public Partner Program page ---------- */
+.pp-top-right { display: flex; align-items: center; gap: 1rem; }
+.pp-login { font-weight: 600; font-size: .92rem; color: var(--navy-900); }
+.pp-hero { background: var(--navy-900); color: #fff; border-radius: 18px; padding: clamp(1.75rem, 1rem + 3vw, 3.25rem); margin-bottom: 2rem; }
+.pp-hero h1 { color: #fff; font-family: var(--font-serif, Georgia, serif); font-size: clamp(1.8rem, 1.2rem + 2.4vw, 2.8rem); line-height: 1.15; margin: 0 0 .9rem; max-width: 34ch; }
+.pp-kicker { color: var(--gold); font-weight: 700; letter-spacing: .14em; font-size: .78rem; margin: 0 0 .8rem; }
+.pp-lead { color: #d6deea; font-size: 1.08rem; max-width: 60ch; margin: 0 0 1.4rem; }
+.pp-ghost { background: transparent; color: #fff; border: 1.5px solid rgb(255 255 255 / .55); }
+.pp-ghost:hover { border-color: #fff; color: #fff; }
+.pp-sec { margin: 0 0 2.25rem; scroll-margin-top: 5rem; }
+.pp-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.pp-cards .portal-card { margin: 0 !important; }
+.pp-card h3 { font-family: var(--font-serif, Georgia, serif); font-size: 1.12rem; color: var(--navy-900); margin: 0 0 .4rem; }
+.pp-card p { margin: 0; color: var(--muted); }
+.pp-bar { display: block; width: 2.2rem; height: 4px; border-radius: 2px; background: var(--gold); margin-bottom: .8rem; }
+.pp-steps { list-style: none; counter-reset: pp; margin: 0; padding: 0; display: grid; gap: .9rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+.pp-steps li { counter-increment: pp; position: relative; align-content: start; padding: 1rem 1rem 1rem 3.4rem; background: var(--white, #fff); border: 1px solid var(--line); border-radius: 12px; display: grid; gap: .25rem; }
+.pp-steps li::before { content: counter(pp); position: absolute; left: 1rem; top: 1rem; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--navy-900); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: .9rem; }
+.pp-steps strong { color: var(--navy-900); }
+.pp-steps span { color: var(--muted); font-size: .95rem; }
+@media (min-width: 900px) { #pf .sched { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+.pp-submit { margin-top: 1rem !important; display: grid; gap: .6rem; }
+.pp-submit .btn { justify-self: start; }
+.pp-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.pp-next { margin: 1rem 0; padding-left: 1.3rem; display: grid; gap: .55rem; }
+/* partner portal: welcome / next steps */
+.pw { border-left: 4px solid var(--gold); }
+.pw-steps { list-style: none; margin: .8rem 0 0; padding: 0; display: grid; gap: .65rem; }
+.pw-steps li { display: grid; grid-template-columns: 1.8rem 1fr; gap: .7rem; align-items: start; }
+.pw-steps .pw-dot { width: 1.6rem; height: 1.6rem; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .85rem; background: #e8ecf3; color: var(--navy-900); }
+.pw-steps .is-done .pw-dot { background: #1f7a4d; color: #fff; }
+.pw-steps .is-now .pw-dot { background: var(--gold); color: var(--navy-950, #07162b); }
+.pw-steps strong { display: block; color: var(--navy-900); }
+.pw-steps p { margin: .15rem 0 0; color: var(--muted); font-size: .93rem; }
+.pw-need { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .9rem; color: var(--muted); }
+#pf .chosen:empty { display: none; }
+.pw-steps .pw-need li { display: list-item; }
+
 </style>
 </head>
 <body class="portal">
@@ -1819,7 +1857,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   var PART = function (id, name, email, company, type, pct, status, uid, stripe, d) {
     return { id: id, created_at: iso(-d), updated_at: iso(-d), name: name, email: email, company: company, phone: null, language: 'pt', partner_type: type, default_share_pct: pct, status: status, user_id: uid,
       invited_at: iso(-d), accepted_at: status === 'active' ? iso(-d + 1) : null, stripe_account_id: stripe ? 'acct_1Demo' + id.slice(1, 8) : null, stripe_details_submitted: !!stripe, stripe_charges_enabled: !!stripe,
-      stripe_payouts_enabled: !!stripe, stripe_transfers_active: !!stripe, notes: null };
+      stripe_payouts_enabled: !!stripe, stripe_transfers_active: !!stripe, notes: null, program_status: 'approved', signup_source: 'admin', contract_status: pct >= 15 ? 'signed' : 'none', contract_pct: pct >= 15 ? pct : null, contract_version: pct >= 15 ? 1 : 0, contract_signed_at: pct >= 15 ? iso(-d + 2) : null, onboarding_at: null, approved_at: iso(-d + 1), country: null };
   };
   // agenda: messages already sent for the first two calls
   [0, 1].forEach(function (i) { var b = DB.bookings[i]; [['confirmation', 0, 'email', 'sent'], ['confirmation', 0, 'whatsapp', i ? 'failed' : 'sent'], ['reminder', 1440, 'email', 'sent']].forEach(function (m, j) { if (i === 1 && j === 2) return; DB.booking_messages.push({ id: i * 10 + j, booking_id: b.id, version: 1, kind: m[0], offset_min: m[1], channel: m[2], audience: 'client', status: m[3] }); }); });
@@ -1850,11 +1888,14 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     DB.mkt_sends = DB.mkt_contacts.filter(function (c, i) { return P[i][5] === L1; }).map(function (c, i) { return { id: i + 1, campaign_id: C1, contact_id: c.id, email: c.email, name: c.name, language: c.language, token: uuid(), status: 'sent', sent_at: iso(-2, 10, 1),
       opened_at: i < 3 ? iso(-2, 11 + i) : null, open_count: i < 3 ? i + 1 : 0, clicked_at: i === 0 ? iso(-2, 11, 5) : null, click_count: i === 0 ? 1 : 0, unsubscribed_at: i === 3 ? iso(-2) : null }; });
     DB.mkt_events = [];
-    DB.mkt_templates = [{ id: uuid(), created_at: iso(-1), updated_at: iso(-1), name: 'Contadores - apresentação', brief: 'Convite para contadores brasileiros que atendem clientes com empresa nos EUA.', created_by: 'support@endeavorbiz.com', data: DEMO_TPL('teal') }];
+    DB.mkt_templates = [{"name": "Programa de Parceiros — Template 1", "brief": "Clássico: cartões de vantagens e 3 passos", "data": {"languages": ["pt", "en", "es"], "style": {"accent": "gold", "hero": "navy"}, "button_url": "https://endeavorbiz.com/partners.html?lang={lang}#cadastro", "pt": {"kicker": "Programa de Parceiros", "subject": "{{nome}}, seus clientes querem empresa nos EUA? Vamos juntos", "preheader": "Indique, acompanhe tudo pelo seu portal e receba sua comissão automaticamente.", "heading": "Seja parceiro da Endeavor Business Solutions", "intro": "A Endeavor ajuda empreendedores e investidores estrangeiros a abrir e manter empresas nos Estados Unidos: abertura de LLC e corporações, compliance, coordenação fiscal, conta bancária e imóveis.\n\nSe os seus clientes precisam disso, você indica e a gente cuida de tudo, com você acompanhando cada etapa.", "sections": [{"type": "cards", "title": "Por que ser parceiro", "items": [{"title": "Comissão em cada indicação", "text": "Você ganha sobre os serviços contratados pelos clientes que indicar. Sem custo e sem meta mínima."}, {"title": "Pagamento automático", "text": "Com a sua conta Stripe conectada, a sua parte cai direto para você quando o cliente paga."}, {"title": "Seu próprio portal", "text": "Envie indicações e acompanhe cada cliente, etapa por etapa."}, {"title": "Atendimento completo", "text": "Cuidamos de todo o processo em português, inglês ou espanhol."}]}, {"type": "steps", "title": "Como começar", "items": [{"title": "Faça seu cadastro", "text": "Leva 2 minutos. Você já escolhe o horário da conversa de boas-vindas."}, {"title": "Conversa de onboarding", "text": "Combinamos a sua comissão e você assina o contrato online."}, {"title": "Indique e receba", "text": "Indique pelo portal e receba via Stripe a cada pagamento."}]}], "cta": "Quero ser parceiro", "closing": "Prefere conversar antes? Responda este e-mail ou chame a gente no WhatsApp.", "sign": "Equipe Endeavor Business Solutions"}, "en": {"kicker": "Partner Program", "subject": "{{nome}}, do your clients want a U.S. company? Let us work together", "preheader": "Refer, follow everything in your own portal and get your commission automatically.", "heading": "Become an Endeavor Business Solutions partner", "intro": "Endeavor helps foreign entrepreneurs and investors open and run companies in the United States: LLC and corporation formation, compliance, tax coordination, banking and real estate.\n\nIf your clients need this, you refer them and we handle everything, while you follow every step.", "sections": [{"type": "cards", "title": "Why partner with us", "items": [{"title": "A commission on every referral", "text": "You earn on the services bought by the clients you refer. No cost and no minimum targets."}, {"title": "Automatic payouts", "text": "With your Stripe account connected, your share goes straight to you when the client pays."}, {"title": "Your own portal", "text": "Send referrals and follow each client step by step."}, {"title": "Full-service support", "text": "We handle the whole process in English, Portuguese or Spanish."}]}, {"type": "steps", "title": "How to start", "items": [{"title": "Sign up", "text": "It takes 2 minutes, and you pick a time for the welcome call."}, {"title": "Onboarding call", "text": "We agree on your commission and you sign the agreement online."}, {"title": "Refer and get paid", "text": "Refer in the portal and get paid through Stripe with every payment."}]}], "cta": "I want to be a partner", "closing": "Prefer to talk first? Reply to this email or message us on WhatsApp.", "sign": "The Endeavor Business Solutions team"}, "es": {"kicker": "Programa de Socios", "subject": "{{nombre}}, ¿sus clientes quieren una empresa en EE. UU.? Trabajemos juntos", "preheader": "Recomiende, siga todo en su propio portal y reciba su comisión automáticamente.", "heading": "Sea socio de Endeavor Business Solutions", "intro": "Endeavor ayuda a emprendedores e inversionistas extranjeros a abrir y mantener empresas en Estados Unidos: constitución de LLC y corporaciones, cumplimiento, coordinación fiscal, cuenta bancaria y bienes raíces.\n\nSi sus clientes lo necesitan, usted los recomienda y nosotros nos encargamos de todo, mientras usted sigue cada etapa.", "sections": [{"type": "cards", "title": "Por qué ser socio", "items": [{"title": "Comisión por cada recomendación", "text": "Usted gana sobre los servicios que contraten los clientes que recomiende. Sin costo y sin metas mínimas."}, {"title": "Pago automático", "text": "Con su cuenta Stripe conectada, su parte le llega directo cuando el cliente paga."}, {"title": "Su propio portal", "text": "Envíe recomendaciones y siga cada cliente paso a paso."}, {"title": "Atención completa", "text": "Nos encargamos de todo el proceso en español, inglés o portugués."}]}, {"type": "steps", "title": "Cómo empezar", "items": [{"title": "Regístrese", "text": "Toma 2 minutos y usted elige el horario de la llamada de bienvenida."}, {"title": "Llamada de onboarding", "text": "Acordamos su comisión y usted firma el contrato en línea."}, {"title": "Recomiende y reciba", "text": "Recomiende en el portal y reciba por Stripe con cada pago."}]}], "cta": "Quiero ser socio", "closing": "¿Prefiere conversar antes? Responda este correo o escríbanos por WhatsApp.", "sign": "Equipo de Endeavor Business Solutions"}}}, {"name": "Programa de Parceiros — Template 2", "brief": "Leve: para contadores, corretores e advogados", "data": {"languages": ["pt", "en", "es"], "style": {"accent": "teal", "hero": "light"}, "button_url": "https://endeavorbiz.com/partners.html?lang={lang}#cadastro", "pt": {"kicker": "Para contadores, corretores e advogados", "subject": "Uma parceira nos EUA para os seus clientes, {{nome}}", "preheader": "Você continua sendo a referência do seu cliente. A gente cuida da parte americana.", "heading": "Seu cliente quer abrir empresa nos EUA? Conte com a Endeavor", "intro": "Muitos profissionais atendem clientes que estão expandindo para os Estados Unidos. Com o Programa de Parceiros da Endeavor, você indica e continua sendo a referência de confiança do seu cliente, enquanto a nossa equipe cuida de toda a parte americana.", "sections": [{"type": "list", "title": "O que fazemos pelo seu cliente", "items": [{"title": "Abertura de empresa", "text": "LLC ou corporação na Flórida ou em outro estado, com Operating Agreement."}, {"title": "EIN e compliance", "text": "EIN no IRS, Registered Agent e calendário de obrigações."}, {"title": "Conta bancária e imóveis", "text": "Orientação para a conta da empresa e para a estrutura de imóveis."}, {"title": "Tudo registrado", "text": "Você acompanha cada etapa pelo Portal do Parceiro."}]}, {"type": "highlight", "title": "Simples para você", "text": "Você faz o cadastro em 2 minutos, escolhe o horário da conversa de onboarding e já recebe o acesso ao portal. A comissão é combinada nessa conversa e paga automaticamente pelo Stripe."}], "cta": "Quero ser parceiro", "closing": "Ficou com alguma dúvida? É só responder este e-mail.", "sign": "Equipe Endeavor Business Solutions"}, "en": {"kicker": "For accountants, realtors and attorneys", "subject": "A U.S. partner for your clients, {{nome}}", "preheader": "You stay your client's trusted advisor. We handle the U.S. side.", "heading": "Is your client opening a U.S. company? Count on Endeavor", "intro": "Many professionals serve clients who are expanding to the United States. With the Endeavor Partner Program, you refer them and remain their trusted advisor, while our team handles the whole U.S. side.", "sections": [{"type": "list", "title": "What we do for your client", "items": [{"title": "Company formation", "text": "An LLC or corporation in Florida or another state, with an Operating Agreement."}, {"title": "EIN and compliance", "text": "EIN with the IRS, registered agent and a filing calendar."}, {"title": "Banking and real estate", "text": "Guidance for the business bank account and real estate structure."}, {"title": "Everything on record", "text": "You follow every step in the Partner Portal."}]}, {"type": "highlight", "title": "Simple for you", "text": "Sign up in 2 minutes, pick a time for the onboarding call and get your portal access right away. Your commission is agreed on that call and paid automatically through Stripe."}], "cta": "I want to be a partner", "closing": "Questions? Just reply to this email.", "sign": "The Endeavor Business Solutions team"}, "es": {"kicker": "Para contadores, agentes y abogados", "subject": "Un socio en EE. UU. para sus clientes, {{nombre}}", "preheader": "Usted sigue siendo el asesor de confianza. Nosotros nos encargamos de la parte en EE. UU.", "heading": "¿Su cliente quiere abrir una empresa en EE. UU.? Cuente con Endeavor", "intro": "Muchos profesionales atienden clientes que se expanden a Estados Unidos. Con el Programa de Socios de Endeavor, usted los recomienda y sigue siendo su asesor de confianza, mientras nuestro equipo se encarga de toda la parte en EE. UU.", "sections": [{"type": "list", "title": "Lo que hacemos por su cliente", "items": [{"title": "Constitución de empresa", "text": "LLC o corporación en Florida u otro estado, con Operating Agreement."}, {"title": "EIN y cumplimiento", "text": "EIN ante el IRS, agente registrado y calendario de obligaciones."}, {"title": "Cuenta bancaria y bienes raíces", "text": "Orientación para la cuenta de la empresa y la estructura de bienes raíces."}, {"title": "Todo registrado", "text": "Usted sigue cada etapa en el Portal de Socios."}]}, {"type": "highlight", "title": "Simple para usted", "text": "Regístrese en 2 minutos, elija el horario de la llamada de onboarding y reciba al instante su acceso al portal. La comisión se acuerda en esa llamada y se paga automáticamente por Stripe."}], "cta": "Quiero ser socio", "closing": "¿Tiene preguntas? Solo responda este correo.", "sign": "Equipo de Endeavor Business Solutions"}}}, {"name": "Programa de Parceiros — Template 3", "brief": "Curto e direto", "data": {"languages": ["pt", "en", "es"], "style": {"accent": "sky", "hero": "navy"}, "button_url": "https://endeavorbiz.com/partners.html?lang={lang}#cadastro", "pt": {"kicker": "Convite", "subject": "{{nome}}, um convite rápido da Endeavor", "preheader": "Cadastro em 2 minutos, acesso ao portal na hora e comissão automática.", "heading": "Indique clientes e ganhe com cada serviço contratado", "intro": "Olá! Estamos convidando profissionais selecionados para o Programa de Parceiros da Endeavor Business Solutions, em Orlando. É simples: você indica, nós atendemos e você recebe.", "sections": [{"type": "steps", "title": "Em 3 passos", "items": [{"title": "Cadastro", "text": "2 minutos, com a escolha do horário da conversa de boas-vindas."}, {"title": "Onboarding", "text": "Combinamos a sua comissão e você assina o contrato online."}, {"title": "Indicações", "text": "Acompanhe tudo pelo portal e receba via Stripe."}]}, {"type": "highlight", "title": "Sem custo e sem meta", "text": "Você não paga nada para participar e não tem meta mínima de indicações."}], "cta": "Quero ser parceiro", "closing": "Até breve!", "sign": "Equipe Endeavor Business Solutions"}, "en": {"kicker": "Invitation", "subject": "{{nome}}, a quick invitation from Endeavor", "preheader": "Sign up in 2 minutes, get portal access right away and automatic commissions.", "heading": "Refer clients and earn on every service they buy", "intro": "Hello! We are inviting selected professionals to the Endeavor Business Solutions Partner Program in Orlando. It is simple: you refer, we serve and you get paid.", "sections": [{"type": "steps", "title": "In 3 steps", "items": [{"title": "Sign up", "text": "2 minutes, including a time for the welcome call."}, {"title": "Onboarding", "text": "We agree on your commission and you sign the agreement online."}, {"title": "Referrals", "text": "Follow everything in the portal and get paid through Stripe."}]}, {"type": "highlight", "title": "No cost, no targets", "text": "There is nothing to pay to join and no minimum number of referrals."}], "cta": "I want to be a partner", "closing": "Talk soon!", "sign": "The Endeavor Business Solutions team"}, "es": {"kicker": "Invitación", "subject": "{{nombre}}, una invitación rápida de Endeavor", "preheader": "Registro en 2 minutos, acceso al portal al instante y comisión automática.", "heading": "Recomiende clientes y gane con cada servicio contratado", "intro": "¡Hola! Estamos invitando a profesionales seleccionados al Programa de Socios de Endeavor Business Solutions, en Orlando. Es simple: usted recomienda, nosotros atendemos y usted recibe.", "sections": [{"type": "steps", "title": "En 3 pasos", "items": [{"title": "Registro", "text": "2 minutos, eligiendo el horario de la llamada de bienvenida."}, {"title": "Onboarding", "text": "Acordamos su comisión y usted firma el contrato en línea."}, {"title": "Recomendaciones", "text": "Siga todo en el portal y reciba por Stripe."}]}, {"type": "highlight", "title": "Sin costo y sin metas", "text": "No paga nada para participar y no tiene un mínimo de recomendaciones."}], "cta": "Quiero ser socio", "closing": "¡Hasta pronto!", "sign": "Equipo de Endeavor Business Solutions"}}}].map(function (t, i) { return Object.assign({ id: uuid(), created_at: iso(-2, 9 + i), updated_at: iso(-2, 9 + i), created_by: 'system' }, t); }).reverse().concat([{ id: uuid(), created_at: iso(-1), updated_at: iso(-1), name: 'Contadores - apresentação', brief: 'Convite para contadores brasileiros que atendem clientes com empresa nos EUA.', created_by: 'support@endeavorbiz.com', data: DEMO_TPL('teal') }]).sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; });
   })();
   DB.partners = [PART(P1, 'Ana Ribeiro', 'ana.cpa@example.com', 'Ribeiro Contabilidade', 'accountant', 15, 'active', 'u-cpa', true, 60),
     PART(P2, 'Marcos Tavares', 'marcos@example.com', 'Tavares Realty', 'realtor', 10, 'active', 'u-marcos', false, 40),
-    PART(P3, 'Bruno Castro', 'bruno@example.com', 'Castro Law', 'attorney', 12, 'invited', null, false, 3)];
+    PART(P3, 'Bruno Castro', 'bruno@example.com', 'Castro Law', 'attorney', 12, 'invited', null, false, 3),
+    Object.assign(PART(uuid(), 'Juliana Prado', 'juliana@pradocontabil.example.com', 'Prado Contabilidade', 'accountant', null, 'active', 'u-juliana', false, 1),
+      { program_status: 'pending', signup_source: 'site', contract_status: 'none', contract_pct: null, contract_signed_at: null, approved_at: null, country: 'Brasil', phone: '+5511988887777', onboarding_at: iso(2, 14),
+        notes: 'Sobre os clientes: atende empresas brasileiras abrindo LLC na Flórida.\nCadastro pelo site.' })];
   DB.referrals = []; DB.referral_events = []; DB.referral_items = []; DB.invoices = [];
   var REF = function (pid, lead, client, name, email, company, service, status, d, steps, items) {
     var id = uuid(), l = DB.leads.find(function (x) { return x.id === lead; }) || {};
@@ -1890,7 +1931,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   INV(C1, R1, P1, 15, [['Abertura de LLC (Lima Real Estate LLC)', 1500]], 'draft', 'scheduled', 1, 'Segunda empresa');
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
-  var PME = MODE === 'partner' ? DB.partners[0] : null;
+  var PME = MODE === 'partner' ? (/[?&]pending=1/.test(location.search) ? DB.partners[3] : DB.partners[0]) : null;
   var DEMO_TOKEN = 'demo4f9c2a7b1e8d6c3f0a5b9e2d7c4f1a8b6e3d0c9f';
   window.DEMO_PROPOSAL_TOKEN = DEMO_TOKEN;
   var PROP_ITEMS = [{ description: 'Abertura da LLC na Flórida (Lima Real Estate LLC)', amount_cents: 120000, quantity: 1 }, { description: 'EIN no IRS', amount_cents: 25000, quantity: 1 }, { description: 'Registered Agent - 12 meses', amount_cents: 30000, quantity: 1 }];
@@ -2747,6 +2788,21 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       }
       return json({ error: 'unknown_action' }, 400);
     }
+    if (/\/functions\/v1\/partner-invite/.test(u)) {
+      var ib = {}; try { ib = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      var ip = DB.partners.find(function (x) { return x.id === ib.partner_id; }) || (MODE === 'partner' ? PME : null);
+      var later2 = function (b, st) { return new Promise(function (res) { setTimeout(function () { res(json(b, st)); }, 500); }); };
+      if (ib.action === 'approve' || ib.action === 'contract_send') {
+        var pct = Number(ib.pct);
+        Object.assign(ip, { default_share_pct: pct, program_status: 'approved', approved_at: new Date().toISOString(), approved_by: ADMIN.email });
+        if (ib.send_contract !== false) { Object.assign(ip, { contract_status: 'sent', contract_pct: pct, contract_version: (ip.contract_version || 0) + 1, contract_sent_at: new Date().toISOString(), contract_partner_token: 'demo-token' }); toast('Demo: o contrato preenchido seria enviado para assinatura eletrônica de ' + ip.email + '.'); }
+        return later2({ ok: true, version: ib.send_contract === false ? undefined : ip.contract_version, mailed: true });
+      }
+      if (ib.action === 'contract_resend') { toast('Demo: link de assinatura reenviado.'); return later2({ ok: true, to: ip.contract_status === 'sent' ? ip.email : 'support@endeavorbiz.com' }); }
+      if (ib.action === 'contract_url') { toast('Demo: abriria o PDF do contrato assinado.'); return later2({ url: '#' }); }
+      if (ib.action === 'delete') { DB.partners = DB.partners.filter(function (x) { return x !== ip; }); return later2({ ok: true }); }
+      toast('Demo: o convite com o link para criar a senha seria enviado para ' + (ip ? ip.email : '') + '.'); return later2({ ok: true, sent: 'invite' });
+    }
     if (/\/functions\/v1\/marketing/.test(u)) {
       var mb = {}; try { mb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
       var slow = function (b, ms, s2) { return new Promise(function (res) { setTimeout(function () { res(json(b, s2)); }, ms || 500); }); };
@@ -3377,6 +3433,16 @@ window.ADMIN_EN = {
   'A IA respondeu num formato inesperado. Tente de novo.': 'The AI replied in an unexpected format. Try again.', 'A IA não respondeu agora. Tente de novo em instantes.': 'The AI did not respond right now. Try again in a moment.',
   'Templates com IA': 'AI templates', 'Clique em Verificar conexão para ver o status.': 'Click Check connection to see the status.', 'Conectada: a IA cria templates na aba Templates.': 'Connected: the AI creates templates in the Templates tab.', 'Pendente: falta a chave ANTHROPIC_API_KEY no Supabase (a mesma do Operating Agreement).': 'Pending: the ANTHROPIC_API_KEY key is missing in Supabase (the same one as the Operating Agreement).',
   'Envio de e-mails (Amazon SES)': 'Email sending (Amazon SES)', 'Código do site (GitHub)': 'Site code (GitHub)', 'Ativa': 'Active', 'Pendente': 'Pending',
+  'Aguardando aprovação': 'Awaiting approval', 'A definir': 'To be defined', 'Aprovar': 'Approve', 'Aprovar parceiro': 'Approve partner', 'Comissão combinada (%)': 'Agreed commission (%)', 'Enviar agora o contrato de parceria para assinatura eletrônica': 'Send the partner agreement for e-signature now',
+  'O contrato sai preenchido com os dados do parceiro e a comissão. Ele assina primeiro; depois chega para você assinar pela Endeavor. A cópia final fica no portal dele e aqui.': "The agreement is filled in with the partner's details and the commission. The partner signs first; then it comes to you to sign for Endeavor. The final copy is kept in their portal and here.",
+  'O modelo do contrato (Referral Partner Agreement) é um rascunho: peça a revisão de um advogado antes de usar com parceiros reais.': 'The agreement template (Referral Partner Agreement) is a draft: have an attorney review it before using it with real partners.',
+  'Aprovando…': 'Approving…', 'Informe a comissão entre 0 e 100%.': 'Enter a commission between 0 and 100%.', 'Contrato': 'Agreement', 'Aprovação e contrato': 'Approval and agreement', 'Cadastro': 'Sign-up', 'Criado pelo admin.': 'Created by the admin.', 'Conversa de onboarding': 'Onboarding call', 'Sem horário marcado.': 'No time booked.',
+  'Aprovação e comissão': 'Approval and commission', 'Aguardando a sua aprovação. A comissão fica "a definir" até lá e as indicações ficam bloqueadas.': 'Waiting for your approval. The commission stays "to be defined" until then and referrals are blocked.',
+  'Assinatura do parceiro': "Partner's signature", 'Contrato ainda não enviado.': 'Agreement not sent yet.', 'Assinado pelo parceiro.': 'Signed by the partner.', 'Assinatura da Endeavor': "Endeavor's signature", 'Falta você assinar pela Endeavor.': 'You still need to sign for Endeavor.',
+  'Aprovar e definir comissão': 'Approve and set commission', 'Assinar pela Endeavor': 'Sign for Endeavor', 'Reenviar link ao parceiro': 'Resend link to partner', 'Reenviar link para o support@': 'Resend link to support@', 'Baixar contrato': 'Download agreement', 'Baixar contrato assinado': 'Download signed agreement', 'Enviar contrato': 'Send agreement', 'Gerar novo contrato': 'Generate new agreement',
+  'Modelo: Referral Partner Agreement v2026-11-06 (em inglês). Precisa da revisão de um advogado antes do uso com parceiros reais. Os dados fiscais (W-9/W-8) e o 1099 ficam com o Stripe.': 'Template: Referral Partner Agreement v2026-11-06 (in English). Needs an attorney review before use with real partners. Tax details (W-9/W-8) and Form 1099 are handled by Stripe.',
+  'Comissão do contrato (%):': 'Agreement commission (%):', 'Gerar um novo contrato? O link anterior deixa de valer.': 'Generate a new agreement? The previous link stops working.', 'Sem contrato': 'No agreement', 'Enviado ao parceiro': 'Sent to partner', 'Parceiro assinou: falta a Endeavor': 'Partner signed: Endeavor pending', 'Assinado pelas duas partes': 'Signed by both parties',
+  'País': 'Country', 'Origem': 'Source', 'Cadastro pelo site': 'Website sign-up', 'Convite do admin': 'Admin invitation', 'Aprovado em': 'Approved on', 'Aguardando': 'Waiting', 'Parceiros': 'Partners', 'A definir na aprovação': 'Set at approval', 'Envio de e-mails (Amazon SES)': 'Email sending (Amazon SES)',
   'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
 };
 // Dynamic messages (regular expressions applied to whole texts)
@@ -3401,7 +3467,7 @@ window.ADMIN_EN_RX = [
   [/^(\d+) contato\(s\)\.$/, '$1 contact(s).'], [/^\((\d+) inscritos\)$/, '($1 subscribed)'], [/^(\d+) pessoas$/, '$1 people'], [/^(\d+) na fila$/, '$1 queued'], [/^(\d+) com falha$/, '$1 failed'],
   [/^(\d+) contatos válidos$/, '$1 valid contacts'], [/^· (\d+) sem e-mail válido \(ignorados\)$/, '· $1 without a valid email (skipped)'], [/^· (\d+) repetidos no arquivo$/, '· $1 repeated in the file'],
   [/^(\d+) contatos novos e (\d+) que já existiam foram colocados na lista\.$/, '$1 new contacts and $2 existing ones were added to the list.'], [/^Importando (\d+) de (\d+)…$/, 'Importing $1 of $2…'],
-  [/^Início (.+)$/, 'Started $1'], [/^· concluída (.+)$/, '· finished $1'], [/^Modelo: (.+)$/, 'Template: $1'], [/^Assunto: (.+)$/, 'Subject: $1'], [/^Criado (.+)$/, 'Created $1'], [/^Template da galeria \((.+)\)\. Campo em branco usa o texto do template\.$/, 'Gallery template ($1). A blank field uses the template text.'], [/^Excluir o template "(.+)"\? As campanhas que já usam ele continuam iguais\.$/, 'Delete the template "$1"? Campaigns already using it stay the same.'],
+  [/^Início (.+)$/, 'Started $1'], [/^· concluída (.+)$/, '· finished $1'], [/^Modelo: (.+)$/, 'Template: $1'], [/^Assunto: (.+)$/, 'Subject: $1'], [/^Criado (.+)$/, 'Created $1'], [/^Comissão (.+)$/, 'Commission $1'], [/^Contrato: (.+)$/, 'Agreement: $1'], [/^Feito pelo site em (.+)\.$/, 'Made on the website on $1.'], [/^Parceiro aprovado com (.+)% de comissão\.$/, 'Partner approved with $1% commission.'], [/^Enviado em (.+) \((.+)\)\. Aguardando o parceiro\.$/, 'Sent on $1 ($2). Waiting for the partner.'], [/^Concluído em (.+)\. Cópia no portal do parceiro e em Assinaturas\.$/, "Completed on $1. Copy in the partner's portal and in Signatures."], [/^Template da galeria \((.+)\)\. Campo em branco usa o texto do template\.$/, 'Gallery template ($1). A blank field uses the template text.'], [/^Excluir o template "(.+)"\? As campanhas que já usam ele continuam iguais\.$/, 'Delete the template "$1"? Campaigns already using it stay the same.'],
   [/^Excluir o documento "(.*)"\?(.*)$/, function (m, a, b) { return 'Delete the document "' + a + '"?' + window.ADMIN_T(b); }],
   [/^Excluir a empresa "(.*)"\?(.*)$/, function (m, a, b) { return 'Delete the company "' + a + '"?' + window.ADMIN_T(b); }],
   [/^Excluir (.+)$/, 'Delete $1'], [/^Timeline · (.+)$/, 'Timeline · $1'], [/^Parceiro · (.+)$/, 'Partner · $1'],
@@ -5764,6 +5830,42 @@ window.ADMIN_EN_RX = [
     if (p.stripe_details_submitted) return pill('stripe-st', 'review', 'Stripe em análise');
     return pill('stripe-st', 'incomplete', 'Cadastro Stripe incompleto');
   }
+  function pBadge(p) {
+    if (p.program_status === 'pending') return '<span class="badge badge--contacted">Aguardando aprovação</span>';
+    return '<span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span>';
+  }
+  var pctOf = function (p) { return p.default_share_pct == null ? 'A definir' : String(+p.default_share_pct) + '%'; };
+  var CTS = { none: 'Sem contrato', sent: 'Enviado ao parceiro', partner_signed: 'Parceiro assinou: falta a Endeavor', signed: 'Assinado pelas duas partes' };
+  async function piCall(ctx, payload) {
+    var sess = (await ctx.sb.auth.getSession()).data.session;
+    var r = await fetch(ctx.CFG.functionsUrl + '/partner-invite', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + (sess ? sess.access_token : ctx.CFG.supabaseKey) }, body: JSON.stringify(payload) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+    return j;
+  }
+  function approveForm(ctx, p) {
+    var esc = ctx.esc;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Aprovar parceiro</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<p><strong>' + esc(p.name) + '</strong>' + (p.company ? ' · ' + esc(p.company) : '') + '<br><span class="portal-muted">' + esc(p.email) + '</span></p>' +
+      '<form class="portal-form" id="ap" novalidate><div class="field"><label for="ap-pct">Comissão combinada (%)</label><input id="ap-pct" type="number" min="0" max="100" step="0.5" required value="' + (p.default_share_pct != null ? esc(String(+p.default_share_pct)) : '') + '"></div>' +
+      '<div class="check-row"><input type="checkbox" id="ap-send" checked><label for="ap-send">Enviar agora o contrato de parceria para assinatura eletrônica</label></div>' +
+      '<p class="portal-muted" style="font-size:.86rem">O contrato sai preenchido com os dados do parceiro e a comissão. Ele assina primeiro; depois chega para você assinar pela Endeavor. A cópia final fica no portal dele e aqui.</p>' +
+      '<div class="portal-alert portal-alert--info" style="display:block;font-size:.86rem">O modelo do contrato (Referral Partner Agreement) é um rascunho: peça a revisão de um advogado antes de usar com parceiros reais.</div>' +
+      '<div class="portal-alert" id="ap-msg" role="alert"></div><button class="btn btn--navy" type="submit">Aprovar</button></form>', true);
+    ctx.$('#ap', o).onsubmit = async function (e) {
+      e.preventDefault();
+      var pct = Number(ctx.$('#ap-pct', o).value), m = ctx.$('#ap-msg', o), b = this.querySelector('button[type=submit]');
+      if (ctx.$('#ap-pct', o).value === '' || !(pct >= 0 && pct <= 100)) return ctx.msg(m, 'Informe a comissão entre 0 e 100%.', 'error');
+      b.disabled = true; b.textContent = 'Aprovando…';
+      try {
+        var j = await piCall(ctx, { action: 'approve', partner_id: p.id, pct: pct, send_contract: ctx.$('#ap-send', o).checked });
+        ctx.$('#ap', o).innerHTML = '<div class="portal-alert portal-alert--ok" style="display:block"><strong>Parceiro aprovado com ' + esc(String(pct)) + '% de comissão.</strong> ' +
+          (j.version ? (j.mailed ? 'O contrato foi enviado para ' + esc(p.email) + '.' : 'O contrato foi criado, mas o e-mail não saiu: use "Reenviar link" na aba Contrato.') : '') + '</div><button class="btn btn--navy" type="button" id="ap-done">Fechar</button>';
+        var fin = function () { ctx.closeOverlay(); ERoute.go('#/parceiros?id=' + p.id + '&tab=contrato'); };
+        ctx.$('#ap-done', o).onclick = fin; o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = fin; });
+      } catch (err) { b.disabled = false; b.textContent = 'Aprovar'; ctx.msg(m, ctx.errText(err), 'error'); }
+    };
+  }
   async function call(ctx, payload) {
     var sess = (await ctx.sb.auth.getSession()).data.session;
     var r = await fetch(ctx.CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify(payload) });
@@ -5804,13 +5906,13 @@ window.ADMIN_EN_RX = [
     var total = function (pid, f) { return invs.filter(function (i) { return i.partner_id === pid && f(i); }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0); };
     var pendingAll = invs.filter(function (i) { return i.status === 'paid' && i.transfer_status === 'pending'; }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0);
     view.innerHTML = head(esc, 'Parceiros', 'Programa de indicações: convide parceiros, acompanhe as indicações e os repasses de comissão via Stripe Connect.', '<button class="btn btn--navy" type="button" id="pt-new">Novo parceiro</button>') +
-      '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Parceiros ativos', parts.filter(function (p) { return p.status === 'active'; }).length) + kpi(esc, 'Indicações', refs.length) +
+      '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Parceiros ativos', parts.filter(function (p) { return p.status === 'active' && p.program_status !== 'pending'; }).length) + kpi(esc, 'Aguardando aprovação', parts.filter(function (p) { return p.program_status === 'pending'; }).length) + kpi(esc, 'Indicações', refs.length) +
       kpi(esc, 'Viraram clientes', refs.filter(function (r) { return ['onboarding', 'in_process', 'completed'].indexOf(r.status) > -1; }).length) + kpi(esc, 'Repasses pendentes', money(pendingAll)) + '</div>' +
       (parts.length ? '<div class="table-wrap"><table class="data data--partners"><thead><tr><th>Parceiro</th><th>Tipo</th><th>Status</th><th class="num">Comissão</th><th>Stripe</th><th class="num">Indicações</th><th class="num">Repassado</th><th class="num">A repassar</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody>' +
         parts.map(function (p) {
           var n = refs.filter(function (r) { return r.partner_id === p.id; }).length;
           return '<tr data-id="' + p.id + '" tabindex="0"><td><strong>' + esc(p.name) + '</strong><span class="sub">' + esc([p.company, p.email].filter(Boolean).join(' · ')) + '</span></td><td>' + esc(TYPE[p.partner_type]) + '</td>' +
-            '<td><span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span></td><td class="num">' + esc(String(+p.default_share_pct)) + '%</td><td>' + stripeOf(p) + '</td>' +
+            '<td>' + pBadge(p) + '</td><td class="num">' + esc(pctOf(p)) + '</td><td>' + stripeOf(p) + '</td>' +
             '<td class="num">' + n + '</td><td class="num">' + esc(money(total(p.id, function (i) { return i.transfer_status === 'paid'; }))) + '</td><td class="num">' + esc(money(total(p.id, function (i) { return ['scheduled', 'pending', 'failed'].indexOf(i.transfer_status) > -1 && i.status !== 'void'; }))) + '</td>' +
             '<td class="row-actions"><button type="button" class="btn btn--ghost btn--xs act-dots" data-menu="' + p.id + '" aria-haspopup="menu" aria-expanded="false" aria-label="Ações do parceiro" title="Ações">⋯</button></td></tr>';
         }).join('') + '</tbody></table></div>'
@@ -5828,7 +5930,7 @@ window.ADMIN_EN_RX = [
         var open = btn.getAttribute('aria-expanded') === 'true'; closeMenu(); if (open) return;
         var p = parts.find(function (x) { return x.id === btn.dataset.menu; });
         var m = document.createElement('div'); m.id = 'pt-menu'; m.className = 'act-menu'; m.setAttribute('role', 'menu');
-        m.innerHTML = rowActions(esc, p).replace(/btn--ghost btn--xs|btn--danger btn--xs/g, function (c) { return c.indexOf('danger') > -1 ? 'act-item act-item--danger' : 'act-item'; }).replace(/class="btn /g, 'role="menuitem" class="');
+        m.innerHTML = rowActions(esc, p).replace(/btn--ghost btn--xs|btn--danger btn--xs|btn--navy btn--xs/g, function (c) { return c.indexOf('danger') > -1 ? 'act-item act-item--danger' : 'act-item'; }).replace(/class="btn /g, 'role="menuitem" class="');
         document.body.appendChild(m);
         m._place = function () {
           var r = btn.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
@@ -5856,7 +5958,7 @@ window.ADMIN_EN_RX = [
   /* row actions: Abrir, Editar, Reenviar convite, Suspender/Reativar, Excluir */
   function rowActions(esc, p) {
     var b = function (act, label, cls) { return '<button type="button" class="btn ' + (cls || 'btn--ghost') + ' btn--xs" data-act="' + act + '" data-pid="' + p.id + '">' + label + '</button>'; };
-    return b('open', 'Abrir') + b('edit', 'Editar') + (p.status !== 'active' || !p.user_id ? b('resend', 'Reenviar convite') : '') +
+    return (p.program_status === 'pending' ? b('approve', 'Aprovar', 'btn--navy') : '') + b('open', 'Abrir') + b('edit', 'Editar') + (p.status !== 'active' || !p.user_id ? b('resend', 'Reenviar convite') : '') +
       (p.status === 'suspended' ? b('reactivate', 'Reativar') : b('suspend', 'Suspender')) + b('delete', 'Excluir', 'btn--danger');
   }
   function confirmBox(ctx, title, text, okLabel, danger, run) {
@@ -5874,6 +5976,7 @@ window.ADMIN_EN_RX = [
     var esc = ctx.esc;
     if (act === 'open') return ERoute.go('#/parceiros?id=' + p.id);
     if (act === 'edit') return partnerForm(ctx, p);
+    if (act === 'approve') return approveForm(ctx, p);
     if (act === 'resend') {
       btn.disabled = true; btn.textContent = 'Enviando…';
       return sendInvite(ctx, p).then(function (ok) {
@@ -5924,7 +6027,7 @@ window.ADMIN_EN_RX = [
       '<div class="field"><label for="pf-email">E-mail (login do parceiro)</label><input id="pf-email" type="email" required value="' + esc(p.email || '') + '"' + (edit && p.user_id ? ' readonly' : '') + '></div>' +
       '<div class="portal-grid2"><div class="field"><label for="pf-company">Empresa</label><input id="pf-company" maxlength="200" value="' + esc(p.company || '') + '"></div><div class="field"><label for="pf-phone">Telefone</label><input id="pf-phone" maxlength="50" value="' + esc(p.phone || '') + '"></div>' +
       '<div class="field"><label for="pf-type">Tipo</label><select id="pf-type">' + Object.keys(TYPE).map(function (k) { return '<option value="' + k + '"' + (p.partner_type === k ? ' selected' : '') + '>' + TYPE[k] + '</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label for="pf-pct">Comissão padrão (%)</label><input id="pf-pct" type="number" min="0" max="100" step="0.5" value="' + esc(String(+p.default_share_pct)) + '"></div>' +
+      '<div class="field"><label for="pf-pct">Comissão padrão (%)</label><input id="pf-pct" type="number" min="0" max="100" step="0.5" value="' + (p.default_share_pct == null ? '' : esc(String(+p.default_share_pct))) + '"' + (p.program_status === 'pending' ? ' placeholder="A definir na aprovação"' : '') + '></div>' +
       '<div class="field"><label for="pf-lang">Idioma</label><select id="pf-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div>' +
       (edit ? '<div class="field"><label for="pf-status">Status</label><select id="pf-status">' + Object.keys(PSTATUS).map(function (k) { return '<option value="' + k + '"' + (p.status === k ? ' selected' : '') + '>' + PSTATUS[k] + '</option>'; }).join('') + '</select></div>' : '') + '</div>' +
       '<div class="field"><label for="pf-notes">Notas internas (o parceiro não vê)</label><textarea id="pf-notes" rows="3" maxlength="5000">' + esc(p.notes || '') + '</textarea></div>' +
@@ -5934,10 +6037,10 @@ window.ADMIN_EN_RX = [
     ctx.$('#pf', o).onsubmit = async function (e) {
       e.preventDefault();
       var v = function (id) { return ctx.$('#' + id, o).value.trim(); };
-      var row = { name: v('pf-name'), email: v('pf-email').toLowerCase(), company: v('pf-company') || null, phone: v('pf-phone') || null, partner_type: v('pf-type'), default_share_pct: Number(v('pf-pct')), language: v('pf-lang'), notes: v('pf-notes') || null };
+      var row = { name: v('pf-name'), email: v('pf-email').toLowerCase(), company: v('pf-company') || null, phone: v('pf-phone') || null, partner_type: v('pf-type'), default_share_pct: v('pf-pct') === '' && p.program_status === 'pending' ? null : Number(v('pf-pct')), language: v('pf-lang'), notes: v('pf-notes') || null };
       if (edit) row.status = v('pf-status');
       if (row.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(row.email)) return ctx.msg(ctx.$('#pf-msg', o), 'Informe nome e e-mail válidos.', 'error');
-      if (!(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
+      if (row.default_share_pct !== null && !(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
       var form = this, btn = form.querySelector('button[type=submit]'), m = ctx.$('#pf-msg', o), label = btn.textContent;
       btn.disabled = true; btn.textContent = edit ? 'Salvando…' : 'Enviando convite…';
       var r = edit ? await ctx.sb.from('partners').update(row).eq('id', p.id) : await ctx.sb.from('partners').insert(row).select('id').single();
@@ -5961,11 +6064,12 @@ window.ADMIN_EN_RX = [
     var esc = ctx.esc, sb = ctx.sb;
     var p = await ctx.q(sb.from('partners').select('*').eq('id', id).single());
     var tab = param('tab') || 'indicacoes';
-    var tabs = [['indicacoes', 'Indicações'], ['comissoes', 'Comissões'], ['stripe', 'Stripe'], ['dados', 'Dados']];
+    var tabs = [['indicacoes', 'Indicações'], ['comissoes', 'Comissões'], ['stripe', 'Stripe'], ['contrato', 'Contrato'], ['dados', 'Dados']];
+    if (p.program_status === 'pending' && !param('tab')) tab = 'contrato';
     view.innerHTML = '<p><a href="#/parceiros">← Parceiros</a></p>' + head(esc, p.name, [TYPE[p.partner_type], p.company, p.email].filter(Boolean).join(' · '),
       '<div class="portal-btn-row row-actions--head">' + rowActions(esc, p).replace(/<button[^>]*data-act="open"[^>]*>Abrir<\/button>/, '') + '</div>') +
       (param('invite') === 'erro' ? '<div class="portal-alert portal-alert--error" style="display:block">O parceiro foi criado, mas o e-mail de convite não saiu. Use "Reenviar convite".</div>' : '') +
-      '<p style="display:flex;gap:.5rem;flex-wrap:wrap"><span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span>' + stripeOf(p) + '<span class="badge badge--new">Comissão padrão ' + esc(String(+p.default_share_pct)) + '%</span></p>' +
+      '<p style="display:flex;gap:.5rem;flex-wrap:wrap">' + pBadge(p) + stripeOf(p) + '<span class="badge badge--new">Comissão ' + esc(pctOf(p)) + '</span>' + (p.contract_status !== 'none' ? '<span class="badge badge--' + (p.contract_status === 'signed' ? 'client' : 'contacted') + '">Contrato: ' + CTS[p.contract_status] + '</span>' : '') + '</p>' +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/parceiros?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pd-body"></div>';
     var counts = await Promise.all([sb.from('referrals').select('id', { count: 'exact', head: true }).eq('partner_id', id), sb.from('invoices').select('id', { count: 'exact', head: true }).eq('partner_id', id)]);
     view.querySelectorAll('.row-actions--head [data-act]').forEach(function (b) {
@@ -5975,10 +6079,43 @@ window.ADMIN_EN_RX = [
     if (tab === 'indicacoes') return tabReferrals(body, ctx, p);
     if (tab === 'comissoes') return tabCommissions(body, ctx, p);
     if (tab === 'stripe') return tabStripe(body, ctx, p);
+    if (tab === 'contrato') return tabContract(body, ctx, p);
     body.innerHTML = '<section class="portal-card"><dl class="kv"><dt>E-mail</dt><dd>' + esc(p.email) + '</dd><dt>Telefone</dt><dd>' + esc(p.phone || '—') + '</dd><dt>Empresa</dt><dd>' + esc(p.company || '—') + '</dd><dt>Idioma</dt><dd>' + esc(p.language) + '</dd>' +
+      '<dt>País</dt><dd>' + esc(p.country || '—') + '</dd><dt>Origem</dt><dd>' + (p.signup_source === 'site' ? 'Cadastro pelo site' : 'Convite do admin') + '</dd>' +
+      '<dt>Conversa de onboarding</dt><dd>' + (p.onboarding_at ? '<a href="#/agenda">' + esc(ctx.fmtDT(p.onboarding_at)) + '</a>' : '—') + '</dd><dt>Aprovado em</dt><dd>' + esc(p.approved_at ? ctx.fmtDT(p.approved_at) + (p.approved_by ? ' · ' + p.approved_by : '') : (p.program_status === 'pending' ? 'Aguardando' : '—')) + '</dd>' +
       '<dt>Convidado em</dt><dd>' + esc(ctx.fmtDT(p.invited_at)) + '</dd><dt>Aceitou em</dt><dd>' + esc(p.accepted_at ? ctx.fmtDT(p.accepted_at) : '—') + '</dd><dt>Notas</dt><dd>' + esc(p.notes || '—') + '</dd></dl></section>';
   }
 
+  async function tabContract(body, ctx, p) {
+    var esc = ctx.esc, sb = ctx.sb, st = p.contract_status || 'none';
+    var envE = null; if (p.contract_endeavor_env) envE = (await sb.from('envelopes').select('token, status').eq('id', p.contract_endeavor_env).maybeSingle()).data;
+    var step = function (done, now, title, text) { return '<li class="' + (done ? 'is-done' : now ? 'is-now' : '') + '"><span class="pw-dot" aria-hidden="true">' + (done ? '✓' : '•') + '</span><div><strong>' + title + '</strong><p>' + text + '</p></div></li>'; };
+    body.innerHTML = '<section class="portal-card pw"><h2 class="portal-h2" style="margin:0">Aprovação e contrato</h2><ol class="pw-steps">' +
+      step(true, false, 'Cadastro', p.signup_source === 'site' ? 'Feito pelo site em ' + esc(ctx.fmtDT(p.created_at)) + '.' : 'Criado pelo admin.') +
+      step(!!p.onboarding_at && new Date(p.onboarding_at) < new Date(), !!p.onboarding_at && new Date(p.onboarding_at) >= new Date(), 'Conversa de onboarding', p.onboarding_at ? esc(ctx.fmtDT(p.onboarding_at)) : 'Sem horário marcado.') +
+      step(p.program_status === 'approved', p.program_status === 'pending', 'Aprovação e comissão', p.program_status === 'pending' ? 'Aguardando a sua aprovação. A comissão fica "a definir" até lá e as indicações ficam bloqueadas.' : 'Aprovado' + (p.approved_at ? ' em ' + esc(ctx.fmtDT(p.approved_at)) : '') + ' · comissão ' + esc(pctOf(p)) + '.') +
+      step(st === 'partner_signed' || st === 'signed', st === 'sent', 'Assinatura do parceiro', st === 'none' ? 'Contrato ainda não enviado.' : st === 'sent' ? 'Enviado em ' + esc(ctx.fmtDT(p.contract_sent_at)) + ' (' + esc(String(+p.contract_pct)) + '%). Aguardando o parceiro.' : 'Assinado pelo parceiro.') +
+      step(st === 'signed', st === 'partner_signed', 'Assinatura da Endeavor', st === 'signed' ? 'Concluído em ' + esc(ctx.fmtDT(p.contract_signed_at)) + '. Cópia no portal do parceiro e em Assinaturas.' : st === 'partner_signed' ? 'Falta você assinar pela Endeavor.' : '—') +
+      '</ol><div class="portal-alert" id="ct-msg" role="status"></div><div class="portal-btn-row" style="margin-top:1rem">' +
+      (p.program_status === 'pending' ? '<button class="btn btn--navy" type="button" id="ct-approve">Aprovar e definir comissão</button>' : '') +
+      (st === 'partner_signed' && envE && envE.status !== 'signed' ? '<a class="btn btn--navy" href="sign.html?t=' + esc(envE.token) + '&lang=pt&ret=admin">Assinar pela Endeavor</a>' : '') +
+      (st === 'sent' || st === 'partner_signed' ? '<button class="btn btn--ghost" type="button" id="ct-resend">Reenviar link' + (st === 'sent' ? ' ao parceiro' : ' para o support@') + '</button>' : '') +
+      (st === 'partner_signed' || st === 'signed' ? '<button class="btn btn--ghost" type="button" id="ct-dl">Baixar contrato' + (st === 'signed' ? ' assinado' : '') + '</button>' : '') +
+      (p.program_status === 'approved' && st !== 'partner_signed' ? '<button class="btn btn--ghost" type="button" id="ct-new">' + (st === 'none' ? 'Enviar contrato' : 'Gerar novo contrato') + '</button>' : '') +
+      '</div><p class="portal-muted" style="font-size:.85rem;margin-top:1rem">Modelo: Referral Partner Agreement v2026-11-06 (em inglês). Precisa da revisão de um advogado antes do uso com parceiros reais. Os dados fiscais (W-9/W-8) e o 1099 ficam com o Stripe.</p></section>';
+    var m = ctx.$('#ct-msg');
+    if (ctx.$('#ct-approve')) ctx.$('#ct-approve').onclick = function () { approveForm(ctx, p); };
+    if (ctx.$('#ct-resend')) ctx.$('#ct-resend').onclick = async function () { this.disabled = true; try { var j = await piCall(ctx, { action: 'contract_resend', partner_id: p.id }); ctx.msg(m, 'Link enviado para ' + j.to + '.', 'ok'); } catch (e) { ctx.msg(m, ctx.errText(e), 'error'); } this.disabled = false; };
+    if (ctx.$('#ct-dl')) ctx.$('#ct-dl').onclick = async function () { try { var j = await piCall(ctx, { action: 'contract_url', partner_id: p.id }); window.open(j.url, '_blank', 'noopener'); } catch (e) { ctx.msg(m, ctx.errText(e), 'error'); } };
+    if (ctx.$('#ct-new')) ctx.$('#ct-new').onclick = async function () {
+      var v = prompt('Comissão do contrato (%):', p.default_share_pct != null ? String(+p.default_share_pct) : ''); if (v == null) return;
+      var pct = Number(v); if (v === '' || !(pct >= 0 && pct <= 100)) return ctx.msg(m, 'Informe a comissão entre 0 e 100%.', 'error');
+      if (st !== 'none' && !confirm('Gerar um novo contrato? O link anterior deixa de valer.')) return;
+      this.disabled = true;
+      try { var j = await piCall(ctx, { action: 'contract_send', partner_id: p.id, pct: pct }); if (pct !== +p.default_share_pct) await sb.from('partners').update({ default_share_pct: pct }).eq('id', p.id); ctx.msg(m, j.mailed ? 'Contrato enviado para ' + p.email + '.' : 'Contrato criado, mas o e-mail não saiu. Use "Reenviar link".', j.mailed ? 'ok' : 'error'); setTimeout(ctx.route, 1200); }
+      catch (e) { this.disabled = false; ctx.msg(m, ctx.errText(e), 'error'); }
+    };
+  }
   async function tabReferrals(body, ctx, p) {
     var esc = ctx.esc;
     var refs = await ctx.q(ctx.sb.from('referrals').select('*').eq('partner_id', p.id).order('created_at', { ascending: false }));
@@ -6105,7 +6242,7 @@ window.ADMIN_EN_RX = [
 
   async function newInvoice(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb;
-    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').order('name')),
+    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id, name').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single())]);
     var clients = res[0], partners = res[1], refs = res[2], cfg = res[3];
     var pre = param('client');
@@ -6238,7 +6375,7 @@ window.ADMIN_EN_RX = [
 
   async function proposalForm(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb, editId = param('id');
-    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').order('name')),
+    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
       editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null),
       ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name'))]);
@@ -6401,7 +6538,7 @@ window.ADMIN_EN_RX = [
   }
 
   /* ================= notifications (bell in the top bar) ================= */
-  var EVK = { proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda' };
+  var EVK = { proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda', partner_new: 'Parceiros', partner_contract: 'Contrato' };
   function bell(ctx) {
     var host = document.getElementById('topbar-user'); if (!host || document.getElementById('notif-btn')) return;
     var btn = document.createElement('button'); btn.type = 'button'; btn.id = 'notif-btn'; btn.className = 'notif-btn'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');
@@ -6492,7 +6629,7 @@ window.ADMIN_EN_RX = [
       intro: 'A Endeavor ajuda empreendedores e investidores estrangeiros a abrir e manter empresas nos Estados Unidos: abertura de LLC e corporações, compliance, coordenação fiscal, conta bancária, imóveis e family office. Se os seus clientes precisam disso, podemos crescer juntos.',
       benefitsTitle: 'Por que ser parceiro',
       benefits: [['Comissão em cada indicação', 'Você ganha sobre os serviços contratados pelos clientes que indicar. Sem custo e sem meta mínima.'], ['Pagamento automático', 'Conecte sua conta Stripe uma vez e a sua parte cai direto na sua conta quando o cliente paga.'], ['Seu próprio portal', 'Envie indicações, acompanhe cada cliente etapa por etapa e veja o que já recebeu e o que vai receber.'], ['Atendimento completo', 'Nossa equipe cuida de todo o processo do cliente, em português, inglês ou espanhol, e mantém você informado.']],
-      howTitle: 'Como começar', how: [['Converse com a gente', 'Uma conversa rápida para conhecer o seu trabalho e os seus clientes.'], ['Receba seu acesso', 'Você recebe o convite para o Portal do Parceiro.'], ['Indique e receba', 'Indique clientes pelo portal e receba a comissão via Stripe a cada pagamento.']],
+      howTitle: 'Como começar', how: [['Faça seu cadastro', 'Preencha o formulário em 2 minutos e escolha o horário da conversa de boas-vindas. Seu acesso ao portal sai na hora.'], ['Conversa de onboarding', 'Conhecemos o seu trabalho, combinamos a sua comissão e você assina o contrato de parceria online.'], ['Indique e receba', 'Indique clientes pelo portal e receba a comissão via Stripe a cada pagamento.']],
       cta: 'Quero ser parceiro', questions: 'Prefere conversar antes? Responda este e-mail ou fale com a gente pelo WhatsApp.', sign: 'Equipe Endeavor Business Solutions',
       why: 'Você recebe este e-mail porque o seu contato profissional está na nossa lista de possíveis parceiros.', whyGen: 'Você recebe este e-mail porque o seu contato profissional está na lista de contatos da Endeavor Business Solutions.', unsub: 'Não quero mais receber estes e-mails'
     },
@@ -6503,7 +6640,7 @@ window.ADMIN_EN_RX = [
       intro: 'Endeavor helps foreign entrepreneurs and investors open and run companies in the United States: LLC and corporation formation, compliance, tax coordination, banking, real estate and family office. If your clients need this, we can grow together.',
       benefitsTitle: 'Why partner with us',
       benefits: [['A commission on every referral', 'You earn on the services bought by the clients you refer. No cost and no minimum targets.'], ['Automatic payouts', 'Connect your Stripe account once and your share goes straight to your account when the client pays.'], ['Your own portal', 'Send referrals, follow each client step by step and see what you have earned and what is coming.'], ['Full-service support', 'Our team handles the whole process for your client, in English, Portuguese or Spanish, and keeps you informed.']],
-      howTitle: 'How to start', how: [['Talk to us', 'A quick call to learn about your work and your clients.'], ['Get your access', 'You receive the invitation to the Partner Portal.'], ['Refer and get paid', 'Refer clients in the portal and receive your commission through Stripe with every payment.']],
+      howTitle: 'How to start', how: [['Sign up', 'Fill in the form in 2 minutes and pick a time for the welcome call. Your portal access is created right away.'], ['Onboarding call', 'We learn about your work, agree on your commission and you sign the partner agreement online.'], ['Refer and get paid', 'Refer clients in the portal and receive your commission through Stripe with every payment.']],
       cta: 'I want to be a partner', questions: 'Prefer to talk first? Reply to this email or reach us on WhatsApp.', sign: 'The Endeavor Business Solutions team',
       why: 'You are receiving this email because your business contact is on our list of potential partners.', whyGen: 'You are receiving this email because your business contact is on the Endeavor Business Solutions contact list.', unsub: 'Unsubscribe from these emails'
     },
@@ -6514,7 +6651,7 @@ window.ADMIN_EN_RX = [
       intro: 'Endeavor ayuda a emprendedores e inversionistas extranjeros a abrir y mantener empresas en Estados Unidos: constitución de LLC y corporaciones, cumplimiento, coordinación fiscal, cuenta bancaria, bienes raíces y family office. Si sus clientes lo necesitan, podemos crecer juntos.',
       benefitsTitle: 'Por qué ser socio',
       benefits: [['Comisión por cada recomendación', 'Usted gana sobre los servicios que contraten los clientes que recomiende. Sin costo y sin metas mínimas.'], ['Pago automático', 'Conecte su cuenta Stripe una vez y su parte llega directo a su cuenta cuando el cliente paga.'], ['Su propio portal', 'Envíe recomendaciones, siga cada cliente paso a paso y vea lo que ya recibió y lo que va a recibir.'], ['Atención completa', 'Nuestro equipo se encarga de todo el proceso del cliente, en español, inglés o portugués, y lo mantiene informado.']],
-      howTitle: 'Cómo empezar', how: [['Hable con nosotros', 'Una conversación rápida para conocer su trabajo y sus clientes.'], ['Reciba su acceso', 'Usted recibe la invitación al Portal de Socios.'], ['Recomiende y reciba', 'Recomiende clientes en el portal y reciba la comisión por Stripe con cada pago.']],
+      howTitle: 'Cómo empezar', how: [['Regístrese', 'Complete el formulario en 2 minutos y elija el horario de la llamada de bienvenida. Su acceso al portal se crea al instante.'], ['Llamada de onboarding', 'Conocemos su trabajo, acordamos su comisión y usted firma el contrato de socio en línea.'], ['Recomiende y reciba', 'Recomiende clientes en el portal y reciba la comisión por Stripe con cada pago.']],
       cta: 'Quiero ser socio', questions: '¿Prefiere conversar antes? Responda este correo o escríbanos por WhatsApp.', sign: 'Equipo de Endeavor Business Solutions',
       why: 'Recibe este correo porque su contacto profesional está en nuestra lista de posibles socios.', whyGen: 'Recibe este correo porque su contacto profesional está en la lista de contactos de Endeavor Business Solutions.', unsub: 'No quiero recibir más estos correos'
     }
@@ -6551,7 +6688,7 @@ window.ADMIN_EN_RX = [
     o = o || {};
     var lang = langOf(c, ct), t = T[lang], site = (o.site || 'https://endeavorbiz.com').replace(/\/$/, '');
     var n = first(ct && ct.name);
-    var btnUrl = c.button_url || (site + '/schedule.html?lang=' + lang);
+    var btnUrl = (c.button_url || (c.template === 'partners' ? site + '/partners.html?lang=' + lang + '#cadastro' : site + '/schedule.html?lang=' + lang)).replace(/\{lang\}/g, lang);
     var subject, pre, body, textParts;
     if (c.template === 'custom') {
       subject = merge(c.subject || '', ct); pre = merge(c.preheader || '', ct);
@@ -6566,7 +6703,7 @@ window.ADMIN_EN_RX = [
       var AC = ACCENTS[(D.style || {}).accent] || GOLD, light = (D.style || {}).hero === 'light';
       subject = merge(c.subject || d.subject || '', ct); pre = merge(c.preheader || d.preheader || '', ct);
       var label = merge(c.button_label || d.cta || '', ct), head = merge(c.heading || d.heading || subject, ct);
-      if (D.button_url && !c.button_url && /^https:\/\//.test(D.button_url)) btnUrl = D.button_url;
+      if (D.button_url && !c.button_url && /^https:\/\//.test(D.button_url)) btnUrl = D.button_url.replace(/\{lang\}/g, lang);
       var paraHtml = function (txt) { return merge(txt || '', ct).split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean).map(function (p) { return '<p style="margin:0 0 12px">' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
       var secHtml = function (sec) {
         var items = (sec.items || []).slice(0, 6), title = sec.title ? '<div style="font:700 20px/1.3 Georgia,serif;color:' + NAVY + ';margin:0 0 14px">' + esc(merge(sec.title, ct)) + '</div>' : '';

@@ -91,7 +91,14 @@
   // Operating Agreement envelopes: tell the OA module (idempotent) so it opens the next signer or archives; offer the way back
   function oaAfterSign(box) {
     try { EP.fn('oa', { action: 'envelope_signed', token: token }).catch(function () {}); } catch (e) { /* not an OA envelope */ }
+    // partner agreements: opens Endeavor's countersignature, or completes the agreement
+    try { EP.fn('partner-invite', { action: 'envelope_signed', token: token }).catch(function () {}); } catch (e) { /* not a partner agreement */ }
     var ret = qp('ret');
+    if ((ret === 'partner' || ret === 'admin') && box && !box.querySelector('.ret-portal')) {
+      var b2 = document.createElement('a'); b2.className = 'btn btn--ghost ret-portal'; b2.textContent = t('backPortal');
+      b2.href = ret === 'admin' ? 'admin.html#/parceiros' : 'partner.html?lang=' + encodeURIComponent(qp('lang') || EP.lang || 'en') + '#/ref-home';
+      (box.querySelector('.portal-btn-row') || box).appendChild(b2);
+    }
     if (ret === 'client' && box && !box.querySelector('.ret-portal')) {
       var a = document.createElement('a'); a.className = 'btn btn--ghost ret-portal'; a.textContent = t('backPortal');
       a.href = 'client.html?lang=' + encodeURIComponent(qp('lang') || EP.lang || 'en') + '#/overview';

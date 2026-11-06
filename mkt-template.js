@@ -17,7 +17,7 @@
       intro: 'A Endeavor ajuda empreendedores e investidores estrangeiros a abrir e manter empresas nos Estados Unidos: abertura de LLC e corporações, compliance, coordenação fiscal, conta bancária, imóveis e family office. Se os seus clientes precisam disso, podemos crescer juntos.',
       benefitsTitle: 'Por que ser parceiro',
       benefits: [['Comissão em cada indicação', 'Você ganha sobre os serviços contratados pelos clientes que indicar. Sem custo e sem meta mínima.'], ['Pagamento automático', 'Conecte sua conta Stripe uma vez e a sua parte cai direto na sua conta quando o cliente paga.'], ['Seu próprio portal', 'Envie indicações, acompanhe cada cliente etapa por etapa e veja o que já recebeu e o que vai receber.'], ['Atendimento completo', 'Nossa equipe cuida de todo o processo do cliente, em português, inglês ou espanhol, e mantém você informado.']],
-      howTitle: 'Como começar', how: [['Converse com a gente', 'Uma conversa rápida para conhecer o seu trabalho e os seus clientes.'], ['Receba seu acesso', 'Você recebe o convite para o Portal do Parceiro.'], ['Indique e receba', 'Indique clientes pelo portal e receba a comissão via Stripe a cada pagamento.']],
+      howTitle: 'Como começar', how: [['Faça seu cadastro', 'Preencha o formulário em 2 minutos e escolha o horário da conversa de boas-vindas. Seu acesso ao portal sai na hora.'], ['Conversa de onboarding', 'Conhecemos o seu trabalho, combinamos a sua comissão e você assina o contrato de parceria online.'], ['Indique e receba', 'Indique clientes pelo portal e receba a comissão via Stripe a cada pagamento.']],
       cta: 'Quero ser parceiro', questions: 'Prefere conversar antes? Responda este e-mail ou fale com a gente pelo WhatsApp.', sign: 'Equipe Endeavor Business Solutions',
       why: 'Você recebe este e-mail porque o seu contato profissional está na nossa lista de possíveis parceiros.', whyGen: 'Você recebe este e-mail porque o seu contato profissional está na lista de contatos da Endeavor Business Solutions.', unsub: 'Não quero mais receber estes e-mails'
     },
@@ -28,7 +28,7 @@
       intro: 'Endeavor helps foreign entrepreneurs and investors open and run companies in the United States: LLC and corporation formation, compliance, tax coordination, banking, real estate and family office. If your clients need this, we can grow together.',
       benefitsTitle: 'Why partner with us',
       benefits: [['A commission on every referral', 'You earn on the services bought by the clients you refer. No cost and no minimum targets.'], ['Automatic payouts', 'Connect your Stripe account once and your share goes straight to your account when the client pays.'], ['Your own portal', 'Send referrals, follow each client step by step and see what you have earned and what is coming.'], ['Full-service support', 'Our team handles the whole process for your client, in English, Portuguese or Spanish, and keeps you informed.']],
-      howTitle: 'How to start', how: [['Talk to us', 'A quick call to learn about your work and your clients.'], ['Get your access', 'You receive the invitation to the Partner Portal.'], ['Refer and get paid', 'Refer clients in the portal and receive your commission through Stripe with every payment.']],
+      howTitle: 'How to start', how: [['Sign up', 'Fill in the form in 2 minutes and pick a time for the welcome call. Your portal access is created right away.'], ['Onboarding call', 'We learn about your work, agree on your commission and you sign the partner agreement online.'], ['Refer and get paid', 'Refer clients in the portal and receive your commission through Stripe with every payment.']],
       cta: 'I want to be a partner', questions: 'Prefer to talk first? Reply to this email or reach us on WhatsApp.', sign: 'The Endeavor Business Solutions team',
       why: 'You are receiving this email because your business contact is on our list of potential partners.', whyGen: 'You are receiving this email because your business contact is on the Endeavor Business Solutions contact list.', unsub: 'Unsubscribe from these emails'
     },
@@ -39,7 +39,7 @@
       intro: 'Endeavor ayuda a emprendedores e inversionistas extranjeros a abrir y mantener empresas en Estados Unidos: constitución de LLC y corporaciones, cumplimiento, coordinación fiscal, cuenta bancaria, bienes raíces y family office. Si sus clientes lo necesitan, podemos crecer juntos.',
       benefitsTitle: 'Por qué ser socio',
       benefits: [['Comisión por cada recomendación', 'Usted gana sobre los servicios que contraten los clientes que recomiende. Sin costo y sin metas mínimas.'], ['Pago automático', 'Conecte su cuenta Stripe una vez y su parte llega directo a su cuenta cuando el cliente paga.'], ['Su propio portal', 'Envíe recomendaciones, siga cada cliente paso a paso y vea lo que ya recibió y lo que va a recibir.'], ['Atención completa', 'Nuestro equipo se encarga de todo el proceso del cliente, en español, inglés o portugués, y lo mantiene informado.']],
-      howTitle: 'Cómo empezar', how: [['Hable con nosotros', 'Una conversación rápida para conocer su trabajo y sus clientes.'], ['Reciba su acceso', 'Usted recibe la invitación al Portal de Socios.'], ['Recomiende y reciba', 'Recomiende clientes en el portal y reciba la comisión por Stripe con cada pago.']],
+      howTitle: 'Cómo empezar', how: [['Regístrese', 'Complete el formulario en 2 minutos y elija el horario de la llamada de bienvenida. Su acceso al portal se crea al instante.'], ['Llamada de onboarding', 'Conocemos su trabajo, acordamos su comisión y usted firma el contrato de socio en línea.'], ['Recomiende y reciba', 'Recomiende clientes en el portal y reciba la comisión por Stripe con cada pago.']],
       cta: 'Quiero ser socio', questions: '¿Prefiere conversar antes? Responda este correo o escríbanos por WhatsApp.', sign: 'Equipo de Endeavor Business Solutions',
       why: 'Recibe este correo porque su contacto profesional está en nuestra lista de posibles socios.', whyGen: 'Recibe este correo porque su contacto profesional está en la lista de contactos de Endeavor Business Solutions.', unsub: 'No quiero recibir más estos correos'
     }
@@ -76,7 +76,7 @@
     o = o || {};
     var lang = langOf(c, ct), t = T[lang], site = (o.site || 'https://endeavorbiz.com').replace(/\/$/, '');
     var n = first(ct && ct.name);
-    var btnUrl = c.button_url || (site + '/schedule.html?lang=' + lang);
+    var btnUrl = (c.button_url || (c.template === 'partners' ? site + '/partners.html?lang=' + lang + '#cadastro' : site + '/schedule.html?lang=' + lang)).replace(/\{lang\}/g, lang);
     var subject, pre, body, textParts;
     if (c.template === 'custom') {
       subject = merge(c.subject || '', ct); pre = merge(c.preheader || '', ct);
@@ -91,7 +91,7 @@
       var AC = ACCENTS[(D.style || {}).accent] || GOLD, light = (D.style || {}).hero === 'light';
       subject = merge(c.subject || d.subject || '', ct); pre = merge(c.preheader || d.preheader || '', ct);
       var label = merge(c.button_label || d.cta || '', ct), head = merge(c.heading || d.heading || subject, ct);
-      if (D.button_url && !c.button_url && /^https:\/\//.test(D.button_url)) btnUrl = D.button_url;
+      if (D.button_url && !c.button_url && /^https:\/\//.test(D.button_url)) btnUrl = D.button_url.replace(/\{lang\}/g, lang);
       var paraHtml = function (txt) { return merge(txt || '', ct).split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean).map(function (p) { return '<p style="margin:0 0 12px">' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
       var secHtml = function (sec) {
         var items = (sec.items || []).slice(0, 6), title = sec.title ? '<div style="font:700 20px/1.3 Georgia,serif;color:' + NAVY + ';margin:0 0 14px">' + esc(merge(sec.title, ct)) + '</div>' : '';
