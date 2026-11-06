@@ -65,6 +65,7 @@
     // WhatsApp links carry a greeting in the current language
     document.querySelectorAll('.js-sched').forEach(function (l) { l.href = 'schedule.html?lang=' + lang; });
     document.querySelectorAll('.js-partners').forEach(function (l) { l.href = 'partners.html?lang=' + lang; });
+    document.querySelectorAll('.js-partners-signup').forEach(function (l) { l.href = 'partners.html?lang=' + lang + '#cadastro'; });
     document.querySelectorAll('.js-client').forEach(function (l) { l.href = 'client.html?lang=' + lang; });
     document.querySelectorAll('.js-partner').forEach(function (l) { l.href = 'partner.html?lang=' + lang; });
     document.querySelectorAll('#wa-float, .js-wa').forEach(function (l) {
