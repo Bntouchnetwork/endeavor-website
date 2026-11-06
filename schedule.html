@@ -52,7 +52,8 @@
           <div class="portal-grid2">
             <div class="field"><label for="b-name"><span data-t="name">Full name</span> <span class="req" aria-hidden="true">*</span></label><input id="b-name" type="text" autocomplete="name" required maxlength="120"><p class="field__error" id="b-name-err"></p></div>
             <div class="field"><label for="b-email"><span data-t="email">Email</span> <span class="req" aria-hidden="true">*</span></label><input id="b-email" type="email" autocomplete="email" required maxlength="200"><p class="field__error" id="b-email-err"></p></div>
-            <div class="field"><label for="b-phone" data-t="phone">Phone / WhatsApp</label><input id="b-phone" type="tel" autocomplete="tel" maxlength="40"></div>
+            <div class="field field--wide"><label for="b-phone"><span>WhatsApp</span> <span class="req" aria-hidden="true">*</span></label><div id="b-phone-box"></div>
+              <p class="field__hint" data-t="waNote">We will send the confirmation and reminders for this call to this WhatsApp number and to your email.</p><p class="field__error" id="b-phone-err"></p></div>
             <div class="field"><label for="b-topic" data-t="topic">Topic</label>
               <select id="b-topic">
                 <option value="Business Formation" data-t="o1">Business Formation</option>
@@ -87,7 +88,7 @@
   <section class="portal-card" id="done" hidden tabindex="-1" aria-labelledby="done-title">
     <h2 class="portal-h1" id="done-title" data-t="doneTitle">You're booked</h2>
     <p id="done-when" class="chosen"></p>
-    <p data-t="doneText">A confirmation was sent to your email. We will reach out using the method you chose. To reschedule, reply to the confirmation or write to support@endeavorbiz.com.</p>
+    <p id="done-text" data-t="doneText">A confirmation was sent to your email. We will reach out using the method you chose. To reschedule, reply to the confirmation or write to support@endeavorbiz.com.</p>
     <p id="done-note" class="portal-muted"></p>
     <div class="portal-btn-row">
       <button class="btn btn--navy" type="button" id="ics" data-t="addCal">Add to calendar (.ics)</button>
@@ -99,6 +100,7 @@
 
 <script src="app-config.js"></script>
 <script src="portal-common.js"></script>
+<script src="phone-intl.js"></script>
 <script src="schedule.js"></script>
 </body>
 </html>

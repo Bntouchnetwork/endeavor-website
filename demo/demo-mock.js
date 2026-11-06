@@ -34,7 +34,8 @@
       L('b7000000-0000-4000-8000-000000000007', 'David Chen', 'dchen@example.com', '+1 321 555 0110', 'United States', 'Chen Logistics', 'Compliance', 'Annual report and registered agent change.', 'contact_form', 'proposal', 9, 'en'),
       L('b8000000-0000-4000-8000-000000000008', 'Renata Souza', 'renata@example.com', '+55 41 95555-2222', 'Brazil', '', 'Family Office', 'Planejamento patrimonial nos EUA.', 'manual', 'lost', 60, 'pt')
     ],
-    booking_settings: [{ id: 1, timezone: 'America/New_York', slot_minutes: 30, buffer_minutes: 0, min_notice_hours: 12, max_days_ahead: 30, meeting_note: 'Enviaremos o link da videochamada por e-mail.' }],
+    booking_settings: [{ id: 1, timezone: 'America/New_York', slot_minutes: 30, buffer_minutes: 0, min_notice_hours: 12, max_days_ahead: 30, meeting_note: 'Enviaremos o link da videochamada por e-mail.', reminder_offsets: [1440, 720, 120], notify_email: 'support@endeavorbiz.com', notify_whatsapp: null, server_email: true, whatsapp_connected: false }],
+    booking_messages: [],
     availability_rules: [[1, '09:00:00', '12:00:00'], [1, '14:00:00', '17:00:00'], [2, '09:00:00', '12:00:00'], [2, '14:00:00', '17:00:00'], [3, '09:00:00', '12:00:00'], [3, '14:00:00', '17:00:00'], [4, '09:00:00', '12:00:00'], [4, '14:00:00', '17:00:00'], [5, '09:00:00', '12:00:00']]
       .map(function (r, i) { return { id: i + 1, weekday: r[0], start_time: r[1], end_time: r[2] }; }),
     blackout_dates: [{ day: ymd(Y, 12, 25), reason: 'Christmas' }, { day: ymd(Y + 1, 1, 1), reason: "New Year's Day" }],
@@ -76,6 +77,8 @@
       invited_at: iso(-d), accepted_at: status === 'active' ? iso(-d + 1) : null, stripe_account_id: stripe ? 'acct_1Demo' + id.slice(1, 8) : null, stripe_details_submitted: !!stripe, stripe_charges_enabled: !!stripe,
       stripe_payouts_enabled: !!stripe, stripe_transfers_active: !!stripe, notes: null };
   };
+  // agenda: messages already sent for the first two calls
+  [0, 1].forEach(function (i) { var b = DB.bookings[i]; [['confirmation', 0, 'email', 'sent'], ['confirmation', 0, 'whatsapp', i ? 'failed' : 'sent'], ['reminder', 1440, 'email', 'sent']].forEach(function (m, j) { if (i === 1 && j === 2) return; DB.booking_messages.push({ id: i * 10 + j, booking_id: b.id, version: 1, kind: m[0], offset_min: m[1], channel: m[2], audience: 'client', status: m[3] }); }); });
   DB.partners = [PART(P1, 'Ana Ribeiro', 'ana.cpa@example.com', 'Ribeiro Contabilidade', 'accountant', 15, 'active', 'u-cpa', true, 60),
     PART(P2, 'Marcos Tavares', 'marcos@example.com', 'Tavares Realty', 'realtor', 10, 'active', 'u-marcos', false, 40),
     PART(P3, 'Bruno Castro', 'bruno@example.com', 'Castro Law', 'attorney', 12, 'invited', null, false, 3)];

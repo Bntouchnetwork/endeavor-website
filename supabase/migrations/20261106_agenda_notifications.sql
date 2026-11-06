@@ -1,0 +1,9 @@
+-- Agenda: confirmations, reminders, reschedule/cancel links (applied as booking_notify_1_schema, booking_notify_2_rpcs, booking_notify_3_hooks)
+-- and the CRM type column (leads_kind_lead_prospect_client). See docs/agenda-notificacoes.md.
+-- 1. bookings: manage_token, timezone, schedule_version, scheduled_at, cancelled_at, cancel_reason, cancelled_by, whatsapp_ok
+-- 2. booking_settings: reminder_offsets (minutes, default {1440,720,120}), notify_email, notify_whatsapp, server_email, whatsapp_connected
+-- 3. booking_messages: one row per message (booking, version, kind, offset, channel, audience) -> no duplicates, admin log
+-- 4. RPCs (anon): book_slot_v2, get_booking_by_token, cancel_booking_by_token, reschedule_booking_by_token, booking_server_email
+-- 5. trigger bookings_notify -> admin_events (booking_new / booking_cancelled / booking_rescheduled) + pg_net call to booking-notify
+-- 6. pg_cron job 'booking-reminders' every 5 minutes -> booking_tick() -> booking-notify {event:'tick'}
+-- 7. internal key 'booking_hook_key' in Vault; the function checks it with booking_hook_key_ok() (service_role only)

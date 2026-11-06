@@ -507,20 +507,29 @@
     query = tab === 'prox' ? query.gte('ends_at', nowIso).order('starts_at') : query.lt('ends_at', nowIso).order('starts_at', { ascending: false }).limit(200);
     var rows = await q(query);
     if (!rows.length) { body.innerHTML = '<p class="empty">Nenhum agendamento.</p>'; return; }
+    var msgs = await q(sb.from('booking_messages').select('booking_id, version, kind, offset_min, channel, audience, status').in('booking_id', rows.map(function (b) { return b.id; })).eq('audience', 'client'));
+    function sentLine(b) {
+      var mine = msgs.filter(function (m) { return m.booking_id === b.id; }); if (!mine.length) return '';
+      var lbl = function (m) { return m.kind === 'reminder' ? 'Lembrete ' + (m.offset_min % 1440 === 0 ? m.offset_min / 1440 + 'd' : m.offset_min % 60 === 0 ? m.offset_min / 60 + 'h' : m.offset_min + 'min') : { confirmation: 'Confirmação', cancelled: 'Cancelamento', rescheduled: 'Remarcação' }[m.kind]; };
+      var groups = {}; mine.forEach(function (m) { var k = lbl(m); (groups[k] = groups[k] || []).push(m); });
+      return '<span class="sent-line">' + Object.keys(groups).map(function (k) {
+        return esc(k) + ': ' + groups[k].map(function (m) { return (m.channel === 'email' ? 'e-mail' : 'WhatsApp') + (m.status === 'sent' ? ' ✓' : m.status === 'failed' ? ' ✗' : ' …'); }).join(', ');
+      }).join(' · ') + '</span>';
+    }
     var html = '', lastDay = '';
     rows.forEach(function (b) {
       var d = fmtDay(b.starts_at);
       if (d !== lastDay) { html += (lastDay ? '</ul></section>' : '') + '<section class="portal-card"><h2 class="portal-h2">' + esc(d.charAt(0).toUpperCase() + d.slice(1)) + '</h2><ul class="list">'; lastDay = d; }
       html += '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at, { dateStyle: undefined })) + ' – ' + esc(fmtDT(b.ends_at, { dateStyle: undefined })) + ' · ' + esc(b.name) + '</strong>' +
         '<span>' + esc(MEET_PT[b.meeting_type]) + ' · ' + esc(b.email) + (b.phone ? ' · ' + esc(b.phone) : '') + ' · ' + esc(b.topic || '') + (b.language ? ' · ' + esc(b.language) : '') + '</span>' +
-        (b.notes ? '<span>“' + esc(b.notes) + '”</span>' : '') + '</div><div class="portal-btn-row">' + badge(b.status) +
+        (b.notes ? '<span>“' + esc(b.notes) + '”</span>' : '') + (b.cancel_reason ? '<span>Motivo do cancelamento: ' + esc(b.cancel_reason) + '</span>' : '') + sentLine(b) + '</div><div class="portal-btn-row">' + badge(b.status) +
         (b.status === 'confirmed' ? '<button class="btn btn--ghost btn--xs" data-act="completed" data-id="' + esc(b.id) + '">Concluir</button><button class="btn btn--ghost btn--xs" data-act="no_show" data-id="' + esc(b.id) + '">Não veio</button><button class="btn btn--danger btn--xs" data-act="cancelled" data-id="' + esc(b.id) + '">Cancelar</button>' : '') +
         '<a class="btn btn--ghost btn--xs" href="mailto:' + esc(b.email) + '">E-mail</a></div></li>';
     });
     body.innerHTML = html + '</ul></section>';
     $$('button[data-act]', body).forEach(function (btn) {
       btn.onclick = async function () {
-        if (btn.dataset.act === 'cancelled' && !confirm('Cancelar este agendamento? O horário volta a ficar disponível. Avise o cliente por e-mail.')) return;
+        if (btn.dataset.act === 'cancelled' && !confirm('Cancelar este agendamento? O horário volta a ficar disponível e o cliente recebe o aviso de cancelamento.')) return;
         var r = await sb.from('bookings').update({ status: btn.dataset.act }).eq('id', btn.dataset.id);
         if (r.error) return alert(errText(r.error));
         drawTab(tab);
@@ -546,10 +555,34 @@
         '<div class="field"><label for="st-notice">Antecedência mínima (horas)</label><input id="st-notice" type="number" min="0" max="720" value="' + s.min_notice_hours + '"></div>' +
         '<div class="field"><label for="st-max">Agendar até (dias à frente)</label><input id="st-max" type="number" min="1" max="180" value="' + s.max_days_ahead + '"></div>' +
       '</div><div class="field" style="margin-top:1rem"><label for="st-note">Mensagem mostrada na confirmação</label><textarea id="st-note" rows="2">' + esc(s.meeting_note || '') + '</textarea></div></section>' +
+      '<section class="portal-card"><h2 class="portal-h2">Confirmações e lembretes</h2><p class="portal-muted">Quem agenda recebe a confirmação e os lembretes por e-mail e WhatsApp, com os botões Reagendar e Cancelar. Você recebe os mesmos avisos.</p>' +
+        '<ul class="list" style="margin-bottom:1rem"><li><div class="list__main"><strong>E-mail automático</strong><span id="nt-email">' + (s.server_email ? 'Ligado' : 'Desligado: falta a senha de app do Gmail (SMTP_PASS) nos segredos das funções do Supabase. Enquanto isso, a confirmação sai pelo formulário antigo e não há lembretes.') + '</span></div>' +
+          '<button class="btn btn--ghost btn--xs" type="button" id="nt-test">Enviar e-mail de teste</button></li>' +
+        '<li><div class="list__main"><strong>WhatsApp</strong><span>' + (s.whatsapp_connected ? 'Conectado' : 'Aguardando a conta da API do WhatsApp Business (WHATSAPP_TOKEN e WHATSAPP_PHONE_ID). Até lá, tudo vai só por e-mail.') + '</span></div>' + (s.whatsapp_connected ? '<span class="badge badge--client">Ativo</span>' : '<span class="badge">Pendente</span>') + '</li></ul>' +
+        '<div class="field"><span style="font-weight:600">Lembretes antes da conversa</span><div id="rm-list" class="rm-list"></div><button class="btn btn--ghost btn--xs" type="button" id="rm-add" style="align-self:flex-start">+ Lembrete</button></div>' +
+        '<div class="portal-grid2" style="margin-top:1rem"><div class="field"><label for="st-nemail">Seu e-mail para os avisos</label><input id="st-nemail" type="email" value="' + esc(s.notify_email || '') + '"></div>' +
+        '<div class="field"><label for="st-nwa">Seu WhatsApp para os avisos (opcional)</label><div id="st-nwa-box"></div></div></div></section>' +
       '<section class="portal-card"><h2 class="portal-h2">Datas bloqueadas</h2><p class="portal-muted">Feriados, viagens ou dias sem atendimento.</p><ul class="list" id="blk-list">' +
         blk.map(function (b) { return '<li><div class="list__main"><strong>' + esc(b.day) + '</strong><span>' + esc(b.reason || '') + '</span></div><button class="btn btn--danger btn--xs" data-del-day="' + esc(b.day) + '">Remover</button></li>'; }).join('') +
       '</ul><div class="portal-btn-row" style="margin-top:.75rem"><input type="date" id="blk-day" aria-label="Data bloqueada" class="toolbar-like"><input type="text" id="blk-reason" placeholder="Motivo (opcional)" aria-label="Motivo"><button class="btn btn--ghost btn--xs" type="button" id="blk-add">Bloquear data</button></div></section>' +
       '<div class="portal-alert" id="av-msg" role="status"></div><button class="btn btn--navy" type="button" id="av-save">Salvar disponibilidade</button>';
+    // reminders: value + unit rows
+    var UNITS = [[1440, 'dias'], [60, 'horas'], [1, 'minutos']];
+    function rmRow(min) { var u = UNITS.filter(function (x) { return min % x[0] === 0; })[0]; return '<div class="rm-row"><input type="number" min="1" max="336" value="' + (min / u[0]) + '" aria-label="Quantidade"><select aria-label="Unidade">' + UNITS.map(function (x) { return '<option value="' + x[0] + '"' + (x === u ? ' selected' : '') + '>' + x[1] + ' antes</option>'; }).join('') + '</select><button class="btn btn--danger btn--xs" type="button" aria-label="Remover lembrete">Remover</button></div>'; }
+    function rmWire() { $$('.rm-row button', body).forEach(function (b) { b.onclick = function () { b.closest('.rm-row').remove(); }; }); }
+    $('#rm-list').innerHTML = (s.reminder_offsets || []).slice().sort(function (a, c) { return c - a; }).map(rmRow).join(''); rmWire();
+    $('#rm-add').onclick = function () { if ($$('.rm-row', body).length >= 6) return msg($('#av-msg'), 'No máximo 6 lembretes.', 'error'); $('#rm-list').insertAdjacentHTML('beforeend', rmRow(60)); rmWire(); };
+    var nwa = window.EPhone ? EPhone.mount($('#st-nwa-box'), { id: 'st-nwa', lang: 'pt', value: s.notify_whatsapp || '', ccLabel: 'Código do país' }) : null;
+    $('#nt-test').onclick = async function () {
+      var b = this; b.disabled = true; b.textContent = 'Enviando…';
+      try {
+        var sess = (await sb.auth.getSession()).data.session;
+        var r = await fetch(CFG.functionsUrl + '/booking-notify', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify({ action: 'test' }) });
+        var j = await r.json().catch(function () { return {}; });
+        msg($('#av-msg'), j.email ? 'E-mail de teste enviado para ' + j.to + '.' : j.error === 'smtp_not_configured' ? 'O e-mail automático ainda não está ligado: falta a senha de app (SMTP_PASS) nos segredos das funções do Supabase.' : 'O teste falhou: ' + (j.error || r.status), j.email ? 'ok' : 'error');
+      } catch (e) { msg($('#av-msg'), errText(e), 'error'); }
+      b.disabled = false; b.textContent = 'Enviar e-mail de teste';
+    };
     $$('#blk-day, #blk-reason', body).forEach(function (i) { i.style.cssText = 'min-height:2.5rem;padding:.3rem .6rem;border:1.5px solid #8a95a8;border-radius:6px'; });
     function wireRows() {
       $$('.add-slot', body).forEach(function (b) { b.onclick = function () { b.insertAdjacentHTML('beforebegin', slotRow({ start_time: '09:00', end_time: '12:00' })); wireRows(); }; });
@@ -572,7 +605,15 @@
         });
       });
       if (bad) return msg($('#av-msg'), 'Confira os intervalos: o horário final precisa ser depois do inicial.', 'error');
-      var settings = { timezone: $('#st-tz').value, slot_minutes: +$('#st-slot').value, buffer_minutes: +$('#st-buf').value, min_notice_hours: +$('#st-notice').value, max_days_ahead: +$('#st-max').value, meeting_note: $('#st-note').value.trim() };
+      var offs = [], badRm = false;
+      $$('.rm-row', body).forEach(function (r) { var n = +$('input', r).value, u = +$('select', r).value; if (!(n > 0)) badRm = true; else offs.push(n * u); });
+      offs = offs.filter(function (v, i) { return offs.indexOf(v) === i && v <= 20160; }).sort(function (a, c) { return c - a; });
+      if (badRm) return msg($('#av-msg'), 'Confira os lembretes: use números maiores que zero.', 'error');
+      var nemail = $('#st-nemail').value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(nemail)) return msg($('#av-msg'), 'Informe um e-mail válido para os avisos.', 'error');
+      if (nwa && !nwa.empty() && !nwa.valid()) return msg($('#av-msg'), 'Confira o seu WhatsApp para os avisos.', 'error');
+      var settings = { timezone: $('#st-tz').value, slot_minutes: +$('#st-slot').value, buffer_minutes: +$('#st-buf').value, min_notice_hours: +$('#st-notice').value, max_days_ahead: +$('#st-max').value, meeting_note: $('#st-note').value.trim(),
+        reminder_offsets: offs, notify_email: nemail, notify_whatsapp: nwa && !nwa.empty() ? nwa.e164() : null };
       var r1 = await sb.from('booking_settings').update(settings).eq('id', 1); if (r1.error) return msg($('#av-msg'), errText(r1.error), 'error');
       var r2 = await sb.from('availability_rules').delete().gte('weekday', 0); if (r2.error) return msg($('#av-msg'), errText(r2.error), 'error');
       if (out.length) { var r3 = await sb.from('availability_rules').insert(out); if (r3.error) return msg($('#av-msg'), errText(r3.error), 'error'); }

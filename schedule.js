@@ -7,7 +7,9 @@
       errName: 'Enter your full name.', errEmail: 'Enter a valid email address.', sending: 'Booking…',
       slot_unavailable: 'Sorry, that time was just taken. Please choose another time.', too_many_bookings: 'You already have two upcoming calls booked. Reply to your confirmation to change them.',
       invalid_email: 'Enter a valid email address.', invalid_name: 'Enter your full name.', generic: 'Something went wrong. Please try again or write to support@endeavorbiz.com.',
-      evTitle: 'Call with Endeavor Business Solutions', pickDayFirst: 'Select an available day on the calendar.', noDays: 'There are no open times right now. Please write to support@endeavorbiz.com or message us on WhatsApp.', ET: 'ET', video: 'Video call', phoneCall: 'Phone', confirm: 'Confirm booking' },
+      evTitle: 'Call with Endeavor Business Solutions', pickDayFirst: 'Select an available day on the calendar.', noDays: 'There are no open times right now. Please write to support@endeavorbiz.com or message us on WhatsApp.', ET: 'ET', video: 'Video call', phoneCall: 'Phone', confirm: 'Confirm booking',
+      errPhone: 'Enter your WhatsApp number with the area code.', invalid_phone: 'Enter your WhatsApp number with the area code.', cc: 'Country code',
+      doneText2: 'We sent the confirmation to your email and WhatsApp, with links to reschedule or cancel. You will also get reminders before the call.' },
     pt: { docTitle: 'Agendar uma chamada | Endeavor Business Solutions', skip: 'Pular para o conteúdo', title: 'Agende uma chamada',
       lead: 'Escolha o dia e o horário para uma conversa inicial gratuita. Uma consulta não cria relação de cliente.',
       pickDay: '1. Escolha o dia', pickTime: '2. Escolha o horário', pickDayFirst: 'Selecione um dia disponível no calendário.', yourDetails: '3. Seus dados',
@@ -23,7 +25,9 @@
       errName: 'Informe seu nome completo.', errEmail: 'Informe um e-mail válido.', sending: 'Agendando…',
       slot_unavailable: 'Esse horário acabou de ser reservado. Escolha outro horário.', too_many_bookings: 'Você já tem duas chamadas agendadas. Responda à confirmação para alterá-las.',
       invalid_email: 'Informe um e-mail válido.', invalid_name: 'Informe seu nome completo.', generic: 'Algo deu errado. Tente de novo ou escreva para support@endeavorbiz.com.',
-      evTitle: 'Chamada com a Endeavor Business Solutions', noDays: 'No momento não há horários abertos. Escreva para support@endeavorbiz.com ou fale conosco pelo WhatsApp.', ET: 'horário de Orlando' },
+      evTitle: 'Chamada com a Endeavor Business Solutions', noDays: 'No momento não há horários abertos. Escreva para support@endeavorbiz.com ou fale conosco pelo WhatsApp.', ET: 'horário de Orlando',
+      waNote: 'Vamos enviar a confirmação e os lembretes desta chamada para este WhatsApp e para o seu e-mail.', errPhone: 'Informe o seu WhatsApp com o DDD.', invalid_phone: 'Informe o seu WhatsApp com o DDD.', cc: 'Código do país',
+      doneText2: 'Enviamos a confirmação para o seu e-mail e WhatsApp, com os links para reagendar ou cancelar. Você também vai receber lembretes antes da chamada.' },
     es: { docTitle: 'Agendar una llamada | Endeavor Business Solutions', skip: 'Saltar al contenido', title: 'Agende una llamada',
       lead: 'Elija el día y la hora para una conversación inicial gratuita. Una consulta no crea una relación de cliente.',
       pickDay: '1. Elija el día', pickTime: '2. Elija la hora', pickDayFirst: 'Seleccione un día disponible en el calendario.', yourDetails: '3. Sus datos',
@@ -39,7 +43,9 @@
       errName: 'Ingrese su nombre completo.', errEmail: 'Ingrese un correo válido.', sending: 'Agendando…',
       slot_unavailable: 'Ese horario acaba de ser reservado. Elija otro horario.', too_many_bookings: 'Ya tiene dos llamadas agendadas. Responda a la confirmación para cambiarlas.',
       invalid_email: 'Ingrese un correo válido.', invalid_name: 'Ingrese su nombre completo.', generic: 'Algo salió mal. Intente de nuevo o escriba a support@endeavorbiz.com.',
-      evTitle: 'Llamada con Endeavor Business Solutions', noDays: 'En este momento no hay horarios disponibles. Escriba a support@endeavorbiz.com o contáctenos por WhatsApp.', ET: 'hora de Orlando' }
+      evTitle: 'Llamada con Endeavor Business Solutions', noDays: 'En este momento no hay horarios disponibles. Escriba a support@endeavorbiz.com o contáctenos por WhatsApp.', ET: 'hora de Orlando',
+      waNote: 'Enviaremos la confirmación y los recordatorios de esta llamada a este WhatsApp y a su correo.', errPhone: 'Ingrese su WhatsApp con el código de área.', invalid_phone: 'Ingrese su WhatsApp con el código de área.', cc: 'Código de país',
+      doneText2: 'Enviamos la confirmación a su correo y WhatsApp, con enlaces para reprogramar o cancelar. También recibirá recordatorios antes de la llamada.' }
   };
   var t = EP.init(DICT);
   var userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -53,6 +59,7 @@
   function fmtLong(d) { return new Intl.DateTimeFormat(EP.locale, { timeZone: userTz, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(d); }
   var sameTz = function () { return fmtTime(new Date(), userTz) === fmtTime(new Date(), info.timezone); };
 
+  var phone = EPhone.mount($('b-phone-box'), { id: 'b-phone', lang: EP.lang, ccLabel: t('cc'), onchange: function () { if (phone && phone.valid()) fieldErr('b-phone', ''); } });
   $('tz-note').textContent = t('tzNote').replace('{tz}', userTz.replace(/_/g, ' '));
 
   var loaded = false;
@@ -146,20 +153,25 @@
   $('book-form').addEventListener('submit', async function (ev) {
     ev.preventDefault();
     var name = $('b-name').value.trim(), email = $('b-email').value.trim();
-    var ok = fieldErr('b-name', name.length < 2 ? t('errName') : '') & fieldErr('b-email', /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? '' : t('errEmail'));
-    if (!ok) { (name.length < 2 ? $('b-name') : $('b-email')).focus(); return; }
+    var okName = fieldErr('b-name', name.length < 2 ? t('errName') : ''), okMail = fieldErr('b-email', /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? '' : t('errEmail'));
+    var okPhone = fieldErr('b-phone', phone.valid() ? '' : t('errPhone'));
+    if (!(okName && okMail && okPhone)) { (!okName ? $('b-name') : !okMail ? $('b-email') : $('b-phone')).focus(); return; }
+    var wa = phone.e164();
     var mt = document.querySelector('input[name=mt]:checked').value;
     var topicSel = $('b-topic'), topic = topicSel.value;
     var btn = $('b-submit'), m = $('b-msg');
     btn.disabled = true; btn.textContent = t('sending'); m.className = 'portal-alert'; m.textContent = '';
     try {
-      var res = await EP.rpc('book_slot', { p_starts_at: selectedSlot.toISOString(), p_name: name, p_email: email, p_phone: $('b-phone').value.trim() || null,
-        p_topic: topic, p_notes: $('b-notes').value.trim() || null, p_meeting_type: mt, p_language: EP.lang });
+      var res = await EP.rpc('book_slot_v2', { p_starts_at: selectedSlot.toISOString(), p_name: name, p_email: email, p_phone: wa,
+        p_topic: topic, p_notes: $('b-notes').value.trim() || null, p_meeting_type: mt, p_language: EP.lang, p_timezone: userTz });
       var row = Array.isArray(res) ? res[0] : res;
       var start = new Date(row.starts_at), end = new Date(row.ends_at);
-      EP.notify({
+      // the server sends the confirmation (e-mail + WhatsApp) once its e-mail is configured; until then the old confirmation is used
+      var server = false; try { server = !!(await EP.rpc('booking_server_email')); } catch (e2) { server = false; }
+      if (server) $('done-text').textContent = t('doneText2');
+      else EP.notify({
         _subject: 'New call booked: ' + name + ' – ' + new Intl.DateTimeFormat('en-US', { timeZone: info.timezone, dateStyle: 'medium', timeStyle: 'short' }).format(start) + ' ET',
-        _replyto: email, email: email, name: name, phone: $('b-phone').value.trim(), topic: topic, meeting_type: mt, language: EP.lang,
+        _replyto: email, email: email, name: name, phone: wa, topic: topic, meeting_type: mt, language: EP.lang,
         when_eastern: new Intl.DateTimeFormat('en-US', { timeZone: info.timezone, dateStyle: 'full', timeStyle: 'short' }).format(start),
         when_client: whenText(start) + ' [' + userTz + ']', notes: $('b-notes').value.trim(),
         _autoresponse: t('doneTitle') + ' – ' + whenText(start) + '. ' + t('doneText')
@@ -167,7 +179,7 @@
       showDone(start, end, mt, topicSel.options[topicSel.selectedIndex].text);
     } catch (e) {
       var code = String(e.code || e.message || '');
-      var key = ['slot_unavailable', 'too_many_bookings', 'invalid_email', 'invalid_name'].filter(function (k) { return code.indexOf(k) > -1; })[0];
+      var key = ['slot_unavailable', 'too_many_bookings', 'invalid_email', 'invalid_name', 'invalid_phone'].filter(function (k) { return code.indexOf(k) > -1; })[0];
       m.className = 'portal-alert portal-alert--error'; m.textContent = t(key || 'generic');
       btn.disabled = false; btn.textContent = t('confirm');
       if (key === 'slot_unavailable') { delete (byDay[selectedDay] || {})[selectedSlot.toISOString()]; selectDay(selectedDay); }

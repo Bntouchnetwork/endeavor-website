@@ -705,3 +705,20 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .pill--kind-client { background: #e9f6ee; color: #1e6b3a; }
 .crm-st { white-space: nowrap; }
 .ld-client { background: #f6faf7; border-color: #cfe6d7; }
+
+/* WhatsApp field with country code */
+.phone-intl { display: grid; grid-template-columns: minmax(0, 11.5rem) minmax(0, 1fr); gap: .5rem; }
+.phone-intl select, .phone-intl input { width: 100%; min-width: 0; }
+@media (max-width: 420px) { .phone-intl { grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr); } }
+.field--wide { grid-column: 1 / -1; }
+
+/* booking.html: day chips */
+.m-days { display: flex; flex-wrap: wrap; gap: .45rem; }
+.m-days button { font: inherit; font-weight: 600; font-size: .9rem; padding: .5rem .8rem; border-radius: var(--radius); border: 1.5px solid var(--navy-800); background: var(--white); color: var(--navy-900); cursor: pointer; text-transform: capitalize; }
+.m-days button[aria-pressed="true"], .m-days button:hover { background: var(--navy-900); color: var(--white); }
+
+/* agenda: reminders and message log */
+.rm-list { display: grid; gap: .45rem; margin: .5rem 0 .6rem; }
+.rm-row { display: grid; grid-template-columns: 5.5rem minmax(0, 12rem) max-content; justify-content: start; gap: .5rem; align-items: center; }
+.rm-row input, .rm-row select { min-height: 2.5rem; }
+.sent-line { font-size: .82rem; color: var(--muted); }
