@@ -75,6 +75,7 @@
 
   window.AdminClients = {
     /* ---------- list ---------- */
+    create: function (ctx, leadId) { return newClient(ctx, leadId); },
     list: async function (view, ctx) {
       var esc = ctx.esc, sb = ctx.sb;
       var res = await Promise.all([
@@ -115,7 +116,7 @@
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
       var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
-      view.innerHTML = '<p class="crumbs"><a href="#/clientes">Clientes</a> /</p>' +
+      view.innerHTML = '<p class="crumbs"><a href="#/crm?ver=client">CRM e clientes</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
         '<nav class="subtabs" aria-label="Seções do cliente">' + TABS.map(function (t) { return '<a href="#/clientes?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>' +
@@ -135,7 +136,7 @@
   }
   var $ = function (s) { return document.querySelector(s); };
 
-  async function newClient(ctx) {
+  async function newClient(ctx, leadId) {
     var leads = await ctx.q(ctx.sb.from('leads').select('id,name,email,phone,language').order('created_at', { ascending: false }).limit(300));
     ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Novo cliente</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<form class="portal-form" id="nc-form" novalidate>' +
@@ -148,6 +149,7 @@
       '<div class="check-row"><input type="checkbox" id="nc-inv" checked><label for="nc-inv">Enviar o convite de acesso por e-mail (cópia para ' + ctx.esc(ctx.CFG.adminEmail) + ')</label></div>' +
       '<div class="portal-alert" id="nc-msg" role="alert"></div><button class="btn btn--navy" type="submit">Criar cliente</button></form>');
     $('#nc-lead').onchange = function () { var l = leads.find(function (x) { return x.id === $('#nc-lead').value; }); if (l) { $('#nc-name').value = l.name; $('#nc-email').value = l.email; $('#nc-phone').value = l.phone || ''; if (l.language) $('#nc-lang').value = l.language; } };
+    if (leadId && leads.some(function (x) { return x.id === leadId; })) { $('#nc-lead').value = leadId; $('#nc-lead').onchange(); }
     $('#nc-form').onsubmit = async function (e) {
       e.preventDefault();
       var m = $('#nc-msg'), name = $('#nc-name').value.trim(), email = $('#nc-email').value.trim().toLowerCase();

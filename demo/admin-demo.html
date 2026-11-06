@@ -1603,6 +1603,12 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+/* CRM e clientes: quick segments */
+.crm-seg { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .9rem; }
+.crm-seg button { font: inherit; font-size: .88rem; font-weight: 600; padding: .4rem .85rem; border-radius: 999px; border: 1px solid var(--line); background: var(--white); color: var(--navy-900); cursor: pointer; }
+.crm-seg button[aria-pressed="true"] { background: var(--navy-900); border-color: var(--navy-900); color: var(--white); }
+.crm-seg__n { opacity: .7; font-weight: 500; margin-left: .15rem; }
+
 </style>
 </head>
 <body class="portal">
@@ -4654,6 +4660,7 @@ window.ENDEAVOR_CFG = {
 
   window.AdminClients = {
     /* ---------- list ---------- */
+    create: function (ctx, leadId) { return newClient(ctx, leadId); },
     list: async function (view, ctx) {
       var esc = ctx.esc, sb = ctx.sb;
       var res = await Promise.all([
@@ -4694,7 +4701,7 @@ window.ENDEAVOR_CFG = {
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
       var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
-      view.innerHTML = '<p class="crumbs"><a href="#/clientes">Clientes</a> /</p>' +
+      view.innerHTML = '<p class="crumbs"><a href="#/crm?ver=client">CRM e clientes</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
         '<nav class="subtabs" aria-label="Seções do cliente">' + TABS.map(function (t) { return '<a href="#/clientes?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>' +
@@ -4714,7 +4721,7 @@ window.ENDEAVOR_CFG = {
   }
   var $ = function (s) { return document.querySelector(s); };
 
-  async function newClient(ctx) {
+  async function newClient(ctx, leadId) {
     var leads = await ctx.q(ctx.sb.from('leads').select('id,name,email,phone,language').order('created_at', { ascending: false }).limit(300));
     ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Novo cliente</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<form class="portal-form" id="nc-form" novalidate>' +
@@ -4727,6 +4734,7 @@ window.ENDEAVOR_CFG = {
       '<div class="check-row"><input type="checkbox" id="nc-inv" checked><label for="nc-inv">Enviar o convite de acesso por e-mail (cópia para ' + ctx.esc(ctx.CFG.adminEmail) + ')</label></div>' +
       '<div class="portal-alert" id="nc-msg" role="alert"></div><button class="btn btn--navy" type="submit">Criar cliente</button></form>');
     $('#nc-lead').onchange = function () { var l = leads.find(function (x) { return x.id === $('#nc-lead').value; }); if (l) { $('#nc-name').value = l.name; $('#nc-email').value = l.email; $('#nc-phone').value = l.phone || ''; if (l.language) $('#nc-lang').value = l.language; } };
+    if (leadId && leads.some(function (x) { return x.id === leadId; })) { $('#nc-lead').value = leadId; $('#nc-lead').onchange(); }
     $('#nc-form').onsubmit = async function (e) {
       e.preventDefault();
       var m = $('#nc-msg'), name = $('#nc-name').value.trim(), email = $('#nc-email').value.trim().toLowerCase();
@@ -5963,7 +5971,7 @@ window.ENDEAVOR_CFG = {
 
   /* ---------- console shell ---------- */
   var NAV = [
-    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['clientes', 'Clientes', 'i-brief'], ['agenda', 'Agenda', 'i-cal'],
+    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM e clientes', 'i-users'], ['agenda', 'Agenda', 'i-cal'],
     ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
@@ -5988,8 +5996,9 @@ window.ENDEAVOR_CFG = {
 
   function route() {
     var v = (ERoute.get().replace(/^#\/?/, '') || 'dashboard').split('?')[0];
-    if (!NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
-    $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    if (v !== 'clientes' && !NAV.some(function (n) { return n[0] === v; })) v = 'dashboard';
+    var navV = v === 'clientes' ? 'crm' : v; // client pages live inside the CRM
+    $$('.console__nav a').forEach(function (a) { if (a.dataset.view === navV) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); if (!view) return;
     view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
     ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig })[v](view).catch(function (e) {
@@ -6047,7 +6056,7 @@ window.ENDEAVOR_CFG = {
       '<aside class="links-panel portal-card" aria-label="Links rápidos"><h2 class="portal-h2">Links rápidos</h2><ul>' +
         '<li><a href="#/assinaturas?novo=1"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Enviar documento para assinatura</a></li>' +
         '<li><a href="#/crm?novo=1"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>Adicionar lead</a></li>' +
-        '<li><a href="#/clientes?novo=1"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>Novo cliente no portal</a></li>' +
+        '<li><a href="#/crm?cliente=1"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>Novo cliente no portal</a></li>' +
         '<li><button type="button" id="ql-copy"><svg class="icon" aria-hidden="true"><use href="#i-link"/></svg>Copiar link de agendamento</button></li>' +
         '<li><a href="schedule.html" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-cal"/></svg>Página pública de agendamento</a></li>' +
         '<li><a href="#/agenda?tab=disp"><svg class="icon" aria-hidden="true"><use href="#i-gear"/></svg>Definir dias e horários</a></li>' +
@@ -6071,33 +6080,67 @@ window.ENDEAVOR_CFG = {
 
   /* ---------- CRM ---------- */
   async function viewCrm(view) {
-    state.leads = await q(sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000));
-    view.innerHTML = '<div class="console__head"><div><h1>CRM</h1><p class="portal-muted">Contatos do formulário do site, dos agendamentos e cadastros manuais.</p></div>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--navy btn--xs" type="button" id="crm-new">Novo lead</button></div></div>' +
-      '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar leads">' +
-      '<select id="crm-status" aria-label="Filtrar por status"><option value="">Todos os status</option>' + Object.keys(STATUS_PT).slice(0, 6).map(function (k) { return '<option value="' + k + '">' + STATUS_PT[k] + '</option>'; }).join('') + '</select>' +
+    // CRM e clientes: one list for leads and client accounts (no separate Clientes tab)
+    var res = await Promise.all([
+      q(sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000)),
+      q(sb.from('clients').select('*').order('created_at', { ascending: false })),
+      q(sb.from('companies').select('id, client_id')),
+      q(sb.from('compliance_items').select('client_id, due_date, status').neq('status', 'done').neq('status', 'not_applicable'))
+    ]);
+    state.leads = res[0]; state.clients = res[1];
+    var cos = res[2], dls = res[3], linked = {};
+    state.clients.forEach(function (c) { if (c.lead_id) linked[c.lead_id] = c; });
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var soon = function (cid) { return dls.filter(function (d) { return d.client_id === cid && (new Date(d.due_date + 'T00:00:00') - today) / 864e5 <= 30; }).length; };
+    // one row per person: client accounts (with their original lead) + leads not yet converted
+    var rows = state.clients.map(function (c) {
+      var l = state.leads.find(function (x) { return x.id === c.lead_id; }) || {};
+      var n = cos.filter(function (x) { return x.client_id === c.id; }).length, d = soon(c.id);
+      return { kind: 'client', id: c.id, at: c.created_at || l.created_at, name: c.name, sub: l.company || '', email: c.primary_email, phone: c.phone || l.phone || '', country: l.country || '',
+        info: n + (n === 1 ? ' empresa' : ' empresas') + (d ? ' · ' + d + ' prazo' + (d > 1 ? 's' : '') + ' em 30 dias' : ''), source: l.source || 'manual', status: 'client', archived: c.status !== 'active' };
+    }).concat(state.leads.filter(function (l) { return !linked[l.id]; }).map(function (l) {
+      return { kind: 'lead', id: l.id, at: l.created_at, name: l.name, sub: l.company || '', email: l.email, phone: l.phone || '', country: l.country || '', info: l.assistance || '', source: l.source, status: l.status, noPortal: l.status === 'client' };
+    })).sort(function (x, y) { return String(y.at || '').localeCompare(String(x.at || '')); });
+
+    var ST = ['new', 'contacted', 'qualified', 'proposal', 'client', 'lost'];
+    view.innerHTML = '<div class="console__head"><div><h1>CRM e clientes</h1><p class="portal-muted">Leads do site, dos agendamentos e de parceiros, e as contas de clientes do portal, numa lista só. Mude o status para <strong>Cliente</strong> para abrir a conta do portal.</p></div>' +
+      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--ghost btn--xs" type="button" id="crm-new">Novo lead</button><button class="btn btn--navy btn--xs" type="button" id="cl-new">Novo cliente</button></div></div>' +
+      '<div class="crm-seg" role="group" aria-label="Mostrar">' + [['', 'Todos'], ['leads', 'Leads em aberto'], ['client', 'Clientes'], ['lost', 'Perdidos']].map(function (x, i) { return '<button type="button" data-seg="' + x[0] + '" aria-pressed="' + (i === 0) + '">' + x[1] + ' <span class="crm-seg__n"></span></button>'; }).join('') + '</div>' +
+      '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar">' +
+      '<select id="crm-status" aria-label="Filtrar por status"><option value="">Todos os status</option>' + ST.map(function (k) { return '<option value="' + k + '">' + STATUS_PT[k] + '</option>'; }).join('') + '</select>' +
       '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="partner">Parceiro</option></select></div>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência</th><th>Origem</th><th>Status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência / empresas</th><th>Origem</th><th>Status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
+    var seg = (ERoute.get().match(/[?&]ver=(leads|client|lost)/) || [])[1] || '';
+    var inSeg = function (r, sg) { return !sg || (sg === 'leads' ? r.kind === 'lead' && r.status !== 'lost' && r.status !== 'client' : sg === 'client' ? r.status === 'client' : r.status === sg); };
+    $$('.crm-seg button', view).forEach(function (b) {
+      b.querySelector('.crm-seg__n').textContent = rows.filter(function (r) { return inSeg(r, b.dataset.seg); }).length;
+      b.onclick = function () { seg = b.dataset.seg; draw(); };
+    });
     function draw() {
+      $$('.crm-seg button', view).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.seg === seg)); });
       var term = $('#crm-q').value.trim().toLowerCase(), st = $('#crm-status').value, so = $('#crm-source').value;
-      var rows = state.leads.filter(function (l) {
-        return (!st || l.status === st) && (!so || l.source === so) &&
-          (!term || [l.name, l.email, l.company, l.phone, l.country].join(' ').toLowerCase().indexOf(term) > -1);
+      var list = rows.filter(function (r) {
+        return inSeg(r, seg) && (!st || r.status === st) && (!so || r.source === so) &&
+          (!term || [r.name, r.email, r.sub, r.phone, r.country].join(' ').toLowerCase().indexOf(term) > -1);
       });
-      $('#crm-body').innerHTML = rows.length ? rows.map(function (l) {
-        return '<tr data-id="' + esc(l.id) + '" tabindex="0"><td>' + esc(fmtDT(l.created_at, { timeStyle: undefined })) + '</td><td><strong>' + esc(l.name) + '</strong><span class="sub">' + esc(l.company || '') + '</span></td>' +
-          '<td>' + esc(l.email) + '<span class="sub">' + esc(l.phone || '') + ' ' + esc(l.country || '') + '</span></td><td>' + esc(l.assistance || '') + '</td><td>' + esc(SOURCE_PT[l.source]) + '</td><td>' + badge(l.status) + '</td></tr>';
-      }).join('') : '<tr><td colspan="6" class="empty">Nenhum lead encontrado.</td></tr>';
+      $('#crm-body').innerHTML = list.length ? list.map(function (r) {
+        var stat = r.kind === 'client' ? '<span class="badge badge--client">Cliente</span>' + (r.archived ? ' <span class="pill">Arquivado</span>' : '')
+          : badge(r.status) + (r.noPortal ? '<span class="sub">sem conta no portal</span>' : '');
+        return '<tr data-kind="' + r.kind + '" data-id="' + esc(r.id) + '" tabindex="0"><td>' + esc(fmtDT(r.at, { timeStyle: undefined })) + '</td><td><strong>' + esc(r.name) + '</strong><span class="sub">' + esc(r.sub) + '</span></td>' +
+          '<td>' + esc(r.email) + '<span class="sub">' + esc(r.phone) + ' ' + esc(r.country) + '</span></td><td>' + esc(r.info) + '</td><td>' + esc(SOURCE_PT[r.source] || '') + '</td><td>' + stat + '</td></tr>';
+      }).join('') : '<tr><td colspan="6" class="empty">Nada encontrado.</td></tr>';
       $$('#crm-body tr[data-id]').forEach(function (tr) {
-        tr.onclick = function () { openLead(tr.dataset.id); };
-        tr.onkeydown = function (e) { if (e.key === 'Enter') openLead(tr.dataset.id); };
+        var go = function () { if (tr.dataset.kind === 'client') ERoute.set('#/clientes?id=' + tr.dataset.id); else openLead(tr.dataset.id); };
+        tr.onclick = go; tr.onkeydown = function (e) { if (e.key === 'Enter') go(); };
       });
     }
-    ['#crm-q', '#crm-status', '#crm-source'].forEach(function (s) { $(s).addEventListener('input', draw); });
+    ['#crm-q', '#crm-status', '#crm-source'].forEach(function (x) { $(x).addEventListener('input', draw); });
     $('#crm-csv').addEventListener('click', exportCsv);
     $('#crm-new').addEventListener('click', function () { openLead(null); });
+    $('#cl-new').addEventListener('click', function () { AdminClients.create(clientsCtx()); });
     draw();
     if (/novo=1/.test(ERoute.get())) openLead(null);
+    if (/cliente=1/.test(ERoute.get())) AdminClients.create(clientsCtx());
     var lq = (ERoute.get().match(/[?&]lead=([0-9a-f-]{36})/) || [])[1]; if (lq && state.leads.some(function (x) { return x.id === lq; })) openLead(lq);
   }
 
@@ -6120,17 +6163,25 @@ window.ENDEAVOR_CFG = {
       '<div class="field"><label for="ld-notes">Notas internas</label><textarea id="ld-notes" rows="5">' + esc(l.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="ld-msg" role="alert"></div>' +
       '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
-      (id ? '<a class="btn btn--ghost" href="mailto:' + esc(l.email) + '">Enviar e-mail</a><a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + '</div></form>' +
+      (id ? ((state.clients || []).some(function (c) { return c.lead_id === id; }) ? '<a class="btn btn--ghost" href="#/clientes?id=' + esc((state.clients.find(function (c) { return c.lead_id === id; }) || {}).id) + '">Abrir cliente</a>' : '<button class="btn btn--ghost" type="button" id="ld-conv">Converter em cliente</button>') +
+        '<a class="btn btn--ghost" href="mailto:' + esc(l.email) + '">Enviar e-mail</a><a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + '</div></form>' +
       (id ? '<h3 style="margin-top:1.5rem">Agendamentos</h3>' + (related[0].length ? '<ul class="list">' + related[0].map(function (b) { return '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at)) + '</strong><span>' + esc(b.topic || '') + '</span></div>' + badge(b.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') +
         '<h3>Documentos</h3>' + (related[1].length ? '<ul class="list">' + related[1].map(function (e) { return '<li><div class="list__main"><strong>' + esc(e.title) + '</strong><span>' + esc(fmtDT(e.created_at)) + '</span></div>' + badge(e.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') : ''));
+    if ($('#ld-conv', o)) $('#ld-conv', o).onclick = function () { closeOverlay(); AdminClients.create(clientsCtx(), id); };
+    var stSel = $('#ld-status', o), btnSave = $('#lead-form button[type=submit]', o);
+    stSel.onchange = function () { var hc = id && (state.clients || []).some(function (c) { return c.lead_id === id; }); btnSave.textContent = stSel.value === 'client' && !hc ? 'Salvar e criar conta do cliente' : 'Salvar'; };
     $('#lead-form', o).addEventListener('submit', async function (e) {
       e.preventDefault();
       var row = { name: $('#ld-name').value.trim(), email: $('#ld-email').value.trim().toLowerCase(), phone: $('#ld-phone').value.trim() || null,
         country: $('#ld-country').value.trim() || null, company: $('#ld-company').value.trim() || null, assistance: $('#ld-assist').value.trim() || null,
         status: $('#ld-status').value, notes: $('#ld-notes').value };
       if (row.name.length < 2 || row.email.indexOf('@') < 1) return msg($('#ld-msg'), 'Preencha nome e e-mail.', 'error');
-      var r = id ? await sb.from('leads').update(row).eq('id', id) : await sb.from('leads').insert(Object.assign(row, { source: 'manual' }));
+      var r = id ? await sb.from('leads').update(row).eq('id', id) : await sb.from('leads').insert(Object.assign(row, { source: 'manual' })).select('id').single();
       if (r.error) return msg($('#ld-msg'), errText(r.error), 'error');
+      // status Cliente: open the portal account form for this lead (unless it already has one)
+      var lid = id || (r.data && r.data.id);
+      var hasClient = (state.clients || []).some(function (c) { return c.lead_id === lid; });
+      if (row.status === 'client' && !hasClient && lid) { closeOverlay(); return AdminClients.create(clientsCtx(), lid); }
       closeOverlay(); if (/novo=1/.test(ERoute.get())) ERoute.set('#/crm'); else route();
     });
   }
@@ -6331,7 +6382,10 @@ window.ENDEAVOR_CFG = {
   async function viewClients(view) {
     if (!window.AdminClients) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de clientes não carregou. Recarregue a página.</div>'; return; }
     var id = (ERoute.get().match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
-    return id ? AdminClients.detail(view, clientsCtx(), id) : AdminClients.list(view, clientsCtx());
+    if (id) return AdminClients.detail(view, clientsCtx(), id);
+    ERoute.set('#/crm?ver=client' + (/novo=1/.test(ERoute.get()) ? '&cliente=1' : ''), true); // the client list now lives in the CRM
+    $$('.console__nav a').forEach(function (a) { if (a.dataset.view === 'crm') a.setAttribute('aria-current', 'page'); });
+    return viewCrm(view);
   }
 
   /* Generic in-console file viewer for any private bucket: PDFs and images render inline, other types download. */
