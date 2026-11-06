@@ -1,6 +1,11 @@
 # Programa de Parceiros: cadastro, aprovação e contrato
 
-## Fluxo
+## Fluxo atual (desde 06/11/2026)
+- A página `partners.html` e a seção "Programa de Parceiros" da home **não têm mais formulário de cadastro**. O botão "Agendar uma conversa" / "Seja parceiro" abre a página de agendamento normal (`schedule.html?topic=partner`), com o assunto **Programa de Parceiros** já escolhido.
+- Depois da conversa, você cadastra o parceiro em Parceiros → **Novo parceiro**, já com a comissão. Ele recebe o convite para criar a senha. Depois disso, na aba **Contrato**, use **"Enviar contrato"** para mandar o contrato para assinatura eletrônica.
+- O cadastro automático pelo site (descrito abaixo) continua pronto no sistema, mas não aparece mais no site. Dá para religar se quiser.
+
+## Fluxo de cadastro automático (desligado no site)
 1. **Cadastro** (`partners.html`, botão "Parceiros" no topo da home e CTA "Quero ser parceiro" dos e-mails). O parceiro preenche o formulário (nome, e-mail, WhatsApp, empresa, profissão, país, idioma) e escolhe o horário da **conversa de onboarding**.
    - O parceiro é criado como **Aguardando aprovação**, com comissão **a definir** (`program_status = pending`, `default_share_pct = null`).
    - O agendamento entra na Agenda, com tópico "Partner onboarding". A confirmação e os lembretes saem como em qualquer agendamento.

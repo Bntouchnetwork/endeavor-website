@@ -5,7 +5,7 @@
 // The template is shared with the admin preview (mkt-template.js), pinned to a commit.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
-import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@f127635aa2d4f6b62fb5cec9e7b4cb0467ebcfef/mkt-template.js";
+import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@0b4679ec95007ec34fc096a7a28ebb5375b3eb39/mkt-template.js";
 
 // deno-lint-ignore no-explicit-any
 const EMkt = (globalThis as any).EMkt;
