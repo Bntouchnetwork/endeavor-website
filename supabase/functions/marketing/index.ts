@@ -23,6 +23,9 @@ const SES_PASS = Deno.env.get("SES_SMTP_PASS") ?? "";
 // support Gmail: only for test e-mails while SES is not connected
 const G_USER = Deno.env.get("SMTP_USER") ?? "support@endeavorbiz.com";
 const G_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
+// AI template writer (same key as the Operating Agreement module)
+const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
+const AI_MODEL = Deno.env.get("MKT_MODEL") || Deno.env.get("OA_MODEL") || "claude-sonnet-5-5";
 const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
 const db = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });
 
@@ -102,6 +105,68 @@ async function tick() {
   return out;
 }
 
+/* ---------- AI template writer ---------- */
+const AI_SYSTEM = `You write marketing e-mail templates for Endeavor Business Solutions LLC (Orlando, FL; https://endeavorbiz.com).
+About Endeavor: helps foreign entrepreneurs and investors open and maintain companies in the United States: LLC and corporation formation, registered agent and compliance, tax coordination with CPAs (ITIN/EIN guidance), U.S. bank account support, real estate and property management support, family office. Serves clients in Portuguese, English and Spanish. Has a Partner Program for realtors, accountants, attorneys and other professionals who refer clients (they earn a commission, follow referrals in their own Partner Portal and get paid automatically through Stripe).
+Contact (added automatically by the layout, do not repeat in the text): WhatsApp +1 (630) 689-8702, phone +1 (407) 436-9567, support@endeavorbiz.com. Booking page: https://endeavorbiz.com/schedule.html.
+The layout (logo, colours, footer with address and unsubscribe link) is added by the system. You only write the content and choose the design options.
+Rules:
+- Honest, professional, warm. No exaggerated or false promises, no guaranteed results, no invented numbers, prices, percentages, testimonials or deadlines unless the brief gives them. Never state a commission percentage.
+- Subject lines must be truthful and not misleading (CAN-SPAM). No ALL CAPS, no spam words, at most one emoji and only if the brief asks.
+- Never ask the reader for SSN, ITIN, passport or bank numbers.
+- Use {{nome}} where the contact's first name should go (only in subject or heading if natural) and {{empresa}} for their company, only if useful.
+- Write natively in each requested language (pt = Brazilian Portuguese, en = American English, es = neutral Latin American Spanish), not word-for-word translations.
+- Keep it scannable: intro 1 to 3 short paragraphs, 1 to 4 sections, each item 1 to 2 sentences.
+Reply with ONLY a JSON object, no markdown, in this shape:
+{"name": "short internal name in Portuguese",
+ "style": {"accent": "gold|teal|sky|emerald|coral", "hero": "navy|light"},
+ "button_url": "https://... (only if the brief gives a specific link; otherwise omit)",
+ "<lang>": {"kicker": "2-4 word label", "subject": "...", "preheader": "...", "heading": "...", "intro": "paragraphs separated by a blank line",
+   "sections": [{"type": "cards|steps|list|highlight|text", "title": "...", "items": [{"title": "...", "text": "..."}], "text": "for highlight/text only"}],
+   "cta": "button label (2-5 words)", "closing": "1-2 short sentences", "sign": "signature line"}}
+with one "<lang>" object for each requested language. "cards" works best with 2 or 4 items, "steps" with 2 to 4.`;
+
+const LANGS3 = ["pt", "en", "es"];
+const SEC_TYPES = ["cards", "steps", "list", "highlight", "text"];
+const str = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/<[^>]*>/g, "").trim().slice(0, max) : "");
+function cleanTemplate(raw: Row, langs: string[]) {
+  const out: Row = { languages: [] as string[], style: { accent: ["gold", "teal", "sky", "emerald", "coral"].includes(raw?.style?.accent) ? raw.style.accent : "gold", hero: raw?.style?.hero === "light" ? "light" : "navy" } };
+  const bu = str(raw?.button_url, 500); if (/^https:\/\/[^\s"<>]+$/.test(bu)) out.button_url = bu;
+  for (const l of langs) {
+    const d = raw?.[l]; if (!d || typeof d !== "object") continue;
+    out[l] = {
+      kicker: str(d.kicker, 40), subject: str(d.subject, 150), preheader: str(d.preheader, 180), heading: str(d.heading, 160), intro: str(d.intro, 2000),
+      sections: (Array.isArray(d.sections) ? d.sections : []).slice(0, 5).map((x: Row) => ({
+        type: SEC_TYPES.includes(x?.type) ? x.type : "text", title: str(x?.title, 120), text: str(x?.text, 1200),
+        items: (Array.isArray(x?.items) ? x.items : []).slice(0, 6).map((it: Row) => ({ title: str(it?.title, 100), text: str(it?.text, 400) })).filter((it: Row) => it.title || it.text),
+      })),
+      cta: str(d.cta, 60), closing: str(d.closing, 600), sign: str(d.sign, 100),
+    };
+    if (out[l].subject && out[l].heading) out.languages.push(l);
+  }
+  return { name: str(raw?.name, 100), data: out };
+}
+async function aiTemplate(body: Row) {
+  if (!ANTHROPIC) return { error: "no_ai_key" };
+  const brief = str(body.brief, 4000), adjust = str(body.adjust, 2000);
+  const langs = (Array.isArray(body.languages) ? body.languages : LANGS3).filter((l: string) => LANGS3.includes(l));
+  if (brief.length < 10 || !langs.length) return { error: "brief" };
+  let user = `Brief from the Endeavor team (may be in Portuguese):\n${brief}\n\nLanguages to write: ${langs.join(", ")}.`;
+  if (adjust && body.previous) user += `\n\nThis is the current version:\n${JSON.stringify(body.previous).slice(0, 20000)}\n\nApply these changes and return the full JSON again:\n${adjust}`;
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: AI_MODEL, max_tokens: 6000, system: AI_SYSTEM, messages: [{ role: "user", content: user }] }),
+  });
+  const j = await r.json().catch(() => null);
+  if (!r.ok) return { error: "ai_failed", detail: String(j?.error?.message || r.status).slice(0, 200) };
+  const text = (j.content || []).filter((b: Row) => b.type === "text").map((b: Row) => b.text).join("");
+  const m = text.match(/\{[\s\S]*\}/); if (!m) return { error: "ai_format" };
+  let raw: Row; try { raw = JSON.parse(m[0]); } catch { return { error: "ai_format" }; }
+  const t = cleanTemplate(raw, langs);
+  if (!t.data.languages.length) return { error: "ai_format" };
+  return { ok: true, name: t.name, data: t.data, model: j.model || AI_MODEL };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   const url = new URL(req.url), ua = req.headers.get("user-agent") ?? "";
@@ -163,13 +228,14 @@ Deno.serve(async (req) => {
     }
 
     // admin
-    if (body.action === "status" || body.action === "test") {
+    if (body.action === "status" || body.action === "test" || body.action === "ai_template") {
       const user = createClient(SB_URL, SB_ANON || SB_SERVICE, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } }, auth: { persistSession: false } });
       const { data: isAdmin } = await user.rpc("is_admin");
       if (!isAdmin) return json({ error: "forbidden" }, 403);
       const { data: s } = await db.from("mkt_settings").select("*").eq("id", 1).single();
       if (s && s.ses_connected !== sesOn()) await db.from("mkt_settings").update({ ses_connected: sesOn() }).eq("id", 1);
-      if (body.action === "status") return json({ ses: sesOn(), gmail_test: G_PASS.length >= 8 });
+      if (body.action === "status") return json({ ses: sesOn(), gmail_test: G_PASS.length >= 8, ai: !!ANTHROPIC });
+      if (body.action === "ai_template") { const r = await aiTemplate(body); return json(r, r.error ? (r.error === "no_ai_key" ? 503 : 400) : 200); }
       const { data: c } = await db.from("mkt_campaigns").select("*").eq("id", String(body.campaign_id || "")).single();
       if (!c) return json({ error: "not_found" }, 404);
       const to = String(body.to || s.reply_to).trim();

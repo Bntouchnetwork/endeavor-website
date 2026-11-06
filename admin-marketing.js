@@ -26,14 +26,15 @@
   async function view(v, c) {
     ctx = c; esc = c.esc; sb = c.sb;
     var tab = param('tab') || 'campanhas', cid = param('c'), rid = param('r');
-    var TABS = [['campanhas', 'Campanhas'], ['contatos', 'Contatos e listas'], ['config', 'Envio e configurações']];
-    v.innerHTML = '<div class="console__head"><div><h1>Marketing</h1><p class="portal-muted">Campanhas de e-mail próprias: listas, agendamento, descadastro, aberturas e cliques por lead.</p></div></div>' +
-      '<nav class="subtabs" aria-label="Marketing">' + TABS.map(function (t) { return '<a href="#/marketing?tab=' + t[0] + '"' + (t[0] === tab && !cid && !rid ? ' aria-current="page"' : (t[0] === 'campanhas' && (cid || rid) ? ' aria-current="page"' : '')) + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="mk-body"></div>';
+    var TABS = [['campanhas', 'Campanhas'], ['templates', 'Templates'], ['contatos', 'Contatos e listas'], ['config', 'Envio e configurações']];
+    v.innerHTML = (cid ? '<h1 class="sr-only">Marketing</h1>' : '<div class="console__head"><div><h1>Marketing</h1><p class="portal-muted">Campanhas de e-mail próprias: listas, agendamento, descadastro, aberturas e cliques por lead.</p></div></div>') +
+      '<nav class="subtabs' + (cid ? ' mk-subtabs--tight' : '') + '" aria-label="Marketing">' + TABS.map(function (t) { return '<a href="#/marketing?tab=' + t[0] + '"' + (t[0] === tab && !cid && !rid ? ' aria-current="page"' : (t[0] === 'campanhas' && (cid || rid) ? ' aria-current="page"' : '')) + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="mk-body"></div>';
     var body = $('#mk-body', v);
     var st = (await sb.from('mkt_settings').select('*').eq('id', 1).maybeSingle()).data || {};
-    if (!st.ses_connected && tab !== 'config') body.insertAdjacentHTML('beforebegin', '<div class="portal-alert portal-alert--info" style="display:block">A Amazon SES ainda não está conectada. Você já pode montar listas e campanhas; as campanhas agendadas saem sozinhas assim que a conexão for feita (veja <a href="#/marketing?tab=config">Envio e configurações</a>).</div>');
+    if (!st.ses_connected && tab !== 'config' && !cid) body.insertAdjacentHTML('beforebegin', '<div class="portal-alert portal-alert--info" style="display:block">A Amazon SES ainda não está conectada. Você já pode montar listas e campanhas; as campanhas agendadas saem sozinhas assim que a conexão for feita (veja <a href="#/marketing?tab=config">Envio e configurações</a>).</div>');
     if (cid) return editor(body, cid, st);
     if (rid) return report(body, rid);
+    if (tab === 'templates') return gallery(body, st);
     if (tab === 'contatos') return contacts(body);
     if (tab === 'config') return settings(body, st);
     return campaigns(body);
@@ -67,65 +68,100 @@
     var c = isNew ? { name: '', template: 'partners', language: 'auto', list_ids: [], status: 'draft' } : (await sb.from('mkt_campaigns').select('*').eq('id', cid).single()).data;
     if (!c) { body.innerHTML = '<div class="portal-alert portal-alert--error" style="display:block">Campanha não encontrada.</div>'; return; }
     if (!/draft|scheduled/.test(c.status)) return ERoute.go('#/marketing?r=' + cid);
-    var res = await Promise.all([ctx.q(sb.from('mkt_lists').select('*').order('name')), rpc('mkt_list_counts')]);
-    var lists = res[0], cnt = {}; res[1].forEach(function (x) { cnt[x.list_id] = x; });
-    var T = window.EMkt.texts;
+    var res = await Promise.all([ctx.q(sb.from('mkt_lists').select('*').order('name')), rpc('mkt_list_counts'), ctx.q(sb.from('mkt_templates').select('*').order('created_at', { ascending: false }))]);
+    var lists = res[0], cnt = {}, tpls = res[2] || []; res[1].forEach(function (x) { cnt[x.list_id] = x; });
+    var T = window.EMkt.texts, plang = 'pt', pname = 'Maria';
+    var tplId = c.template_id || null, tplData = c.tpl_data || null;
+    var pre = isNew && param('tpl') ? tpls.find(function (t) { return t.id === param('tpl'); }) : null;
+    if (pre) { c.template = 'ai'; tplId = pre.id; tplData = pre.data; }
     var fld = function (id, label, val, ph, extra) { return '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" value="' + esc(val || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + (extra || '') + '></div>'; };
     var local = function (d) { if (!d) return ''; var x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
-    body.innerHTML = '<p class="crumbs"><a href="#/marketing">Campanhas</a> /</p><div class="mk-editor"><div class="mk-form portal-card">' +
-      (c.status === 'scheduled' ? '<div class="portal-alert portal-alert--info" style="display:block">Agendada para ' + esc(ctx.fmtDT(c.scheduled_at)) + '. Para mudar, edite e agende de novo, ou cancele o agendamento.</div>' : '') +
-      fld('mk-name', 'Nome interno da campanha', c.name, 'Ex.: Parceiros - corretores Orlando - nov/2026') +
-      '<div class="field"><span style="font-weight:600">Enviar para as listas</span><div class="mk-lists">' + (lists.length ? lists.map(function (l) { var n = cnt[l.id] ? +cnt[l.id].subscribed : 0; return '<label class="check-row"><input type="checkbox" value="' + l.id + '"' + ((c.list_ids || []).indexOf(l.id) > -1 ? ' checked' : '') + '> ' + esc(l.name) + ' <span class="portal-muted">(' + n + ' inscritos)</span></label>'; }).join('') : '<p class="portal-muted">Nenhuma lista ainda. Crie em <a href="#/marketing?tab=contatos">Contatos e listas</a>.</p>') + '</div><p class="portal-muted" id="mk-reach" style="font-size:.86rem;margin:.3rem 0 0"></p></div>' +
-      '<div class="portal-grid2"><div class="field"><label for="mk-tpl">Modelo</label><select id="mk-tpl"><option value="partners">Programa de parceiros (pronto)</option><option value="custom">Personalizado</option></select></div>' +
-      '<div class="field"><label for="mk-lang">Idioma</label><select id="mk-lang"><option value="auto">Automático (idioma de cada contato)</option><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
-      fld('mk-subject', 'Assunto', c.subject, '') + fld('mk-pre', 'Pré-cabeçalho (aparece ao lado do assunto)', c.preheader, '') + fld('mk-heading', 'Título', c.heading, '') +
-      '<div class="field"><label for="mk-text">Texto</label><textarea id="mk-text" rows="6" placeholder="">' + esc(c.body || '') + '</textarea><p class="portal-muted" style="font-size:.84rem;margin:.3rem 0 0">Use {{nome}} e {{empresa}} para personalizar. Deixe uma linha em branco entre parágrafos.</p></div>' +
-      '<div class="portal-grid2">' + fld('mk-btn', 'Texto do botão', c.button_label, '') + fld('mk-url', 'Link do botão (https://…)', c.button_url, '', ' type="url"') + '</div>' +
-      '<p class="portal-muted" id="mk-tplnote" style="font-size:.86rem"></p>' +
-      '<div class="portal-alert" id="mk-msg" role="status"></div>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost" type="button" id="mk-save">Salvar rascunho</button>' + (isNew ? '' : '<button class="btn btn--danger btn--xs" type="button" id="mk-del">Excluir</button>') + '</div>' +
-      '<section class="mk-box"><h3 class="portal-h2" style="font-size:1rem">Enviar teste</h3><div class="mk-inline"><input id="mk-to" type="email" value="' + esc(st.reply_to || '') + '" aria-label="E-mail para o teste"><select id="mk-tlang" aria-label="Idioma do teste"><option value="pt">PT</option><option value="en">EN</option><option value="es">ES</option></select><button class="btn btn--ghost btn--xs" type="button" id="mk-test">Enviar teste</button></div></section>' +
-      '<section class="mk-box"><h3 class="portal-h2" style="font-size:1rem">Enviar a campanha</h3><div class="mk-inline"><input id="mk-when" type="datetime-local" value="' + esc(local(c.scheduled_at)) + '" aria-label="Data e hora do envio"><button class="btn btn--navy btn--xs" type="button" id="mk-sched">Agendar</button><button class="btn btn--ghost btn--xs" type="button" id="mk-now">Enviar agora</button>' +
+    body.innerHTML = '<div class="mk-edhead"><p class="crumbs" style="margin:0"><a href="#/marketing">Campanhas</a> / ' + esc(isNew ? 'Nova campanha' : c.name) + '</p>' +
+      '<div class="portal-btn-row" style="margin:0"><button class="btn btn--ghost btn--xs" type="button" id="mk-prev"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg> Ver prévia</button><button class="btn btn--navy btn--xs" type="button" id="mk-save">Salvar rascunho</button>' + (isNew ? '' : '<button class="btn btn--danger btn--xs" type="button" id="mk-del">Excluir</button>') + '</div></div>' +
+      (c.status === 'scheduled' ? '<div class="portal-alert portal-alert--info" style="display:block;margin:0 0 .6rem">Agendada para ' + esc(ctx.fmtDT(c.scheduled_at)) + '. Para mudar, edite e agende de novo, ou cancele o agendamento.</div>' : '') +
+      '<div class="portal-alert" id="mk-msg" role="status" style="margin:0 0 .6rem"></div>' +
+      '<div class="mk-editor"><section class="portal-card mk-col"><h2 class="mk-colh">Para quem e quando</h2>' +
+      '<div class="mk-row32">' + fld('mk-name', 'Nome interno da campanha', c.name, 'Ex.: Parceiros - corretores Orlando - nov/2026') +
+      '<div class="field"><label for="mk-lang">Idioma</label><select id="mk-lang" title="Automático: cada contato recebe no idioma dele"><option value="auto">Automático (do contato)</option><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
+      '<div class="field"><span style="font-weight:600">Enviar para as listas</span><div class="mk-lists">' + (lists.length ? lists.map(function (l) { var n = cnt[l.id] ? +cnt[l.id].subscribed : 0; return '<label class="check-row"><input type="checkbox" value="' + l.id + '"' + ((c.list_ids || []).indexOf(l.id) > -1 ? ' checked' : '') + '> ' + esc(l.name) + ' <span class="portal-muted">(' + n + ' inscritos)</span></label>'; }).join('') : '<p class="portal-muted">Nenhuma lista ainda. Crie em <a href="#/marketing?tab=contatos">Contatos e listas</a>.</p>') + '</div><p class="portal-muted" id="mk-reach" style="font-size:.84rem;margin:.25rem 0 0"></p></div>' +
+      '<div class="mk-box"><strong class="mk-boxh">Enviar teste</strong><div class="mk-inline"><input id="mk-to" type="email" value="' + esc(st.reply_to || '') + '" aria-label="E-mail para o teste"><select id="mk-tlang" aria-label="Idioma do teste"><option value="pt">PT</option><option value="en">EN</option><option value="es">ES</option></select><button class="btn btn--ghost btn--xs" type="button" id="mk-test">Enviar teste</button></div></div>' +
+      '<div class="mk-box"><strong class="mk-boxh">Enviar a campanha</strong><div class="mk-inline"><input id="mk-when" type="datetime-local" value="' + esc(local(c.scheduled_at)) + '" aria-label="Data e hora do envio"><button class="btn btn--navy btn--xs" type="button" id="mk-sched">Agendar</button><button class="btn btn--ghost btn--xs" type="button" id="mk-now">Enviar agora</button>' +
         (c.status === 'scheduled' ? '<button class="btn btn--ghost btn--xs" type="button" id="mk-unsched">Cancelar agendamento</button>' : '') + '</div>' +
-        '<p class="portal-muted" style="font-size:.84rem;margin:.4rem 0 0">Horário do seu computador. Cada e-mail leva o link de descadastro e o endereço da empresa. Contatos descadastrados nunca recebem.</p></section>' +
-      '</div><div class="mk-preview portal-card"><div class="mk-inline" style="justify-content:space-between"><strong>Prévia</strong><span><select id="mk-plang" aria-label="Idioma da prévia"><option value="pt">PT</option><option value="en">EN</option><option value="es">ES</option></select> <input id="mk-pname" value="Maria" aria-label="Nome de exemplo" style="width:7rem"></span></div>' +
-      '<p class="portal-muted" id="mk-psubject" style="margin:.6rem 0;font-size:.9rem"></p><iframe id="mk-frame" title="Prévia do e-mail" sandbox=""></iframe></div></div>';
-    $('#mk-tpl', body).value = c.template; $('#mk-lang', body).value = c.language;
+        '<p class="portal-muted" style="font-size:.8rem;margin:.35rem 0 0">Horário do seu computador. Todo e-mail leva descadastro e endereço.</p></div>' +
+      '</section><section class="portal-card mk-col mk-form"><h2 class="mk-colh">Conteúdo</h2>' +
+      '<div class="field"><label for="mk-tpl">Modelo</label><div class="mk-inline mk-tplrow"><select id="mk-tpl"></select><button class="btn btn--ghost btn--xs" type="button" id="mk-ai"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg> Criar template com IA</button></div><p class="portal-muted" id="mk-tplnote" style="font-size:.8rem;margin:.3rem 0 0"></p></div>' +
+      '<div class="portal-grid2">' + fld('mk-subject', 'Assunto', c.subject, '') + fld('mk-pre', 'Pré-cabeçalho', c.preheader, '', ' title="Texto curto que aparece ao lado do assunto na caixa de entrada"') + '</div>' + fld('mk-heading', 'Título', c.heading, '') +
+      '<div class="field"><label for="mk-text">Texto</label><textarea id="mk-text" rows="3" placeholder="">' + esc(c.body || '') + '</textarea><p class="portal-muted" style="font-size:.8rem;margin:.25rem 0 0">Use {{nome}} e {{empresa}} para personalizar; uma linha em branco separa parágrafos.</p></div>' +
+      '<div class="portal-grid2">' + fld('mk-btn', 'Texto do botão', c.button_label, '') + fld('mk-url', 'Link do botão (https://…)', c.button_url, '', ' type="url"') + '</div>' +
+      '</section></div>';
+    function tplOptions() {
+      var hasSnap = c.template === 'ai' && c.tpl_data && !tpls.some(function (t) { return t.id === c.template_id; });
+      return '<option value="partners">Programa de parceiros (pronto)</option>' +
+        (tpls.length ? '<optgroup label="Galeria de templates">' + tpls.map(function (t) { return '<option value="ai:' + t.id + '">' + esc(t.name) + '</option>'; }).join('') + '</optgroup>' : '') +
+        (hasSnap ? '<option value="ai:snap">Template desta campanha</option>' : '') +
+        '<option value="custom">Texto simples (eu escrevo)</option><option value="__new">+ Personalizado: criar com IA…</option>';
+    }
+    var sel = $('#mk-tpl', body), prevSel;
+    function setTplSel() { sel.innerHTML = tplOptions(); sel.value = c.template === 'ai' ? (tplId && tpls.some(function (t) { return t.id === tplId; }) ? 'ai:' + tplId : 'ai:snap') : c.template; prevSel = sel.value; }
+    setTplSel(); $('#mk-lang', body).value = c.language;
+    function openCreator() {
+      aiCreator(null, function (t) { tpls.unshift(t); c.template = 'ai'; tplId = t.id; tplData = t.data; setTplSel(); preview(); ctx.msg($('#mk-msg'), 'Template salvo na galeria e escolhido para esta campanha.', 'ok'); });
+    }
+    sel.onchange = function () {
+      var v = sel.value;
+      if (v === '__new') { sel.value = prevSel; openCreator(); return; }
+      if (v.indexOf('ai:') === 0) { c.template = 'ai'; if (v !== 'ai:snap') { var t = tpls.find(function (x) { return 'ai:' + x.id === v; }); tplId = t.id; tplData = t.data; } else { tplId = c.template_id; tplData = c.tpl_data; } }
+      else { c.template = v; tplId = null; tplData = null; }
+      prevSel = v; preview();
+    };
+    $('#mk-ai', body).onclick = openCreator;
     function read() {
-      return { name: $('#mk-name').value.trim(), template: $('#mk-tpl').value, language: $('#mk-lang').value, subject: $('#mk-subject').value.trim() || null, preheader: $('#mk-pre').value.trim() || null,
+      var tpl = c.template;
+      return { name: $('#mk-name').value.trim(), template: tpl, template_id: tpl === 'ai' ? tplId : null, tpl_data: tpl === 'ai' ? tplData : null, language: $('#mk-lang').value, subject: $('#mk-subject').value.trim() || null, preheader: $('#mk-pre').value.trim() || null,
         heading: $('#mk-heading').value.trim() || null, body: $('#mk-text').value.trim() || null, button_label: $('#mk-btn').value.trim() || null, button_url: $('#mk-url').value.trim() || null,
         list_ids: $$('.mk-lists input:checked', body).map(function (i) { return i.value; }) };
     }
     function placeholders() {
-      var tpl = $('#mk-tpl').value, l = $('#mk-plang').value, t = T[l];
-      var ph = tpl === 'partners' ? { subject: t.subject.replace('{nome}', '{{nome}}'), pre: t.pre, heading: t.h1, body: 'Opcional: substitui o parágrafo de apresentação.', btn: t.cta, url: 'https://endeavorbiz.com/schedule.html (agendar conversa)' }
-        : { subject: 'Assunto do e-mail', pre: 'Resumo curto', heading: 'Título no topo do e-mail', body: 'Olá, {{nome}}!\n\nEscreva aqui a mensagem.', btn: 'Ex.: Agendar uma conversa', url: 'https://' };
+      var tpl = c.template, t = T[plang], ph, note;
+      if (tpl === 'partners') { ph = { subject: t.subject.replace('{nome}', '{{nome}}'), pre: t.pre, heading: t.h1, body: 'Opcional: substitui o parágrafo de apresentação.', btn: t.cta, url: 'https://endeavorbiz.com/schedule.html (agendar conversa)' }; note = 'Textos prontos em PT, EN e ES. Campo em branco usa o texto do modelo.'; }
+      else if (tpl === 'ai' && tplData) {
+        var d = tplData[plang] || tplData[(tplData.languages || [])[0]] || {};
+        ph = { subject: d.subject || '', pre: d.preheader || '', heading: d.heading || '', body: 'Opcional: substitui a introdução do template.', btn: d.cta || '', url: tplData.button_url || 'https://endeavorbiz.com/schedule.html (agendar conversa)' };
+        note = 'Template da galeria (' + (tplData.languages || []).map(function (l) { return l.toUpperCase(); }).join(', ') + '). Campo em branco usa o texto do template.';
+      } else { ph = { subject: 'Assunto do e-mail', pre: 'Resumo curto', heading: 'Título no topo do e-mail', body: 'Olá, {{nome}}!\n\nEscreva aqui a mensagem.', btn: 'Ex.: Agendar uma conversa', url: 'https://' }; note = 'Você escreve o texto; ele é o mesmo para todos os contatos.'; }
       $('#mk-subject').placeholder = ph.subject; $('#mk-pre').placeholder = ph.pre; $('#mk-heading').placeholder = ph.heading; $('#mk-text').placeholder = ph.body; $('#mk-btn').placeholder = ph.btn; $('#mk-url').placeholder = ph.url;
-      $('#mk-tplnote').textContent = tpl === 'partners' ? 'O modelo já tem textos prontos em PT, EN e ES (vantagens, como começar e botão). Os campos em branco usam o texto do modelo no idioma de cada contato. Se você preencher um campo, ele vale para todos os idiomas.' : 'No modelo personalizado, o texto é o mesmo para todos; o rodapé (descadastro) sai no idioma de cada contato.';
+      $('#mk-tplnote').textContent = note;
     }
-    var timer = null;
+    function renderNow() { return window.EMkt.render(read(), { name: pname, company: 'Exemplo Realty', language: plang }, { site: 'https://endeavorbiz.com', address: st.postal_address, replyTo: st.reply_to, unsubUrl: 'https://endeavorbiz.com/unsubscribe.html' }); }
     function preview() {
       placeholders();
-      var c2 = read(), l = $('#mk-plang').value;
-      var r = window.EMkt.render(c2, { name: $('#mk-pname').value, company: 'Exemplo Realty', language: l }, { site: 'https://endeavorbiz.com', address: st.postal_address, replyTo: st.reply_to, unsubUrl: 'https://endeavorbiz.com/unsubscribe.html' });
-      $('#mk-psubject').innerHTML = '<strong>Assunto:</strong> ' + esc(r.subject);
-      $('#mk-frame').srcdoc = r.html;
+      var o = $('#overlay'); if (o.hidden || !$('#pv-frame', o)) return;
+      var r = renderNow(); $('#pv-subject', o).innerHTML = '<strong>Assunto:</strong> ' + esc(r.subject); $('#pv-frame', o).srcdoc = r.html;
     }
+    $('#mk-prev', body).onclick = function () {
+      var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Prévia do e-mail</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+        '<div class="mk-inline" style="margin:0 0 .5rem"><select id="pv-lang" aria-label="Idioma da prévia"><option value="pt">PT</option><option value="en">EN</option><option value="es">ES</option></select><input id="pv-name" value="' + esc(pname) + '" aria-label="Nome de exemplo" style="width:8rem"></div>' +
+        '<p class="portal-muted" id="pv-subject" style="margin:0 0 .5rem;font-size:.9rem"></p><iframe id="pv-frame" class="mk-frame" title="Prévia do e-mail" sandbox=""></iframe>');
+      o.firstChild.classList.add('drawer--wide');
+      $('#pv-lang', o).value = plang;
+      $('#pv-lang', o).onchange = function () { plang = this.value; preview(); };
+      $('#pv-name', o).oninput = function () { pname = this.value; preview(); };
+      preview();
+    };
     async function reach() {
       var ids = read().list_ids; if (!ids.length) { $('#mk-reach').textContent = 'Escolha pelo menos uma lista.'; return; }
       var mem = await all(function () { return sb.from('mkt_list_members').select('contact_id, mkt_contacts(status)').in('list_id', ids); });
       var u = {}; mem.forEach(function (m) { if (m.mkt_contacts && m.mkt_contacts.status === 'subscribed') u[m.contact_id] = 1; });
       $('#mk-reach').textContent = Object.keys(u).length + ' contatos inscritos vão receber (sem repetir quem está em mais de uma lista).';
     }
-    $$('input, select, textarea', $('.mk-form', body)).forEach(function (i) { i.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(preview, 250); }); });
     $$('.mk-lists input', body).forEach(function (i) { i.addEventListener('change', reach); });
-    $('#mk-plang').onchange = preview; $('#mk-pname').oninput = preview;
-    preview(); reach();
+    placeholders(); reach();
     async function save(extra) {
       var row = Object.assign(read(), extra || {}), m = $('#mk-msg');
       if (row.name.length < 2) { ctx.msg(m, 'Dê um nome interno à campanha.', 'error'); return null; }
       if (row.button_url && !/^https:\/\//.test(row.button_url)) { ctx.msg(m, 'O link do botão precisa começar com https://', 'error'); return null; }
-      if (row.template === 'custom' && (!row.subject || !row.body)) { ctx.msg(m, 'No modelo personalizado, preencha o assunto e o texto.', 'error'); return null; }
+      if (row.template === 'custom' && (!row.subject || !row.body)) { ctx.msg(m, 'No texto simples, preencha o assunto e o texto.', 'error'); return null; }
+      if (row.template === 'ai' && !row.tpl_data) { ctx.msg(m, 'Escolha um template da galeria.', 'error'); return null; }
       var r = isNew ? await sb.from('mkt_campaigns').insert(Object.assign(row, { created_by: (await sb.auth.getUser()).data.user.email })).select('id').single() : await sb.from('mkt_campaigns').update(row).eq('id', cid).select('id').single();
       if (r.error) { ctx.msg(m, ctx.errText(r.error), 'error'); return null; }
       if (isNew) { isNew = false; cid = r.data.id; ERoute.set('#/marketing?c=' + cid, true); }
@@ -136,7 +172,7 @@
     $('#mk-test').onclick = async function () {
       var b = this, to = $('#mk-to').value.trim(); if (!EMAIL.test(to)) return ctx.msg($('#mk-msg'), 'Digite um e-mail válido para o teste.', 'error');
       b.disabled = true; var id = await save(); if (!id) { b.disabled = false; return; }
-      var j = await fnCall({ action: 'test', campaign_id: id, to: to, language: $('#mk-tlang').value, name: $('#mk-pname').value }); b.disabled = false;
+      var j = await fnCall({ action: 'test', campaign_id: id, to: to, language: $('#mk-tlang').value, name: pname }); b.disabled = false;
       ctx.msg($('#mk-msg'), j.ok ? 'Teste enviado para ' + j.to + (j.via === 'gmail' ? ' (pelo Gmail do support, enquanto a Amazon SES não está conectada).' : '.') : 'O teste não saiu: ' + (j.error === 'no_sender' ? 'nenhum serviço de envio conectado.' : j.error), j.ok ? 'ok' : 'error');
     };
     async function schedule(when) {
@@ -151,6 +187,97 @@
     $('#mk-sched').onclick = function () { var v = $('#mk-when').value; schedule(v ? new Date(v) : null); };
     $('#mk-now').onclick = function () { schedule(new Date()); };
     if ($('#mk-unsched', body)) $('#mk-unsched').onclick = async function () { await sb.from('mkt_campaigns').update({ status: 'draft', scheduled_at: null }).eq('id', cid); ctx.route(); };
+  }
+
+  /* ---------------- template gallery + AI creator ---------------- */
+  var SAMPLE = { name: 'Maria', company: 'Exemplo Realty' };
+  function renderTpl(data, lang, st) {
+    return window.EMkt.render({ template: data === 'partners' ? 'partners' : 'ai', tpl_data: data === 'partners' ? null : data, language: lang }, Object.assign({ language: lang }, SAMPLE), { site: 'https://endeavorbiz.com', address: (st || {}).postal_address, replyTo: (st || {}).reply_to, unsubUrl: 'https://endeavorbiz.com/unsubscribe.html' });
+  }
+  async function gallery(body, st) {
+    var tpls = await ctx.q(sb.from('mkt_templates').select('*').order('created_at', { ascending: false }));
+    var card = function (id, name, sub, data, builtIn) {
+      var langs = data === 'partners' ? ['pt', 'en', 'es'] : (data.languages || []);
+      return '<article class="mk-tcard portal-card"><div class="mk-thumb"><iframe tabindex="-1" aria-hidden="true" sandbox="" data-tpl="' + id + '"></iframe></div>' +
+        '<div class="mk-tcard__body"><strong>' + esc(name) + '</strong><span class="portal-muted">' + esc(sub) + ' · ' + langs.map(function (l) { return l.toUpperCase(); }).join(' ') + '</span>' +
+        '<div class="portal-btn-row" style="margin:.5rem 0 0"><a class="btn btn--navy btn--xs" href="#/marketing?c=novo' + (builtIn ? '' : '&tpl=' + id) + '">Usar em campanha</a><button class="btn btn--ghost btn--xs" type="button" data-act="view" data-id="' + id + '">Ver</button>' +
+        (builtIn ? '' : '<button class="btn btn--ghost btn--xs" type="button" data-act="ai" data-id="' + id + '">Ajustar com IA</button><button class="btn btn--ghost btn--xs" type="button" data-act="ren" data-id="' + id + '">Renomear</button><button class="btn btn--danger btn--xs" type="button" data-act="del" data-id="' + id + '">Excluir</button>') + '</div></div></article>';
+    };
+    body.innerHTML = '<div class="console__head" style="margin-top:0"><div><h2 class="portal-h2" style="margin:0">Galeria de templates</h2><p class="portal-muted" style="margin:.2rem 0 0">Descreva o e-mail e a IA cria o template no padrão da Endeavor (logo, cores, endereço, telefone, WhatsApp e e-mails). Você revisa, ajusta e salva aqui para usar nas campanhas.</p></div>' +
+      '<button class="btn btn--navy" type="button" id="tg-new"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg> Criar template com IA</button></div>' +
+      '<div class="mk-tgrid">' + card('partners', 'Programa de parceiros', 'Modelo pronto', 'partners', true) + tpls.map(function (t) { return card(t.id, t.name, 'Criado ' + ctx.fmtDT(t.created_at), t.data, false); }).join('') + '</div>' +
+      (tpls.length ? '' : '<p class="portal-muted" style="margin-top:1rem">Nenhum template criado ainda. Clique em "Criar template com IA".</p>');
+    var get = function (id) { return id === 'partners' ? 'partners' : (tpls.find(function (t) { return t.id === id; }) || {}).data; };
+    $$('iframe[data-tpl]', body).forEach(function (f) { var d = get(f.dataset.tpl); f.srcdoc = renderTpl(d, d === 'partners' ? 'pt' : (d.languages || ['pt'])[0], st).html; });
+    $('#tg-new').onclick = function () { aiCreator(null, function () { ctx.route(); }); };
+    $$('[data-act]', body).forEach(function (b) {
+      b.onclick = async function () {
+        var id = b.dataset.id, t = tpls.find(function (x) { return x.id === id; });
+        if (b.dataset.act === 'view') return previewTpl(id === 'partners' ? 'Programa de parceiros' : t.name, get(id), st);
+        if (b.dataset.act === 'ai') return aiCreator(t, function () { ctx.route(); });
+        if (b.dataset.act === 'ren') { var n = prompt('Novo nome do template:', t.name); if (!n || n.trim().length < 2) return; await sb.from('mkt_templates').update({ name: n.trim(), updated_at: new Date().toISOString() }).eq('id', id); return ctx.route(); }
+        if (b.dataset.act === 'del') { if (!confirm('Excluir o template "' + t.name + '"? As campanhas que já usam ele continuam iguais.')) return; await sb.from('mkt_templates').delete().eq('id', id); ctx.route(); }
+      };
+    });
+  }
+  function previewTpl(name, data, st) {
+    var langs = data === 'partners' ? ['pt', 'en', 'es'] : data.languages;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + esc(name) + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<div class="mk-inline" style="margin:0 0 .5rem"><select id="tv-lang" aria-label="Idioma da prévia">' + langs.map(function (l) { return '<option value="' + l + '">' + l.toUpperCase() + '</option>'; }).join('') + '</select></div>' +
+      '<p class="portal-muted" id="tv-subject" style="margin:0 0 .5rem;font-size:.9rem"></p><iframe id="tv-frame" class="mk-frame" title="Prévia do e-mail" sandbox=""></iframe>');
+    o.firstChild.classList.add('drawer--wide');
+    var draw = function () { var r = renderTpl(data, $('#tv-lang', o).value, st); $('#tv-subject', o).innerHTML = '<strong>Assunto:</strong> ' + esc(r.subject); $('#tv-frame', o).srcdoc = r.html; };
+    $('#tv-lang', o).onchange = draw; draw();
+  }
+  var AI_ERR = { no_ai_key: 'A IA ainda não está conectada: falta a chave ANTHROPIC_API_KEY no Supabase (Edge Functions → Secrets), a mesma do Operating Agreement. Assim que ela for adicionada, este botão funciona.', brief: 'Descreva o e-mail com um pouco mais de detalhe.', ai_format: 'A IA respondeu num formato inesperado. Tente de novo.', ai_failed: 'A IA não respondeu agora. Tente de novo em instantes.' };
+  // existing: template row to adjust (or null to create); done(savedRow)
+  function aiCreator(existing, done) {
+    var st = null, data = existing ? existing.data : null;
+    sb.from('mkt_settings').select('*').eq('id', 1).maybeSingle().then(function (r) { st = r.data; });
+    var langs0 = existing ? existing.data.languages : ['pt', 'en', 'es'];
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (existing ? 'Ajustar template' : 'Criar template com IA') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<div class="mk-ai"><div class="mk-ai__form">' +
+      '<div class="field"><label for="ai-brief">O que este e-mail deve dizer?</label><textarea id="ai-brief" rows="7" placeholder="Ex.: Convite para contadores brasileiros que atendem clientes com empresa nos EUA. Explicar que cuidamos da abertura da LLC, EIN e compliance, e que o contador continua com a parte fiscal. Tom próximo e profissional. Botão para agendar uma conversa de 20 minutos.">' + esc(existing ? existing.brief || '' : '') + '</textarea></div>' +
+      '<div class="field"><span style="font-weight:600">Idiomas</span><div class="mk-inline">' + ['pt', 'en', 'es'].map(function (l) { return '<label class="check-row"><input type="checkbox" class="ai-l" value="' + l + '"' + (langs0.indexOf(l) > -1 ? ' checked' : '') + '> ' + LANGS[l] + '</label>'; }).join('') + '</div></div>' +
+      '<p class="portal-muted" style="font-size:.84rem;margin:.2rem 0 .7rem">A IA escreve o texto e escolhe o layout; o logo, as cores, o endereço, o telefone, o WhatsApp, os e-mails e o rodapé com descadastro da Endeavor entram automaticamente.</p>' +
+      '<button class="btn btn--navy" type="button" id="ai-gen">' + (existing ? 'Gerar de novo' : 'Gerar com IA') + '</button>' +
+      '<div class="field" id="ai-adj" style="margin-top:1rem"' + (data ? '' : ' hidden') + '><label for="ai-adjust">Quer mudar algo? Diga o que ajustar</label><textarea id="ai-adjust" rows="3" placeholder="Ex.: deixe mais curto, troque o título, use cor verde, acrescente um passo sobre a conta bancária."></textarea><button class="btn btn--ghost btn--xs" type="button" id="ai-apply" style="margin-top:.4rem">Aplicar ajuste</button></div>' +
+      '<div class="portal-alert" id="ai-msg" role="status"></div>' +
+      '<div class="field" style="margin-top:.8rem"><label for="ai-name">Nome na galeria</label><input id="ai-name" value="' + esc(existing ? existing.name : '') + '" placeholder="Ex.: Contadores Brasil - apresentação"></div>' +
+      '<button class="btn btn--navy" type="button" id="ai-save"' + (data ? '' : ' disabled') + '>Salvar na galeria</button>' +
+      '</div><div class="mk-ai__prev"><div class="mk-inline" style="margin:0 0 .4rem"><strong>Prévia</strong><select id="ai-plang" aria-label="Idioma da prévia"></select></div><p class="portal-muted" id="ai-subject" style="margin:0 0 .4rem;font-size:.88rem"></p>' +
+      '<iframe id="ai-frame" class="mk-frame" title="Prévia do template" sandbox=""></iframe></div></div>');
+    o.firstChild.classList.add('drawer--wide', 'drawer--xl');
+    var msg = $('#ai-msg', o);
+    function draw() {
+      var ps = $('#ai-plang', o);
+      if (!data) { ps.innerHTML = ''; $('#ai-frame', o).srcdoc = '<p style="font:15px Arial,sans-serif;color:#6b7280;padding:2rem;text-align:center">A prévia aparece aqui depois de gerar.</p>'; return; }
+      var cur = ps.value; ps.innerHTML = data.languages.map(function (l) { return '<option value="' + l + '">' + l.toUpperCase() + '</option>'; }).join(''); ps.value = data.languages.indexOf(cur) > -1 ? cur : data.languages[0];
+      var r = renderTpl(data, ps.value, st); $('#ai-subject', o).innerHTML = '<strong>Assunto:</strong> ' + esc(r.subject); $('#ai-frame', o).srcdoc = r.html;
+    }
+    $('#ai-plang', o).onchange = draw; draw();
+    async function gen(adjust) {
+      var brief = $('#ai-brief', o).value.trim(), langs = $$('.ai-l:checked', o).map(function (i) { return i.value; });
+      if (brief.length < 10) return ctx.msg(msg, 'Descreva o e-mail com um pouco mais de detalhe.', 'error');
+      if (!langs.length) return ctx.msg(msg, 'Escolha pelo menos um idioma.', 'error');
+      var bs = [$('#ai-gen', o), $('#ai-apply', o), $('#ai-save', o)]; bs.forEach(function (b) { b.disabled = true; });
+      ctx.msg(msg, 'A IA está escrevendo o template… (leva uns 20 a 40 segundos)', 'info');
+      var j = await fnCall({ action: 'ai_template', brief: brief, languages: langs, adjust: adjust || undefined, previous: adjust ? data : undefined });
+      bs.forEach(function (b) { b.disabled = false; });
+      if (!j.ok) { $('#ai-save', o).disabled = !data; return ctx.msg(msg, AI_ERR[j.error] || ('Não foi possível gerar: ' + (j.error || '')), 'error'); }
+      data = j.data; if (!$('#ai-name', o).value.trim() && j.name) $('#ai-name', o).value = j.name;
+      $('#ai-adj', o).hidden = false; $('#ai-adjust', o).value = ''; draw();
+      ctx.msg(msg, 'Pronto. Confira a prévia; se quiser, peça um ajuste ou salve na galeria.', 'ok');
+    }
+    $('#ai-gen', o).onclick = function () { gen(null); };
+    $('#ai-apply', o).onclick = function () { var a = $('#ai-adjust', o).value.trim(); if (a.length < 3) return ctx.msg(msg, 'Diga o que ajustar.', 'error'); gen(a); };
+    $('#ai-save', o).onclick = async function () {
+      var name = $('#ai-name', o).value.trim(); if (name.length < 2) return ctx.msg(msg, 'Dê um nome ao template.', 'error');
+      var row = { name: name, brief: $('#ai-brief', o).value.trim() || null, data: data, updated_at: new Date().toISOString() };
+      var r = existing ? await sb.from('mkt_templates').update(row).eq('id', existing.id).select('*').single() : await sb.from('mkt_templates').insert(Object.assign(row, { created_by: (await sb.auth.getUser()).data.user.email })).select('*').single();
+      if (r.error) return ctx.msg(msg, ctx.errText(r.error), 'error');
+      ctx.closeOverlay(); done(r.data);
+    };
   }
 
   async function report(body, id) {
@@ -188,7 +315,7 @@
     if ($('#mk-resume')) $('#mk-resume').onclick = set('sending');
     if ($('#mk-cancel')) $('#mk-cancel').onclick = async function () { if (confirm('Cancelar a campanha? Quem ainda está na fila não recebe.')) { await sb.from('mkt_sends').update({ status: 'skipped', error: 'cancelled' }).eq('campaign_id', id).eq('status', 'queued'); await set('cancelled')(); } };
     $('#mk-dup').onclick = async function () {
-      var copy = { name: c.name + ' (cópia)', template: c.template, language: c.language, subject: c.subject, preheader: c.preheader, heading: c.heading, body: c.body, button_label: c.button_label, button_url: c.button_url, list_ids: c.list_ids, created_by: c.created_by };
+      var copy = { name: c.name + ' (cópia)', template: c.template, template_id: c.template_id, tpl_data: c.tpl_data, language: c.language, subject: c.subject, preheader: c.preheader, heading: c.heading, body: c.body, button_label: c.button_label, button_url: c.button_url, list_ids: c.list_ids, created_by: c.created_by };
       var r = await sb.from('mkt_campaigns').insert(copy).select('id').single(); if (!r.error) ERoute.go('#/marketing?c=' + r.data.id);
     };
     $('#mk-csv').onclick = function () {
@@ -375,14 +502,15 @@
   async function settings(body, st) {
     var f = function (id, label, val, type, extra) { return '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(val == null ? '' : val) + '"' + (extra || '') + '></div>'; };
     body.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Serviço de envio</h2><ul class="list"><li><div class="list__main"><strong>Amazon SES</strong><span id="ses-st">' + (st.ses_connected ? 'Conectada: as campanhas saem pela Amazon SES.' : 'Ainda não conectada. As campanhas podem ser criadas e agendadas, e saem sozinhas quando a conexão for feita.') + '</span></div>' +
-      '<span class="badge badge--' + (st.ses_connected ? 'client' : 'new') + '">' + (st.ses_connected ? 'Ativa' : 'Pendente') + '</span></li></ul>' +
+      '<span class="badge badge--' + (st.ses_connected ? 'client' : 'new') + '">' + (st.ses_connected ? 'Ativa' : 'Pendente') + '</span></li>' +
+      '<li><div class="list__main"><strong>Templates com IA</strong><span id="ai-st">Clique em Verificar conexão para ver o status.</span></div><span class="badge badge--new" id="ai-badge">…</span></li></ul>' +
       '<button class="btn btn--ghost btn--xs" type="button" id="ses-check">Verificar conexão</button>' +
       '<details style="margin-top:1rem"><summary><strong>Como conectar a Amazon SES</strong></summary><ol class="mk-steps">' +
-        '<li>Crie a conta na Amazon Web Services (aws.amazon.com) e abra o serviço <strong>Amazon SES</strong> na região <strong>us-east-1</strong>.</li>' +
+        '<li>Crie a conta na Amazon Web Services (aws.amazon.com) e abra o serviço <strong>Amazon SES</strong> (a Endeavor usa a região <strong>Ohio, us-east-2</strong>).</li>' +
         '<li>Em <strong>Identities</strong>, verifique o domínio <strong>endeavorbiz.com</strong>: a Amazon mostra 3 registros CNAME (DKIM) para colocar no DNS do Squarespace. Recomendado também: registro SPF e DMARC.</li>' +
         '<li>Em <strong>Account dashboard</strong>, peça a saída do modo sandbox (<strong>Request production access</strong>), explicando que são e-mails para parceiros profissionais com descadastro.</li>' +
         '<li>Em <strong>SMTP settings</strong>, crie as credenciais SMTP.</li>' +
-        '<li>No Supabase, em Edge Functions → Secrets, crie: <code>SES_SMTP_HOST</code> = email-smtp.us-east-1.amazonaws.com, <code>SES_SMTP_USER</code> e <code>SES_SMTP_PASS</code> (as credenciais do passo 4).</li>' +
+        '<li>No Supabase, em Edge Functions → Secrets, crie: <code>SES_SMTP_HOST</code> = email-smtp.us-east-2.amazonaws.com (o endereço mostrado em SMTP settings), <code>SES_SMTP_USER</code> e <code>SES_SMTP_PASS</code> (as credenciais do passo 4).</li>' +
         '<li>Volte aqui e clique em <strong>Verificar conexão</strong>. Depois, envie um teste de uma campanha.</li></ol></details></section>' +
       '<section class="portal-card"><h2 class="portal-h2">Remetente e rodapé</h2><div class="portal-grid2">' + f('ms-name', 'Nome do remetente', st.from_name) + f('ms-from', 'E-mail do remetente (domínio verificado na SES)', st.from_email, 'email') +
         f('ms-reply', 'Respostas vão para', st.reply_to, 'email') + f('ms-addr', 'Endereço da empresa (obrigatório no rodapé)', st.postal_address) + '</div>' +
@@ -392,8 +520,9 @@
       '<div class="portal-alert" id="ms-msg" role="status"></div><button class="btn btn--navy" type="button" id="ms-save">Salvar</button>';
     $('#ses-check').onclick = async function () {
       var b = this; b.disabled = true; var j = await fnCall({ action: 'status' }); b.disabled = false;
+      if (!j.error) { $('#ai-st').textContent = j.ai ? 'Conectada: a IA cria templates na aba Templates.' : 'Pendente: falta a chave ANTHROPIC_API_KEY no Supabase (a mesma do Operating Agreement).'; $('#ai-badge').textContent = j.ai ? 'Ativa' : 'Pendente'; $('#ai-badge').className = 'badge badge--' + (j.ai ? 'client' : 'new'); }
       ctx.msg($('#ms-msg'), j.ses ? 'Amazon SES conectada.' : j.error ? 'Não foi possível verificar: ' + j.error : 'Ainda não conectada: faltam os segredos SES_SMTP_HOST, SES_SMTP_USER e SES_SMTP_PASS no Supabase.', j.ses ? 'ok' : 'error');
-      if (j.ses && !st.ses_connected) ctx.route();
+      if (j.ses && !st.ses_connected) { st.ses_connected = true; $('#ses-st').textContent = 'Conectada: as campanhas saem pela Amazon SES.'; }
     };
     $('#ms-save').onclick = async function () {
       var row = { from_name: $('#ms-name').value.trim(), from_email: lc($('#ms-from').value), reply_to: lc($('#ms-reply').value), postal_address: $('#ms-addr').value.trim(), daily_limit: +$('#ms-day').value, per_minute: +$('#ms-min').value, updated_at: new Date().toISOString() };

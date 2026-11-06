@@ -79,6 +79,20 @@
   };
   // agenda: messages already sent for the first two calls
   [0, 1].forEach(function (i) { var b = DB.bookings[i]; [['confirmation', 0, 'email', 'sent'], ['confirmation', 0, 'whatsapp', i ? 'failed' : 'sent'], ['reminder', 1440, 'email', 'sent']].forEach(function (m, j) { if (i === 1 && j === 2) return; DB.booking_messages.push({ id: i * 10 + j, booking_id: b.id, version: 1, kind: m[0], offset_min: m[1], channel: m[2], audience: 'client', status: m[3] }); }); });
+
+  // sample "AI" template for the demo (the real one is written by Claude on the server)
+  function DEMO_TPL(accent, short) {
+    var L = {
+      pt: { kicker: 'Para contadores', subject: '{{nome}}, seus clientes vão abrir empresa nos EUA?', preheader: 'Cuidamos da abertura e do compliance; você continua com a parte fiscal.', heading: 'Uma parceira nos EUA para os seus clientes', intro: 'Muitos clientes de escritórios brasileiros estão abrindo empresas nos Estados Unidos. A Endeavor cuida de toda a parte americana, e você continua sendo o contador de confiança deles.' + (short ? '' : '\n\nTrabalhamos lado a lado com você, em português, com tudo registrado no portal.'),
+        sections: [{ type: 'cards', title: 'O que fazemos pelo seu cliente', items: [{ title: 'Abertura da LLC', text: 'Registro na Flórida ou em outro estado, com Operating Agreement.' }, { title: 'EIN e compliance', text: 'EIN no IRS, Registered Agent e calendário de obrigações.' }, { title: 'Conta bancária', text: 'Orientação para abrir a conta da empresa nos EUA.' }, { title: 'Você no controle', text: 'Acompanhe cada etapa pelo Portal do Parceiro.' }] },
+          { type: 'steps', title: 'Como funciona', items: [{ title: 'Conversa de 20 minutos', text: 'Entendemos o perfil dos seus clientes.' }, { title: 'Indicação pelo portal', text: 'Você envia o cliente e acompanha tudo.' }] }],
+        cta: 'Agendar conversa', closing: 'Se preferir, responda este e-mail e combinamos um horário.', sign: 'Equipe Endeavor Business Solutions' },
+      en: { kicker: 'For accountants', subject: '{{nome}}, are your clients opening a U.S. company?', preheader: 'We handle formation and compliance; you keep the tax work.', heading: 'A U.S. partner for your clients', intro: 'Many of your clients are starting companies in the United States. Endeavor handles the U.S. side, and you remain their trusted accountant.',
+        sections: [{ type: 'list', title: 'What we do for your client', items: [{ title: 'LLC formation', text: 'Florida or any other state, with an Operating Agreement.' }, { title: 'EIN and compliance', text: 'EIN, registered agent and a filing calendar.' }, { title: 'Bank account', text: 'Guidance to open the U.S. business account.' }] }],
+        cta: 'Book a call', closing: 'Or simply reply to this email and we will find a time.', sign: 'The Endeavor Business Solutions team' }
+    };
+    return { languages: ['pt', 'en'], style: { accent: accent || 'gold', hero: 'navy' }, pt: L.pt, en: L.en };
+  }
   // marketing sample data
   (function () {
     DB.mkt_settings = [{ id: 1, from_name: 'Endeavor Business Solutions', from_email: 'partners@endeavorbiz.com', reply_to: 'support@endeavorbiz.com', postal_address: 'Endeavor Business Solutions · Orlando, FL, USA', daily_limit: 2000, per_minute: 50, ses_connected: false }];
@@ -92,6 +106,7 @@
     DB.mkt_sends = DB.mkt_contacts.filter(function (c, i) { return P[i][5] === L1; }).map(function (c, i) { return { id: i + 1, campaign_id: C1, contact_id: c.id, email: c.email, name: c.name, language: c.language, token: uuid(), status: 'sent', sent_at: iso(-2, 10, 1),
       opened_at: i < 3 ? iso(-2, 11 + i) : null, open_count: i < 3 ? i + 1 : 0, clicked_at: i === 0 ? iso(-2, 11, 5) : null, click_count: i === 0 ? 1 : 0, unsubscribed_at: i === 3 ? iso(-2) : null }; });
     DB.mkt_events = [];
+    DB.mkt_templates = [{ id: uuid(), created_at: iso(-1), updated_at: iso(-1), name: 'Contadores - apresentação', brief: 'Convite para contadores brasileiros que atendem clientes com empresa nos EUA.', created_by: 'support@endeavorbiz.com', data: DEMO_TPL('teal') }];
   })();
   DB.partners = [PART(P1, 'Ana Ribeiro', 'ana.cpa@example.com', 'Ribeiro Contabilidade', 'accountant', 15, 'active', 'u-cpa', true, 60),
     PART(P2, 'Marcos Tavares', 'marcos@example.com', 'Tavares Realty', 'realtor', 10, 'active', 'u-marcos', false, 40),
@@ -259,7 +274,7 @@
     partners: { status: 'invited', partner_type: 'referral', default_share_pct: 10, language: 'pt', stripe_details_submitted: false, stripe_charges_enabled: false, stripe_payouts_enabled: false, stripe_transfers_active: false, stripe_account_id: null, user_id: null },
     referral_items: { status: 'pending' }, referral_events: { kind: 'note', visible_to_partner: true },
     proposal_templates: { archived: false, structure: 'other', language: 'pt', days_until_due: 7, valid_days: 30 },
-    mkt_campaigns: { status: 'draft', template: 'partners', language: 'auto', list_ids: [] }, mkt_contacts: { status: 'subscribed', kind: 'other', language: 'pt' },
+    mkt_campaigns: { status: 'draft', template: 'partners', language: 'auto', list_ids: [] }, mkt_templates: {}, mkt_contacts: { status: 'subscribed', kind: 'other', language: 'pt' },
     clients: { status: 'active', language: 'pt' }, companies: { status: 'in_formation', state: 'FL' }, company_documents: { visible_to_client: true }
   };
   function current() { return AUTH.user; }
@@ -987,6 +1002,19 @@
           invRow.transfer_status = 'paid'; invRow.stripe_transfer_id = 'tr_demo'; toast('Demo: comissão transferida para a conta Stripe do parceiro.'); return later({ ok: true });
       }
       return json({ error: 'unknown_action' }, 400);
+    }
+    if (/\/functions\/v1\/marketing/.test(u)) {
+      var mb = {}; try { mb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      var slow = function (b, ms, s2) { return new Promise(function (res) { setTimeout(function () { res(json(b, s2)); }, ms || 500); }); };
+      if (mb.action === 'status') return slow({ ses: true, gmail_test: true, ai: true });
+      if (mb.action === 'test') { toast('Demo: o e-mail de teste sairia pela Amazon SES para ' + mb.to + '.'); return slow({ ok: true, to: mb.to, via: 'ses' }); }
+      if (mb.action === 'ai_template') {
+        var d = DEMO_TPL(mb.adjust && /verde|green/i.test(mb.adjust) ? 'emerald' : 'gold', mb.adjust && /curt|short/i.test(mb.adjust));
+        d.languages = d.languages.filter(function (l) { return (mb.languages || []).indexOf(l) > -1; }); if (!d.languages.length) d.languages = ['pt'];
+        toast('Demo: no site real a IA (Claude) escreve o template a partir da sua descrição.');
+        return slow({ ok: true, name: 'Contadores Brasil - apresentação', data: d }, 1200);
+      }
+      return json({ error: 'forbidden' }, 403);
     }
     if (/\/rest\/v1\/rpc\//.test(u)) return json(null);
     return realFetch(url, opts);
