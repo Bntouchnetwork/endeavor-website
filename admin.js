@@ -524,9 +524,10 @@
       if (d !== lastDay) { html += (lastDay ? '</ul></section>' : '') + '<section class="portal-card"><h2 class="portal-h2">' + esc(d.charAt(0).toUpperCase() + d.slice(1)) + '</h2><ul class="list">'; lastDay = d; }
       html += '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at, { dateStyle: undefined })) + ' – ' + esc(fmtDT(b.ends_at, { dateStyle: undefined })) + ' · ' + esc(b.name) + '</strong>' +
         '<span>' + esc(MEET_PT[b.meeting_type]) + ' · ' + esc(b.email) + (b.phone ? ' · ' + esc(b.phone) : '') + ' · ' + esc(b.topic || '') + (b.language ? ' · ' + esc(b.language) : '') + '</span>' +
-        (b.notes ? '<span>“' + esc(b.notes) + '”</span>' : '') + (b.cancel_reason ? '<span>Motivo do cancelamento: ' + esc(b.cancel_reason) + '</span>' : '') + sentLine(b) + '</div><div class="portal-btn-row">' + badge(b.status) +
-        (b.status === 'confirmed' ? '<button class="btn btn--ghost btn--xs" data-act="completed" data-id="' + esc(b.id) + '">Concluir</button><button class="btn btn--ghost btn--xs" data-act="no_show" data-id="' + esc(b.id) + '">Não veio</button><button class="btn btn--danger btn--xs" data-act="cancelled" data-id="' + esc(b.id) + '">Cancelar</button>' : '') +
-        '<a class="btn btn--ghost btn--xs" href="mailto:' + esc(b.email) + '">E-mail</a></div></li>';
+        (b.notes ? '<span>“' + esc(b.notes) + '”</span>' : '') + (b.status === 'cancelled' ? '<span class="cancel-line">' + (b.cancelled_by === 'client' ? 'Cancelado pelo cliente' : 'Cancelado pela Endeavor') + (b.cancel_reason ? ' · Motivo: ' + esc(b.cancel_reason) : ' · Motivo não informado') + '</span>' : '') + sentLine(b) + '</div><div class="portal-btn-row">' + badge(b.status) +
+        (tab === 'hist' ? '<button class="btn btn--danger btn--xs" data-delbk="' + esc(b.id) + '">Excluir</button>'
+          : (b.status === 'confirmed' ? '<button class="btn btn--ghost btn--xs" data-act="completed" data-id="' + esc(b.id) + '">Concluir</button><button class="btn btn--ghost btn--xs" data-act="no_show" data-id="' + esc(b.id) + '">Não veio</button><button class="btn btn--danger btn--xs" data-act="cancelled" data-id="' + esc(b.id) + '">Cancelar</button>' : '') +
+            '<a class="btn btn--ghost btn--xs" href="mailto:' + esc(b.email) + '">E-mail</a>') + '</div></li>';
     });
     body.innerHTML = html + '</ul></section>';
     $$('button[data-act]', body).forEach(function (btn) {
@@ -537,6 +538,16 @@
         drawTab(tab);
       };
     });
+    // History: delete the record only (no e-mail is sent)
+    $$('button[data-delbk]', body).forEach(function (btn) {
+      btn.onclick = async function () {
+        if (!confirm('Excluir este agendamento do histórico? Nenhum e-mail é enviado. Esta ação não pode ser desfeita.')) return;
+        btn.disabled = true;
+        var r = await sb.from('bookings').delete().eq('id', btn.dataset.delbk);
+        if (r.error) { btn.disabled = false; return alert(errText(r.error)); }
+        drawTab(tab);
+      };
+    });
   }
 
   var DAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
@@ -544,30 +555,42 @@
     var res = await Promise.all([q(sb.from('availability_rules').select('*').order('weekday').order('start_time')), q(sb.from('blackout_dates').select('*').order('day')), q(sb.from('booking_settings').select('*').eq('id', 1).single())]);
     var rules = res[0], blk = res[1], s = res[2];
     var zones = ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Sao_Paulo', 'America/Asuncion'];
-    body.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Horários semanais</h2><p class="portal-muted">Defina os intervalos em que clientes podem agendar.</p><div class="week" id="week">' +
+    var AVT = [['horarios', 'Horários semanais'], ['regras', 'Regras'], ['avisos', 'Confirmações e lembretes'], ['bloqueios', 'Datas bloqueadas']];
+    body.innerHTML = '<div class="subtabs av-tabs" role="tablist" aria-label="Disponibilidade">' + AVT.map(function (t, i) { return '<button type="button" role="tab" data-av="' + t[0] + '" aria-selected="' + (i === 0) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<section class="portal-card" data-avp="horarios"><h2 class="portal-h2">Horários semanais</h2><p class="portal-muted">Defina os intervalos em que clientes podem agendar.</p><div class="week" id="week">' +
       DAYS.map(function (d, i) {
         var mine = rules.filter(function (r) { return r.weekday === i; });
         return '<div class="week__day" data-day="' + i + '"><strong>' + d + '</strong><div class="week__slots">' + mine.map(slotRow).join('') +
           '<button class="btn btn--ghost btn--xs add-slot" type="button" style="align-self:flex-start">+ Intervalo</button></div></div>';
       }).join('') + '</div></section>' +
-      '<section class="portal-card"><h2 class="portal-h2">Regras</h2><div class="portal-grid2">' +
+      '<section class="portal-card" data-avp="regras" hidden><h2 class="portal-h2">Regras</h2><div class="portal-grid2">' +
         '<div class="field"><label for="st-tz">Fuso horário</label><select id="st-tz">' + zones.map(function (z) { return '<option' + (z === s.timezone ? ' selected' : '') + '>' + z + '</option>'; }).join('') + '</select></div>' +
         '<div class="field"><label for="st-slot">Duração da chamada (min)</label><input id="st-slot" type="number" min="15" max="240" step="5" value="' + s.slot_minutes + '"></div>' +
         '<div class="field"><label for="st-buf">Intervalo entre chamadas (min)</label><input id="st-buf" type="number" min="0" max="120" step="5" value="' + s.buffer_minutes + '"></div>' +
         '<div class="field"><label for="st-notice">Antecedência mínima (horas)</label><input id="st-notice" type="number" min="0" max="720" value="' + s.min_notice_hours + '"></div>' +
         '<div class="field"><label for="st-max">Agendar até (dias à frente)</label><input id="st-max" type="number" min="1" max="180" value="' + s.max_days_ahead + '"></div>' +
       '</div><div class="field" style="margin-top:1rem"><label for="st-note">Mensagem mostrada na confirmação</label><textarea id="st-note" rows="2">' + esc(s.meeting_note || '') + '</textarea></div></section>' +
-      '<section class="portal-card"><h2 class="portal-h2">Confirmações e lembretes</h2><p class="portal-muted">Quem agenda recebe a confirmação e os lembretes por e-mail e WhatsApp, com os botões Reagendar e Cancelar. Você recebe os mesmos avisos.</p>' +
+      '<section class="portal-card" data-avp="avisos" hidden><h2 class="portal-h2">Confirmações e lembretes</h2><p class="portal-muted">Quem agenda recebe a confirmação e os lembretes por e-mail e WhatsApp, com os botões Reagendar e Cancelar. Você recebe os mesmos avisos.</p>' +
         '<ul class="list" style="margin-bottom:1rem"><li><div class="list__main"><strong>E-mail automático</strong><span id="nt-email">' + (s.server_email ? 'Ligado' : 'Desligado: falta a senha de app do Gmail (SMTP_PASS) nos segredos das funções do Supabase. Enquanto isso, a confirmação sai pelo formulário antigo e não há lembretes.') + '</span></div>' +
           '<button class="btn btn--ghost btn--xs" type="button" id="nt-test">Enviar e-mail de teste</button></li>' +
         '<li><div class="list__main"><strong>WhatsApp</strong><span>' + (s.whatsapp_connected ? 'Conectado' : 'Aguardando a conta da API do WhatsApp Business (WHATSAPP_TOKEN e WHATSAPP_PHONE_ID). Até lá, tudo vai só por e-mail.') + '</span></div>' + (s.whatsapp_connected ? '<span class="badge badge--client">Ativo</span>' : '<span class="badge">Pendente</span>') + '</li></ul>' +
         '<div class="field"><span style="font-weight:600">Lembretes antes da conversa</span><div id="rm-list" class="rm-list"></div><button class="btn btn--ghost btn--xs" type="button" id="rm-add" style="align-self:flex-start">+ Lembrete</button></div>' +
         '<div class="portal-grid2" style="margin-top:1rem"><div class="field"><label for="st-nemail">Seu e-mail para os avisos</label><input id="st-nemail" type="email" value="' + esc(s.notify_email || '') + '"></div>' +
         '<div class="field"><label for="st-nwa">Seu WhatsApp para os avisos (opcional)</label><div id="st-nwa-box"></div></div></div></section>' +
-      '<section class="portal-card"><h2 class="portal-h2">Datas bloqueadas</h2><p class="portal-muted">Feriados, viagens ou dias sem atendimento.</p><ul class="list" id="blk-list">' +
+      '<section class="portal-card" data-avp="bloqueios" hidden><h2 class="portal-h2">Datas bloqueadas</h2><p class="portal-muted">Feriados, viagens ou dias sem atendimento.</p><ul class="list" id="blk-list">' +
         blk.map(function (b) { return '<li><div class="list__main"><strong>' + esc(b.day) + '</strong><span>' + esc(b.reason || '') + '</span></div><button class="btn btn--danger btn--xs" data-del-day="' + esc(b.day) + '">Remover</button></li>'; }).join('') +
       '</ul><div class="portal-btn-row" style="margin-top:.75rem"><input type="date" id="blk-day" aria-label="Data bloqueada" class="toolbar-like"><input type="text" id="blk-reason" placeholder="Motivo (opcional)" aria-label="Motivo"><button class="btn btn--ghost btn--xs" type="button" id="blk-add">Bloquear data</button></div></section>' +
       '<div class="portal-alert" id="av-msg" role="status"></div><button class="btn btn--navy" type="button" id="av-save">Salvar disponibilidade</button>';
+    // one panel at a time; edits in other panels are kept until "Salvar"
+    var avShow = function (k) {
+      $$('[data-av]', body).forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.av === k)); if (b.dataset.av === k && b.scrollIntoView) b.scrollIntoView({ block: 'nearest', inline: 'nearest' }); });
+      $$('[data-avp]', body).forEach(function (p) { p.hidden = p.dataset.avp !== k; });
+      $('#av-save').hidden = k === 'bloqueios'; // blocked dates save on their own buttons
+      try { sessionStorage.setItem('endeavor-av-tab', k); } catch (e) { /* ignore */ }
+    };
+    $$('[data-av]', body).forEach(function (b) { b.onclick = function () { avShow(b.dataset.av); }; });
+    var avLast = null; try { avLast = sessionStorage.getItem('endeavor-av-tab'); } catch (e) { /* ignore */ }
+    avShow(AVT.some(function (t) { return t[0] === avLast; }) ? avLast : 'horarios');
     // reminders: value + unit rows
     var UNITS = [[1440, 'dias'], [60, 'horas'], [1, 'minutos']];
     function rmRow(min) { var u = UNITS.filter(function (x) { return min % x[0] === 0; })[0]; return '<div class="rm-row"><input type="number" min="1" max="336" value="' + (min / u[0]) + '" aria-label="Quantidade"><select aria-label="Unidade">' + UNITS.map(function (x) { return '<option value="' + x[0] + '"' + (x === u ? ' selected' : '') + '>' + x[1] + ' antes</option>'; }).join('') + '</select><button class="btn btn--danger btn--xs" type="button" aria-label="Remover lembrete">Remover</button></div>'; }
@@ -624,7 +647,7 @@
     };
   }
   function slotRow(r) {
-    return '<div class="week__slot"><input type="time" data-k="start" value="' + esc(String(r.start_time).slice(0, 5)) + '" aria-label="Início"> até <input type="time" data-k="end" value="' + esc(String(r.end_time).slice(0, 5)) + '" aria-label="Fim"><button class="btn btn--danger btn--xs rm-slot" type="button" aria-label="Remover intervalo">Remover</button></div>';
+    return '<div class="week__slot"><input type="time" data-k="start" value="' + esc(String(r.start_time).slice(0, 5)) + '" aria-label="Início"> até <input type="time" data-k="end" value="' + esc(String(r.end_time).slice(0, 5)) + '" aria-label="Fim"><button class="btn btn--danger btn--xs rm-slot" type="button" aria-label="Remover intervalo" title="Remover intervalo">×</button></div>';
   }
 
   /* ---------- E-signature ---------- */

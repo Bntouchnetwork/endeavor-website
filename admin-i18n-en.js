@@ -240,6 +240,8 @@ window.ADMIN_EN = {
   'Adicione a primeira empresa deste cliente.': "Add this client's first company.", 'Ano (opcional)': 'Year (optional)', 'Ativa (aplicativo autenticador)': 'On (authenticator app)', 'Consultando o Stripe…': 'Checking Stripe…', 'Conta Stripe': 'Stripe account', 'Copiado ✓': 'Copied ✓', 'Desconectar o QuickBooks desta empresa?': 'Disconnect QuickBooks from this company?',
   'Enviando a proposta…': 'Sending the proposal…', 'Estimated tax 1º trimestre': 'Estimated tax Q1', 'Estimated tax 2º trimestre': 'Estimated tax Q2', 'Estimated tax 3º trimestre': 'Estimated tax Q3', 'Estimated tax 4º trimestre': 'Estimated tax Q4', 'Ex.: Articles of Organization': 'E.g. Articles of Organization',
   'Mensagem (opcional)': 'Message (optional)', 'Parceiro (contador, bookkeeping, property management)': 'Partner (accountant, bookkeeping, property management)', 'Parceiro recebe (': 'Partner receives (', 'Selecione o cliente.': 'Select the client.', 'Senha alterada.': 'Password changed.', 'Titular (acesso completo)': 'Owner (full access)', 'Vencimento (dias)': 'Due in (days)', 'a definir': 'to be set', '+ itens a definir': '+ items to be set', '+ Item': '+ Item', 'A conta': 'The account',
+  'Cancelado pelo cliente': 'Cancelled by the client', 'Cancelado pela Endeavor': 'Cancelled by Endeavor', 'Motivo não informado': 'No reason given',
+  'Excluir este agendamento do histórico? Nenhum e-mail é enviado. Esta ação não pode ser desfeita.': 'Delete this booking from the history? No email is sent. This action cannot be undone.',
   'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
 };
 // Dynamic messages (regular expressions applied to whole texts)
@@ -256,7 +258,7 @@ window.ADMIN_EN_RX = [
   [/^Convite enviado para (.+)\.$/, 'Invitation sent to $1.'],
   [/^E-mail de teste enviado para (.+)\.$/, 'Test email sent to $1.'],
   [/^Comissão padrão (.+)%$/, 'Default commission $1%'],
-  [/^Motivo do cancelamento: (.*)$/, 'Cancellation reason: $1'],
+  [/^Motivo do cancelamento: (.*)$/, 'Cancellation reason: $1'], [/^Motivo: (.*)$/, 'Reason: $1'],
   [/^Novo agendamento: (.*)$/, 'New booking: $1'], [/^Agendamento cancelado: (.*)$/, 'Booking cancelled: $1'], [/^Agendamento remarcado: (.*)$/, 'Booking rescheduled: $1'],
   [/^Horários no fuso (.+)\.$/, 'Times in the $1 time zone.'],
   [/^(\d+) dias? antes$/, '$1 day(s) before'],
