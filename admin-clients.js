@@ -76,6 +76,14 @@
   window.AdminClients = {
     /* ---------- list ---------- */
     create: function (ctx, leadId) { return newClient(ctx, leadId); },
+    invite: function (ctx, o) { return sendInvite(ctx, o); },
+    /* create the portal account from the CRM card (no company yet) and optionally send the invite */
+    createAccount: async function (ctx, o) {
+      var c = await ctx.q(ctx.sb.from('clients').insert({ name: o.name, primary_email: o.email, phone: o.phone || null, language: o.lang || 'pt', lead_id: o.leadId || null, status: o.status === 'archived' ? 'archived' : 'active' }).select('*').single());
+      await ctx.q(ctx.sb.from('client_users').insert({ client_id: c.id, email: o.email, name: o.name, role: 'owner', can_view: true, can_upload: true }));
+      var sent = o.invite ? await sendInvite(ctx, { clientId: c.id, email: o.email, name: o.name, clientName: o.name, role: 'owner', lang: o.lang || 'pt' }) : false;
+      return { client: c, sent: sent };
+    },
     list: async function (view, ctx) {
       var esc = ctx.esc, sb = ctx.sb;
       var res = await Promise.all([
@@ -116,7 +124,7 @@
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
       var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
-      view.innerHTML = '<p class="crumbs"><a href="#/crm?status=client">CRM</a> /</p>' +
+      view.innerHTML = '<p class="crumbs"><a href="#/crm?tipo=client">CRM</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
         '<nav class="subtabs" aria-label="Seções do cliente">' + TABS.map(function (t) { return '<a href="#/clientes?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>' +

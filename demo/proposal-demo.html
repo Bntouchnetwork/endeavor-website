@@ -1604,6 +1604,13 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
+/* CRM types */
+.pill--kind-lead { background: #eaf1fb; color: #1d4e89; }
+.pill--kind-prospect { background: #f1ecfa; color: #5b3f8c; }
+.pill--kind-client { background: #e9f6ee; color: #1e6b3a; }
+.crm-st { white-space: nowrap; }
+.ld-client { background: #f6faf7; border-color: #cfe6d7; }
+
 </style>
 </head>
 <body class="portal">
@@ -1866,7 +1873,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 
   /* ---------------- query engine ---------------- */
   var DEF = {
-    leads: { status: 'new', source: 'manual', marketing_consent: false }, envelopes: { status: 'sent', fields: [], id_stamped: false },
+    leads: { status: 'new', kind: 'lead', source: 'manual', marketing_consent: false }, envelopes: { status: 'sent', fields: [], id_stamped: false },
     client_users: { status: 'invited', can_view: false, can_upload: true }, compliance_items: { status: 'pending', category: 'other' },
     partners: { status: 'invited', partner_type: 'referral', default_share_pct: 10, language: 'pt', stripe_details_submitted: false, stripe_charges_enabled: false, stripe_payouts_enabled: false, stripe_transfers_active: false, stripe_account_id: null, user_id: null },
     referral_items: { status: 'pending' }, referral_events: { kind: 'note', visible_to_partner: true },

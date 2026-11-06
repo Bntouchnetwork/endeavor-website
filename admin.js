@@ -315,8 +315,17 @@
   }
 
   /* ---------- CRM ---------- */
+  // CRM types and the statuses of each type
+  var KIND_PT = { lead: 'Lead', prospect: 'Prospect', client: 'Cliente' };
+  var KIND_ST = { lead: ['new', 'contacted', 'lost'], prospect: ['qualified', 'proposal', 'lost'], client: ['active', 'archived'] };
+  var CST_PT = { active: 'Ativo', archived: 'Arquivado' };
+  function kindOf(l) { return l.status === 'client' ? 'client' : /qualified|proposal/.test(l.status) ? 'prospect' : /new|contacted/.test(l.status) ? 'lead' : (l.kind === 'prospect' ? 'prospect' : 'lead'); }
+  function stLabel(st) { return CST_PT[st] || STATUS_PT[st] || st; }
+  function crmBadges(kind, st) {
+    return '<span class="pill pill--kind-' + kind + '">' + KIND_PT[kind] + '</span> <span class="badge badge--' + (st === 'active' ? 'client' : st === 'archived' ? 'lost' : esc(st)) + '">' + esc(stLabel(st)) + '</span>';
+  }
+
   async function viewCrm(view) {
-    // CRM e clientes: one list for leads and client accounts (no separate Clientes tab)
     var res = await Promise.all([
       q(sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000)),
       q(sb.from('clients').select('*').order('created_at', { ascending: false })),
@@ -328,91 +337,152 @@
     state.clients.forEach(function (c) { if (c.lead_id) linked[c.lead_id] = c; });
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var soon = function (cid) { return dls.filter(function (d) { return d.client_id === cid && (new Date(d.due_date + 'T00:00:00') - today) / 864e5 <= 30; }).length; };
-    // one row per person: client accounts (with their original lead) + leads not yet converted
     var rows = state.clients.map(function (c) {
       var l = state.leads.find(function (x) { return x.id === c.lead_id; }) || {};
       var n = cos.filter(function (x) { return x.client_id === c.id; }).length, d = soon(c.id);
-      return { kind: 'client', id: c.id, at: c.created_at || l.created_at, name: c.name, sub: l.company || '', email: c.primary_email, phone: c.phone || l.phone || '', country: l.country || '',
-        info: n + (n === 1 ? ' empresa' : ' empresas') + (d ? ' · ' + d + ' prazo' + (d > 1 ? 's' : '') + ' em 30 dias' : ''), source: l.source || 'manual', status: 'client', archived: c.status !== 'active' };
+      return { ref: 'client', id: c.id, at: c.created_at || l.created_at, name: c.name, sub: l.company || '', email: c.primary_email, phone: c.phone || l.phone || '', country: l.country || '',
+        info: (n ? n + (n === 1 ? ' empresa' : ' empresas') : 'Sem empresa ainda') + (d ? ' · ' + d + ' prazo' + (d > 1 ? 's' : '') + ' em 30 dias' : ''), source: l.source || 'manual', kind: 'client', status: c.status === 'active' ? 'active' : 'archived' };
     }).concat(state.leads.filter(function (l) { return !linked[l.id]; }).map(function (l) {
-      return { kind: 'lead', id: l.id, at: l.created_at, name: l.name, sub: l.company || '', email: l.email, phone: l.phone || '', country: l.country || '', info: l.assistance || '', source: l.source, status: l.status, noPortal: l.status === 'client' };
+      var k = kindOf(l);
+      return { ref: 'lead', id: l.id, at: l.created_at, name: l.name, sub: l.company || '', email: l.email, phone: l.phone || '', country: l.country || '', info: (k === 'client' ? 'Sem conta no portal · ' : '') + (l.assistance || ''), source: l.source, kind: k, status: k === 'client' ? 'active' : l.status };
     })).sort(function (x, y) { return String(y.at || '').localeCompare(String(x.at || '')); });
 
-    var ST = ['new', 'contacted', 'qualified', 'proposal', 'client', 'lost'];
-    view.innerHTML = '<div class="console__head"><div><h1>CRM</h1><p class="portal-muted">Leads e clientes. Mude o status do lead para <strong>Cliente</strong> para abrir a conta do portal.</p></div>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--ghost btn--xs" type="button" id="crm-new">Novo lead</button><button class="btn btn--navy btn--xs" type="button" id="cl-new">Novo cliente</button></div></div>' +
+    view.innerHTML = '<div class="console__head"><div><h1>CRM</h1><p class="portal-muted">Leads, prospects e clientes. Em <strong>Novo</strong> você escolhe o tipo; como Cliente, a conta do portal é criada e o convite sai na hora.</p></div>' +
+      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--navy btn--xs" type="button" id="crm-new">Novo</button></div></div>' +
       '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar">' +
-      '<select id="crm-status" aria-label="Filtrar por status"><option value="">Todos os status</option>' + ST.map(function (k) { return '<option value="' + k + '">' + STATUS_PT[k] + '</option>'; }).join('') + '</select>' +
+      '<select id="crm-kind" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>' + Object.keys(KIND_PT).map(function (k) { return '<option value="' + k + '">' + KIND_PT[k] + '</option>'; }).join('') + '</select>' +
+      '<select id="crm-status" aria-label="Filtrar por status"></select>' +
       '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="partner">Parceiro</option></select></div>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência / empresas</th><th>Origem</th><th>Status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
-    var pre = (ERoute.get().match(/[?&]status=([a-z]+)/) || [])[1]; if (pre && ST.indexOf(pre) > -1) $('#crm-status').value = pre;
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência / empresas</th><th>Origem</th><th>Tipo e status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
+    function fillStatus() {
+      var k = $('#crm-kind').value, cur = $('#crm-status').value;
+      var list = k ? KIND_ST[k] : ['new', 'contacted', 'qualified', 'proposal', 'lost', 'active', 'archived'];
+      $('#crm-status').innerHTML = '<option value="">Todos os status</option>' + list.map(function (x) { return '<option value="' + x + '">' + stLabel(x) + '</option>'; }).join('');
+      if (list.indexOf(cur) > -1) $('#crm-status').value = cur;
+    }
+    var pre = (ERoute.get().match(/[?&](?:tipo|status)=([a-z]+)/) || [])[1]; if (pre) $('#crm-kind').value = KIND_PT[pre] ? pre : '';
+    fillStatus();
     function draw() {
-      var term = $('#crm-q').value.trim().toLowerCase(), st = $('#crm-status').value, so = $('#crm-source').value;
+      var term = $('#crm-q').value.trim().toLowerCase(), k = $('#crm-kind').value, st = $('#crm-status').value, so = $('#crm-source').value;
       var list = rows.filter(function (r) {
-        return (!st || r.status === st) && (!so || r.source === so) &&
+        return (!k || r.kind === k) && (!st || r.status === st) && (!so || r.source === so) &&
           (!term || [r.name, r.email, r.sub, r.phone, r.country].join(' ').toLowerCase().indexOf(term) > -1);
       });
       $('#crm-body').innerHTML = list.length ? list.map(function (r) {
-        var stat = r.kind === 'client' ? '<span class="badge badge--client">Cliente</span>' + (r.archived ? ' <span class="pill">Arquivado</span>' : '')
-          : badge(r.status) + (r.noPortal ? '<span class="sub">sem conta no portal</span>' : '');
-        return '<tr data-kind="' + r.kind + '" data-id="' + esc(r.id) + '" tabindex="0"><td>' + esc(fmtDT(r.at, { timeStyle: undefined })) + '</td><td><strong>' + esc(r.name) + '</strong><span class="sub">' + esc(r.sub) + '</span></td>' +
-          '<td>' + esc(r.email) + '<span class="sub">' + esc(r.phone) + ' ' + esc(r.country) + '</span></td><td>' + esc(r.info) + '</td><td>' + esc(SOURCE_PT[r.source] || '') + '</td><td>' + stat + '</td></tr>';
+        return '<tr data-ref="' + r.ref + '" data-id="' + esc(r.id) + '" tabindex="0"><td>' + esc(fmtDT(r.at, { timeStyle: undefined })) + '</td><td><strong>' + esc(r.name) + '</strong><span class="sub">' + esc(r.sub) + '</span></td>' +
+          '<td>' + esc(r.email) + '<span class="sub">' + esc(r.phone) + ' ' + esc(r.country) + '</span></td><td>' + esc(r.info) + '</td><td>' + esc(SOURCE_PT[r.source] || '') + '</td><td class="crm-st">' + crmBadges(r.kind, r.status) + '</td></tr>';
       }).join('') : '<tr><td colspan="6" class="empty">Nada encontrado.</td></tr>';
       $$('#crm-body tr[data-id]').forEach(function (tr) {
-        var go = function () { if (tr.dataset.kind === 'client') ERoute.set('#/clientes?id=' + tr.dataset.id); else openLead(tr.dataset.id); };
+        var go = function () { if (tr.dataset.ref === 'client') openClientCard(tr.dataset.id); else openLead(tr.dataset.id); };
         tr.onclick = go; tr.onkeydown = function (e) { if (e.key === 'Enter') go(); };
       });
     }
+    $('#crm-kind').addEventListener('input', function () { fillStatus(); draw(); });
     ['#crm-q', '#crm-status', '#crm-source'].forEach(function (x) { $(x).addEventListener('input', draw); });
     $('#crm-csv').addEventListener('click', exportCsv);
     $('#crm-new').addEventListener('click', function () { openLead(null); });
-    $('#cl-new').addEventListener('click', function () { AdminClients.create(clientsCtx()); });
     draw();
     if (/novo=1/.test(ERoute.get())) openLead(null);
-    if (/cliente=1/.test(ERoute.get())) AdminClients.create(clientsCtx());
+    if (/cliente=1/.test(ERoute.get())) openLead(null, 'client');
     var lq = (ERoute.get().match(/[?&]lead=([0-9a-f-]{36})/) || [])[1]; if (lq && state.leads.some(function (x) { return x.id === lq; })) openLead(lq);
+    var cq = (ERoute.get().match(/[?&]card=([0-9a-f-]{36})/) || [])[1]; if (cq) openClientCard(cq);
   }
 
-  async function openLead(id) {
-    var l = id ? state.leads.find(function (x) { return x.id === id; }) : { status: 'new', source: 'manual' };
+  /* card for a new contact, a lead or a prospect; choosing Cliente creates the portal account and sends the invite */
+  async function openLead(id, kindPre) {
+    var l = id ? state.leads.find(function (x) { return x.id === id; }) : { status: 'new', source: 'manual', language: 'pt' };
+    var kind0 = kindPre || kindOf(l);
     var related = id ? await Promise.all([
       q(sb.from('bookings').select('*').eq('lead_id', id).order('starts_at', { ascending: false })),
       q(sb.from('envelopes').select('id,title,status,created_at').eq('lead_id', id).order('created_at', { ascending: false }))
     ]) : [[], []];
-    var o = openOverlay('<div class="drawer__head"><div><h2 class="portal-h2" style="margin:0">' + (id ? esc(l.name) : 'Novo lead') + '</h2>' +
+    var o = openOverlay('<div class="drawer__head"><div><h2 class="portal-h2" style="margin:0">' + (id ? esc(l.name) : 'Novo') + '</h2>' +
       (id ? '<p class="portal-muted">' + esc(SOURCE_PT[l.source]) + ' · ' + esc(fmtDT(l.created_at)) + (l.marketing_consent ? ' · Aceitou marketing' : '') + '</p>' : '') + '</div><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
-      '<form class="portal-form" id="lead-form">' +
+      '<form class="portal-form" id="lead-form" novalidate>' +
       '<div class="portal-grid2">' +
+        '<div class="field"><label for="ld-kind">Tipo</label><select id="ld-kind">' + Object.keys(KIND_PT).map(function (k) { return '<option value="' + k + '"' + (k === kind0 ? ' selected' : '') + '>' + KIND_PT[k] + '</option>'; }).join('') + '</select></div>' +
+        '<div class="field"><label for="ld-status">Status</label><select id="ld-status"></select></div>' +
         fld('ld-name', 'Nome', l.name, 'text', true) + fld('ld-email', 'E-mail', l.email, 'email', true) +
         fld('ld-phone', 'Telefone', l.phone, 'tel') + fld('ld-country', 'País', l.country) +
         fld('ld-company', 'Empresa', l.company) + fld('ld-assist', 'Assistência', l.assistance) +
+        '<div class="field"><label for="ld-lang">Idioma</label><select id="ld-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div>' +
       '</div>' +
-      '<div class="field"><label for="ld-status">Status</label><select id="ld-status">' + Object.keys(STATUS_PT).slice(0, 6).map(function (k) { return '<option value="' + k + '"' + (l.status === k ? ' selected' : '') + '>' + STATUS_PT[k] + '</option>'; }).join('') + '</select></div>' +
+      '<div id="ld-client" class="portal-card ld-client" hidden><div class="check-row"><input type="checkbox" id="ld-inv" checked><label for="ld-inv">Enviar agora o convite de acesso ao portal (link para criar a senha)</label></div>' +
+        '<p class="portal-muted" style="font-size:.86rem;margin:.4rem 0 0">A conta é criada sem empresa. A empresa e os prazos você adiciona depois, no card do cliente, quando a empresa for registrada.</p></div>' +
       (id && l.message ? '<div class="field"><span class="portal-muted">Mensagem enviada</span><p style="white-space:pre-wrap;margin:0">' + esc(l.message) + '</p></div>' : '') +
-      '<div class="field"><label for="ld-notes">Notas internas</label><textarea id="ld-notes" rows="5">' + esc(l.notes || '') + '</textarea></div>' +
+      '<div class="field"><label for="ld-notes">Notas internas</label><textarea id="ld-notes" rows="4">' + esc(l.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="ld-msg" role="alert"></div>' +
       '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
-      (id ? ((state.clients || []).some(function (c) { return c.lead_id === id; }) ? '<a class="btn btn--ghost" href="#/clientes?id=' + esc((state.clients.find(function (c) { return c.lead_id === id; }) || {}).id) + '">Abrir cliente</a>' : '<button class="btn btn--ghost" type="button" id="ld-conv">Converter em cliente</button>') +
-        '<a class="btn btn--ghost" href="mailto:' + esc(l.email) + '">Enviar e-mail</a><a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + '</div></form>' +
+      (id ? '<a class="btn btn--ghost" href="mailto:' + esc(l.email) + '">Enviar e-mail</a><a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + '</div></form>' +
       (id ? '<h3 style="margin-top:1.5rem">Agendamentos</h3>' + (related[0].length ? '<ul class="list">' + related[0].map(function (b) { return '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at)) + '</strong><span>' + esc(b.topic || '') + '</span></div>' + badge(b.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') +
         '<h3>Documentos</h3>' + (related[1].length ? '<ul class="list">' + related[1].map(function (e) { return '<li><div class="list__main"><strong>' + esc(e.title) + '</strong><span>' + esc(fmtDT(e.created_at)) + '</span></div>' + badge(e.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') : ''));
-    if ($('#ld-conv', o)) $('#ld-conv', o).onclick = function () { closeOverlay(); AdminClients.create(clientsCtx(), id); };
-    var stSel = $('#ld-status', o), btnSave = $('#lead-form button[type=submit]', o);
-    stSel.onchange = function () { var hc = id && (state.clients || []).some(function (c) { return c.lead_id === id; }); btnSave.textContent = stSel.value === 'client' && !hc ? 'Salvar e criar conta do cliente' : 'Salvar'; };
+    $('#ld-lang', o).value = l.language && /^(pt|en|es)$/.test(l.language) ? l.language : 'pt';
+    var kSel = $('#ld-kind', o), sSel = $('#ld-status', o), save = $('#lead-form button[type=submit]', o);
+    function sync() {
+      var k = kSel.value, cur = sSel.value || (k === kindOf(l) ? (k === 'client' ? 'active' : l.status) : '');
+      sSel.innerHTML = KIND_ST[k].map(function (x) { return '<option value="' + x + '">' + stLabel(x) + '</option>'; }).join('');
+      if (KIND_ST[k].indexOf(cur) > -1) sSel.value = cur;
+      $('#ld-client', o).hidden = k !== 'client';
+      save.textContent = k === 'client' ? 'Salvar e criar conta do cliente' : 'Salvar';
+    }
+    kSel.onchange = function () { sSel.value = ''; sync(); }; sync();
     $('#lead-form', o).addEventListener('submit', async function (e) {
       e.preventDefault();
+      var m = $('#ld-msg', o), k = kSel.value;
       var row = { name: $('#ld-name').value.trim(), email: $('#ld-email').value.trim().toLowerCase(), phone: $('#ld-phone').value.trim() || null,
         country: $('#ld-country').value.trim() || null, company: $('#ld-company').value.trim() || null, assistance: $('#ld-assist').value.trim() || null,
-        status: $('#ld-status').value, notes: $('#ld-notes').value };
-      if (row.name.length < 2 || row.email.indexOf('@') < 1) return msg($('#ld-msg'), 'Preencha nome e e-mail.', 'error');
-      var r = id ? await sb.from('leads').update(row).eq('id', id) : await sb.from('leads').insert(Object.assign(row, { source: 'manual' })).select('id').single();
-      if (r.error) return msg($('#ld-msg'), errText(r.error), 'error');
-      // status Cliente: open the portal account form for this lead (unless it already has one)
-      var lid = id || (r.data && r.data.id);
-      var hasClient = (state.clients || []).some(function (c) { return c.lead_id === lid; });
-      if (row.status === 'client' && !hasClient && lid) { closeOverlay(); return AdminClients.create(clientsCtx(), lid); }
-      closeOverlay(); if (/novo=1/.test(ERoute.get())) ERoute.set('#/crm'); else route();
+        language: $('#ld-lang').value, kind: k, status: k === 'client' ? 'client' : sSel.value, notes: $('#ld-notes').value };
+      if (row.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(row.email)) return msg(m, 'Preencha nome e um e-mail válido.', 'error');
+      save.disabled = true; var label = save.textContent; save.textContent = k === 'client' ? 'Criando a conta…' : 'Salvando…';
+      try {
+        var r = id ? await sb.from('leads').update(row).eq('id', id) : await sb.from('leads').insert(Object.assign(row, { source: 'manual' })).select('id').single();
+        if (r.error) throw r.error;
+        var lid = id || (r.data && r.data.id);
+        if (k !== 'client') { closeOverlay(); if (/novo=1/.test(ERoute.get())) ERoute.set('#/crm'); else route(); return; }
+        var inv = $('#ld-inv', o).checked;
+        var done = await AdminClients.createAccount(clientsCtx(), { leadId: lid, name: row.name, email: row.email, phone: row.phone, lang: row.language, status: sSel.value, invite: inv });
+        closeOverlay(); route();
+        openClientCard(done.client.id, { created: true, invited: inv, sent: done.sent });
+      } catch (err) { save.disabled = false; save.textContent = label; msg(m, /duplicate|unique/i.test(err.message || '') ? 'Já existe uma conta de cliente com este e-mail.' : errText(err), 'error'); }
     });
+  }
+
+  /* client card: access, proposal, invoice, companies and the full client page */
+  async function openClientCard(cid, info) {
+    info = info || {};
+    var o = openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Cliente</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div><p class="portal-muted">Carregando…</p>');
+    var res = await Promise.all([q(sb.from('clients').select('*').eq('id', cid).single()), q(sb.from('client_users').select('*').eq('client_id', cid).eq('role', 'owner')), q(sb.from('companies').select('id, legal_name, state, status').eq('client_id', cid).order('legal_name'))]);
+    var c = res[0], owner = res[1][0], cos = res[2];
+    var access = !owner ? 'Sem usuário titular' : owner.status === 'active' ? 'Ativo no portal' + (owner.accepted_at ? ' desde ' + fmtDT(owner.accepted_at, { timeStyle: undefined }) : '') : owner.status === 'revoked' ? 'Acesso revogado' : 'Convite enviado' + (owner.invited_at ? ' em ' + fmtDT(owner.invited_at) : '') + ', aguardando o primeiro acesso';
+    var banner = info.created ? (info.invited ? (info.sent ? '<div class="portal-alert portal-alert--ok" style="display:block"><strong>Conta criada.</strong> O convite foi enviado para ' + esc(c.primary_email) + '.</div>' : '<div class="portal-alert portal-alert--error" style="display:block"><strong>Conta criada, mas o convite não saiu.</strong> Use "Reenviar convite".</div>') : '<div class="portal-alert portal-alert--ok" style="display:block"><strong>Conta criada.</strong> O convite ainda não foi enviado.</div>') : '';
+    o.querySelector('.drawer, .modal').innerHTML = '<div class="drawer__head"><div><h2 class="portal-h2" style="margin:0">' + esc(c.name) + '</h2><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      banner + '<p>' + crmBadges('client', c.status === 'active' ? 'active' : 'archived') + '</p>' +
+      '<section class="portal-card"><h3 class="portal-h2" style="font-size:1rem">Acesso ao portal</h3><p class="portal-muted" style="margin:.2rem 0 .7rem">' + esc(access) + '</p><div class="portal-btn-row">' +
+        (owner && owner.status !== 'revoked' ? '<button class="btn btn--ghost btn--xs" type="button" id="cc-inv">' + (owner.status === 'active' ? 'Enviar link de acesso' : 'Reenviar convite') + '</button>' : '') + '</div><div class="portal-alert" id="cc-inv-msg" role="status"></div></section>' +
+      '<section class="portal-card"><h3 class="portal-h2" style="font-size:1rem">Ações</h3><div class="portal-btn-row">' +
+        '<a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + cid + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + cid + '">Nova fatura</a>' +
+        '<a class="btn btn--ghost btn--xs" href="#/assinaturas?novo=1' + (c.lead_id ? '&lead=' + c.lead_id : '') + '">Enviar documento</a><a class="btn btn--ghost btn--xs" href="mailto:' + esc(c.primary_email) + '">Enviar e-mail</a></div></section>' +
+      '<section class="portal-card"><h3 class="portal-h2" style="font-size:1rem">Empresas</h3>' + (cos.length ? '<ul class="list">' + cos.map(function (x) { return '<li><div class="list__main"><strong>' + esc(x.legal_name) + '</strong><span>' + esc(x.state || '') + '</span></div></li>'; }).join('') + '</ul>' : '<p class="portal-muted" style="margin:.2rem 0 .7rem">Nenhuma empresa ainda. Adicione quando a empresa for registrada.</p>') +
+        '<div class="portal-btn-row"><a class="btn btn--ghost btn--xs" href="#/clientes?id=' + cid + '&tab=empresas">' + (cos.length ? 'Gerenciar empresas' : 'Adicionar empresa') + '</a></div></section>' +
+      '<form class="portal-form" id="cc-form"><div class="portal-grid2"><div class="field"><label for="cc-status">Status</label><select id="cc-status"><option value="active">Ativo</option><option value="archived">Arquivado (bloqueia o portal)</option></select></div>' +
+        '<div class="field"><label for="cc-lang">Idioma do portal</label><select id="cc-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
+        '<div class="field"><label for="cc-notes">Notas internas</label><textarea id="cc-notes" rows="3">' + esc(c.notes || '') + '</textarea></div><div class="portal-alert" id="cc-msg" role="alert"></div>' +
+        '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button><a class="btn btn--ghost" href="#/clientes?id=' + cid + '">Abrir página completa</a></div></form>';
+    $('#cc-status', o).value = c.status === 'active' ? 'active' : 'archived'; $('#cc-lang', o).value = c.language || 'pt';
+    o.querySelectorAll('.close-x').forEach(function (b) { b.onclick = closeOverlay; });
+    o.querySelectorAll('a[href^="#/"]').forEach(function (a) { a.addEventListener('click', function () { closeOverlay(); }); });
+    if ($('#cc-inv', o)) $('#cc-inv', o).onclick = async function () {
+      var b = this; b.disabled = true; var t = b.textContent; b.textContent = 'Enviando…';
+      var ok = await AdminClients.invite(clientsCtx(), { clientId: cid, email: owner.email, name: owner.name || c.name, clientName: c.name, role: 'owner', lang: c.language });
+      b.disabled = false; b.textContent = t;
+      msg($('#cc-inv-msg', o), ok ? 'Enviado para ' + owner.email + '. Peça para olhar também o spam.' : 'O e-mail não saiu. Tente de novo em alguns segundos.', ok ? 'ok' : 'error');
+    };
+    $('#cc-form', o).onsubmit = async function (e) {
+      e.preventDefault();
+      var r = await sb.from('clients').update({ status: $('#cc-status', o).value, language: $('#cc-lang', o).value, notes: $('#cc-notes', o).value }).eq('id', cid);
+      if (r.error) return msg($('#cc-msg', o), errText(r.error), 'error');
+      closeOverlay(); route();
+    };
   }
   function fld(id, label, val, type, req) {
     return '<div class="field"><label for="' + id + '">' + esc(label) + (req ? ' <span class="req" aria-hidden="true">*</span>' : '') + '</label><input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(val || '') + '"' + (req ? ' required' : '') + '></div>';
@@ -612,7 +682,7 @@
     if (!window.AdminClients) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de clientes não carregou. Recarregue a página.</div>'; return; }
     var id = (ERoute.get().match(/[?&]id=([0-9a-f-]{36})/) || [])[1];
     if (id) return AdminClients.detail(view, clientsCtx(), id);
-    ERoute.set('#/crm?status=client' + (/novo=1/.test(ERoute.get()) ? '&cliente=1' : ''), true); // the client list now lives in the CRM
+    ERoute.set('#/crm?tipo=client' + (/novo=1/.test(ERoute.get()) ? '&cliente=1' : ''), true); // the client list now lives in the CRM
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === 'crm') a.setAttribute('aria-current', 'page'); });
     return viewCrm(view);
   }
