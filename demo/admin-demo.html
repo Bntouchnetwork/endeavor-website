@@ -1590,6 +1590,19 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .oa-approve .check, .oa-review .check { display: flex; gap: .55rem; line-height: 1.45; }
 .oa-approve .check input { flex: none; margin-top: .2rem; }
 
+/* partner list: per-row actions menu */
+.row-actions { text-align: right; white-space: nowrap; width: 1%; padding-left: .25rem !important; padding-right: .6rem !important; }
+.data--partners .badge, .data--partners .pill, .data--partners .stripe-st { white-space: normal; text-align: left; }
+.act-dots { min-width: 2.25rem; padding: .2rem .5rem; font-size: 1.25rem; line-height: 1; letter-spacing: .05em; }
+.row-actions--head { flex-wrap: wrap; }
+.act-menu { position: fixed; z-index: 250; min-width: 12rem; background: var(--white); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px rgb(10 25 50 / .16); padding: .3rem; display: grid; }
+.act-item { background: none; border: 0; text-align: left; padding: .6rem .8rem; border-radius: 7px; font: inherit; font-size: .92rem; color: var(--navy-900); cursor: pointer; }
+.act-item:hover, .act-item:focus-visible { background: #f1f4f9; outline: none; }
+.act-item--danger { color: var(--error); }
+.act-item--danger:hover, .act-item--danger:focus-visible { background: #fdf3f2; }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
 </style>
 </head>
 <body class="portal">
@@ -5083,20 +5096,106 @@ window.ENDEAVOR_CFG = {
     view.innerHTML = head(esc, 'Parceiros', 'Programa de indicações: convide parceiros, acompanhe as indicações e os repasses de comissão via Stripe Connect.', '<button class="btn btn--navy" type="button" id="pt-new">Novo parceiro</button>') +
       '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Parceiros ativos', parts.filter(function (p) { return p.status === 'active'; }).length) + kpi(esc, 'Indicações', refs.length) +
       kpi(esc, 'Viraram clientes', refs.filter(function (r) { return ['onboarding', 'in_process', 'completed'].indexOf(r.status) > -1; }).length) + kpi(esc, 'Repasses pendentes', money(pendingAll)) + '</div>' +
-      (parts.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Parceiro</th><th>Tipo</th><th>Status</th><th class="num">Comissão</th><th>Stripe</th><th class="num">Indicações</th><th class="num">Repassado</th><th class="num">A repassar</th></tr></thead><tbody>' +
+      (parts.length ? '<div class="table-wrap"><table class="data data--partners"><thead><tr><th>Parceiro</th><th>Tipo</th><th>Status</th><th class="num">Comissão</th><th>Stripe</th><th class="num">Indicações</th><th class="num">Repassado</th><th class="num">A repassar</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody>' +
         parts.map(function (p) {
           var n = refs.filter(function (r) { return r.partner_id === p.id; }).length;
           return '<tr data-id="' + p.id + '" tabindex="0"><td><strong>' + esc(p.name) + '</strong><span class="sub">' + esc([p.company, p.email].filter(Boolean).join(' · ')) + '</span></td><td>' + esc(TYPE[p.partner_type]) + '</td>' +
             '<td><span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span></td><td class="num">' + esc(String(+p.default_share_pct)) + '%</td><td>' + stripeOf(p) + '</td>' +
-            '<td class="num">' + n + '</td><td class="num">' + esc(money(total(p.id, function (i) { return i.transfer_status === 'paid'; }))) + '</td><td class="num">' + esc(money(total(p.id, function (i) { return ['scheduled', 'pending', 'failed'].indexOf(i.transfer_status) > -1 && i.status !== 'void'; }))) + '</td></tr>';
+            '<td class="num">' + n + '</td><td class="num">' + esc(money(total(p.id, function (i) { return i.transfer_status === 'paid'; }))) + '</td><td class="num">' + esc(money(total(p.id, function (i) { return ['scheduled', 'pending', 'failed'].indexOf(i.transfer_status) > -1 && i.status !== 'void'; }))) + '</td>' +
+            '<td class="row-actions"><button type="button" class="btn btn--ghost btn--xs act-dots" data-menu="' + p.id + '" aria-haspopup="menu" aria-expanded="false" aria-label="Ações do parceiro" title="Ações">⋯</button></td></tr>';
         }).join('') + '</tbody></table></div>'
         : '<div class="empty-state portal-card"><strong>Nenhum parceiro ainda</strong><p>Convide contadores, corretores, advogados e outros parceiros que indicam clientes.</p></div>');
     view.querySelectorAll('tr[data-id]').forEach(function (tr) {
       var go = function () { ERoute.go('#/parceiros?id=' + tr.dataset.id); };
-      tr.onclick = go; tr.onkeydown = function (e) { if (e.key === 'Enter') go(); };
+      tr.onclick = function (e) { if (!e.target.closest('.row-actions')) go(); };
+      tr.onkeydown = function (e) { if (e.key === 'Enter' && e.target === tr) go(); };
     });
+    // per-row menu (fixed popover so the table scroll does not cut it)
+    var closeMenu = function () { var m = document.getElementById('pt-menu'); if (m) m.remove(); view.querySelectorAll('[data-menu][aria-expanded=true]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); }); };
+    view.querySelectorAll('[data-menu]').forEach(function (btn) {
+      btn.onclick = function (e) {
+        e.stopPropagation();
+        var open = btn.getAttribute('aria-expanded') === 'true'; closeMenu(); if (open) return;
+        var p = parts.find(function (x) { return x.id === btn.dataset.menu; });
+        var m = document.createElement('div'); m.id = 'pt-menu'; m.className = 'act-menu'; m.setAttribute('role', 'menu');
+        m.innerHTML = rowActions(esc, p).replace(/btn--ghost btn--xs|btn--danger btn--xs/g, function (c) { return c.indexOf('danger') > -1 ? 'act-item act-item--danger' : 'act-item'; }).replace(/class="btn /g, 'role="menuitem" class="');
+        document.body.appendChild(m);
+        m._place = function () {
+          var r = btn.getBoundingClientRect(), mw = m.offsetWidth, mh = m.offsetHeight;
+          m.style.left = Math.max(8, Math.min(r.right - mw, window.innerWidth - mw - 8)) + 'px';
+          m.style.top = (r.bottom + 4 + mh > window.innerHeight ? Math.max(8, r.top - mh - 4) : r.bottom + 4) + 'px';
+        };
+        m._place();
+        btn.setAttribute('aria-expanded', 'true');
+        wireActions(m, ctx, parts, refs, invs, closeMenu);
+        var first = m.querySelector('button'); if (first) first.focus();
+      };
+    });
+    if (!window.__ptMenuWired) {
+      window.__ptMenuWired = true;
+      var kill = function () { var m = document.getElementById('pt-menu'); if (m) m.remove(); document.querySelectorAll('[data-menu][aria-expanded=true]').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); }); };
+      document.addEventListener('click', function (e) { if (!e.target.closest('#pt-menu')) kill(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') kill(); });
+      window.addEventListener('hashchange', kill); window.addEventListener('resize', kill);
+      document.addEventListener('scroll', function () { var m = document.getElementById('pt-menu'); if (m && m._place) m._place(); }, true);
+    }
     ctx.$('#pt-new').onclick = function () { partnerForm(ctx, null); };
     if (param('novo')) partnerForm(ctx, null);
+  }
+
+  /* row actions: Abrir, Editar, Reenviar convite, Suspender/Reativar, Excluir */
+  function rowActions(esc, p) {
+    var b = function (act, label, cls) { return '<button type="button" class="btn ' + (cls || 'btn--ghost') + ' btn--xs" data-act="' + act + '" data-pid="' + p.id + '">' + label + '</button>'; };
+    return b('open', 'Abrir') + b('edit', 'Editar') + (p.status !== 'active' || !p.user_id ? b('resend', 'Reenviar convite') : '') +
+      (p.status === 'suspended' ? b('reactivate', 'Reativar') : b('suspend', 'Suspender')) + b('delete', 'Excluir', 'btn--danger');
+  }
+  function confirmBox(ctx, title, text, okLabel, danger, run) {
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + title + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<p>' + text + '</p><div class="portal-alert" id="cf-msg" role="alert"></div><div class="portal-btn-row"><button class="btn ' + (danger ? 'btn--danger' : 'btn--navy') + '" type="button" id="cf-ok">' + okLabel + '</button><button class="btn btn--ghost" type="button" id="cf-no">Cancelar</button></div>', true);
+    ctx.$('#cf-no', o).onclick = ctx.closeOverlay;
+    ctx.$('#cf-ok', o).onclick = async function () {
+      var b = this; b.disabled = true;
+      var err = await run();
+      if (err) { b.disabled = false; return ctx.msg(ctx.$('#cf-msg', o), err, 'error'); }
+      ctx.closeOverlay(); ctx.route();
+    };
+  }
+  function partnerActions(ctx, p, act, counts, btn) {
+    var esc = ctx.esc;
+    if (act === 'open') return ERoute.go('#/parceiros?id=' + p.id);
+    if (act === 'edit') return partnerForm(ctx, p);
+    if (act === 'resend') {
+      btn.disabled = true; btn.textContent = 'Enviando…';
+      return sendInvite(ctx, p).then(function (ok) {
+        btn.disabled = false; btn.textContent = 'Reenviar convite';
+        var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (ok ? 'Convite reenviado' : 'Convite não enviado') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+          '<div class="portal-alert portal-alert--' + (ok ? 'ok' : 'error') + '" style="display:block">' + (ok ? 'O convite foi reenviado para ' + esc(p.email) + '. Peça para olhar também o spam.' : 'O e-mail para ' + esc(p.email) + ' não saiu. Tente de novo em alguns segundos.') + '</div>' +
+          '<button class="btn btn--navy" type="button" id="rs-ok">Fechar</button>', true);
+        ctx.$('#rs-ok', o).onclick = ctx.closeOverlay; ctx.$('#rs-ok', o).focus();
+      });
+    }
+    var set = function (st) { return async function () { var r = await ctx.sb.from('partners').update({ status: st }).eq('id', p.id); return r.error ? ctx.errText(r.error) : null; }; };
+    if (act === 'suspend') return confirmBox(ctx, 'Suspender parceiro', '<strong>' + esc(p.name) + '</strong> perde o acesso ao Portal do Parceiro e não pode enviar novas indicações. As indicações e comissões continuam registradas. Você pode reativar depois.', 'Suspender', true, set('suspended'));
+    if (act === 'reactivate') return confirmBox(ctx, 'Reativar parceiro', '<strong>' + esc(p.name) + '</strong> volta a ' + (p.user_id ? 'ter acesso ao Portal do Parceiro.' : 'ficar como convidado. Se ainda não criou a senha, use "Reenviar convite".'), 'Reativar', false, set(p.user_id ? 'active' : 'invited'));
+    if (act === 'delete') {
+      if (counts.refs || counts.invs) return confirmBox(ctx, 'Não é possível excluir', '<strong>' + esc(p.name) + '</strong> tem ' + [counts.refs ? counts.refs + ' indicação(ões)' : '', counts.invs ? counts.invs + ' comissão(ões)' : ''].filter(Boolean).join(' e ') +
+        ' registradas. Para não apagar esse histórico, use <strong>Suspender</strong>: o parceiro perde o acesso e os registros ficam guardados.', p.status === 'suspended' ? 'Ok' : 'Suspender', p.status !== 'suspended', p.status === 'suspended' ? async function () { return null; } : set('suspended'));
+      return confirmBox(ctx, 'Excluir parceiro', 'Excluir <strong>' + esc(p.name) + '</strong> (' + esc(p.email) + ')? O cadastro é apagado e o parceiro perde o acesso ao portal. Isso não pode ser desfeito.', 'Excluir', true, async function () {
+        var r = await ctx.sb.from('partners').delete().eq('id', p.id);
+        if (r.error) return ctx.errText(r.error);
+        if (/[?&]id=/.test(location.hash)) ERoute.go('#/parceiros');
+        return null;
+      });
+    }
+  }
+  function wireActions(root, ctx, parts, refs, invs, done) {
+    root.querySelectorAll('[data-act]').forEach(function (b) {
+      b.onclick = function (e) {
+        e.stopPropagation(); if (done) done();
+        var p = parts.find(function (x) { return x.id === b.dataset.pid; }); if (!p) return;
+        partnerActions(ctx, p, b.dataset.act, { refs: refs.filter(function (r) { return r.partner_id === p.id; }).length, invs: invs.filter(function (i) { return i.partner_id === p.id; }).length }, b);
+      };
+    });
   }
 
   function partnerForm(ctx, p) {
@@ -5122,21 +5221,20 @@ window.ENDEAVOR_CFG = {
       if (!(row.default_share_pct >= 0 && row.default_share_pct <= 100)) return ctx.msg(ctx.$('#pf-msg', o), 'Comissão entre 0 e 100%.', 'error');
       var form = this, btn = form.querySelector('button[type=submit]'), m = ctx.$('#pf-msg', o), label = btn.textContent;
       btn.disabled = true; btn.textContent = edit ? 'Salvando…' : 'Enviando convite…';
-      if (!edit) ctx.msg(m, 'Criando o parceiro e enviando o convite para ' + row.email + '. Aguarde alguns segundos…', 'info');
       var r = edit ? await ctx.sb.from('partners').update(row).eq('id', p.id) : await ctx.sb.from('partners').insert(row).select('id').single();
       if (r.error) { btn.disabled = false; btn.textContent = label; return ctx.msg(m, /duplicate|unique/i.test(r.error.message) ? 'Já existe um parceiro com este e-mail.' : ctx.errText(r.error), 'error'); }
       if (edit) { ctx.closeOverlay(); ctx.route(); return; }
-      var id = r.data.id, ok = await sendInvite(ctx, Object.assign({ id: id }, row));
-      var dest = '#/parceiros?id=' + id + '&invite=' + (ok ? 'ok' : 'erro'), gone = false;
-      var finish = function () { if (gone) return; gone = true; clearTimeout(timer); ctx.closeOverlay(); ERoute.go(dest); };
-      // replace the form with a clear confirmation; the card closes by itself or with the button
+      var ok = await sendInvite(ctx, Object.assign({ id: r.data.id }, row));
+      // confirmation stays open until the admin closes it (Fechar or X)
+      var finish = function () { ctx.closeOverlay(); ctx.route(); };
       form.innerHTML = '<div class="portal-alert portal-alert--' + (ok ? 'ok' : 'error') + '" role="status" style="display:block">' +
         (ok ? '<strong>Convite enviado.</strong> ' + ctx.esc(row.name) + ' vai receber em ' + ctx.esc(row.email) + ' o link para criar a senha. Peça para olhar também o spam.'
-            : '<strong>O parceiro foi criado, mas o e-mail de convite não saiu.</strong> Use "Reenviar convite" na página do parceiro.') + '</div>' +
-        '<p class="portal-muted" style="font-size:.88rem">Esta janela fecha sozinha em alguns segundos.</p><button class="btn btn--navy" type="button" id="pf-done">Fechar</button>';
+            : '<strong>O parceiro foi criado, mas o e-mail de convite não saiu.</strong> Use "Reenviar convite" na lista de parceiros.') + '</div>' +
+        '<button class="btn btn--navy" type="button" id="pf-done">Fechar</button>';
       ctx.$('#pf-done', o).onclick = finish; ctx.$('#pf-done', o).focus();
       o.querySelectorAll('.close-x').forEach(function (b) { b.onclick = finish; });
-      var timer = setTimeout(finish, ok ? 4000 : 8000);
+      o.onclick = function (e) { if (e.target === o) finish(); };
+      document.onkeydown = function (e) { if (e.key === 'Escape') finish(); };
     };
   }
 
@@ -5146,15 +5244,14 @@ window.ENDEAVOR_CFG = {
     var tab = param('tab') || 'indicacoes';
     var tabs = [['indicacoes', 'Indicações'], ['comissoes', 'Comissões'], ['stripe', 'Stripe'], ['dados', 'Dados']];
     view.innerHTML = '<p><a href="#/parceiros">← Parceiros</a></p>' + head(esc, p.name, [TYPE[p.partner_type], p.company, p.email].filter(Boolean).join(' · '),
-      '<div class="portal-btn-row">' + (p.status === 'invited' ? '<button class="btn btn--ghost" type="button" id="pd-resend">Reenviar convite</button>' : '') + '<button class="btn btn--ghost" type="button" id="pd-edit">Editar</button></div>') +
+      '<div class="portal-btn-row row-actions--head">' + rowActions(esc, p).replace(/<button[^>]*data-act="open"[^>]*>Abrir<\/button>/, '') + '</div>') +
       (param('invite') === 'erro' ? '<div class="portal-alert portal-alert--error" style="display:block">O parceiro foi criado, mas o e-mail de convite não saiu. Use "Reenviar convite".</div>' : '') +
-      (param('invite') === 'ok' ? '<div class="portal-alert portal-alert--ok" style="display:block" role="status">Convite enviado para ' + esc(p.email) + '.</div>' : '') +
-      '<div class="portal-alert" id="pd-msg" role="status"></div>' +
       '<p style="display:flex;gap:.5rem;flex-wrap:wrap"><span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span>' + stripeOf(p) + '<span class="badge badge--new">Comissão padrão ' + esc(String(+p.default_share_pct)) + '%</span></p>' +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/parceiros?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pd-body"></div>';
-    ctx.$('#pd-edit').onclick = function () { partnerForm(ctx, p); };
-    if (ctx.$('#pd-resend')) ctx.$('#pd-resend').onclick = async function () { var b = this; b.disabled = true; b.textContent = 'Enviando…'; var ok = await sendInvite(ctx, p); b.textContent = ok ? 'Convite reenviado' : 'Falhou, tente de novo'; b.disabled = false;
-      ctx.msg(ctx.$('#pd-msg'), ok ? 'Convite reenviado para ' + p.email + '. Peça para olhar também o spam.' : 'O e-mail de convite não saiu. Tente de novo em alguns segundos.', ok ? 'ok' : 'error'); };
+    var counts = await Promise.all([sb.from('referrals').select('id', { count: 'exact', head: true }).eq('partner_id', id), sb.from('invoices').select('id', { count: 'exact', head: true }).eq('partner_id', id)]);
+    view.querySelectorAll('.row-actions--head [data-act]').forEach(function (b) {
+      b.onclick = function () { partnerActions(ctx, p, b.dataset.act, { refs: counts[0].count || 0, invs: counts[1].count || 0 }, b); };
+    });
     var body = ctx.$('#pd-body');
     if (tab === 'indicacoes') return tabReferrals(body, ctx, p);
     if (tab === 'comissoes') return tabCommissions(body, ctx, p);
