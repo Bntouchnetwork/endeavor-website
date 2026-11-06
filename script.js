@@ -404,4 +404,20 @@
   /* ---------- Year ---------- */
   var y = document.getElementById('year');
   if (y) y.textContent = new Date().getFullYear();
+
+  /* Floating buttons (accessibility, WhatsApp) move above the hero trust bar while it is visible */
+  (function () {
+    var bar = document.querySelector('.trustbar'), root = document.documentElement;
+    if (!bar) return;
+    function update() {
+      var r = bar.getBoundingClientRect(), vh = window.innerHeight, zone = 96; // the buttons live in the bottom ~96px
+      if (r.top < vh && r.bottom > vh - zone) { root.style.setProperty('--fab-raise', Math.round(vh - r.top) + 'px'); root.classList.add('fab-raise'); }
+      else root.classList.remove('fab-raise');
+    }
+    var queued = false;
+    function onScroll() { if (queued) return; queued = true; requestAnimationFrame(function () { queued = false; update(); }); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    update();
+  })();
 })();
