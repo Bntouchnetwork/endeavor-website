@@ -5,6 +5,8 @@
 //   2. leads that did not answer get up to 2 follow-ups (day 2 and day 7 by default) inviting them to book a call
 //   3. partners who did not finish onboarding (create the password, choose how to receive, sign the agreement) get reminders
 // - admin: status, run_now, ai_suggest (AI reads the lead and drafts the next step and a reply), send_email (reply from the CRM)
+// - Admin agent (AI): watches each partner's onboarding, writes a personal e-mail (and WhatsApp) when they get stuck,
+//   tells the admin when there is no progress, answers the partner in the portal chat and, when Meta is on, on WhatsApp.
 // Every message is logged in crm_messages with a unique key, so nothing is sent twice.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
@@ -21,6 +23,7 @@ const G_USER = Deno.env.get("SMTP_USER") ?? "support@endeavorbiz.com";
 const G_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
 const WA_TOKEN = Deno.env.get("WHATSAPP_TOKEN") ?? "", WA_PHONE = Deno.env.get("WHATSAPP_PHONE_ID") ?? "", WA_VER = Deno.env.get("WHATSAPP_API_VERSION") ?? "v21.0";
 const WA_TPL = Deno.env.get("WA_TPL_CRM") ?? "endeavor_status_update";
+const WA_VERIFY = Deno.env.get("WHATSAPP_VERIFY_TOKEN") ?? "", WA_SECRET = Deno.env.get("WHATSAPP_APP_SECRET") ?? "";
 const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const AI_MODEL = Deno.env.get("CRM_MODEL") || Deno.env.get("OA_MODEL") || "claude-sonnet-5-5";
 const SUPPORT = "support@endeavorbiz.com", PHONE = "+1 (407) 436-9567", WA_NUM = "+1 (630) 689-8702";
@@ -138,7 +141,7 @@ const portal = (l: Lang, h: string) => `${SITE}/partner.html?lang=${l}${h}`;
 /* ---------- tick ---------- */
 let S: Row = {};
 async function tick() {
-  S = (await db.from("crm_settings").select("*").eq("id", 1).single()).data ?? {};
+  S = (await db.from("crm_settings").select("*").eq("id", 1).single()).data ?? {} as Row;
   if (!mailOn()) return { waiting: "no_sender" };
   await loadFrom();
   const out: Row = { referral: 0, paid: 0, commission: 0, followup: 0, partner: 0 };
@@ -201,35 +204,155 @@ async function tick() {
     }
   }
 
-  // 3. partner onboarding reminders (day 3 and day 7)
-  if (S.partner_reminders !== false) {
-    const { data: ps } = await db.from("partners").select("*").neq("status", "suspended").gte("invited_at", new Date(Math.max(Date.now() - 45 * 864e5, new Date(start).getTime())).toISOString()).limit(300);
-    const vid = S.partner_video_url;
-    for (const p of ps ?? []) {
+  // 3. partners: password reminders, automatic activation, and the Admin agent for stuck onboarding
+  {
+    const { data: ps } = await db.from("partners").select("*").neq("status", "suspended").is("onboarding_done_at", null).gte("invited_at", new Date(Math.max(Date.now() - 60 * 864e5, new Date(start).getTime())).toISOString()).limit(300);
+    const vid = S.partner_video_url, stuck = Number(S.agent_stuck_days) || 2, escal = Number(S.agent_escalate_days) || 6;
+    for (const p0 of ps ?? []) {
+      let p = p0;
       const l = lang(p.language);
       if (p.status === "invited") {
+        if (S.partner_reminders === false) continue;
         for (const d of [7, 3]) if (days(p.invited_at) >= d) {
-          const res = await deliver({ dedupe: `pinv${d}:${p.id}`, kind: "partner_invite_reminder", partner_id: p.id, to: p.email, l, subject: T[l].invSubj,
+          const res = await deliver({ dedupe: `pinv${d}:${p.id}`, kind: "partner_invite_reminder", partner_id: p.id, name: p.name, to: p.email, l, subject: T[l].invSubj, phone: p.phone, waText: T[l].invP,
             mail: { kicker: T[l].kPartner, h1: T[l].invH1, pre: T[l].invP, paras: [hi(l, p.name), esc(T[l].invP)], cta: T[l].invCta, url: portal(l, "") } });
           if (res.email === "sent") out.partner++; break;
         }
         continue;
       }
-      if (p.status !== "active" || p.onboarding_done_at || !p.accepted_at) continue;
-      const miss: string[] = [];
-      if (vid && !p.video_seen_at) miss.push(T[l].m_video);
-      if (!p.payout_method) miss.push(T[l].m_payout);
-      else if (p.payout_method === "stripe" && !p.stripe_transfers_active) miss.push(T[l].m_stripe);
-      if (p.contract_status === "sent") miss.push(T[l].m_contract);
-      if (!miss.length) continue;
-      for (const d of [7, 3]) if (days(p.accepted_at) >= d) {
-        const res = await deliver({ dedupe: `pob${d}:${p.id}`, kind: "partner_onboarding_reminder", partner_id: p.id, to: p.email, l, subject: T[l].obSubj,
-          mail: { kicker: T[l].kPartner, h1: T[l].obH1, pre: T[l].obP + " " + miss.join(", "), paras: [hi(l, p.name), esc(T[l].obP), "<br>• " + miss.map(esc).join("<br>• ")], cta: T[l].obCta, url: portal(l, "#/onboarding") } });
-        if (res.email === "sent") out.partner++; break;
+      if (p.status !== "active" || !p.accepted_at) continue;
+      // Stripe may have finished in the background: try to activate first
+      const act = await db.rpc("partner_try_activate", { p_partner: p.id });
+      if (Array.isArray(act.data) && act.data[0]) p = act.data[0];
+      if (p.onboarding_done_at) { out.activated = (out.activated || 0) + 1; continue; }
+      const step = nextStep(p, vid);
+      if (!step) continue;
+      const idle = days(p.onboarding_step_at || p.accepted_at);
+      if (S.agent_enabled === false) {
+        if (S.partner_reminders === false) continue;
+        for (const d of [7, 3]) if (days(p.accepted_at) >= d) {
+          const res = await deliver({ dedupe: `pob${d}:${p.id}`, kind: "partner_onboarding_reminder", partner_id: p.id, name: p.name, to: p.email, l, subject: T[l].obSubj,
+            mail: { kicker: T[l].kPartner, h1: T[l].obH1, pre: T[l].obP, paras: [hi(l, p.name), esc(T[l].obP), "• " + esc(T[l]["m_" + step])], cta: T[l].obCta, url: portal(l, "#/onboarding") } });
+          if (res.email === "sent") out.partner++; break;
+        }
+        continue;
+      }
+      // agent: a personal nudge after N days without progress (at most 3, spaced by N days)
+      if (idle >= stuck && (p.agent_nudges || 0) < 3 && (!p.agent_last_nudge_at || days(p.agent_last_nudge_at) >= stuck)) {
+        const n = (p.agent_nudges || 0) + 1;
+        const m = await agentNudge(p, step, n);
+        const res = await deliver({ dedupe: `agent:${p.id}:${n}`, kind: "agent_nudge", partner_id: p.id, name: p.name, to: p.email, l, subject: m.subject, phone: p.phone, waText: m.short,
+          mail: { kicker: T[l].kPartner, h1: m.subject, pre: m.short, paras: m.body.split(/\n\s*\n/).map((x) => esc(x.trim()).replace(/\n/g, "<br>")).filter(Boolean), cta: T[l].obCta, url: portal(l, "#/onboarding"), sign: false } });
+        if (res.email === "sent" || res.email === "dup") {
+          await db.from("partners").update({ agent_nudges: n, agent_last_nudge_at: new Date().toISOString() }).eq("id", p.id);
+          await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel: "email", role: "assistant", content: (m.subject + "\n\n" + m.body).slice(0, 6000), meta: { step, nudge: n, ai: m.ai } });
+          if (res.email === "sent") out.agent = (out.agent || 0) + 1;
+        }
+      }
+      // escalate to the admin when there is still no progress
+      if (idle >= escal && !p.agent_escalated_at) {
+        await db.from("admin_events").insert({ kind: "partner_new", title: ("Parceiro parado no onboarding: " + p.name).slice(0, 300), body: ("Passo: " + STEP_PT[step] + ". Sem avanço há " + Math.floor(idle) + " dias, mesmo com " + (p.agent_nudges || 0) + " lembrete(s) do agente. Vale um contato pessoal" + (p.phone ? " (WhatsApp " + p.phone + ")" : "") + ".").slice(0, 2000), link: "#/agentes?partner=" + p.id });
+        await db.from("partners").update({ agent_escalated_at: new Date().toISOString() }).eq("id", p.id);
+        await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel: "system", role: "system", content: "Escalado para a equipe: sem avanço em " + STEP_PT[step] + "." });
+        out.escalated = (out.escalated || 0) + 1;
       }
     }
   }
   return out;
+}
+
+/* ---------- Admin agent (AI): onboarding guide for partners ---------- */
+const STEP_PT: Record<string, string> = { video: "assistir ao vídeo", contract: "assinar o contrato", payout: "configurar como recebe", stripe: "terminar o cadastro no Stripe" };
+function nextStep(p: Row, video: string | null) {
+  if (video && !p.video_seen_at) return "video";
+  if (!["partner_signed", "signed"].includes(p.contract_status)) return "contract";
+  if (!p.payout_method) return "payout";
+  if (p.payout_method === "stripe" && !(p.stripe_details_submitted || p.stripe_transfers_active)) return "stripe";
+  return null;
+}
+const KNOW = `Endeavor Business Solutions (Orlando, FL; https://endeavorbiz.com) helps foreign entrepreneurs open and keep companies in the U.S. (LLC/corporation formation, registered agent, compliance, tax coordination with CPAs, EIN/ITIN guidance, U.S. bank account support, real estate structure, family office) in Portuguese, English and Spanish.
+Partner Program: realtors, accountants, attorneys and advisors refer clients and earn a commission on the invoices paid by those clients (standard 10%, the exact % is in the partner's agreement). No cost, no minimum.
+Partner Portal (partner.html), menu: "Start here" (onboarding), Dashboard, My referrals (pipeline: Received, In contact, Proposal, Onboarding, In process, Completed), New referral (client name, email, phone, service; the client must agree to be contacted), Commissions, Stripe payouts.
+Onboarding steps in "Start here", in order: 1) portal access (password + two-step verification, already done when they are in the portal); 2) watch the welcome video and click "I watched it"; 3) sign the partner agreement online (button in the step; the agreement is in English; Endeavor countersigns later); 4) choose the country of the bank account: U.S. (also Canada, UK, Europe) = Stripe Connect Express, they click "Connect Stripe account" and finish on Stripe's site (photo ID, bank details, SSN/ITIN/EIN when in the U.S.; Stripe collects the W-9/W-8); other countries such as Brazil = Stripe Global Payouts: Endeavor registers them as a recipient and Stripe emails them a link to add the bank, and Endeavor sends each commission after the client pays (payouts in BRL depend on Stripe enabling them); an optional Pix key (email, phone or random key, never CPF) is kept for a future Pix option. 5) When all steps are done the account is activated automatically, referrals are unlocked and a "Book your welcome call" button appears.
+The partner gets an email (and WhatsApp when available) at every step of each referred client, when the client pays and when the commission is sent.
+Contact: support@endeavorbiz.com, WhatsApp +1 (630) 689-8702, phone +1 (407) 436-9567.`;
+const AGENT_RULES = `You are the Endeavor onboarding assistant (the "Admin agent") talking to a partner.
+Rules: reply in the partner's language (pt = Brazilian Portuguese, en, es); be warm, clear and short (at most 120 words, plain text, no markdown headings); guide them to the next pending step with concrete clicks;
+never ask for or accept SSN, ITIN, passport, CPF, card or bank numbers (if they send any, tell them not to share it here and that Stripe collects it securely); do not give legal or tax advice and do not change commissions or contract terms (a person from the team handles that);
+never invent features, prices, deadlines or promises. If the partner asks for a person, wants to negotiate the commission or contract, reports a problem you cannot solve, or is upset, say the team will contact them and end your message with the exact token [[HANDOFF]].`;
+async function claude(system: string, messages: { role: string; content: string }[], max = 700) {
+  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: AI_MODEL, max_tokens: max, system, messages }) });
+  const j = await r.json().catch(() => null);
+  if (!r.ok) throw new Error(j?.error?.message || `ai_${r.status}`);
+  return (j.content || []).filter((b: Row) => b.type === "text").map((b: Row) => b.text).join("").trim();
+}
+function partnerState(p: Row, video: string | null) {
+  return { name: first(p.name), language: lang(p.language), country: p.country, commission_pct: p.contract_pct ?? p.default_share_pct ?? 10, account_active: !!p.onboarding_done_at,
+    video_required: !!video, video_seen: !!p.video_seen_at, agreement: p.contract_status, payout_method: p.payout_method, payout_country: p.payout_country,
+    stripe: { created: !!p.stripe_account_id, details_submitted: !!p.stripe_details_submitted, ready: !!p.stripe_transfers_active }, global_payouts: p.global_payouts_status, next_step: nextStep(p, video) };
+}
+async function agentNudge(p: Row, step: string, n: number) {
+  const l = lang(p.language), fb = { subject: T[l].obSubj, body: [first(p.name) ? fill(T[l].hi, { n: first(p.name) }) : T[l].hiAnon, T[l].obP + " " + T[l]["m_" + step] + ".", SIGN[l]].join("\n\n"), short: T[l].obP + " " + T[l]["m_" + step], ai: false };
+  if (!ANTHROPIC) return fb;
+  try {
+    const txt = await claude(AGENT_RULES + "\n\nWhat you know:\n" + KNOW + `\n\nWrite reminder e-mail number ${n} (of at most 3) to a partner who stopped at the onboarding step "${step}". Be specific about how to do that step. Reply with ONLY a JSON object {"subject": "...", "body": "plain text, 2-4 short paragraphs, signed with the Endeavor team signature in their language", "short": "one sentence for WhatsApp"}.`,
+      [{ role: "user", content: "Partner record: " + JSON.stringify(partnerState(p, S.partner_video_url)) }], 900);
+    const o = JSON.parse((txt.match(/\{[\s\S]*\}/) || ["{}"])[0]);
+    const clean = (v: unknown, k: number) => (typeof v === "string" ? v.replace(/<[^>]*>/g, "").trim().slice(0, k) : "");
+    if (clean(o.subject, 150) && clean(o.body, 3000)) return { subject: clean(o.subject, 150), body: clean(o.body, 3000), short: clean(o.short, 400) || fb.short, ai: true };
+  } catch (e) { console.error("agent nudge", e); }
+  return fb;
+}
+// one turn of the conversation (portal chat or WhatsApp); stores both messages, escalates on [[HANDOFF]]
+async function agentReply(p: Row, channel: "portal" | "whatsapp", text: string) {
+  const S0: Row = (await db.from("crm_settings").select("*").eq("id", 1).single()).data ?? {};
+  await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel, role: "user", content: text.slice(0, 4000) });
+  const { data: hist } = await db.from("agent_messages").select("role, content, channel").eq("partner_id", p.id).in("role", ["user", "assistant"]).in("channel", ["portal", "whatsapp", "email"]).order("created_at", { ascending: false }).limit(16);
+  const msgs: { role: string; content: string }[] = [];
+  for (const m of (hist ?? []).reverse()) { const role = m.role === "user" ? "user" : "assistant"; if (msgs.length && msgs[msgs.length - 1].role === role) msgs[msgs.length - 1].content += "\n\n" + m.content; else msgs.push({ role, content: m.content }); }
+  while (msgs.length && msgs[0].role !== "user") msgs.shift();
+  let reply = "", handoff = false;
+  if (!ANTHROPIC) { reply = { pt: "Obrigado pela mensagem! A nossa equipe vai responder em breve.", en: "Thanks for your message! Our team will reply soon.", es: "¡Gracias por su mensaje! Nuestro equipo responderá pronto." }[lang(p.language)]; handoff = true; }
+  else {
+    try {
+      reply = await claude(AGENT_RULES + "\n\nWhat you know:\n" + KNOW + "\n\nThis partner right now: " + JSON.stringify(partnerState(p, S0.partner_video_url)) + `\nChannel: ${channel === "whatsapp" ? "WhatsApp (keep it very short)" : "chat inside the Partner Portal"}.`, msgs);
+    } catch (e) { console.error("agent chat", e); reply = { pt: "Tive um problema agora. A equipe da Endeavor vai responder você em breve.", en: "I had a problem just now. The Endeavor team will reply to you soon.", es: "Tuve un problema ahora. El equipo de Endeavor le responderá pronto." }[lang(p.language)]; handoff = true; }
+  }
+  if (/\[\[HANDOFF\]\]/.test(reply)) { handoff = true; reply = reply.replace(/\s*\[\[HANDOFF\]\]\s*/g, "").trim(); }
+  reply = reply.slice(0, 3000);
+  await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel, role: "assistant", content: reply, meta: handoff ? { handoff: true } : {} });
+  if (handoff) await db.from("admin_events").insert({ kind: "partner_new", title: ("Parceiro pediu ajuda da equipe: " + p.name).slice(0, 300), body: ("Pelo " + (channel === "whatsapp" ? "WhatsApp" : "chat do portal") + ": \"" + text.slice(0, 300) + "\"").slice(0, 2000), link: "#/agentes?partner=" + p.id });
+  return { reply, handoff };
+}
+async function waText(to: string, body: string) {
+  const r = await fetch(`https://graph.facebook.com/${WA_VER}/${WA_PHONE}/messages`, { method: "POST", headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", to: to.replace(/^\+/, ""), type: "text", text: { body: body.slice(0, 4000) } }) });
+  if (!r.ok) { const j = await r.json().catch(() => null); throw new Error(j?.error?.message || `whatsapp_${r.status}`); }
+}
+async function hmacOk(raw: string, sig: string | null) {
+  if (!WA_SECRET || !sig?.startsWith("sha256=")) return false;
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(WA_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = Array.from(new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(raw)))).map((x) => x.toString(16).padStart(2, "0")).join("");
+  const a = mac, b = sig.slice(7); if (a.length !== b.length) return false;
+  let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0;
+}
+// incoming WhatsApp messages (Meta webhook): the agent answers partners; unknown numbers go to the admin bell
+async function waWebhook(payload: Row) {
+  const S0: Row = (await db.from("crm_settings").select("whatsapp_enabled, agent_enabled, agent_chat_enabled").eq("id", 1).single()).data ?? {};
+  for (const e of payload.entry ?? []) for (const c of e.changes ?? []) for (const m of c.value?.messages ?? []) {
+    const from = "+" + String(m.from || "").replace(/\D/g, ""), text = m.type === "text" ? String(m.text?.body || "").slice(0, 4000) : "";
+    if (!/^\+\d{7,15}$/.test(from)) continue;
+    const digits = from.slice(1);
+    const { data: ps } = await db.from("partners").select("*").neq("status", "suspended").limit(500);
+    const p = (ps ?? []).find((x) => String(x.phone || "").replace(/\D/g, "") === digits);
+    if (!p) { await db.from("admin_events").insert({ kind: "partner_new", title: "WhatsApp de número não cadastrado: " + from, body: (text || "[" + m.type + "]").slice(0, 1000), link: "#/agentes" }); continue; }
+    await db.from("partners").update({ whatsapp_last_inbound_at: new Date().toISOString() }).eq("id", p.id);
+    if (!text) { await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel: "whatsapp", role: "user", content: "[" + m.type + "]" }); continue; }
+    if (!S0.whatsapp_enabled || S0.agent_enabled === false || S0.agent_chat_enabled === false || !waOn()) { await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel: "whatsapp", role: "user", content: text }); continue; }
+    const r = await agentReply(p, "whatsapp", text);
+    try { await waText(from, r.reply); } catch (err) { console.error("wa reply", err); }
+  }
 }
 
 /* ---------- AI assistant for one lead ---------- */
@@ -268,16 +391,54 @@ async function aiSuggest(leadId: string) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const url = new URL(req.url);
+  // Meta webhook verification (WhatsApp)
+  if (req.method === "GET" && url.searchParams.get("hub.mode") === "subscribe") {
+    return WA_VERIFY && url.searchParams.get("hub.verify_token") === WA_VERIFY ? new Response(url.searchParams.get("hub.challenge") ?? "", { status: 200 }) : new Response("forbidden", { status: 403 });
+  }
   if (req.method !== "POST") return json({ error: "method" }, 405);
   try {
-    const body = await req.json().catch(() => ({}));
+    const raw = await req.text();
+    let body: Row = {}; try { body = JSON.parse(raw || "{}"); } catch { body = {}; }
+    // Meta webhook: incoming WhatsApp messages (signed with the app secret)
+    if (body.object === "whatsapp_business_account") {
+      if (!(await hmacOk(raw, req.headers.get("x-hub-signature-256")))) return new Response("forbidden", { status: 403 });
+      try { await waWebhook(body); } catch (e) { console.error("wa webhook", e); }
+      return new Response("ok", { status: 200 });
+    }
+    // partner: chat with the Admin agent in the portal
+    if (body.action === "agent_chat") {
+      const user = createClient(SB_URL, SB_ANON || SB_SERVICE, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } }, auth: { persistSession: false } });
+      const { data: pid } = await user.rpc("my_partner_id");
+      if (!pid) return json({ error: "forbidden" }, 403);
+      const S0: Row = (await db.from("crm_settings").select("agent_enabled, agent_chat_enabled").eq("id", 1).single()).data ?? {};
+      if (S0.agent_enabled === false || S0.agent_chat_enabled === false) return json({ error: "chat_off" }, 503);
+      const text = String(body.message || "").trim().slice(0, 2000);
+      if (text.length < 1) return json({ error: "empty" }, 400);
+      const { count } = await db.from("agent_messages").select("id", { count: "exact", head: true }).eq("partner_id", String(pid)).eq("role", "user").gte("created_at", new Date(Date.now() - 864e5).toISOString());
+      if ((count ?? 0) >= 40) return json({ error: "rate_limited" }, 429);
+      const { data: p } = await db.from("partners").select("*").eq("id", String(pid)).single();
+      if (!p) return json({ error: "forbidden" }, 403);
+      return json({ ok: true, ...(await agentReply(p, "portal", text)) });
+    }
     if (body.action) {
       const user = createClient(SB_URL, SB_ANON || SB_SERVICE, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } }, auth: { persistSession: false } });
       const { data: isAdmin } = await user.rpc("is_admin");
       if (!isAdmin) return json({ error: "forbidden" }, 403);
       const email = (await user.auth.getUser()).data.user?.email ?? "admin";
-      if (body.action === "status") return json({ email: mailOn(), via: sesOn() ? "ses" : mailOn() ? "gmail" : null, whatsapp: waOn(), ai: !!ANTHROPIC });
+      if (body.action === "status") return json({ email: mailOn(), via: sesOn() ? "ses" : mailOn() ? "gmail" : null, whatsapp: waOn(), whatsapp_webhook: !!(WA_VERIFY && WA_SECRET), ai: !!ANTHROPIC });
       if (body.action === "run_now") return json(await tick());
+      if (body.action === "agent_human_reply") {
+        // the team answers a partner from the Agents page (portal chat; WhatsApp too when the 24-hour window is open)
+        const { data: p } = await db.from("partners").select("*").eq("id", String(body.partner_id || "")).single();
+        if (!p) return json({ error: "not_found" }, 404);
+        const text = String(body.message || "").trim().slice(0, 3000);
+        if (text.length < 2) return json({ error: "empty" }, 400);
+        await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel: "portal", role: "assistant", content: text, meta: { human: email } });
+        let wa = "off";
+        if (waOn() && p.phone && p.whatsapp_last_inbound_at && days(p.whatsapp_last_inbound_at) < 1) { try { await waText(p.phone, text); wa = "sent"; } catch (e) { wa = "failed"; console.error(e); } }
+        return json({ ok: true, whatsapp: wa });
+      }
       if (body.action === "ai_suggest") { const r = await aiSuggest(String(body.lead_id || "")); return json(r, (r as Row).error ? ((r as Row).error === "no_ai_key" ? 503 : 400) : 200); }
       if (body.action === "send_email") {
         const { data: l } = await db.from("leads").select("*").eq("id", String(body.lead_id || "")).single();
@@ -285,7 +446,7 @@ Deno.serve(async (req) => {
         const subject = String(body.subject || "").trim().slice(0, 150), text = String(body.body || "").trim().slice(0, 6000);
         if (subject.length < 3 || text.length < 10) return json({ error: "empty" }, 400);
         if (!mailOn()) return json({ error: "no_sender" }, 503);
-        await loadFrom(); S = (await db.from("crm_settings").select("*").eq("id", 1).single()).data ?? {};
+        await loadFrom(); S = (await db.from("crm_settings").select("*").eq("id", 1).single()).data ?? {} as Row;
         const lg = lang(l.language), paras = text.split(/\n\s*\n/).map((p) => esc(p.trim()).replace(/\n/g, "<br>")).filter(Boolean);
         const r = await deliver({ dedupe: `manual:${crypto.randomUUID()}`, kind: "manual", lead_id: l.id, to: l.email, l: lg, subject, by: email,
           mail: { kicker: "ENDEAVOR BUSINESS SOLUTIONS", h1: subject, pre: text.slice(0, 140), paras, sign: false } });

@@ -49,8 +49,12 @@
   };
   var t = EP.init(DICT);
   // ?topic=partner (Partner Program pages) preselects the topic
-  (function () { var m = /[?&]topic=([a-z_]+)/.exec(location.search), map = { partner: 'Partner Program', formation: 'Business Formation', brazil: 'Brazil to USA', paraguay: 'Paraguay Operations' };
-    if (m && map[m[1]]) { var sel = document.getElementById('b-topic'); if (sel) sel.value = map[m[1]]; } })();
+  (function () { var m = /[?&]topic=([a-z_]+)/.exec(location.search), map = { partner: 'Partner Program', welcome: 'Partner Program', formation: 'Business Formation', brazil: 'Brazil to USA', paraguay: 'Paraguay Operations' };
+    if (m && map[m[1]]) { var sel = document.getElementById('b-topic'); if (sel) sel.value = map[m[1]]; }
+    // ?name=&email= prefill (welcome call from the Partner Portal)
+    var q = function (k) { var r = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search); try { return r ? decodeURIComponent(r[1].replace(/\+/g, ' ')) : ''; } catch (e) { return ''; } };
+    var nm = q('name'), em = q('email'), bn = document.getElementById('b-name'), be = document.getElementById('b-email');
+    if (bn && nm && !bn.value) bn.value = nm.slice(0, 120); if (be && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em) && !be.value) be.value = em.slice(0, 200); })();
   var userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   var info = { timezone: 'America/New_York', slot_minutes: 30, max_days_ahead: 30, meeting_note: '' };
   var byDay = {}, selectedDay = null, selectedSlot = null, view = new Date(); view.setDate(1);

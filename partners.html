@@ -48,34 +48,67 @@
   <section aria-labelledby="how-title" class="pp-sec" id="como">
     <h2 class="portal-h2" id="how-title" data-t="howTitle">How it works</h2>
     <ol class="pp-steps">
-      <li><strong data-t="s1t">Schedule a call</strong><span data-t="s1">Pick a time on our calendar for a 30-minute conversation with our team.</span></li>
-      <li><strong data-t="s2t">Onboarding call</strong><span data-t="s2">We get to know your work, agree on your commission and send the partner agreement for your electronic signature.</span></li>
-      <li><strong data-t="s3t">Portal and Stripe</strong><span data-t="s3">You receive your Partner Portal access and connect your Stripe account to receive your commissions.</span></li>
+      <li><strong data-t="s1t">Sign up</strong><span data-t="s1">Fill in the short form below. Your Partner Portal access is created right away.</span></li>
+      <li><strong data-t="s2t">Onboarding in the portal</strong><span data-t="s2">Watch the video, sign the partner agreement online and set up how you get paid. Our assistant helps you at every step.</span></li>
+      <li><strong data-t="s3t">Account activated</strong><span data-t="s3">When every step is done, your account is activated automatically and you book a welcome call with our team.</span></li>
       <li><strong data-t="s4t">Refer and get paid</strong><span data-t="s4">Refer clients in the portal and receive your share with every payment.</span></li>
     </ol>
   </section>
 
   <section class="pp-sec" id="cadastro" aria-labelledby="form-title" tabindex="-1">
-    <div class="portal-card pp-book">
-      <div>
-        <h2 class="portal-h1" id="form-title" data-t="formTitle">Schedule a call</h2>
-        <p class="portal-muted" data-t="formLead">Pick a 30-minute time with our team. On the call we get to know your work and your clients, agree on your commission and, if it is a fit, create your Partner Portal access and send the partner agreement for your electronic signature.</p>
-        <ul class="pp-book__list">
-          <li data-t="bk1">Choose the day and time on our calendar</li>
-          <li data-t="bk2">Video call, phone or WhatsApp, in English, Portuguese or Spanish</li>
-          <li data-t="bk3">You receive the confirmation and reminders by email</li>
-        </ul>
-      </div>
-      <div class="pp-book__cta">
-        <a class="btn btn--gold btn--lg" id="pp-book" href="schedule.html?topic=partner" data-t="bookBtn">Schedule a call</a>
-        <p class="portal-muted" style="font-size:.88rem;margin:.6rem 0 0"><span data-t="already">Already a partner?</span> <a href="partner.html" data-keep-lang data-t="login">Partner login</a></p>
-      </div>
-    </div>
+    <h2 class="portal-h1" id="form-title" data-t="formTitle">Become a partner</h2>
+    <p class="portal-muted" data-t="formLead">It takes about 2 minutes. Your Partner Portal access is created right away.</p>
+    <form class="portal-form" id="pf" novalidate>
+      <section class="portal-card" aria-labelledby="d-title">
+        <h3 class="portal-h2" id="d-title" data-t="yourDetails">Your details</h3>
+        <div class="portal-grid2">
+          <div class="field"><label for="p-name"><span data-t="name">Full name</span> <span class="req" aria-hidden="true">*</span></label><input id="p-name" autocomplete="name" required maxlength="120"><p class="field__error" id="p-name-err"></p></div>
+          <div class="field"><label for="p-email"><span data-t="email">Email</span> <span class="req" aria-hidden="true">*</span></label><input id="p-email" type="email" autocomplete="email" required maxlength="200"><p class="field__error" id="p-email-err"></p></div>
+          <div class="field field--wide"><label for="p-phone"><span>WhatsApp</span> <span class="req" aria-hidden="true">*</span></label><div id="p-phone-box"></div><p class="field__error" id="p-phone-err"></p></div>
+          <div class="field"><label for="p-company" data-t="company">Company (if any)</label><input id="p-company" autocomplete="organization" maxlength="200"></div>
+          <div class="field"><label for="p-type"><span data-t="profession">Profession</span> <span class="req" aria-hidden="true">*</span></label>
+            <select id="p-type">
+              <option value="" data-t="select">Select</option>
+              <option value="realtor" data-t="t_realtor">Realtor</option>
+              <option value="accountant" data-t="t_accountant">Accountant</option>
+              <option value="attorney" data-t="t_attorney">Attorney</option>
+              <option value="bookkeeping" data-t="t_bookkeeping">Bookkeeping</option>
+              <option value="property_management" data-t="t_pm">Property management</option>
+              <option value="referral" data-t="t_consultant">Consultant / advisor</option>
+              <option value="other" data-t="t_other">Other</option>
+            </select><p class="field__error" id="p-type-err"></p></div>
+          <div class="field"><label for="p-country" data-t="country">Country where you work</label><input id="p-country" autocomplete="country-name" maxlength="100"></div>
+          <div class="field"><label for="p-lang" data-t="plang">Preferred language</label><select id="p-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div>
+        </div>
+        <div class="field"><label for="p-notes" data-t="notes">Tell us about your clients (optional)</label><textarea id="p-notes" rows="3" maxlength="1500"></textarea>
+          <p class="portal-muted" style="font-size:.85rem" data-t="noSensitive">Please do not include SSN, ITIN, passport or bank account numbers. Your payout details are entered later, directly with Stripe.</p></div>
+        <div class="pp-hp" aria-hidden="true"><label for="p-web">Website</label><input id="p-web" tabindex="-1" autocomplete="off"></div>
+      </section>
+      <section class="portal-card pp-submit">
+        <div class="check-row"><input type="checkbox" id="p-ok"><label for="p-ok" data-t="consent">I agree to receive emails and WhatsApp messages about the Partner Program and my onboarding (I can stop them at any time). The standard commission is 10% and is set in the partner agreement I will sign in the portal.</label></div>
+        <p class="field__error" id="p-ok-err"></p>
+        <div class="portal-alert" id="p-msg" role="alert"></div>
+        <button class="btn btn--navy" type="submit" id="p-submit" data-t="submit">Create my partner account</button>
+        <p class="portal-muted" style="font-size:.85rem"><span data-t="privacy">We use your details to run the Partner Program, as described in our</span> <a href="privacy-policy.html" data-keep-lang data-t="pp">Privacy Policy</a>. <span data-t="already">Already a partner?</span> <a href="partner.html" data-keep-lang data-t="login">Partner login</a></p>
+      </section>
+    </form>
+
+    <section class="portal-card" id="done" hidden tabindex="-1" aria-labelledby="done-title">
+      <h2 class="portal-h1" id="done-title" data-t="doneTitle">Welcome to the Partner Program!</h2>
+      <p id="done-text"></p>
+      <ol class="pp-next">
+        <li data-t="n1">Open the email we just sent and create your password (it also turns on two-step verification).</li>
+        <li data-t="n2">The portal opens on "Start here": watch the short video, sign the partner agreement and set up how you get paid.</li>
+        <li data-t="n3">When every step is done, your account is activated automatically and you can book your welcome call and start referring clients.</li>
+      </ol>
+      <div class="portal-btn-row"><a class="btn btn--navy" href="partner.html" data-keep-lang data-t="openPortal">Open the Partner Portal</a></div>
+    </section>
   </section>
 </main>
 
 <script src="app-config.js"></script>
 <script src="portal-common.js"></script>
+<script src="phone-intl.js"></script>
 <script src="partners.js"></script>
 </body>
 </html>

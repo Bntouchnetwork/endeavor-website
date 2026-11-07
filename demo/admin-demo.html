@@ -1899,6 +1899,39 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 @media (max-width: 1023.98px) { .ob-grid { grid-template-areas: "main" "steps" "tour"; } }
 @media (min-width: 1024px) { .ob-grid { grid-template-rows: auto 1fr; } .ob-tourc { align-self: start; } }
 
+/* onboarding timeline + assistant chat */
+.ob-tourc { display: grid; gap: 1.25rem; align-content: start; }
+.ob-tourc > .portal-card { margin: 0; }
+.ob-timeline .is-locked { opacity: .6; }
+.ob-timeline .is-locked .pw-dot { background: #eef0f4; color: var(--muted); }
+.ob-chat { display: flex; flex-direction: column; }
+.ch-log { display: flex; flex-direction: column; gap: .5rem; max-height: 22rem; min-height: 8rem; overflow-y: auto; padding: .6rem; background: #f7f8fb; border: 1px solid var(--line); border-radius: 10px; }
+.ch-msg { max-width: 85%; padding: .55rem .75rem; border-radius: 12px; font-size: .92rem; line-height: 1.5; overflow-wrap: anywhere; }
+.ch-msg small { display: block; font-weight: 600; font-size: .75rem; color: var(--gold-ink, #7a5b17); margin-bottom: .15rem; }
+.ch-msg--bot { align-self: flex-start; background: #fff; border: 1px solid var(--line); color: var(--text, #1f2937); border-bottom-left-radius: 4px; }
+.ch-msg--me { align-self: flex-end; background: var(--navy-900); color: #fff; border-bottom-right-radius: 4px; }
+.ch-msg--wait { color: var(--muted); }
+.ch-form { display: flex; gap: .5rem; align-items: flex-end; margin-top: .6rem; }
+.ch-form textarea { flex: 1; min-height: 2.75rem; resize: vertical; border: 1px solid var(--line); border-radius: 10px; padding: .55rem .7rem; font: inherit; font-size: .95rem; }
+.ch-form textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+/* admin: AI agents */
+.ag-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+@media (max-width: 1199.98px) { .ag-grid { grid-template-columns: 1fr 1fr; } .ag-card--on { grid-column: 1 / -1; } }
+@media (max-width: 699.98px) { .ag-grid { grid-template-columns: 1fr; } }
+.ag-grid > .portal-card { margin: 0; }
+.ag-card__head { display: flex; gap: .75rem; align-items: center; margin-bottom: .6rem; }
+.ag-ico { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 12px; background: #eef1f6; color: var(--navy-900); flex: none; }
+.ag-ico .icon { width: 1.4rem; height: 1.4rem; }
+.ag-card--on .ag-ico { background: var(--navy-900); color: var(--gold); }
+.ag-card:not(.ag-card--on) { opacity: .85; }
+.ag-does { margin: .6rem 0 .8rem; padding-left: 1.1rem; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.pill--on { background: #e6f4ec; color: #1f6b43; }
+.ag-conv { cursor: pointer; }
+.ag-conv:hover { background: #f7f8fb; }
+.ag-log { max-height: 55vh; }
+.ag-sys { align-self: center; font-size: .78rem; color: var(--muted); background: #eef1f6; border-radius: 999px; padding: .2rem .7rem; text-align: center; }
+
 </style>
 </head>
 <body class="portal">
@@ -1915,6 +1948,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
   <symbol id="i-brief" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 7V5.5A1.5 1.5 0 0110 4h4a1.5 1.5 0 011.5 1.5V7M3 12.5h18" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4.5" y="8" width="15" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 4.5V8M9.5 13h.01M14.5 13h.01M9.5 16.2h5M2.5 12.5v2.5M21.5 12.5v2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="4" r="1" fill="currentColor"/></symbol>
   <symbol id="i-code" viewBox="0 0 24 24"><path d="M8.5 7 3.5 12l5 5M15.5 7l5 5-5 5M13.5 5l-3 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5.5" rx="7.5" ry="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 5.5v13c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5v-13M4.5 12c0 1.4 3.4 2.5 7.5 2.5s7.5-1.1 7.5-2.5" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
   <symbol id="i-handshake" viewBox="0 0 24 24"><path d="M3 12l3-3 4 1 3-2 3 1 5 3M7 15l2 2a1.5 1.5 0 002 0l1-1M10 17.5l1 1a1.5 1.5 0 002 0l2-2M14 16l1 1a1.5 1.5 0 002-2l-4-4M3 12l4 4M21 12l-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
@@ -2093,10 +2127,19 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
   // smart CRM: automations, partner onboarding (video, payout method), a partner prospect from the booking page
-  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30) }];
+  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30), agent_enabled: true, agent_chat_enabled: true, agent_stuck_days: 2, agent_escalate_days: 6 }];
   Object.assign(DB.partners[0], { payout_method: 'stripe', payout_country: 'US', onboarding_done_at: iso(-50), video_seen_at: iso(-55) });
   Object.assign(DB.partners[1], { payout_method: 'global_payouts', payout_country: 'BR', global_payouts_status: 'requested', pix_key: 'marcos@example.com', pix_key_type: 'email' });
-  Object.assign(DB.partners[3], { payout_method: null, global_payouts_status: 'none' });
+  Object.assign(DB.partners[3], { payout_method: null, global_payouts_status: 'none', default_share_pct: 10, accepted_at: iso(-4), onboarding_step_at: iso(-3), agent_nudges: 1, agent_last_nudge_at: iso(-1) });
+  DB.agent_messages = [
+    { id: 1, created_at: iso(-1, 9), agent: 'admin', partner_id: DB.partners[3].id, channel: 'email', role: 'assistant', content: 'Falta pouco para ativar a sua conta\n\nOlá, Juliana! Vi que você já entrou no portal. O próximo passo é assinar o contrato de parceria: em "Comece aqui", clique em "Ler e assinar o contrato". Leva 1 minuto.\n\nEquipe Endeavor Business Solutions', meta: { step: 'contract', nudge: 1, ai: true } },
+    { id: 2, created_at: iso(0, 8), agent: 'admin', partner_id: DB.partners[3].id, channel: 'portal', role: 'user', content: 'Como recebo se minha conta é no Brasil?', meta: {} },
+    { id: 3, created_at: iso(0, 8, 1), agent: 'admin', partner_id: DB.partners[3].id, channel: 'portal', role: 'assistant', content: 'Para conta no Brasil, a Endeavor envia a sua comissão pelo Stripe Global Payouts depois que o cliente paga. No passo "Configure como você recebe", escolha Brasil e salve. Você recebe um link do Stripe por e-mail para cadastrar o banco.', meta: {} }];
+  var DEMO_ACT = function (row) {
+    var vid = DB.crm_settings[0].partner_video_url, ok = row.status === 'active' && (!vid || row.video_seen_at) && (row.contract_status === 'partner_signed' || row.contract_status === 'signed') && (row.payout_method === 'global_payouts' || (row.payout_method === 'stripe' && (row.stripe_details_submitted || row.stripe_transfers_active)));
+    if (ok && !row.onboarding_done_at) { Object.assign(row, { onboarding_done_at: new Date().toISOString(), program_status: 'approved', approved_at: new Date().toISOString(), approved_by: 'onboarding-automatico' }); toast('Demo: onboarding concluído. Conta ativada automaticamente.'); }
+    return row;
+  };
   DB.leads.push(Object.assign(L('b9000000-0000-4000-8000-000000000009', 'Fernanda Albuquerque', 'fernanda.alb@example.com', '+55 11 97777-4321', 'Brazil', 'Albuquerque Imóveis', 'Partner Program', 'Sou corretora em São Paulo e tenho clientes querendo investir em Orlando.', 'booking', 'new', 3, 'pt'), { kind: 'partner' }));
   DB.bookings.push({ id: uuid(), lead_id: 'b9000000-0000-4000-8000-000000000009', starts_at: iso(-1, 15), ends_at: iso(-1, 15, 30), name: 'Fernanda Albuquerque', email: 'fernanda.alb@example.com', phone: '+5511977774321', topic: 'Partner Program', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-3) });
   DB.crm_messages = [
@@ -2272,6 +2315,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       case 'financial_reports': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'report'); });
       case 'partners': return rows.filter(function (r) { return PME && r.id === PME.id; });
       case 'crm_settings': return rows;
+      case 'agent_messages': return rows.filter(function (r) { return PME && r.partner_id === PME.id && (r.channel === 'portal' || r.channel === 'whatsapp'); });
       case 'referrals': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
       case 'referral_items': case 'referral_events': return rows.filter(function (r) { var ref = DB.referrals.find(function (x) { return x.id === r.referral_id; }); return PME && ref && ref.partner_id === PME.id && (table === 'referral_items' || r.visible_to_partner); });
       case 'invoices': return rows.filter(function (r) { return r.status !== 'draft' && r.status !== 'void' && role(r.client_id) === 'owner'; });
@@ -2462,17 +2506,18 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
-    else if (name === 'partner_set_payout' || name === 'partner_onboarding_mark') {
+    else if (name === 'partner_set_payout' || name === 'partner_onboarding_mark' || name === 'partner_onboarding_check') {
       if (!PME) return Promise.resolve({ data: null, error: { message: 'forbidden' } });
       var row0 = DB.partners.find(function (x) { return x.id === PME.id; }) || PME;
-      if (name === 'partner_onboarding_mark') { if (args.p_step === 'video') row0.video_seen_at = row0.video_seen_at || new Date().toISOString(); else row0.onboarding_done_at = row0.onboarding_done_at || new Date().toISOString(); }
+      if (name === 'partner_onboarding_check') { /* only activation */ }
+      else if (name === 'partner_onboarding_mark') { if (args.p_step === 'video') row0.video_seen_at = row0.video_seen_at || new Date().toISOString(); }
       else {
         var pk = (args.p_pix || '').trim();
         if (pk && !(args.p_pix_type === 'email' ? /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(pk) : args.p_pix_type === 'phone' ? /^\+?[0-9 ()-]{10,20}$/.test(pk) : /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(pk))) return Promise.resolve({ data: null, error: { message: 'invalid_pix' } });
         Object.assign(row0, { payout_method: args.p_method, payout_country: args.p_country, pix_key: pk || null, pix_key_type: pk ? args.p_pix_type : null, global_payouts_status: args.p_method === 'global_payouts' ? (row0.global_payouts_status && row0.global_payouts_status !== 'none' ? row0.global_payouts_status : 'requested') : 'none' });
         toast(args.p_method === 'global_payouts' ? 'Demo: a Endeavor recebe o aviso para enviar o link do Stripe Global Payouts.' : 'Demo: agora o parceiro conecta a conta Stripe.');
       }
-      Object.assign(PME, row0); r = [JSON.parse(JSON.stringify(row0))];
+      DEMO_ACT(row0); Object.assign(PME, row0); r = [JSON.parse(JSON.stringify(row0))];
     }
     else if (name === 'partner_commissions') r = !PME ? [] : DB.invoices.filter(function (i) { return i.partner_id === PME.id && i.status !== 'draft'; }).sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; }).map(function (i) {
       var ref = DB.referrals.find(function (x) { return x.id === i.referral_id; }), c = DB.clients.find(function (x) { return x.id === i.client_id; });
@@ -2985,6 +3030,11 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
         if (ib.send_contract !== false) { Object.assign(ip, { contract_status: 'sent', contract_pct: pct, contract_version: (ip.contract_version || 0) + 1, contract_sent_at: new Date().toISOString(), contract_partner_token: 'demo-token' }); toast('Demo: o contrato preenchido seria enviado para assinatura eletrônica de ' + ip.email + '.'); }
         return later2({ ok: true, version: ib.send_contract === false ? undefined : ip.contract_version, mailed: true });
       }
+      if (ib.action === 'contract_self') {
+        var me2 = DB.partners.find(function (x) { return x.id === PME.id; });
+        Object.assign(me2, { contract_status: 'partner_signed', contract_pct: me2.default_share_pct || 10, contract_sent_at: new Date().toISOString() }); DEMO_ACT(me2); Object.assign(PME, me2);
+        toast('Demo: no site real abre a assinatura eletrônica do contrato. Aqui marcamos como assinado.'); return later2({ ok: true, signed: true });
+      }
       if (ib.action === 'contract_resend') { toast('Demo: link de assinatura reenviado.'); return later2({ ok: true, to: ip.contract_status === 'sent' ? ip.email : 'support@endeavorbiz.com' }); }
       if (ib.action === 'contract_url') { toast('Demo: abriria o PDF do contrato assinado.'); return later2({ url: '#' }); }
       if (ib.action === 'delete') { DB.partners = DB.partners.filter(function (x) { return x !== ip; }); return later2({ ok: true }); }
@@ -2993,8 +3043,17 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
     if (/\/functions\/v1\/crm/.test(u)) {
       var cb = {}; try { cb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
       var slow2 = function (b, ms) { return new Promise(function (res) { setTimeout(function () { res(json(b)); }, ms || 500); }); };
-      if (cb.action === 'status') return slow2({ email: true, via: 'ses', whatsapp: false, ai: true }, 200);
-      if (cb.action === 'run_now') { toast('Demo: no site real as automações rodam a cada 10 minutos.'); return slow2({ referral: 1, paid: 0, commission: 0, followup: 1, partner: 1 }, 900); }
+      if (cb.action === 'status') return slow2({ email: true, via: 'ses', whatsapp: false, whatsapp_webhook: false, ai: true }, 200);
+      if (cb.action === 'agent_chat') {
+        var q2 = String(cb.message || '').toLowerCase(), pt2 = (PME && PME.language) !== 'en';
+        DB.agent_messages.push({ id: Date.now(), created_at: new Date().toISOString(), agent: 'admin', partner_id: PME.id, channel: 'portal', role: 'user', content: cb.message, meta: {} });
+        var rep = /pessoa|humano|atendente|comiss/.test(q2) ? 'Entendi. Vou chamar a nossa equipe, que vai falar com você em breve.' : /stripe|receb|banco|pix/.test(q2) ? 'Se a sua conta bancária é nos EUA, você conecta o Stripe e recebe automaticamente. Se é no Brasil, escolha Brasil no passo "Configure como você recebe": a Endeavor envia a comissão pelo Stripe Global Payouts.' : 'Claro! O próximo passo está destacado em "Passos para ativar a sua conta". Se travar em algo, me conte qual botão aparece na sua tela.';
+        var ho = /pessoa|humano|atendente|comiss/.test(q2);
+        DB.agent_messages.push({ id: Date.now() + 1, created_at: new Date().toISOString(), agent: 'admin', partner_id: PME.id, channel: 'portal', role: 'assistant', content: rep, meta: ho ? { handoff: true } : {} });
+        return slow2({ ok: true, reply: rep, handoff: ho }, 900);
+      }
+      if (cb.action === 'agent_human_reply') { DB.agent_messages.push({ id: Date.now(), created_at: new Date().toISOString(), agent: 'admin', partner_id: cb.partner_id, channel: 'portal', role: 'assistant', content: cb.message, meta: { human: 'support@endeavorbiz.com' } }); toast('Demo: a resposta aparece no chat do portal do parceiro.'); return slow2({ ok: true, whatsapp: 'off' }); }
+      if (cb.action === 'run_now') { toast('Demo: no site real as automações rodam a cada 10 minutos.'); return slow2({ referral: 1, paid: 0, commission: 0, followup: 1, partner: 1, agent: 1, escalated: 0, activated: 0 }, 900); }
       if (cb.action === 'send_email') { var ld = DB.leads.find(function (x) { return x.id === cb.lead_id; }); if (ld && ld.status === 'new') ld.status = 'contacted';
         DB.crm_messages.unshift({ id: Date.now(), created_at: new Date().toISOString(), kind: 'manual', channel: 'email', lead_id: cb.lead_id, to_addr: ld && ld.email, subject: cb.subject, status: 'sent' });
         toast('Demo: o e-mail sairia de support@endeavorbiz.com com o layout da Endeavor.'); return slow2({ ok: true }); }
@@ -3723,6 +3782,56 @@ window.ADMIN_EN = {
   "Definir a comissão e enviar o contrato.": "Set the commission and send the agreement.",
   "O parceiro já assinou.": "The partner already signed.",
   "Parceiro com conta bancária fora dos EUA.": "Partner with a bank account outside the U.S.",
+  "Agentes IA": "AI agents",
+  "Assistentes de IA que trabalham junto com a equipe. Tudo o que eles enviam fica registrado aqui.": "AI assistants that work alongside the team. Everything they send is logged here.",
+  "Agente Admin": "Admin agent",
+  "Agente Billing": "Billing agent",
+  "Agente Marketing": "Marketing agent",
+  "Onboarding dos parceiros e operação da plataforma": "Partner onboarding and platform operations",
+  "Faturas, cobranças e comissões": "Invoices, collections and commissions",
+  "Campanhas e prospecção": "Campaigns and prospecting",
+  "Em breve": "Coming soon",
+  "Acompanha cada parceiro na linha do tempo do onboarding.": "Follows each partner along the onboarding timeline.",
+  "Quando ele trava, escreve um e-mail personalizado (e WhatsApp) sobre o passo que falta.": "When they get stuck, writes a personal email (and WhatsApp) about the missing step.",
+  "Sem avanço, avisa você no sino para um contato pessoal.": "With no progress, alerts you in the bell for a personal contact.",
+  "Responde dúvidas no chat do portal e, com a Meta liberada, no WhatsApp.": "Answers questions in the portal chat and, once Meta approves, on WhatsApp.",
+  "Lembra o cliente de faturas em aberto.": "Reminds clients about open invoices.",
+  "Confirma pagamentos e repasses aos parceiros.": "Confirms payments and partner payouts.",
+  "Avisa a equipe sobre falhas de pagamento.": "Alerts the team about failed payments.",
+  "Sugere campanhas e textos para cada público.": "Suggests campaigns and copy for each audience.",
+  "Acompanha aberturas e respostas.": "Tracks opens and replies.",
+  "Prioriza os contatos mais quentes no CRM.": "Prioritizes the hottest contacts in the CRM.",
+  "Agente ligado": "Agent on",
+  "Chat no Portal do Parceiro": "Chat in the Partner Portal",
+  "Lembrar após (dias sem avanço)": "Remind after (days without progress)",
+  "Avisar a equipe após (dias)": "Alert the team after (days)",
+  "Onboarding em andamento": "Onboarding in progress",
+  "Passo atual": "Current step",
+  "Dias parado": "Days idle",
+  "Lembretes do agente": "Agent reminders",
+  "Precisa de contato": "Needs contact",
+  "Travado": "Stuck",
+  "Em dia": "On track",
+  "Conversas recentes": "Recent conversations",
+  "Nenhuma conversa ainda.": "No conversations yet.",
+  "Nenhum parceiro em onboarding agora.": "No partners in onboarding right now.",
+  "Assistir ao vídeo": "Watch the video",
+  "Assinar o contrato": "Sign the agreement",
+  "Escolher como recebe": "Choose how to get paid",
+  "Terminar o cadastro no Stripe": "Finish Stripe setup",
+  "Criar a senha": "Create the password",
+  "Conversa": "Conversation",
+  "Abrir parceiro": "Open partner",
+  "Pediu a equipe": "Asked for the team",
+  "Chat do portal": "Portal chat",
+  "E-mail do agente": "Agent email",
+  "Sistema": "System",
+  "IA ativa": "AI on",
+  "E-mail": "Email",
+  "WhatsApp ligado": "WhatsApp on",
+  "Respostas do WhatsApp": "WhatsApp replies",
+  "Webhook do WhatsApp pendente": "WhatsApp webhook pending",
+  "Agente: lembrete de onboarding": "Agent: onboarding reminder",
   'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
 };
 // Dynamic messages (regular expressions applied to whole texts)
@@ -7751,7 +7860,7 @@ window.ADMIN_EN_RX = [
   var err = function (ctx, e) { return ERR[e.message] || ctx.errText(e); };
   var ago = function (d) { var n = Math.floor((Date.now() - new Date(d)) / DAY); return n <= 0 ? 'hoje' : n === 1 ? 'há 1 dia' : 'há ' + n + ' dias'; };
   var KIND_MSG = { referral_contacted: 'Parceiro: indicação em contato', referral_proposal: 'Parceiro: proposta enviada', referral_onboarding: 'Parceiro: virou cliente', referral_in_process: 'Parceiro: em processamento', referral_completed: 'Parceiro: concluída', referral_lost: 'Parceiro: encerrada',
-    invoice_paid: 'Parceiro: pagamento confirmado', commission_paid: 'Parceiro: comissão enviada', followup_1: 'Follow-up 1 (lead)', followup_2: 'Follow-up 2 (lead)', partner_invite_reminder: 'Lembrete: criar senha (parceiro)', partner_onboarding_reminder: 'Lembrete: terminar onboarding (parceiro)', manual: 'E-mail enviado pelo CRM' };
+    invoice_paid: 'Parceiro: pagamento confirmado', commission_paid: 'Parceiro: comissão enviada', followup_1: 'Follow-up 1 (lead)', agent_nudge: 'Agente: lembrete de onboarding', followup_2: 'Follow-up 2 (lead)', partner_invite_reminder: 'Lembrete: criar senha (parceiro)', partner_onboarding_reminder: 'Lembrete: terminar onboarding (parceiro)', manual: 'E-mail enviado pelo CRM' };
 
   /* ---------- next actions ---------- */
   async function nextActions(ctx, el, leads, onLead) {
@@ -7900,7 +8009,83 @@ window.ADMIN_EN_RX = [
     };
   }
 
-  window.AdminCRM = { nextActions: nextActions, automations: automations, leadPanel: leadPanel, call: call };
+  /* ---------- Agents page: Admin (onboarding + platform), Billing and Marketing (coming) ---------- */
+  var STEP_PT = { video: 'Assistir ao vídeo', contract: 'Assinar o contrato', payout: 'Escolher como recebe', stripe: 'Terminar o cadastro no Stripe', password: 'Criar a senha' };
+  function stepOf(p, video) {
+    if (p.status === 'invited') return 'password';
+    if (video && !p.video_seen_at) return 'video';
+    if (['partner_signed', 'signed'].indexOf(p.contract_status) < 0) return 'contract';
+    if (!p.payout_method) return 'payout';
+    if (p.payout_method === 'stripe' && !(p.stripe_details_submitted || p.stripe_transfers_active)) return 'stripe';
+    return null;
+  }
+  async function agents(view, ctx) {
+    var sb = ctx.sb, esc = ctx.esc;
+    var res = await Promise.all([sb.from('crm_settings').select('*').eq('id', 1).single(), call(ctx, { action: 'status' }).catch(function () { return {}; }),
+      sb.from('partners').select('*').neq('status', 'suspended').is('onboarding_done_at', null).order('invited_at', { ascending: false }),
+      sb.from('agent_messages').select('partner_id, created_at, channel, role, content, meta, partners(name)').order('created_at', { ascending: false }).limit(200)]);
+    var s = res[0].data || {}, st = res[1] || {}, onb = res[2].data || [], msgs = res[3].data || [];
+    var last = {}; msgs.forEach(function (m) { if (m.partner_id && !last[m.partner_id]) last[m.partner_id] = m; });
+    var convs = Object.keys(last).map(function (k) { return last[k]; }).slice(0, 12);
+    var chip = function (on, a, b) { return '<span class="pill' + (on ? ' pill--on' : '') + '">' + (on ? a : b) + '</span>'; };
+    var idle = function (p) { return Math.floor((Date.now() - new Date(p.onboarding_step_at || p.accepted_at || p.invited_at)) / 864e5); };
+    view.innerHTML = '<div class="console__head"><div><h1>Agentes IA</h1><p class="portal-muted">Assistentes de IA que trabalham junto com a equipe. Tudo o que eles enviam fica registrado aqui.</p></div></div>' +
+      '<div class="ag-grid">' +
+      '<section class="portal-card ag-card ag-card--on"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-bot"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Admin</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Onboarding dos parceiros e operação da plataforma</p></div></div>' +
+        '<p class="mk-status">' + chip(st.ai, 'IA ativa', 'IA não configurada') + ' ' + chip(st.email, 'E-mail', 'E-mail não configurado') + ' ' + chip(st.whatsapp && s.whatsapp_enabled, 'WhatsApp ligado', 'WhatsApp: aguardando a Meta') + ' ' + chip(st.whatsapp_webhook, 'Respostas do WhatsApp', 'Webhook do WhatsApp pendente') + '</p>' +
+        '<ul class="ag-does"><li>Acompanha cada parceiro na linha do tempo do onboarding.</li><li>Quando ele trava, escreve um e-mail personalizado (e WhatsApp) sobre o passo que falta.</li><li>Sem avanço, avisa você no sino para um contato pessoal.</li><li>Responde dúvidas no chat do portal e, com a Meta liberada, no WhatsApp.</li></ul>' +
+        '<form class="portal-form" id="ag-f" novalidate><div class="check-row"><input type="checkbox" id="ag-on"' + (s.agent_enabled !== false ? ' checked' : '') + '><label for="ag-on">Agente ligado</label></div>' +
+        '<div class="check-row"><input type="checkbox" id="ag-chat"' + (s.agent_chat_enabled !== false ? ' checked' : '') + '><label for="ag-chat">Chat no Portal do Parceiro</label></div>' +
+        '<div class="portal-grid2"><div class="field"><label for="ag-stuck">Lembrar após (dias sem avanço)</label><input id="ag-stuck" type="number" min="1" max="14" value="' + (s.agent_stuck_days || 2) + '"></div>' +
+        '<div class="field"><label for="ag-esc">Avisar a equipe após (dias)</label><input id="ag-esc" type="number" min="2" max="30" value="' + (s.agent_escalate_days || 6) + '"></div></div>' +
+        '<div class="portal-alert" id="ag-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy btn--xs" type="submit">Salvar</button><button class="btn btn--ghost btn--xs" type="button" id="ag-run">Rodar agora</button><a class="btn btn--ghost btn--xs" href="#/crm?auto=1">Vídeo e automações</a></div></form></section>' +
+      '<section class="portal-card ag-card"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-card"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Billing</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Faturas, cobranças e comissões</p></div></div><span class="pill">Em breve</span>' +
+        '<ul class="ag-does"><li>Lembra o cliente de faturas em aberto.</li><li>Confirma pagamentos e repasses aos parceiros.</li><li>Avisa a equipe sobre falhas de pagamento.</li></ul></section>' +
+      '<section class="portal-card ag-card"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-mail"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Marketing</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Campanhas e prospecção</p></div></div><span class="pill">Em breve</span>' +
+        '<ul class="ag-does"><li>Sugere campanhas e textos para cada público.</li><li>Acompanha aberturas e respostas.</li><li>Prioriza os contatos mais quentes no CRM.</li></ul></section></div>' +
+      '<section class="portal-card" style="margin-top:1.25rem"><h2 class="portal-h2">Onboarding em andamento <span class="crm-next__n">' + onb.length + '</span></h2>' +
+        (onb.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Parceiro</th><th>Passo atual</th><th class="num">Dias parado</th><th class="num">Lembretes do agente</th><th>Situação</th></tr></thead><tbody>' + onb.map(function (p) {
+          var stp = stepOf(p, s.partner_video_url), d = idle(p);
+          return '<tr data-p="' + p.id + '" tabindex="0"><td><strong>' + esc(p.name) + '</strong><span class="sub">' + esc([p.email, p.phone].filter(Boolean).join(' · ')) + '</span></td><td>' + esc(STEP_PT[stp] || 'Ativando…') + '</td><td class="num">' + d + '</td><td class="num">' + (p.agent_nudges || 0) + '</td>' +
+            '<td>' + (p.agent_escalated_at ? '<span class="badge badge--lost">Precisa de contato</span>' : d >= (s.agent_stuck_days || 2) ? '<span class="badge badge--contacted">Travado</span>' : '<span class="badge badge--client">Em dia</span>') + '</td></tr>';
+        }).join('') + '</tbody></table></div>' : '<p class="empty">Nenhum parceiro em onboarding agora.</p>') + '</section>' +
+      '<section class="portal-card"><h2 class="portal-h2">Conversas recentes</h2>' +
+        (convs.length ? '<ul class="list">' + convs.map(function (m) { return '<li class="ag-conv" data-p="' + m.partner_id + '" tabindex="0"><div class="list__main"><strong>' + esc(m.partners ? m.partners.name : '') + '</strong><span>' + esc(({ portal: 'Chat do portal', whatsapp: 'WhatsApp', email: 'E-mail do agente', system: 'Sistema' })[m.channel]) + ' · ' + esc(ctx.fmtDT(m.created_at)) + ' · ' + esc(String(m.content).slice(0, 110)) + '</span></div>' + (m.meta && m.meta.handoff ? '<span class="badge badge--lost">Pediu a equipe</span>' : '') + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhuma conversa ainda.</p>') + '</section>';
+    var m = ctx.$('#ag-m');
+    ctx.$('#ag-f').onsubmit = async function (e) {
+      e.preventDefault();
+      var a = Math.max(1, Math.min(14, +ctx.$('#ag-stuck').value || 2)), b = Math.max(a + 1, Math.min(30, +ctx.$('#ag-esc').value || 6));
+      var r = await sb.from('crm_settings').update({ agent_enabled: ctx.$('#ag-on').checked, agent_chat_enabled: ctx.$('#ag-chat').checked, agent_stuck_days: a, agent_escalate_days: b, updated_at: new Date().toISOString() }).eq('id', 1);
+      ctx.msg(m, r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
+    };
+    ctx.$('#ag-run').onclick = async function () { var b = this; b.disabled = true; ctx.msg(m, 'Rodando…', 'info'); try { var r = await call(ctx, { action: 'run_now' }); ctx.msg(m, 'Pronto: ' + (r.agent || 0) + ' lembrete(s) do agente, ' + (r.escalated || 0) + ' aviso(s) à equipe, ' + (r.activated || 0) + ' conta(s) ativada(s).', 'ok'); } catch (x) { ctx.msg(m, err(ctx, x), 'error'); } b.disabled = false; };
+    view.querySelectorAll('[data-p]').forEach(function (el) { var go = function () { conversation(ctx, el.dataset.p); }; el.onclick = go; el.onkeydown = function (e) { if (e.key === 'Enter') go(); }; });
+    var pq = (ERoute.get().match(/[?&]partner=([0-9a-f-]{36})/) || [])[1]; if (pq) conversation(ctx, pq);
+  }
+  async function conversation(ctx, pid) {
+    var sb = ctx.sb, esc = ctx.esc;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Conversa</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div><div id="cv-b"><p class="portal-muted">Carregando…</p></div>');
+    var res = await Promise.all([sb.from('partners').select('*').eq('id', pid).single(), sb.from('agent_messages').select('*').eq('partner_id', pid).order('created_at', { ascending: true }).limit(200), sb.from('crm_settings').select('partner_video_url').eq('id', 1).single()]);
+    var p = res[0].data, list = res[1].data || [], video = (res[2].data || {}).partner_video_url;
+    if (!p) { ctx.$('#cv-b', o).innerHTML = '<p class="empty">Parceiro não encontrado.</p>'; return; }
+    var stp = stepOf(p, video), CH = { portal: 'Chat', whatsapp: 'WhatsApp', email: 'E-mail', system: 'Sistema' };
+    ctx.$('#cv-b', o).innerHTML = '<p><strong>' + esc(p.name) + '</strong><br><span class="portal-muted">' + esc([p.email, p.phone].filter(Boolean).join(' · ')) + '</span></p>' +
+      '<p class="mk-status"><span class="pill">' + (p.onboarding_done_at ? 'Conta ativa' : 'Passo: ' + esc(STEP_PT[stp] || 'ativando')) + '</span> <span class="pill">' + (p.agent_nudges || 0) + ' lembrete(s)</span>' + (p.agent_escalated_at ? ' <span class="pill">Escalado em ' + esc(ctx.fmtDT(p.agent_escalated_at)) + '</span>' : '') + ' <a href="#/parceiros?id=' + p.id + '">Abrir parceiro</a></p>' +
+      '<div class="ch-log ag-log">' + (list.length ? list.map(function (x) {
+        if (x.role === 'system') return '<div class="ag-sys">' + esc(x.content) + ' · ' + esc(ctx.fmtDT(x.created_at)) + '</div>';
+        return '<div class="ch-msg ch-msg--' + (x.role === 'user' ? 'bot' : 'me') + '"><small>' + esc(x.role === 'user' ? p.name.split(' ')[0] : x.meta && x.meta.human ? 'Equipe (' + x.meta.human + ')' : 'Agente') + ' · ' + esc(CH[x.channel]) + ' · ' + esc(ctx.fmtDT(x.created_at)) + '</small>' + esc(x.content).replace(/\n/g, '<br>') + '</div>';
+      }).join('') : '<p class="portal-muted">Nenhuma mensagem ainda.</p>') + '</div>' +
+      '<form class="ch-form" id="cv-f"><label for="cv-in" class="sr-only">Responder</label><textarea id="cv-in" rows="3" maxlength="3000" placeholder="Responder como equipe (aparece no chat do portal; no WhatsApp se ele escreveu nas últimas 24 h)"></textarea><button class="btn btn--navy btn--xs" type="submit">Enviar</button></form><div class="portal-alert" id="cv-m" role="alert"></div>';
+    var lg = ctx.$('.ag-log', o); lg.scrollTop = lg.scrollHeight;
+    ctx.$('#cv-f', o).onsubmit = async function (e) {
+      e.preventDefault(); var t = ctx.$('#cv-in', o).value.trim(); if (t.length < 2) return;
+      var b = this.querySelector('button'); b.disabled = true;
+      try { var r = await call(ctx, { action: 'agent_human_reply', partner_id: pid, message: t }); ctx.msg(ctx.$('#cv-m', o), 'Enviado no chat do portal' + (r.whatsapp === 'sent' ? ' e no WhatsApp.' : '.'), 'ok'); conversation(ctx, pid); }
+      catch (x) { b.disabled = false; ctx.msg(ctx.$('#cv-m', o), err(ctx, x), 'error'); }
+    };
+  }
+
+  window.AdminCRM = { agents: agents, nextActions: nextActions, automations: automations, leadPanel: leadPanel, call: call };
 })();
 
 </script>
@@ -8116,7 +8301,7 @@ window.ADMIN_EN_RX = [
   /* ---------- console shell ---------- */
   var NAV = [
     ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'],
-    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
+    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['agentes', 'Agentes IA', 'i-bot'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
     $('#topbar-user').hidden = false;
@@ -8145,7 +8330,7 @@ window.ADMIN_EN_RX = [
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === navV) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); if (!view) return;
     view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
-    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, marketing: viewMarketing, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig })[v](view).catch(function (e) {
+    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, marketing: viewMarketing, agentes: viewAgents, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
   }
@@ -8663,6 +8848,10 @@ window.ADMIN_EN_RX = [
   function viewMarketing(view) {
     if (!window.AdminMkt) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de marketing não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
     return AdminMkt.view(view, clientsCtx());
+  }
+  function viewAgents(view) {
+    if (!window.AdminCRM) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de agentes não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
+    return AdminCRM.agents(view, clientsCtx());
   }
   function viewPayments(view) {
     if (!window.AdminPayments) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de pagamentos não carregou. Recarregue a página.</div>'; return Promise.resolve(); }

@@ -15,7 +15,7 @@
   var err = function (ctx, e) { return ERR[e.message] || ctx.errText(e); };
   var ago = function (d) { var n = Math.floor((Date.now() - new Date(d)) / DAY); return n <= 0 ? 'hoje' : n === 1 ? 'há 1 dia' : 'há ' + n + ' dias'; };
   var KIND_MSG = { referral_contacted: 'Parceiro: indicação em contato', referral_proposal: 'Parceiro: proposta enviada', referral_onboarding: 'Parceiro: virou cliente', referral_in_process: 'Parceiro: em processamento', referral_completed: 'Parceiro: concluída', referral_lost: 'Parceiro: encerrada',
-    invoice_paid: 'Parceiro: pagamento confirmado', commission_paid: 'Parceiro: comissão enviada', followup_1: 'Follow-up 1 (lead)', followup_2: 'Follow-up 2 (lead)', partner_invite_reminder: 'Lembrete: criar senha (parceiro)', partner_onboarding_reminder: 'Lembrete: terminar onboarding (parceiro)', manual: 'E-mail enviado pelo CRM' };
+    invoice_paid: 'Parceiro: pagamento confirmado', commission_paid: 'Parceiro: comissão enviada', followup_1: 'Follow-up 1 (lead)', agent_nudge: 'Agente: lembrete de onboarding', followup_2: 'Follow-up 2 (lead)', partner_invite_reminder: 'Lembrete: criar senha (parceiro)', partner_onboarding_reminder: 'Lembrete: terminar onboarding (parceiro)', manual: 'E-mail enviado pelo CRM' };
 
   /* ---------- next actions ---------- */
   async function nextActions(ctx, el, leads, onLead) {
@@ -164,5 +164,81 @@
     };
   }
 
-  window.AdminCRM = { nextActions: nextActions, automations: automations, leadPanel: leadPanel, call: call };
+  /* ---------- Agents page: Admin (onboarding + platform), Billing and Marketing (coming) ---------- */
+  var STEP_PT = { video: 'Assistir ao vídeo', contract: 'Assinar o contrato', payout: 'Escolher como recebe', stripe: 'Terminar o cadastro no Stripe', password: 'Criar a senha' };
+  function stepOf(p, video) {
+    if (p.status === 'invited') return 'password';
+    if (video && !p.video_seen_at) return 'video';
+    if (['partner_signed', 'signed'].indexOf(p.contract_status) < 0) return 'contract';
+    if (!p.payout_method) return 'payout';
+    if (p.payout_method === 'stripe' && !(p.stripe_details_submitted || p.stripe_transfers_active)) return 'stripe';
+    return null;
+  }
+  async function agents(view, ctx) {
+    var sb = ctx.sb, esc = ctx.esc;
+    var res = await Promise.all([sb.from('crm_settings').select('*').eq('id', 1).single(), call(ctx, { action: 'status' }).catch(function () { return {}; }),
+      sb.from('partners').select('*').neq('status', 'suspended').is('onboarding_done_at', null).order('invited_at', { ascending: false }),
+      sb.from('agent_messages').select('partner_id, created_at, channel, role, content, meta, partners(name)').order('created_at', { ascending: false }).limit(200)]);
+    var s = res[0].data || {}, st = res[1] || {}, onb = res[2].data || [], msgs = res[3].data || [];
+    var last = {}; msgs.forEach(function (m) { if (m.partner_id && !last[m.partner_id]) last[m.partner_id] = m; });
+    var convs = Object.keys(last).map(function (k) { return last[k]; }).slice(0, 12);
+    var chip = function (on, a, b) { return '<span class="pill' + (on ? ' pill--on' : '') + '">' + (on ? a : b) + '</span>'; };
+    var idle = function (p) { return Math.floor((Date.now() - new Date(p.onboarding_step_at || p.accepted_at || p.invited_at)) / 864e5); };
+    view.innerHTML = '<div class="console__head"><div><h1>Agentes IA</h1><p class="portal-muted">Assistentes de IA que trabalham junto com a equipe. Tudo o que eles enviam fica registrado aqui.</p></div></div>' +
+      '<div class="ag-grid">' +
+      '<section class="portal-card ag-card ag-card--on"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-bot"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Admin</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Onboarding dos parceiros e operação da plataforma</p></div></div>' +
+        '<p class="mk-status">' + chip(st.ai, 'IA ativa', 'IA não configurada') + ' ' + chip(st.email, 'E-mail', 'E-mail não configurado') + ' ' + chip(st.whatsapp && s.whatsapp_enabled, 'WhatsApp ligado', 'WhatsApp: aguardando a Meta') + ' ' + chip(st.whatsapp_webhook, 'Respostas do WhatsApp', 'Webhook do WhatsApp pendente') + '</p>' +
+        '<ul class="ag-does"><li>Acompanha cada parceiro na linha do tempo do onboarding.</li><li>Quando ele trava, escreve um e-mail personalizado (e WhatsApp) sobre o passo que falta.</li><li>Sem avanço, avisa você no sino para um contato pessoal.</li><li>Responde dúvidas no chat do portal e, com a Meta liberada, no WhatsApp.</li></ul>' +
+        '<form class="portal-form" id="ag-f" novalidate><div class="check-row"><input type="checkbox" id="ag-on"' + (s.agent_enabled !== false ? ' checked' : '') + '><label for="ag-on">Agente ligado</label></div>' +
+        '<div class="check-row"><input type="checkbox" id="ag-chat"' + (s.agent_chat_enabled !== false ? ' checked' : '') + '><label for="ag-chat">Chat no Portal do Parceiro</label></div>' +
+        '<div class="portal-grid2"><div class="field"><label for="ag-stuck">Lembrar após (dias sem avanço)</label><input id="ag-stuck" type="number" min="1" max="14" value="' + (s.agent_stuck_days || 2) + '"></div>' +
+        '<div class="field"><label for="ag-esc">Avisar a equipe após (dias)</label><input id="ag-esc" type="number" min="2" max="30" value="' + (s.agent_escalate_days || 6) + '"></div></div>' +
+        '<div class="portal-alert" id="ag-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy btn--xs" type="submit">Salvar</button><button class="btn btn--ghost btn--xs" type="button" id="ag-run">Rodar agora</button><a class="btn btn--ghost btn--xs" href="#/crm?auto=1">Vídeo e automações</a></div></form></section>' +
+      '<section class="portal-card ag-card"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-card"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Billing</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Faturas, cobranças e comissões</p></div></div><span class="pill">Em breve</span>' +
+        '<ul class="ag-does"><li>Lembra o cliente de faturas em aberto.</li><li>Confirma pagamentos e repasses aos parceiros.</li><li>Avisa a equipe sobre falhas de pagamento.</li></ul></section>' +
+      '<section class="portal-card ag-card"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-mail"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Marketing</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Campanhas e prospecção</p></div></div><span class="pill">Em breve</span>' +
+        '<ul class="ag-does"><li>Sugere campanhas e textos para cada público.</li><li>Acompanha aberturas e respostas.</li><li>Prioriza os contatos mais quentes no CRM.</li></ul></section></div>' +
+      '<section class="portal-card" style="margin-top:1.25rem"><h2 class="portal-h2">Onboarding em andamento <span class="crm-next__n">' + onb.length + '</span></h2>' +
+        (onb.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Parceiro</th><th>Passo atual</th><th class="num">Dias parado</th><th class="num">Lembretes do agente</th><th>Situação</th></tr></thead><tbody>' + onb.map(function (p) {
+          var stp = stepOf(p, s.partner_video_url), d = idle(p);
+          return '<tr data-p="' + p.id + '" tabindex="0"><td><strong>' + esc(p.name) + '</strong><span class="sub">' + esc([p.email, p.phone].filter(Boolean).join(' · ')) + '</span></td><td>' + esc(STEP_PT[stp] || 'Ativando…') + '</td><td class="num">' + d + '</td><td class="num">' + (p.agent_nudges || 0) + '</td>' +
+            '<td>' + (p.agent_escalated_at ? '<span class="badge badge--lost">Precisa de contato</span>' : d >= (s.agent_stuck_days || 2) ? '<span class="badge badge--contacted">Travado</span>' : '<span class="badge badge--client">Em dia</span>') + '</td></tr>';
+        }).join('') + '</tbody></table></div>' : '<p class="empty">Nenhum parceiro em onboarding agora.</p>') + '</section>' +
+      '<section class="portal-card"><h2 class="portal-h2">Conversas recentes</h2>' +
+        (convs.length ? '<ul class="list">' + convs.map(function (m) { return '<li class="ag-conv" data-p="' + m.partner_id + '" tabindex="0"><div class="list__main"><strong>' + esc(m.partners ? m.partners.name : '') + '</strong><span>' + esc(({ portal: 'Chat do portal', whatsapp: 'WhatsApp', email: 'E-mail do agente', system: 'Sistema' })[m.channel]) + ' · ' + esc(ctx.fmtDT(m.created_at)) + ' · ' + esc(String(m.content).slice(0, 110)) + '</span></div>' + (m.meta && m.meta.handoff ? '<span class="badge badge--lost">Pediu a equipe</span>' : '') + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhuma conversa ainda.</p>') + '</section>';
+    var m = ctx.$('#ag-m');
+    ctx.$('#ag-f').onsubmit = async function (e) {
+      e.preventDefault();
+      var a = Math.max(1, Math.min(14, +ctx.$('#ag-stuck').value || 2)), b = Math.max(a + 1, Math.min(30, +ctx.$('#ag-esc').value || 6));
+      var r = await sb.from('crm_settings').update({ agent_enabled: ctx.$('#ag-on').checked, agent_chat_enabled: ctx.$('#ag-chat').checked, agent_stuck_days: a, agent_escalate_days: b, updated_at: new Date().toISOString() }).eq('id', 1);
+      ctx.msg(m, r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
+    };
+    ctx.$('#ag-run').onclick = async function () { var b = this; b.disabled = true; ctx.msg(m, 'Rodando…', 'info'); try { var r = await call(ctx, { action: 'run_now' }); ctx.msg(m, 'Pronto: ' + (r.agent || 0) + ' lembrete(s) do agente, ' + (r.escalated || 0) + ' aviso(s) à equipe, ' + (r.activated || 0) + ' conta(s) ativada(s).', 'ok'); } catch (x) { ctx.msg(m, err(ctx, x), 'error'); } b.disabled = false; };
+    view.querySelectorAll('[data-p]').forEach(function (el) { var go = function () { conversation(ctx, el.dataset.p); }; el.onclick = go; el.onkeydown = function (e) { if (e.key === 'Enter') go(); }; });
+    var pq = (ERoute.get().match(/[?&]partner=([0-9a-f-]{36})/) || [])[1]; if (pq) conversation(ctx, pq);
+  }
+  async function conversation(ctx, pid) {
+    var sb = ctx.sb, esc = ctx.esc;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Conversa</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div><div id="cv-b"><p class="portal-muted">Carregando…</p></div>');
+    var res = await Promise.all([sb.from('partners').select('*').eq('id', pid).single(), sb.from('agent_messages').select('*').eq('partner_id', pid).order('created_at', { ascending: true }).limit(200), sb.from('crm_settings').select('partner_video_url').eq('id', 1).single()]);
+    var p = res[0].data, list = res[1].data || [], video = (res[2].data || {}).partner_video_url;
+    if (!p) { ctx.$('#cv-b', o).innerHTML = '<p class="empty">Parceiro não encontrado.</p>'; return; }
+    var stp = stepOf(p, video), CH = { portal: 'Chat', whatsapp: 'WhatsApp', email: 'E-mail', system: 'Sistema' };
+    ctx.$('#cv-b', o).innerHTML = '<p><strong>' + esc(p.name) + '</strong><br><span class="portal-muted">' + esc([p.email, p.phone].filter(Boolean).join(' · ')) + '</span></p>' +
+      '<p class="mk-status"><span class="pill">' + (p.onboarding_done_at ? 'Conta ativa' : 'Passo: ' + esc(STEP_PT[stp] || 'ativando')) + '</span> <span class="pill">' + (p.agent_nudges || 0) + ' lembrete(s)</span>' + (p.agent_escalated_at ? ' <span class="pill">Escalado em ' + esc(ctx.fmtDT(p.agent_escalated_at)) + '</span>' : '') + ' <a href="#/parceiros?id=' + p.id + '">Abrir parceiro</a></p>' +
+      '<div class="ch-log ag-log">' + (list.length ? list.map(function (x) {
+        if (x.role === 'system') return '<div class="ag-sys">' + esc(x.content) + ' · ' + esc(ctx.fmtDT(x.created_at)) + '</div>';
+        return '<div class="ch-msg ch-msg--' + (x.role === 'user' ? 'bot' : 'me') + '"><small>' + esc(x.role === 'user' ? p.name.split(' ')[0] : x.meta && x.meta.human ? 'Equipe (' + x.meta.human + ')' : 'Agente') + ' · ' + esc(CH[x.channel]) + ' · ' + esc(ctx.fmtDT(x.created_at)) + '</small>' + esc(x.content).replace(/\n/g, '<br>') + '</div>';
+      }).join('') : '<p class="portal-muted">Nenhuma mensagem ainda.</p>') + '</div>' +
+      '<form class="ch-form" id="cv-f"><label for="cv-in" class="sr-only">Responder</label><textarea id="cv-in" rows="3" maxlength="3000" placeholder="Responder como equipe (aparece no chat do portal; no WhatsApp se ele escreveu nas últimas 24 h)"></textarea><button class="btn btn--navy btn--xs" type="submit">Enviar</button></form><div class="portal-alert" id="cv-m" role="alert"></div>';
+    var lg = ctx.$('.ag-log', o); lg.scrollTop = lg.scrollHeight;
+    ctx.$('#cv-f', o).onsubmit = async function (e) {
+      e.preventDefault(); var t = ctx.$('#cv-in', o).value.trim(); if (t.length < 2) return;
+      var b = this.querySelector('button'); b.disabled = true;
+      try { var r = await call(ctx, { action: 'agent_human_reply', partner_id: pid, message: t }); ctx.msg(ctx.$('#cv-m', o), 'Enviado no chat do portal' + (r.whatsapp === 'sent' ? ' e no WhatsApp.' : '.'), 'ok'); conversation(ctx, pid); }
+      catch (x) { b.disabled = false; ctx.msg(ctx.$('#cv-m', o), err(ctx, x), 'error'); }
+    };
+  }
+
+  window.AdminCRM = { agents: agents, nextActions: nextActions, automations: automations, leadPanel: leadPanel, call: call };
 })();
