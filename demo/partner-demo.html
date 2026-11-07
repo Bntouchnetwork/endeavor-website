@@ -2013,19 +2013,19 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 @media (max-width: 720px) { .acc-grid, .acc-form--2 { grid-template-columns: minmax(0, 1fr); } }
 .acc-card .portal-alert { padding: .35rem .65rem; font-size: .82rem; margin: 0; }
 
-/* partner "New referral": whole form on one screen */
-.rf-card { padding: 1rem 1.2rem; }
-.rf-form { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1rem; }
-.rf-form .field { grid-column: span 3; }
-.rf-form .rf-w2 { grid-column: span 4; }
-.rf-form .rf-em { grid-column: span 3; }
-.rf-form .rf-ph { grid-column: span 5; }
+/* partner "New referral": one centered card, whole form on one screen */
+body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wrap { max-width: 46rem; margin-inline: auto; }
+.rf-card { padding: 1rem 1.25rem; }
+.rf-form { grid-template-columns: repeat(6, minmax(0, 1fr)); column-gap: .8rem; }
+.rf-form .field { grid-column: span 2; }
+.rf-form .rf-c3 { grid-column: span 3; }
+.rf-form .rf-c4 { grid-column: span 4; }
 .rf-form .rf-full, .rf-form .acc-foot { grid-column: 1 / -1; }
-.rf-form textarea { min-height: 4.6rem; resize: vertical; }
-.rf-note { display: block; margin: 0; padding: .45rem .7rem; font-size: .82rem; }
+.rf-form .phone-intl { grid-template-columns: minmax(0, 9rem) minmax(0, 1fr); }
+.rf-form textarea { min-height: 3.6rem; resize: vertical; }
+.rf-note { display: block; margin: 0; padding: .4rem .65rem; font-size: .8rem; }
 .rf-form .check-row { font-size: .86rem; }
-@media (max-width: 1100px) { .rf-form .field, .rf-form .rf-w2, .rf-form .rf-em, .rf-form .rf-ph { grid-column: span 6; } }
-@media (max-width: 720px) { .rf-form { grid-template-columns: minmax(0, 1fr); } .rf-form .field, .rf-form .rf-w2, .rf-form .rf-em, .rf-form .rf-ph { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .rf-form { grid-template-columns: minmax(0, 1fr); } .rf-form .field { grid-column: 1 / -1; } }
 
 </style>
 </head>
@@ -4295,19 +4295,19 @@ window.ENDEAVOR_CFG = {
       /* ---------- new referral ---------- */
       async function vNew(view) {
         if (noNew()) { view.innerHTML = C.head(t('r_nav_new'), '') + '<div class="portal-alert portal-alert--info" style="display:block;max-width:44rem">' + noNewMsg() + '</div>'; return; }
-        view.innerHTML = C.head(t('r_nav_new'), t('r_newLead')) +
+        view.innerHTML = '<div class="rf-wrap">' + C.head(t('r_nav_new'), t('r_newLead')) +
           '<section class="portal-card acc-card rf-card"><form class="portal-form acc-form rf-form" id="rf-form" novalidate>' +
-          '<div class="field rf-w2"><label for="rf-name">' + t('f_name') + '</label><input id="rf-name" autocomplete="off" required maxlength="200"></div>' +
-          '<div class="field rf-em"><label for="rf-email">' + t('f_email') + '</label><input id="rf-email" type="email" autocomplete="off" required maxlength="254"></div>' +
-          '<div class="field rf-ph"><label for="rf-phone">' + t('f_phone') + '</label><div id="rf-phone-box"></div></div>' +
+          '<div class="field rf-c3"><label for="rf-name">' + t('f_name') + '</label><input id="rf-name" autocomplete="off" required maxlength="200"></div>' +
+          '<div class="field rf-c3"><label for="rf-email">' + t('f_email') + '</label><input id="rf-email" type="email" autocomplete="off" required maxlength="254"></div>' +
+          '<div class="field rf-c4"><label for="rf-phone">' + t('f_phone') + '</label><div id="rf-phone-box"></div></div>' +
           '<div class="field"><label for="rf-country">' + t('f_country') + '</label><input id="rf-country" maxlength="100"></div>' +
           '<div class="field"><label for="rf-company">' + t('f_company') + '</label><input id="rf-company" maxlength="200"></div>' +
           '<div class="field"><label for="rf-service">' + t('f_service') + '</label><select id="rf-service"><option value="">' + t('f_select') + '</option>' + SERVICES.map(function (s) { return '<option>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
           '<div class="field"><label for="rf-lang">' + t('f_lang') + '</label><select id="rf-lang"><option value="pt"' + (L === 'pt' ? ' selected' : '') + '>Português</option><option value="en"' + (L === 'en' ? ' selected' : '') + '>English</option><option value="es"' + (L === 'es' ? ' selected' : '') + '>Español</option></select></div>' +
-          '<div class="field rf-full"><label for="rf-msg">' + t('f_msg') + '</label><textarea id="rf-msg" rows="3" maxlength="3000"></textarea></div>' +
+          '<div class="field rf-full"><label for="rf-msg">' + t('f_msg') + '</label><textarea id="rf-msg" rows="2" maxlength="3000"></textarea></div>' +
           '<p class="portal-alert portal-alert--info rf-full rf-note">' + t('f_privacy') + '</p>' +
           '<div class="check-row rf-full"><input type="checkbox" id="rf-consent" required><label for="rf-consent">' + t('f_consent') + '</label></div>' +
-          '<div class="acc-foot"><button class="btn btn--navy" type="submit">' + t('f_submit') + '</button><div class="portal-alert" id="rf-msgbox" role="alert"></div></div></form></section>';
+          '<div class="acc-foot"><button class="btn btn--navy" type="submit">' + t('f_submit') + '</button><div class="portal-alert" id="rf-msgbox" role="alert"></div></div></form></section></div>';
         var rfPhone = window.EPhone ? EPhone.mount($('#rf-phone-box'), { id: 'rf-phone', lang: L }) : null;
         if (!rfPhone) $('#rf-phone-box').innerHTML = '<input id="rf-phone" type="tel" autocomplete="off" maxlength="50">';
         $('#rf-form').onsubmit = async function (e) {
