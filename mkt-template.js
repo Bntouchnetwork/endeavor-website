@@ -46,7 +46,19 @@
   };
   var CUSTOM_FOOT = { pt: T.pt, en: T.en, es: T.es };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function first(name) { return String(name || '').trim().split(/\s+/)[0] || ''; }
+  /* First name for the greeting: "MARIA SILVA" -> "Maria", "Dr. João Souza" -> "João", "Silva, Maria" -> "Maria".
+     Anything that does not look like a name (an e-mail, digits) gives '' so the e-mail falls back to "Olá!". */
+  var HONOR = /^(sr|sra|srta|dr|dra|prof|profa|eng|mr|mrs|ms|miss|mx|sir|don|doña|dona|lic|ing)\.?$/i;
+  function cap(w) { return w.split(/([-'’])/).map(function (p) { return p.length > 1 || /[a-zà-ÿ]/i.test(p) ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : p; }).join(''); }
+  function first(name) {
+    var s = String(name || '').replace(/\s+/g, ' ').trim();
+    if (!s || /[@\d<>{}\/\\]/.test(s)) return '';
+    if (s.indexOf(',') > -1) s = s.split(',')[1].trim() || s.split(',')[0].trim();
+    var w = s.split(' ').filter(function (x) { return !HONOR.test(x); })[0] || '';
+    w = w.replace(/^[^A-Za-zÀ-ÿ]+|[^A-Za-zÀ-ÿ'’-]+$/g, '');
+    if (w.length < 2) return '';
+    return (w === w.toUpperCase() || w === w.toLowerCase()) ? cap(w) : w;
+  }
   function merge(s, ct) {
     var n = first(ct && ct.name), co = (ct && ct.company) || '';
     return String(s || '').replace(/\{\{?\s*(nome|name|nombre)\s*\}?\}/gi, n).replace(/\{\{?\s*(empresa|company)\s*\}?\}/gi, co)
@@ -80,6 +92,7 @@
     var subject, pre, body, textParts;
     if (c.template === 'custom') {
       subject = merge(c.subject || '', ct); pre = merge(c.preheader || '', ct);
+      if (!n) subject = subject.charAt(0).toUpperCase() + subject.slice(1);
       var paras = merge(c.body || '', ct).split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
       body = '<tr><td style="background:' + NAVY + ';padding:36px 32px 32px"><div style="font:700 26px/1.25 Georgia,serif;color:#ffffff">' + esc(merge(c.heading || subject, ct)) + '</div>' +
         (pre ? '<div style="font:16px/1.6 Arial,sans-serif;color:#d6deea;margin:12px 0 0">' + esc(pre) + '</div>' : '') + '</td></tr>' +
@@ -90,6 +103,7 @@
       var D = c.tpl_data, d = D[lang] || D[(D.languages || [])[0]] || D.pt || D.en || D.es || {};
       var AC = ACCENTS[(D.style || {}).accent] || GOLD, light = (D.style || {}).hero === 'light';
       subject = merge(c.subject || d.subject || '', ct); pre = merge(c.preheader || d.preheader || '', ct);
+      if (!n) subject = subject.charAt(0).toUpperCase() + subject.slice(1);
       var label = merge(c.button_label || d.cta || '', ct), head = merge(c.heading || d.heading || subject, ct);
       if (D.button_url && !c.button_url && /^https:\/\//.test(D.button_url)) btnUrl = D.button_url.replace(/\{lang\}/g, lang);
       var paraHtml = function (txt) { return merge(txt || '', ct).split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean).map(function (p) { return '<p style="margin:0 0 12px">' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
@@ -153,5 +167,5 @@
     var text = textParts.join('\n') + '\n\n--\n' + (c.template === 'partners' ? foot.why : foot.whyGen) + '\n' + (o.address || '') + '\n' + foot.unsub + ': ' + withLang(o.unsubUrl, lang);
     return { subject: subject, html: html, text: text, urls: urls, language: lang };
   }
-  G.EMkt = { render: render, texts: T, langOf: langOf, brand: BRAND, accents: ACCENTS };
+  G.EMkt = { render: render, texts: T, langOf: langOf, brand: BRAND, accents: ACCENTS, firstName: first };
 })(typeof globalThis !== 'undefined' ? globalThis : window);

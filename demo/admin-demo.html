@@ -6763,7 +6763,19 @@ window.ADMIN_EN_RX = [
   };
   var CUSTOM_FOOT = { pt: T.pt, en: T.en, es: T.es };
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
-  function first(name) { return String(name || '').trim().split(/\s+/)[0] || ''; }
+  /* First name for the greeting: "MARIA SILVA" -> "Maria", "Dr. João Souza" -> "João", "Silva, Maria" -> "Maria".
+     Anything that does not look like a name (an e-mail, digits) gives '' so the e-mail falls back to "Olá!". */
+  var HONOR = /^(sr|sra|srta|dr|dra|prof|profa|eng|mr|mrs|ms|miss|mx|sir|don|doña|dona|lic|ing)\.?$/i;
+  function cap(w) { return w.split(/([-'’])/).map(function (p) { return p.length > 1 || /[a-zà-ÿ]/i.test(p) ? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase() : p; }).join(''); }
+  function first(name) {
+    var s = String(name || '').replace(/\s+/g, ' ').trim();
+    if (!s || /[@\d<>{}\/\\]/.test(s)) return '';
+    if (s.indexOf(',') > -1) s = s.split(',')[1].trim() || s.split(',')[0].trim();
+    var w = s.split(' ').filter(function (x) { return !HONOR.test(x); })[0] || '';
+    w = w.replace(/^[^A-Za-zÀ-ÿ]+|[^A-Za-zÀ-ÿ'’-]+$/g, '');
+    if (w.length < 2) return '';
+    return (w === w.toUpperCase() || w === w.toLowerCase()) ? cap(w) : w;
+  }
   function merge(s, ct) {
     var n = first(ct && ct.name), co = (ct && ct.company) || '';
     return String(s || '').replace(/\{\{?\s*(nome|name|nombre)\s*\}?\}/gi, n).replace(/\{\{?\s*(empresa|company)\s*\}?\}/gi, co)
@@ -6797,6 +6809,7 @@ window.ADMIN_EN_RX = [
     var subject, pre, body, textParts;
     if (c.template === 'custom') {
       subject = merge(c.subject || '', ct); pre = merge(c.preheader || '', ct);
+      if (!n) subject = subject.charAt(0).toUpperCase() + subject.slice(1);
       var paras = merge(c.body || '', ct).split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
       body = '<tr><td style="background:' + NAVY + ';padding:36px 32px 32px"><div style="font:700 26px/1.25 Georgia,serif;color:#ffffff">' + esc(merge(c.heading || subject, ct)) + '</div>' +
         (pre ? '<div style="font:16px/1.6 Arial,sans-serif;color:#d6deea;margin:12px 0 0">' + esc(pre) + '</div>' : '') + '</td></tr>' +
@@ -6807,6 +6820,7 @@ window.ADMIN_EN_RX = [
       var D = c.tpl_data, d = D[lang] || D[(D.languages || [])[0]] || D.pt || D.en || D.es || {};
       var AC = ACCENTS[(D.style || {}).accent] || GOLD, light = (D.style || {}).hero === 'light';
       subject = merge(c.subject || d.subject || '', ct); pre = merge(c.preheader || d.preheader || '', ct);
+      if (!n) subject = subject.charAt(0).toUpperCase() + subject.slice(1);
       var label = merge(c.button_label || d.cta || '', ct), head = merge(c.heading || d.heading || subject, ct);
       if (D.button_url && !c.button_url && /^https:\/\//.test(D.button_url)) btnUrl = D.button_url.replace(/\{lang\}/g, lang);
       var paraHtml = function (txt) { return merge(txt || '', ct).split(/\n\s*\n/).map(function (p) { return p.trim(); }).filter(Boolean).map(function (p) { return '<p style="margin:0 0 12px">' + esc(p).replace(/\n/g, '<br>') + '</p>'; }).join(''); };
@@ -6870,7 +6884,7 @@ window.ADMIN_EN_RX = [
     var text = textParts.join('\n') + '\n\n--\n' + (c.template === 'partners' ? foot.why : foot.whyGen) + '\n' + (o.address || '') + '\n' + foot.unsub + ': ' + withLang(o.unsubUrl, lang);
     return { subject: subject, html: html, text: text, urls: urls, language: lang };
   }
-  G.EMkt = { render: render, texts: T, langOf: langOf, brand: BRAND, accents: ACCENTS };
+  G.EMkt = { render: render, texts: T, langOf: langOf, brand: BRAND, accents: ACCENTS, firstName: first };
 })(typeof globalThis !== 'undefined' ? globalThis : window);
 
 </script>
@@ -7294,7 +7308,7 @@ window.ADMIN_EN_RX = [
     if (window.XLSX) return Promise.resolve(window.XLSX);
     return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = function () { ok(window.XLSX); }; s.onerror = bad; document.head.appendChild(s); });
   }
-  var GUESS = { email: /e-?mail|correo/i, name: /^(nome|name|nombre|contato|contact|full ?name)/i, company: /empresa|company|compa[nñ]ia|imobili|broker|firm/i, phone: /tel|phone|fone|celular|whats|mobile/i, kind: /tipo|type|categor|profiss|profession/i, language: /idioma|lang/i };
+  var GUESS = { email: /e-?mail|correo/i, name: /^(primeiro ?nome|first ?name|given ?name|nome|name|nombre|contato|contact|full ?name)/i, company: /empresa|company|compa[nñ]ia|imobili|broker|firm/i, phone: /tel|phone|fone|celular|whats|mobile/i, kind: /tipo|type|categor|profiss|profession/i, language: /idioma|lang/i };
   function mapKind(v) { v = lc(v); if (/realt|corret|imobil|broker|real estate|agente/.test(v)) return 'realtor'; if (/account|contad|cpa|contab/.test(v)) return 'accountant'; if (/attorn|advog|abogad|lawyer|law/.test(v)) return 'attorney'; if (/bookkeep/.test(v)) return 'bookkeeping'; if (/property|administr/.test(v)) return 'property_management'; if (/financ|bank|banc|loan|mortg|hipotec/.test(v)) return 'financial'; return null; }
   function mapLang(v) { v = lc(v); if (/^(pt|port|br)/.test(v)) return 'pt'; if (/^(en|ing|eng)/.test(v)) return 'en'; if (/^(es|esp|span)/.test(v)) return 'es'; return null; }
 
@@ -7341,6 +7355,8 @@ window.ADMIN_EN_RX = [
       function summary() {
         var p = parsed();
         $('#im-summary', o).innerHTML = '<strong>' + p.ok.length + ' contatos válidos</strong>' + (p.bad ? ' · ' + p.bad + ' sem e-mail válido (ignorados)' : '') + (p.dup ? ' · ' + p.dup + ' repetidos no arquivo' : '') +
+          (function () { var nn = p.ok.filter(function (x) { return !EMkt.firstName(x.name); }).length, ex = p.ok.filter(function (x) { return EMkt.firstName(x.name); })[0];
+            return '<p class="portal-muted" style="font-size:.85rem;margin:.4rem 0 0">' + (ex ? 'Cada e-mail sai personalizado com o primeiro nome do contato (ex.: “Olá, ' + esc(EMkt.firstName(ex.name)) + '!”).' : 'Nenhum nome encontrado: escolha a coluna de nome acima para personalizar os e-mails.') + (nn && ex ? ' ' + nn + ' sem nome recebem só “Olá!”.' : '') + '</p>'; })() +
           '<div class="table-wrap" style="margin-top:.5rem"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th><th>Empresa</th><th>Tipo</th><th>Idioma</th></tr></thead><tbody>' +
           p.ok.slice(0, 5).map(function (x) { return '<tr><td>' + esc(x.email) + '</td><td>' + esc(x.name || '') + '</td><td>' + esc(x.company || '') + '</td><td>' + esc(KIND[x.kind]) + '</td><td>' + x.language.toUpperCase() + '</td></tr>'; }).join('') + '</tbody></table></div>';
       }

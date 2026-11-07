@@ -417,7 +417,7 @@
     if (window.XLSX) return Promise.resolve(window.XLSX);
     return new Promise(function (ok, bad) { var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = function () { ok(window.XLSX); }; s.onerror = bad; document.head.appendChild(s); });
   }
-  var GUESS = { email: /e-?mail|correo/i, name: /^(nome|name|nombre|contato|contact|full ?name)/i, company: /empresa|company|compa[nñ]ia|imobili|broker|firm/i, phone: /tel|phone|fone|celular|whats|mobile/i, kind: /tipo|type|categor|profiss|profession/i, language: /idioma|lang/i };
+  var GUESS = { email: /e-?mail|correo/i, name: /^(primeiro ?nome|first ?name|given ?name|nome|name|nombre|contato|contact|full ?name)/i, company: /empresa|company|compa[nñ]ia|imobili|broker|firm/i, phone: /tel|phone|fone|celular|whats|mobile/i, kind: /tipo|type|categor|profiss|profession/i, language: /idioma|lang/i };
   function mapKind(v) { v = lc(v); if (/realt|corret|imobil|broker|real estate|agente/.test(v)) return 'realtor'; if (/account|contad|cpa|contab/.test(v)) return 'accountant'; if (/attorn|advog|abogad|lawyer|law/.test(v)) return 'attorney'; if (/bookkeep/.test(v)) return 'bookkeeping'; if (/property|administr/.test(v)) return 'property_management'; if (/financ|bank|banc|loan|mortg|hipotec/.test(v)) return 'financial'; return null; }
   function mapLang(v) { v = lc(v); if (/^(pt|port|br)/.test(v)) return 'pt'; if (/^(en|ing|eng)/.test(v)) return 'en'; if (/^(es|esp|span)/.test(v)) return 'es'; return null; }
 
@@ -464,6 +464,8 @@
       function summary() {
         var p = parsed();
         $('#im-summary', o).innerHTML = '<strong>' + p.ok.length + ' contatos válidos</strong>' + (p.bad ? ' · ' + p.bad + ' sem e-mail válido (ignorados)' : '') + (p.dup ? ' · ' + p.dup + ' repetidos no arquivo' : '') +
+          (function () { var nn = p.ok.filter(function (x) { return !EMkt.firstName(x.name); }).length, ex = p.ok.filter(function (x) { return EMkt.firstName(x.name); })[0];
+            return '<p class="portal-muted" style="font-size:.85rem;margin:.4rem 0 0">' + (ex ? 'Cada e-mail sai personalizado com o primeiro nome do contato (ex.: “Olá, ' + esc(EMkt.firstName(ex.name)) + '!”).' : 'Nenhum nome encontrado: escolha a coluna de nome acima para personalizar os e-mails.') + (nn && ex ? ' ' + nn + ' sem nome recebem só “Olá!”.' : '') + '</p>'; })() +
           '<div class="table-wrap" style="margin-top:.5rem"><table class="data"><thead><tr><th>E-mail</th><th>Nome</th><th>Empresa</th><th>Tipo</th><th>Idioma</th></tr></thead><tbody>' +
           p.ok.slice(0, 5).map(function (x) { return '<tr><td>' + esc(x.email) + '</td><td>' + esc(x.name || '') + '</td><td>' + esc(x.company || '') + '</td><td>' + esc(KIND[x.kind]) + '</td><td>' + x.language.toUpperCase() + '</td></tr>'; }).join('') + '</tbody></table></div>';
       }
