@@ -1077,3 +1077,17 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
 .rf-note { display: block; margin: 0; padding: .4rem .65rem; font-size: .8rem; }
 .rf-form .check-row { font-size: .86rem; }
 @media (max-width: 640px) { .rf-form { grid-template-columns: minmax(0, 1fr); } .rf-form .field { grid-column: 1 / -1; } }
+
+/* partner referral: closed package (service, value, commission) */
+.deal-box { margin: 0 0 1.25rem; padding: .85rem 1rem; border: 1px solid #e6d7ae; background: #fffaf0; border-radius: var(--radius, 10px); }
+.deal + .deal { margin-top: .7rem; padding-top: .7rem; border-top: 1px dashed #e6d7ae; }
+.deal { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem 1rem; align-items: start; }
+.deal__svc { grid-column: 1 / -1; }
+.deal > div { display: grid; gap: .1rem; font-size: .85rem; }
+.deal strong { font-size: 1rem; color: var(--navy, #0b1f3a); }
+.deal__num strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.deal__num--comm strong { color: #1d6b3a; }
+.deal__st { font-size: .76rem; font-weight: 600; justify-self: start; padding: .1rem .45rem; border-radius: 999px; background: #eef1f6; color: #45546b; }
+.deal__st--due { background: #fff1d6; color: #8a5a00; }
+.deal__st--paid { background: #e3f4e8; color: #1d6b3a; }
+.timeline li.tl-deal::before { background: #1d6b3a; }

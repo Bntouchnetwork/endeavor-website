@@ -2028,6 +2028,20 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
 .rf-form .check-row { font-size: .86rem; }
 @media (max-width: 640px) { .rf-form { grid-template-columns: minmax(0, 1fr); } .rf-form .field { grid-column: 1 / -1; } }
 
+/* partner referral: closed package (service, value, commission) */
+.deal-box { margin: 0 0 1.25rem; padding: .85rem 1rem; border: 1px solid #e6d7ae; background: #fffaf0; border-radius: var(--radius, 10px); }
+.deal + .deal { margin-top: .7rem; padding-top: .7rem; border-top: 1px dashed #e6d7ae; }
+.deal { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem 1rem; align-items: start; }
+.deal__svc { grid-column: 1 / -1; }
+.deal > div { display: grid; gap: .1rem; font-size: .85rem; }
+.deal strong { font-size: 1rem; color: var(--navy, #0b1f3a); }
+.deal__num strong { font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.deal__num--comm strong { color: #1d6b3a; }
+.deal__st { font-size: .76rem; font-weight: 600; justify-self: start; padding: .1rem .45rem; border-radius: 999px; background: #eef1f6; color: #45546b; }
+.deal__st--due { background: #fff1d6; color: #8a5a00; }
+.deal__st--paid { background: #e3f4e8; color: #1d6b3a; }
+.timeline li.tl-deal::before { background: #1d6b3a; }
+
 </style>
 </head>
 <body class="portal">
@@ -2313,7 +2327,7 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
   var PARTNER_USER = { id: 'u-cpa', email: 'ana.cpa@example.com' };
   var ME = MODE === 'partner' ? PARTNER_USER : CLIENT_USER;
   var ALLCATS = ['formation', 'tax_return', 'report', 'compliance', 'other'];
-  var C1 = 'c1000000-0000-4000-8000-000000000001', C2 = 'c2000000-0000-4000-8000-000000000002', C3 = 'c3000000-0000-4000-8000-000000000003';
+  var C1 = 'c1000000-0000-4000-8000-000000000001', C2 = 'c2000000-0000-4000-8000-000000000002', C3 = 'c3000000-0000-4000-8000-000000000003', C9 = 'c9000000-0000-4000-8000-000000000009';
   var CO1 = 'a1000000-0000-4000-8000-000000000001', CO2 = 'a2000000-0000-4000-8000-000000000002', CO3 = 'a3000000-0000-4000-8000-000000000003', CO4 = 'a4000000-0000-4000-8000-000000000004';
   var L = function (id, name, email, phone, country, company, assistance, msg, source, status, d, lang) {
     return { id: id, created_at: iso(-d, 10), updated_at: iso(-d, 10), name: name, email: email, phone: phone, country: country, company: company, assistance: assistance, message: msg, source: source, status: status, marketing_consent: d % 2 === 0, notes: '', language: lang };
@@ -2345,7 +2359,8 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
     clients: [
       { id: C1, created_at: iso(-35), updated_at: iso(-35), name: 'Carlos Lima', primary_email: 'carlos.lima@example.com', phone: '+55 11 98888-1234', language: 'pt', lead_id: 'b1000000-0000-4000-8000-000000000001', status: 'active', notes: 'Cliente desde a formação da LLC.' },
       { id: C2, created_at: iso(-28), updated_at: iso(-28), name: 'Sofía Martínez', primary_email: 'sofia@example.com', phone: '+595 981 555 222', language: 'es', lead_id: 'b2000000-0000-4000-8000-000000000002', status: 'active', notes: '' },
-      { id: C3, created_at: iso(-20), updated_at: iso(-20), name: 'Sunshine Ventures', primary_email: 'mturner@example.com', phone: '+1 407 555 0199', language: 'en', lead_id: 'b3000000-0000-4000-8000-000000000003', status: 'active', notes: '' }
+      { id: C3, created_at: iso(-20), updated_at: iso(-20), name: 'Sunshine Ventures', primary_email: 'mturner@example.com', phone: '+1 407 555 0199', language: 'en', lead_id: 'b3000000-0000-4000-8000-000000000003', status: 'active', notes: '' },
+      { id: C9, created_at: iso(-7), updated_at: iso(-7), name: 'Ricardo Mendes', primary_email: 'ricardo.mendes@example.com', phone: '+55 21 97777-3500', language: 'pt', lead_id: null, status: 'active', notes: 'Cliente de exemplo: pacote de US$ 3.500 indicado pela Ana Ribeiro.' }
     ],
     client_users: [
       { id: uuid(), client_id: C1, user_id: CLIENT_USER.id, email: 'carlos.lima@example.com', name: 'Carlos Lima', role: 'owner', collab_type: null, can_view: true, can_upload: true, status: 'active', invited_by: 'support@endeavorbiz.com', invited_at: iso(-35), accepted_at: iso(-34) },
@@ -2442,6 +2457,10 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
   INV(C2, null, null, null, [['Contabilidade mensal (outubro)', 450], ['Form 5472 + pro forma 1120', 450]], 'paid', 'none', 12, null);
   INV(C3, R7, P2, 10, [['Preparação Form 1120 + F-1120', 2000]], 'paid', 'pending', 15, 'Imposto corporativo');
   INV(C1, R1, P1, 15, [['Abertura de LLC (Lima Real Estate LLC)', 1500]], 'draft', 'scheduled', 1, 'Segunda empresa');
+  // sample: a referral whose package was closed at US$ 3,500 (the partner sees the service, the value and the commission)
+  var R9 = REF(P1, null, C9, 'Ricardo Mendes', 'ricardo.mendes@example.com', 'Mendes Participações', 'Start a U.S. Company', 'onboarding', 12, [['contacted', 11], ['proposal', 9], ['onboarding', 7]], [['Passaporte do sócio', 'approved'], ['Comprovante de endereço', 'received']]);
+  INV(C9, R9, P1, 15, [['Abertura de LLC na Flórida', 2500], ['EIN no IRS', 400], ['Registered Agent - 12 meses', 300], ['Operating Agreement', 300]], 'paid', 'pending', 7, 'Abertura de LLC na Flórida');
+  var INV9 = DB.invoices[DB.invoices.length - 1];
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
   // smart CRM: automations, partner onboarding (video, payout method), a partner prospect from the booking page
@@ -2482,6 +2501,9 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
       total_cents: 540000, currency: 'usd', terms: null, language: 'es', days_until_due: 7, partner_id: null, partner_pct: null, referral_id: null, status: 'draft', token: null, valid_until: null, sent_at: null, viewed_at: null, accepted_at: null, accepted_name: null, invoice_id: null, created_by: ADMIN.email }
   ];
   DB.invoices[3].proposal_id = 'f2000000-0000-4000-8000-000000000002';
+  DB.proposals.push({ id: 'f4000000-0000-4000-8000-000000000004', created_at: iso(-9), updated_at: iso(-7), client_id: C9, title: 'Abertura de LLC na Flórida', intro: null, included: [], items: INV9.items, total_cents: 350000, currency: 'usd', terms: null, language: 'pt', days_until_due: 7,
+    partner_id: P1, partner_pct: 15, referral_id: R9, status: 'accepted', token: 'demo0sample000000000000000000000000000000', valid_until: day(20), sent_at: iso(-9), viewed_at: iso(-8), accepted_at: iso(-7), accepted_name: 'Ricardo Mendes', invoice_id: INV9.id, created_by: ADMIN.email });
+  INV9.proposal_id = 'f4000000-0000-4000-8000-000000000004';
   var TPL = function (n, name, st, title, intro, inc, items, lang) { return { id: 'fa00000' + n + '-0000-4000-8000-00000000000' + n, created_at: iso(-60), updated_at: iso(-60), name: name, structure: st, language: lang || 'pt', title: title, intro: intro, included: inc,
     items: items.map(function (i) { return { description: i[0], amount_cents: i[1] == null ? null : i[1] * 100, quantity: i[2] || 1 }; }), terms: 'Pagamento pelo portal do cliente (cartão, Pix ou transferência bancária). Taxas do governo incluídas. Os serviços começam após a confirmação do pagamento.',
     days_until_due: 7, valid_days: 30, archived: false, created_by: ADMIN.email }; };
@@ -2825,6 +2847,13 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
+    else if (name === 'partner_referral_deals') {
+      var rr = PME && DB.referrals.find(function (x) { return x.id === args.p_referral && x.partner_id === PME.id; });
+      r = !rr ? [] : DB.proposals.filter(function (pr) { return pr.referral_id === rr.id && pr.status === 'accepted'; }).map(function (pr) { var iv = DB.invoices.find(function (i) { return i.id === pr.invoice_id; }) || {};
+        return { source: 'proposal', title: pr.title, total_cents: pr.total_cents, currency: pr.currency, partner_pct: iv.partner_pct != null ? iv.partner_pct : pr.partner_pct, commission_cents: iv.partner_amount_cents != null ? iv.partner_amount_cents : Math.round(pr.total_cents * (pr.partner_pct || 0) / 100), closed_at: pr.accepted_at, invoice_status: iv.status || null, transfer_status: iv.transfer_status || null }; })
+        .concat(DB.invoices.filter(function (i) { return i.referral_id === rr.id && !i.proposal_id && (i.status === 'open' || i.status === 'paid'); }).map(function (i) { return { source: 'invoice', title: i.description || i.number, total_cents: i.total_cents, currency: i.currency, partner_pct: i.partner_pct, commission_cents: i.partner_amount_cents || 0, closed_at: i.sent_at || i.created_at, invoice_status: i.status, transfer_status: i.transfer_status }; }))
+        .sort(function (a, b) { return new Date(a.closed_at) - new Date(b.closed_at); });
+    }
     else if (name === 'verify_my_password') r = !!args.p_password && args.p_password !== 'errada';
     else if (name === 'partner_sync_email') r = PME ? [JSON.parse(JSON.stringify(PME))] : [];
     else if (name === 'partner_update_profile' || name === 'partner_request_closure' || name === 'partner_cancel_closure') {
