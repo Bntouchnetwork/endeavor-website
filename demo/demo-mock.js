@@ -529,6 +529,7 @@
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
+    else if (name === 'partner_welcome_booking') { r = /[?&]booked=1/.test(location.search) ? [{ starts_at: iso(2, 14), ends_at: iso(2, 14, 30), meeting_type: 'video', manage_token: '00000000-0000-4000-8000-0000000000aa' }] : []; }
     else if (name === 'partner_set_payout' || name === 'partner_onboarding_mark' || name === 'partner_onboarding_check') {
       if (!PME) return Promise.resolve({ data: null, error: { message: 'forbidden' } });
       var row0 = DB.partners.find(function (x) { return x.id === PME.id; }) || PME;
