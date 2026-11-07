@@ -755,7 +755,7 @@
   }
 
   /* ================= notifications (bell in the top bar) ================= */
-  var EVK = { proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda', partner_new: 'Parceiros', partner_contract: 'Contrato' };
+  var EVK = { lead_chat: 'Chat do site', proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda', partner_new: 'Parceiros', partner_contract: 'Contrato' };
   function bell(ctx) {
     var host = document.getElementById('topbar-user'); if (!host || document.getElementById('notif-btn')) return;
     var btn = document.createElement('button'); btn.type = 'button'; btn.id = 'notif-btn'; btn.className = 'notif-btn'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');

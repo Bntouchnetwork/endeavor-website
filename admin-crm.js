@@ -178,8 +178,9 @@
     var sb = ctx.sb, esc = ctx.esc;
     var res = await Promise.all([sb.from('crm_settings').select('*').eq('id', 1).single(), call(ctx, { action: 'status' }).catch(function () { return {}; }),
       sb.from('partners').select('*').neq('status', 'suspended').is('onboarding_done_at', null).order('invited_at', { ascending: false }),
-      sb.from('agent_messages').select('partner_id, created_at, channel, role, content, meta, partners(name)').order('created_at', { ascending: false }).limit(200)]);
-    var s = res[0].data || {}, st = res[1] || {}, onb = res[2].data || [], msgs = res[3].data || [];
+      sb.from('agent_messages').select('partner_id, created_at, channel, role, content, meta, partners(name)').order('created_at', { ascending: false }).limit(200),
+      sb.from('site_chats').select('id, created_at, updated_at, language, messages, handoff, lead_id, leads(name, email)').gt('messages', 0).order('updated_at', { ascending: false }).limit(15)]);
+    var s = res[0].data || {}, st = res[1] || {}, onb = res[2].data || [], msgs = res[3].data || [], chats = res[4].data || [];
     var last = {}; msgs.forEach(function (m) { if (m.partner_id && !last[m.partner_id]) last[m.partner_id] = m; });
     var convs = Object.keys(last).map(function (k) { return last[k]; }).slice(0, 12);
     var chip = function (on, a, b) { return '<span class="pill' + (on ? ' pill--on' : '') + '">' + (on ? a : b) + '</span>'; };
@@ -194,6 +195,12 @@
         '<div class="portal-grid2"><div class="field"><label for="ag-stuck">Lembrar após (dias sem avanço)</label><input id="ag-stuck" type="number" min="1" max="14" value="' + (s.agent_stuck_days || 2) + '"></div>' +
         '<div class="field"><label for="ag-esc">Avisar a equipe após (dias)</label><input id="ag-esc" type="number" min="2" max="30" value="' + (s.agent_escalate_days || 6) + '"></div></div>' +
         '<div class="portal-alert" id="ag-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy btn--xs" type="submit">Salvar</button><button class="btn btn--ghost btn--xs" type="button" id="ag-run">Rodar agora</button><a class="btn btn--ghost btn--xs" href="#/crm?auto=1">Vídeo e automações</a></div></form></section>' +
+      '<section class="portal-card ag-card ag-card--on"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-users"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente de Vendas</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Chat do site com IA: tira dúvidas e capta pedidos de proposta</p></div></div>' +
+        '<p class="mk-status">' + chip(st.ai, 'IA ativa', 'IA não configurada') + ' ' + chip(s.site_chat_enabled !== false, 'No ar no site', 'Desligado') + '</p>' +
+        '<ul class="ag-does"><li>Responde sobre os serviços e o Programa de Parceiros, em português, inglês e espanhol.</li><li>Não informa preços: oferece enviar a proposta por e-mail.</li><li>Quem deixa nome e e-mail vira lead no CRM, e você recebe aviso no sino e por e-mail.</li></ul>' +
+        '<form class="portal-form" id="sc-f" novalidate><div class="check-row"><input type="checkbox" id="sc-on"' + (s.site_chat_enabled !== false ? ' checked' : '') + '><label for="sc-on">Chat no site ligado</label></div>' +
+        '<div class="field"><label for="sc-sec">Abrir o balão sozinho após (segundos, 0 = nunca)</label><input id="sc-sec" type="number" min="0" max="120" value="' + (s.site_chat_popup_seconds == null ? 8 : s.site_chat_popup_seconds) + '"></div>' +
+        '<div class="portal-alert" id="sc-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy btn--xs" type="submit">Salvar</button><a class="btn btn--ghost btn--xs" href="https://endeavorbiz.com/" target="_blank" rel="noopener">Ver no site</a></div></form></section>' +
       '<section class="portal-card ag-card"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-card"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Billing</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Faturas, cobranças e comissões</p></div></div><span class="pill">Em breve</span>' +
         '<ul class="ag-does"><li>Lembra o cliente de faturas em aberto.</li><li>Confirma pagamentos e repasses aos parceiros.</li><li>Avisa a equipe sobre falhas de pagamento.</li></ul></section>' +
       '<section class="portal-card ag-card"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-mail"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Marketing</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Campanhas e prospecção</p></div></div><span class="pill">Em breve</span>' +
@@ -204,6 +211,9 @@
           return '<tr data-p="' + p.id + '" tabindex="0"><td><strong>' + esc(p.name) + '</strong><span class="sub">' + esc([p.email, p.phone].filter(Boolean).join(' · ')) + '</span></td><td>' + esc(STEP_PT[stp] || 'Ativando…') + '</td><td class="num">' + d + '</td><td class="num">' + (p.agent_nudges || 0) + '</td>' +
             '<td>' + (p.agent_escalated_at ? '<span class="badge badge--lost">Precisa de contato</span>' : d >= (s.agent_stuck_days || 2) ? '<span class="badge badge--contacted">Travado</span>' : '<span class="badge badge--client">Em dia</span>') + '</td></tr>';
         }).join('') + '</tbody></table></div>' : '<p class="empty">Nenhum parceiro em onboarding agora.</p>') + '</section>' +
+      '<section class="portal-card"><h2 class="portal-h2">Conversas do chat do site</h2>' +
+        (chats.length ? '<ul class="list">' + chats.map(function (c) { return '<li class="ag-conv" data-sc="' + c.id + '" tabindex="0"><div class="list__main"><strong>' + esc(c.leads ? c.leads.name : 'Visitante') + '</strong><span>' + esc(ctx.fmtDT(c.updated_at)) + ' · ' + c.messages + ' mensagem(ns) · ' + esc(String(c.language || '').toUpperCase()) + (c.leads ? ' · ' + esc(c.leads.email) : '') + '</span></div>' +
+          (c.lead_id ? '<span class="badge badge--client">Pediu proposta</span>' : c.handoff ? '<span class="badge badge--lost">Pediu a equipe</span>' : '') + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhuma conversa no site ainda.</p>') + '</section>' +
       '<section class="portal-card"><h2 class="portal-h2">Conversas recentes</h2>' +
         (convs.length ? '<ul class="list">' + convs.map(function (m) { return '<li class="ag-conv" data-p="' + m.partner_id + '" tabindex="0"><div class="list__main"><strong>' + esc(m.partners ? m.partners.name : '') + '</strong><span>' + esc(({ portal: 'Chat do portal', whatsapp: 'WhatsApp', email: 'E-mail do agente', system: 'Sistema' })[m.channel]) + ' · ' + esc(ctx.fmtDT(m.created_at)) + ' · ' + esc(String(m.content).slice(0, 110)) + '</span></div>' + (m.meta && m.meta.handoff ? '<span class="badge badge--lost">Pediu a equipe</span>' : '') + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhuma conversa ainda.</p>') + '</section>';
     var m = ctx.$('#ag-m');
@@ -213,9 +223,29 @@
       var r = await sb.from('crm_settings').update({ agent_enabled: ctx.$('#ag-on').checked, agent_chat_enabled: ctx.$('#ag-chat').checked, agent_stuck_days: a, agent_escalate_days: b, updated_at: new Date().toISOString() }).eq('id', 1);
       ctx.msg(m, r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
     };
+    ctx.$('#sc-f').onsubmit = async function (e) {
+      e.preventDefault();
+      var sec = Math.max(0, Math.min(120, Math.round(+ctx.$('#sc-sec').value || 0)));
+      var r = await sb.from('crm_settings').update({ site_chat_enabled: ctx.$('#sc-on').checked, site_chat_popup_seconds: sec, updated_at: new Date().toISOString() }).eq('id', 1);
+      ctx.msg(ctx.$('#sc-m'), r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
+    };
+    view.querySelectorAll('[data-sc]').forEach(function (el) { var go = function () { siteChat(ctx, el.dataset.sc); }; el.onclick = go; el.onkeydown = function (e) { if (e.key === 'Enter') go(); }; });
     ctx.$('#ag-run').onclick = async function () { var b = this; b.disabled = true; ctx.msg(m, 'Rodando…', 'info'); try { var r = await call(ctx, { action: 'run_now' }); ctx.msg(m, 'Pronto: ' + (r.agent || 0) + ' lembrete(s) do agente, ' + (r.escalated || 0) + ' aviso(s) à equipe, ' + (r.activated || 0) + ' conta(s) ativada(s).', 'ok'); } catch (x) { ctx.msg(m, err(ctx, x), 'error'); } b.disabled = false; };
     view.querySelectorAll('[data-p]').forEach(function (el) { var go = function () { conversation(ctx, el.dataset.p); }; el.onclick = go; el.onkeydown = function (e) { if (e.key === 'Enter') go(); }; });
     var pq = (ERoute.get().match(/[?&]partner=([0-9a-f-]{36})/) || [])[1]; if (pq) conversation(ctx, pq);
+  }
+  async function siteChat(ctx, id) {
+    var sb = ctx.sb, esc = ctx.esc;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Chat do site</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div><div id="scv-b"><p class="portal-muted">Carregando…</p></div>');
+    var res = await Promise.all([sb.from('site_chats').select('*, leads(id, name, email, phone)').eq('id', id).single(), sb.from('site_chat_messages').select('*').eq('chat_id', id).order('created_at').limit(200)]);
+    var c = res[0].data, list = res[1].data || [];
+    if (!c) { ctx.$('#scv-b', o).innerHTML = '<p class="empty">Conversa não encontrada.</p>'; return; }
+    ctx.$('#scv-b', o).innerHTML = '<p class="mk-status"><span class="pill">' + esc(ctx.fmtDT(c.created_at)) + '</span> <span class="pill">' + esc(String(c.language || '').toUpperCase()) + '</span>' + (c.page ? ' <span class="pill">' + esc(c.page) + '</span>' : '') +
+      (c.leads ? ' <a href="#/crm?id=' + c.leads.id + '">Abrir lead: ' + esc(c.leads.name) + '</a>' : '') + '</p>' +
+      '<div class="ch-log ag-log">' + list.map(function (x) {
+        if (x.role === 'system') return '<div class="ag-sys">' + esc(x.content) + ' · ' + esc(ctx.fmtDT(x.created_at)) + '</div>';
+        return '<div class="ch-msg ch-msg--' + (x.role === 'user' ? 'bot' : 'me') + '"><small>' + (x.role === 'user' ? 'Visitante' : 'Assistente') + ' · ' + esc(ctx.fmtDT(x.created_at)) + '</small>' + esc(x.content).replace(/\n/g, '<br>') + '</div>';
+      }).join('') + '</div>';
   }
   async function conversation(ctx, pid) {
     var sb = ctx.sb, esc = ctx.esc;

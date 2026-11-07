@@ -16,7 +16,7 @@
   var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', client: 'Cliente', partner: 'Virou parceiro', lost: 'Perdido',
     sent: 'Enviado', viewed: 'Visualizado', signed: 'Assinado', voided: 'Anulado', expired: 'Expirado',
     confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído', no_show: 'Não compareceu' };
-  var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro' };
+  var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro', chat: 'Chat do site' };
   var MEET_PT = { video: 'Vídeo', phone: 'Telefone', whatsapp: 'WhatsApp' };
   function badge(s) { return '<span class="badge badge--' + esc(s) + '">' + esc(STATUS_PT[s] || s) + '</span>'; }
   function tz() { return (state.settings && state.settings.timezone) || 'America/New_York'; }
@@ -359,7 +359,7 @@
       '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar">' +
       '<select id="crm-kind" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>' + Object.keys(KIND_PT).map(function (k) { return '<option value="' + k + '">' + KIND_PT[k] + '</option>'; }).join('') + '</select>' +
       '<select id="crm-status" aria-label="Filtrar por status"></select>' +
-      '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="partner">Parceiro</option></select></div>' +
+      '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="chat">Chat do site</option><option value="partner">Parceiro</option></select></div>' +
       '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência / empresas</th><th>Origem</th><th>Tipo e status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
     function fillStatus() {
       var k = $('#crm-kind').value, cur = $('#crm-status').value;

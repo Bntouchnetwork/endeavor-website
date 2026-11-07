@@ -155,7 +155,7 @@
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
   // smart CRM: automations, partner onboarding (video, payout method), a partner prospect from the booking page
-  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30), agent_enabled: true, agent_chat_enabled: true, agent_stuck_days: 2, agent_escalate_days: 6 }];
+  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30), agent_enabled: true, agent_chat_enabled: true, agent_stuck_days: 2, agent_escalate_days: 6, site_chat_enabled: true, site_chat_popup_seconds: 8 }];
   Object.assign(DB.partners[0], { payout_method: 'stripe', payout_country: 'US', onboarding_done_at: iso(-50), video_seen_at: iso(-55) });
   Object.assign(DB.partners[1], { payout_method: 'global_payouts', payout_country: 'BR', global_payouts_status: 'requested', pix_key: 'marcos@example.com', pix_key_type: 'email' });
   Object.assign(DB.partners[3], { payout_method: null, global_payouts_status: 'none', default_share_pct: 10, accepted_at: iso(-4), onboarding_step_at: iso(-3), agent_nudges: 1, agent_last_nudge_at: iso(-1) });
@@ -169,6 +169,18 @@
     return row;
   };
   DB.leads.push(Object.assign(L('b9000000-0000-4000-8000-000000000009', 'Fernanda Albuquerque', 'fernanda.alb@example.com', '+55 11 97777-4321', 'Brazil', 'Albuquerque Imóveis', 'Partner Program', 'Sou corretora em São Paulo e tenho clientes querendo investir em Orlando.', 'booking', 'new', 3, 'pt'), { kind: 'partner' }));
+  // website chat (sales agent): one visitor asked for a proposal, another only had questions
+  DB.leads.push(L('ba000000-0000-4000-8000-00000000000a', 'Rafael Nogueira', 'rafael.nogueira@example.com', '+5531988776655', null, null, 'Abertura de empresa (LLC/Corp)', 'Pediu proposta pelo chat do site.\n\nVisitante: Quero abrir uma LLC na Flórida para vender meus serviços de software para clientes americanos.\nAssistente: Ótimo! Abrimos LLCs na Flórida para donos estrangeiros, com EIN, Registered Agent e Operating Agreement, tudo remoto. Você já tem sócio?\nVisitante: Sou só eu. Quanto custa?\nAssistente: O valor depende do seu caso. Posso pedir para a equipe enviar uma proposta personalizada por e-mail?', 'chat', 'new', 0, 'pt'));
+  DB.site_chats = [{ id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9), updated_at: iso(0, 9, 6), ip_hash: 'demo', language: 'pt', page: '/', lead_id: 'ba000000-0000-4000-8000-00000000000a', messages: 2, handoff: false },
+    { id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16), updated_at: iso(-1, 16, 3), ip_hash: 'demo', language: 'en', page: '/partners.html', lead_id: null, messages: 1, handoff: false }];
+  DB.site_chat_messages = [
+    { id: 1, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 1), role: 'user', content: 'Quero abrir uma LLC na Flórida para vender meus serviços de software para clientes americanos.' },
+    { id: 2, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 1), role: 'assistant', content: 'Ótimo! Abrimos LLCs na Flórida para donos estrangeiros, com EIN, Registered Agent e Operating Agreement, tudo remoto. Você já tem sócio?' },
+    { id: 3, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 4), role: 'user', content: 'Sou só eu. Quanto custa?' },
+    { id: 4, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 4), role: 'assistant', content: 'O valor depende do seu caso. Posso pedir para a equipe enviar uma proposta personalizada por e-mail?' },
+    { id: 5, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 6), role: 'system', content: 'Contato deixado: Rafael Nogueira <rafael.nogueira@example.com> · +5531988776655' },
+    { id: 6, chat_id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16, 2), role: 'user', content: 'How does the commission work for realtors?' },
+    { id: 7, chat_id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16, 2), role: 'assistant', content: 'You earn a commission on the invoices paid by the clients you refer (standard 10%, set in your partner agreement). No cost to join and no minimum. Want to sign up?' }];
   DB.bookings.push({ id: uuid(), lead_id: 'b9000000-0000-4000-8000-000000000009', starts_at: iso(-1, 15), ends_at: iso(-1, 15, 30), name: 'Fernanda Albuquerque', email: 'fernanda.alb@example.com', phone: '+5511977774321', topic: 'Partner Program', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-3) });
   DB.crm_messages = [
     { id: 1, created_at: iso(-2, 11), kind: 'referral_contacted', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Pedro Alves: Em contato', status: 'sent', sent_at: iso(-2, 11) },

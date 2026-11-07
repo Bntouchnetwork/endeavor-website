@@ -967,8 +967,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .ch-form textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 
 /* admin: AI agents */
-.ag-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
-@media (max-width: 1199.98px) { .ag-grid { grid-template-columns: 1fr 1fr; } .ag-card--on { grid-column: 1 / -1; } }
+.ag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
 @media (max-width: 699.98px) { .ag-grid { grid-template-columns: 1fr; } }
 .ag-grid > .portal-card { margin: 0; }
 .ag-card__head { display: flex; gap: .75rem; align-items: center; margin-bottom: .6rem; }

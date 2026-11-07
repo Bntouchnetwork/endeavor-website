@@ -948,6 +948,97 @@ html.a11y-contrast .wa-float { background: #000; border: 2px solid #fff; }
 .a11y, .wa-float { transition: bottom .3s var(--ease), transform .2s var(--ease), background-color .2s var(--ease); }
 html.fab-raise .a11y, html.fab-raise .wa-float { bottom: calc(var(--fab-raise, 5rem) + 0.75rem); }
 
+/* ---------- Website assistant (AI chat, bottom-right; WhatsApp button moves above it) ---------- */
+.sc { --sc-navy: var(--navy-900, #0b1f3a); --sc-gold: var(--gold, #c8a45d); font-family: var(--font-sans); }
+body.has-sc .wa-float { bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 4.5rem); width: 3.25rem; height: 3.25rem; }
+body.has-sc .wa-float__icon { width: 1.6rem; height: 1.6rem; }
+.sc-launch { position: fixed; z-index: 210; right: max(0.75rem, env(safe-area-inset-right)); bottom: max(0.75rem, env(safe-area-inset-bottom));
+  width: 3.75rem; height: 3.75rem; border-radius: 50%; border: 0; cursor: pointer; color: #fff;
+  background: radial-gradient(120% 120% at 30% 20%, #1d4e89 0%, var(--sc-navy) 60%); box-shadow: 0 12px 30px rgb(7 22 43 / .35), inset 0 0 0 2px rgb(200 164 93 / .55);
+  display: grid; place-items: center; opacity: 0; transform: scale(.6); transition: opacity .3s var(--ease, ease), transform .3s var(--ease, ease), box-shadow .2s; }
+.sc.is-ready .sc-launch { opacity: 1; transform: none; }
+.sc-launch:hover { box-shadow: 0 14px 34px rgb(7 22 43 / .42), inset 0 0 0 2px var(--sc-gold); transform: translateY(-2px); }
+.sc-launch:focus-visible, .sc-icon-btn:focus-visible, .sc-chip:focus-visible, .sc-send:focus-visible, .sc-btn:focus-visible, .sc-teaser button:focus-visible { outline: 3px solid var(--focus, #2f6fdb); outline-offset: 2px; }
+.sc-launch__i { grid-area: 1 / 1; display: grid; transition: transform .25s, opacity .2s; }
+.sc-launch__i--x { opacity: 0; transform: rotate(-90deg) scale(.6); }
+.sc.is-open .sc-launch__i--chat { opacity: 0; transform: rotate(90deg) scale(.6); }
+.sc.is-open .sc-launch__i--x { opacity: 1; transform: none; }
+.sc-badge { position: absolute; top: -2px; right: -2px; min-width: 1.25rem; height: 1.25rem; border-radius: 999px; background: #d92d20; color: #fff; font: 700 .72rem/1.25rem var(--font-sans); text-align: center; box-shadow: 0 0 0 2px #fff; }
+.sc-teaser { position: fixed; z-index: 209; right: max(0.75rem, env(safe-area-inset-right)); bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 4.6rem); width: min(19rem, calc(100vw - 1.5rem));
+  animation: sc-pop .35s var(--ease, ease) both; }
+body.has-sc .sc-teaser:not([hidden]) ~ .sc-launch { animation: sc-pulse 2s ease-out 2; }
+.sc-teaser__body { display: flex; gap: .65rem; align-items: flex-start; width: 100%; text-align: left; padding: .85rem 1rem; border: 1px solid var(--line, #dce1e9); border-radius: 16px 16px 4px 16px; background: #fff; color: var(--ink, #14213d);
+  font: 500 .92rem/1.45 var(--font-sans); box-shadow: 0 16px 40px rgb(7 22 43 / .2); cursor: pointer; }
+.sc-teaser__x { position: absolute; top: -.6rem; left: -.6rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; border: 1px solid var(--line, #dce1e9); background: #fff; color: var(--muted, #55627a); display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 10px rgb(7 22 43 / .15); }
+.sc-teaser__x svg { width: 14px; height: 14px; }
+.sc-av { position: relative; flex: none; width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center; background: var(--sc-navy); color: var(--sc-gold); font: 600 1.15rem/1 var(--font-serif); box-shadow: inset 0 0 0 2px rgb(200 164 93 / .6); }
+.sc-av--sm { width: 2rem; height: 2rem; font-size: 1rem; }
+.sc-dot { position: absolute; right: 0; bottom: 0; width: .65rem; height: .65rem; border-radius: 50%; background: #2fb766; box-shadow: 0 0 0 2px var(--sc-navy); }
+.sc-panel { position: fixed; z-index: 211; right: max(0.75rem, env(safe-area-inset-right)); bottom: calc(max(0.75rem, env(safe-area-inset-bottom)) + 4.6rem);
+  width: min(24rem, calc(100vw - 1.5rem)); height: min(38rem, calc(100vh - 7rem)); height: min(38rem, calc(100dvh - 7rem)); display: flex; flex-direction: column;
+  background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 24px 60px rgb(7 22 43 / .3), 0 0 0 1px rgb(7 22 43 / .06); animation: sc-pop .28s var(--ease, ease) both; transform-origin: bottom right; }
+.sc-panel[hidden], .sc-teaser[hidden] { display: none; }
+.sc-head { display: flex; align-items: center; gap: .7rem; padding: .9rem 1rem; background: linear-gradient(135deg, var(--sc-navy) 0%, #12305a 100%); color: #fff; }
+.sc-head__t { flex: 1; min-width: 0; }
+.sc-head h2 { margin: 0; font: 600 1.05rem/1.2 var(--font-serif); color: #fff; }
+.sc-head p { margin: .1rem 0 0; font-size: .78rem; color: var(--on-dark-muted, #a9b6ca); }
+.sc-icon-btn { flex: none; display: grid; place-items: center; min-width: 2.25rem; height: 2.25rem; border-radius: 10px; border: 0; background: rgb(255 255 255 / .08); color: #fff; cursor: pointer; }
+.sc-icon-btn:hover { background: rgb(255 255 255 / .16); }
+.sc-restart { padding: 0 .6rem; font: 500 .74rem/1 var(--font-sans); color: var(--on-dark, #e8edf5); }
+.sc-log { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1rem; display: flex; flex-direction: column; gap: .55rem; background: var(--gray-50, #f5f7fa); scrollbar-width: thin; }
+.sc-msg { max-width: 86%; padding: .6rem .85rem; border-radius: 16px; font-size: .9rem; line-height: 1.5; overflow-wrap: anywhere; animation: sc-in .22s ease-out both; }
+.sc-msg--bot { align-self: flex-start; background: #fff; color: var(--ink, #14213d); border: 1px solid var(--line, #dce1e9); border-bottom-left-radius: 4px; }
+.sc-msg--me { align-self: flex-end; background: var(--sc-navy); color: #fff; border-bottom-right-radius: 4px; }
+.sc-msg a { color: var(--blue-700, #1d4e89); font-weight: 600; }
+.sc-msg--ok { background: #e9f6ee; border-color: #b7e0c4; color: #14532d; }
+.sc-msg--err { background: #fef3f2; border-color: #f4c7c3; color: var(--error, #b42318); }
+.sc-msg--cta, .sc-msg--form { background: transparent; border: 0; padding: 0; max-width: 100%; }
+.sc-msg--form { width: 100%; }
+.sc-msg.is-restored { animation: none; }
+.sc-cta { display: inline-flex; align-items: center; gap: .3rem; padding: .55rem .95rem; border-radius: 999px; background: var(--sc-navy); color: #fff !important; font: 600 .86rem/1.2 var(--font-sans); text-decoration: none; box-shadow: inset 0 0 0 1.5px var(--sc-gold); }
+.sc-cta:hover { background: #12305a; }
+.sc-typing { display: inline-flex; gap: .25rem; padding: .2rem 0; }
+.sc-typing i { width: .45rem; height: .45rem; border-radius: 50%; background: #9aa6b8; animation: sc-dot 1.2s infinite ease-in-out; }
+.sc-typing i:nth-child(2) { animation-delay: .15s; } .sc-typing i:nth-child(3) { animation-delay: .3s; }
+.sc-chips { display: flex; flex-wrap: wrap; gap: .4rem; padding: .6rem 1rem 0; background: var(--gray-50, #f5f7fa); }
+.sc-chips[hidden] { display: none; }
+.sc-chip { padding: .42rem .75rem; border-radius: 999px; border: 1px solid #c9d3e2; background: #fff; color: var(--navy-800, #12305a); font: 500 .8rem/1.2 var(--font-sans); cursor: pointer; transition: background .15s, border-color .15s; }
+.sc-chip:hover { border-color: var(--sc-gold); background: #fffaf0; }
+.sc-form { display: flex; align-items: flex-end; gap: .5rem; padding: .7rem .8rem; border-top: 1px solid var(--line, #dce1e9); background: #fff; }
+.sc-form textarea { flex: 1; resize: none; min-height: 2.6rem; max-height: 7.5rem; padding: .6rem .8rem; border: 1px solid #c9d3e2; border-radius: 14px; font: 400 .92rem/1.4 var(--font-sans); color: var(--ink, #14213d); background: #fff; }
+.sc-form textarea:focus { outline: 2px solid var(--focus, #2f6fdb); outline-offset: 0; border-color: transparent; }
+.sc-send { flex: none; width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 0; background: var(--sc-navy); color: var(--sc-gold); display: grid; place-items: center; cursor: pointer; }
+.sc-send:disabled { opacity: .5; cursor: default; }
+.sc-foot { margin: 0; padding: 0 .9rem .6rem; background: #fff; font-size: .7rem; line-height: 1.35; color: var(--muted, #55627a); text-align: center; }
+.sc-lead { display: grid; gap: .45rem; padding: .9rem; border-radius: 16px; background: #fff; border: 1px solid #e6d7ae; box-shadow: 0 6px 18px rgb(7 22 43 / .08); font-size: .86rem; }
+.sc-lead strong { font: 600 1rem/1.25 var(--font-serif); color: var(--ink, #14213d); }
+.sc-lead p { margin: 0; color: var(--muted, #55627a); }
+.sc-lead label { display: grid; gap: .15rem; font-weight: 600; font-size: .78rem; color: var(--ink, #14213d); }
+.sc-lead input, .sc-lead select { min-height: 2.35rem; padding: .35rem .6rem; border: 1px solid #c9d3e2; border-radius: 10px; font: 400 .9rem var(--font-sans); background: #fff; color: var(--ink, #14213d); }
+.sc-lead__err { margin: 0; color: var(--error, #b42318); font-size: .8rem; min-height: 0; }
+.sc-lead__err:empty { display: none; }
+.sc-lead__btns { display: flex; flex-wrap: wrap; gap: .45rem; }
+.sc-btn { padding: .6rem 1rem; border-radius: 999px; border: 0; background: var(--sc-navy); color: #fff; font: 600 .85rem/1.2 var(--font-sans); cursor: pointer; }
+.sc-btn--ghost { background: transparent; color: var(--muted, #55627a); box-shadow: inset 0 0 0 1px #c9d3e2; }
+.sc-btn:disabled { opacity: .6; }
+.sc-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.sc-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@keyframes sc-pop { from { opacity: 0; transform: translateY(12px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes sc-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@keyframes sc-dot { 0%, 80%, 100% { transform: scale(.6); opacity: .5; } 40% { transform: scale(1); opacity: 1; } }
+@keyframes sc-pulse { 0% { box-shadow: 0 0 0 0 rgb(200 164 93 / .55), 0 12px 30px rgb(7 22 43 / .35); } 100% { box-shadow: 0 0 0 18px rgb(200 164 93 / 0), 0 12px 30px rgb(7 22 43 / .35); } }
+@media (max-width: 600px) {
+  .sc-panel { inset: 0; width: 100%; height: 100%; height: 100dvh; border-radius: 0; animation-name: sc-in; }
+  .sc.is-open .sc-launch { display: none; }
+  body.sc-lock { overflow: hidden; }
+  .sc-msg { max-width: 90%; }
+}
+@media (prefers-reduced-motion: reduce) { .sc *, .sc-launch { animation: none !important; transition: none !important; } }
+html.a11y-motion .sc *, html.a11y-motion .sc-launch { animation: none !important; transition: none !important; }
+html.a11y-contrast .sc-launch, html.a11y-contrast .sc-head, html.a11y-contrast .sc-msg--me, html.a11y-contrast .sc-send, html.a11y-contrast .sc-btn { background: #000; color: #fff; }
+@media print { .sc { display: none !important; } }
+body.sc-open .wa-float { display: none; }
+
 /* Endeavor portal (admin console, scheduling, e-signature). Builds on the tokens in styles.css. */
 body.portal { background: var(--gray-50); min-height: 100vh; }
 .portal-top {
@@ -1917,8 +2008,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .ch-form textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
 
 /* admin: AI agents */
-.ag-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
-@media (max-width: 1199.98px) { .ag-grid { grid-template-columns: 1fr 1fr; } .ag-card--on { grid-column: 1 / -1; } }
+.ag-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
 @media (max-width: 699.98px) { .ag-grid { grid-template-columns: 1fr; } }
 .ag-grid > .portal-card { margin: 0; }
 .ag-card__head { display: flex; gap: .75rem; align-items: center; margin-bottom: .6rem; }
@@ -2464,7 +2554,7 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
   // smart CRM: automations, partner onboarding (video, payout method), a partner prospect from the booking page
-  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30), agent_enabled: true, agent_chat_enabled: true, agent_stuck_days: 2, agent_escalate_days: 6 }];
+  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30), agent_enabled: true, agent_chat_enabled: true, agent_stuck_days: 2, agent_escalate_days: 6, site_chat_enabled: true, site_chat_popup_seconds: 8 }];
   Object.assign(DB.partners[0], { payout_method: 'stripe', payout_country: 'US', onboarding_done_at: iso(-50), video_seen_at: iso(-55) });
   Object.assign(DB.partners[1], { payout_method: 'global_payouts', payout_country: 'BR', global_payouts_status: 'requested', pix_key: 'marcos@example.com', pix_key_type: 'email' });
   Object.assign(DB.partners[3], { payout_method: null, global_payouts_status: 'none', default_share_pct: 10, accepted_at: iso(-4), onboarding_step_at: iso(-3), agent_nudges: 1, agent_last_nudge_at: iso(-1) });
@@ -2478,6 +2568,18 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
     return row;
   };
   DB.leads.push(Object.assign(L('b9000000-0000-4000-8000-000000000009', 'Fernanda Albuquerque', 'fernanda.alb@example.com', '+55 11 97777-4321', 'Brazil', 'Albuquerque Imóveis', 'Partner Program', 'Sou corretora em São Paulo e tenho clientes querendo investir em Orlando.', 'booking', 'new', 3, 'pt'), { kind: 'partner' }));
+  // website chat (sales agent): one visitor asked for a proposal, another only had questions
+  DB.leads.push(L('ba000000-0000-4000-8000-00000000000a', 'Rafael Nogueira', 'rafael.nogueira@example.com', '+5531988776655', null, null, 'Abertura de empresa (LLC/Corp)', 'Pediu proposta pelo chat do site.\n\nVisitante: Quero abrir uma LLC na Flórida para vender meus serviços de software para clientes americanos.\nAssistente: Ótimo! Abrimos LLCs na Flórida para donos estrangeiros, com EIN, Registered Agent e Operating Agreement, tudo remoto. Você já tem sócio?\nVisitante: Sou só eu. Quanto custa?\nAssistente: O valor depende do seu caso. Posso pedir para a equipe enviar uma proposta personalizada por e-mail?', 'chat', 'new', 0, 'pt'));
+  DB.site_chats = [{ id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9), updated_at: iso(0, 9, 6), ip_hash: 'demo', language: 'pt', page: '/', lead_id: 'ba000000-0000-4000-8000-00000000000a', messages: 2, handoff: false },
+    { id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16), updated_at: iso(-1, 16, 3), ip_hash: 'demo', language: 'en', page: '/partners.html', lead_id: null, messages: 1, handoff: false }];
+  DB.site_chat_messages = [
+    { id: 1, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 1), role: 'user', content: 'Quero abrir uma LLC na Flórida para vender meus serviços de software para clientes americanos.' },
+    { id: 2, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 1), role: 'assistant', content: 'Ótimo! Abrimos LLCs na Flórida para donos estrangeiros, com EIN, Registered Agent e Operating Agreement, tudo remoto. Você já tem sócio?' },
+    { id: 3, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 4), role: 'user', content: 'Sou só eu. Quanto custa?' },
+    { id: 4, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 4), role: 'assistant', content: 'O valor depende do seu caso. Posso pedir para a equipe enviar uma proposta personalizada por e-mail?' },
+    { id: 5, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 6), role: 'system', content: 'Contato deixado: Rafael Nogueira <rafael.nogueira@example.com> · +5531988776655' },
+    { id: 6, chat_id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16, 2), role: 'user', content: 'How does the commission work for realtors?' },
+    { id: 7, chat_id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16, 2), role: 'assistant', content: 'You earn a commission on the invoices paid by the clients you refer (standard 10%, set in your partner agreement). No cost to join and no minimum. Want to sign up?' }];
   DB.bookings.push({ id: uuid(), lead_id: 'b9000000-0000-4000-8000-000000000009', starts_at: iso(-1, 15), ends_at: iso(-1, 15, 30), name: 'Fernanda Albuquerque', email: 'fernanda.alb@example.com', phone: '+5511977774321', topic: 'Partner Program', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-3) });
   DB.crm_messages = [
     { id: 1, created_at: iso(-2, 11), kind: 'referral_contacted', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Pedro Alves: Em contato', status: 'sent', sent_at: iso(-2, 11) },
