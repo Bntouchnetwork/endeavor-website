@@ -7,6 +7,7 @@
     'Start Operations in Paraguay', 'Business Financing', 'Real Estate Structure', 'Family Office', 'Other Business Services'];
   var D = {
     en: {
+      o_pixKey: 'Key', o_nav: 'Start here', o_title: 'Welcome to the Partner Program', o_lead: 'Watch the video and follow the steps to activate your account.', o_noVideo: 'The welcome video will be here soon.', o_seen: 'I watched it', o_steps: 'Steps to activate your account', o_s1: 'Portal access', o_s1d: 'Password and two-step verification are on.', o_s2: 'Watch the welcome video', o_s2d: 'How to refer, follow each client and get paid.', o_s3: 'How you get paid', o_s3d: 'Choose the country of the bank account that will receive your commissions.', o_country: 'Country of your bank account', o_us: 'You get paid through Stripe: your share goes automatically to your Stripe account when the client pays.', o_gp: 'For bank accounts in Brazil and Latin America, Endeavor sends your commission through Stripe Global Payouts after the client pays. You will receive a Stripe link by email to add your bank. Endeavor never sees these details.', o_pix: 'Pix key (optional)', o_pixNote: 'For Pix payouts, coming soon. Use an email, mobile number or random key (not your CPF).', o_pixType: 'Key type', pt_email: 'Email', pt_phone: 'Mobile', pt_random: 'Random key', o_save: 'Save', o_saved: 'Saved.', o_gpRequested: 'Request received: you will get the Stripe link by email to add your bank.', o_gpLink: 'Link sent: check your email to add your bank.', o_gpReady: 'All set to receive.', o_s4: 'Partner agreement', o_s4none: 'We send it after the onboarding call.', o_s5: 'Account activated', o_s5d: 'After approval you can start referring clients.', o_s5wait: 'Waiting for Endeavor approval.', o_done: 'All set! Your account is active.', o_tour: 'Get to know the portal', o_t1: 'Send a client\'s contact in under a minute.', o_t2: 'Follow each client step by step. You also get an email at every step.', o_t3: 'See what you have earned and what is coming.', o_t4: 'Your Stripe account and payout status.', o_banner: 'Almost there: finish your onboarding to start referring.', o_continue: 'Continue', e_pix: 'Invalid Pix key for the selected type.', o_change: 'Change',
       w_title: 'Welcome! Your registration is under review', w_lead: 'Follow the steps below. After the onboarding call we approve your account and send the partner agreement.', w_s1: 'Portal access created', w_s1d: 'Password and two-step verification are on.', w_s2: 'Create your Stripe account', w_s2d: 'This is where you receive your commissions.', w_s2ok: 'Your Stripe account is enabled to receive payouts.', w_s2rev: 'Stripe is reviewing your details.', w_s2btn: 'Create my Stripe account', w_need: 'Have at hand:', need1: 'A photo ID', need2: 'Your bank account details', need3: 'Your tax number: SSN, ITIN or EIN (if you are in the U.S.)', w_needNote: 'You enter everything directly with Stripe. Endeavor does not receive these details. Stripe also collects your tax form (W-9 or W-8) and issues Form 1099 when required.', w_s3: 'Onboarding call', w_s3none: 'We will agree on a time with you.', w_s4: 'Approval and agreement', w_s4d: 'We set your commission and you sign the partner agreement online.', pct_tbd: 'To be defined', ref_pending: 'You can send referrals as soon as your account is approved, after the onboarding call.', k_contract: 'Partner agreement', ct_sent: 'Waiting for your signature', ct_sign: 'Sign the agreement', ct_partner_signed: 'You signed. Waiting for Endeavor\'s signature.', ct_signed: 'Signed by both parties', ct_download: 'Download signed agreement', p_readyMsg: 'All set! Your Stripe account is enabled and your commissions go straight to it.', p_need: 'What you will need', p_needNote: 'You enter these details directly with Stripe; Endeavor never sees them. Stripe also collects your W-9 or W-8 tax form.',
       r_nav_home: 'Dashboard', r_nav_refs: 'My referrals', r_nav_new: 'New referral', r_nav_comm: 'Commissions', r_nav_pay: 'Stripe payouts', r_sep_clients: 'Shared clients',
       r_hello: 'Hello, {n}', r_homeLead: 'Your referral pipeline with Endeavor Business Solutions.',
@@ -34,6 +35,7 @@
       p_sharePct: 'Default commission', p_accountId: 'Account', yes: 'Yes', no: 'No', p_payouts: 'Payouts to bank', p_transfers: 'Receives transfers'
     },
     pt: {
+      o_pixKey: 'Chave', o_nav: 'Comece aqui', o_title: 'Boas-vindas ao Programa de Parceiros', o_lead: 'Assista ao vídeo e siga os passos para ativar a sua conta.', o_noVideo: 'O vídeo de apresentação vai aparecer aqui em breve.', o_seen: 'Já assisti', o_steps: 'Passos para ativar a sua conta', o_s1: 'Acesso ao portal', o_s1d: 'Senha e verificação em duas etapas ativas.', o_s2: 'Assista ao vídeo de apresentação', o_s2d: 'Como indicar, acompanhar cada cliente e receber.', o_s3: 'Como você recebe', o_s3d: 'Escolha o país da conta bancária que vai receber as comissões.', o_country: 'País da sua conta bancária', o_us: 'Você recebe pelo Stripe: a sua parte cai automaticamente na sua conta Stripe quando o cliente paga.', o_gp: 'Para contas no Brasil e na América Latina, a Endeavor envia a sua comissão pelo Stripe Global Payouts depois que o cliente paga. Você recebe por e-mail um link do Stripe para cadastrar o seu banco. A Endeavor não vê esses dados.', o_pix: 'Chave Pix (opcional)', o_pixNote: 'Para o recebimento por Pix, que estará disponível em breve. Use e-mail, celular ou chave aleatória (não use o CPF).', o_pixType: 'Tipo de chave', pt_email: 'E-mail', pt_phone: 'Celular', pt_random: 'Chave aleatória', o_save: 'Salvar', o_saved: 'Salvo.', o_gpRequested: 'Pedido recebido: você vai receber por e-mail o link do Stripe para cadastrar o seu banco.', o_gpLink: 'Link enviado: confira o seu e-mail para cadastrar o banco.', o_gpReady: 'Tudo certo para receber.', o_s4: 'Contrato de parceria', o_s4none: 'Enviamos depois da conversa de onboarding.', o_s5: 'Conta ativada', o_s5d: 'Depois da aprovação, você já pode indicar clientes.', o_s5wait: 'Aguardando a aprovação da Endeavor.', o_done: 'Tudo pronto! Sua conta está ativa.', o_tour: 'Conheça o portal', o_t1: 'Envie o contato de um cliente em menos de um minuto.', o_t2: 'Acompanhe cada cliente etapa por etapa. Você também recebe um e-mail a cada etapa.', o_t3: 'Veja o que já recebeu e o que vai receber.', o_t4: 'Sua conta Stripe e a situação dos repasses.', o_banner: 'Falta pouco: termine o onboarding para começar a indicar.', o_continue: 'Continuar', e_pix: 'Chave Pix inválida para o tipo escolhido.', o_change: 'Alterar',
       w_title: 'Boas-vindas! Seu cadastro está em análise', w_lead: 'Siga os passos abaixo. Depois da conversa de onboarding, aprovamos a sua conta e enviamos o contrato de parceria.', w_s1: 'Acesso ao portal criado', w_s1d: 'Senha e verificação em duas etapas ativas.', w_s2: 'Crie sua conta Stripe', w_s2d: 'É por ela que você recebe as comissões.', w_s2ok: 'Sua conta Stripe está habilitada para receber.', w_s2rev: 'O Stripe está analisando os seus dados.', w_s2btn: 'Criar minha conta no Stripe', w_need: 'Tenha em mãos:', need1: 'Documento com foto', need2: 'Dados da conta bancária', need3: 'Número fiscal: SSN, ITIN ou EIN (se estiver nos EUA)', w_needNote: 'Você informa tudo direto no Stripe. A Endeavor não recebe esses dados. O Stripe também coleta o seu formulário fiscal (W-9 ou W-8) e emite o 1099 quando for o caso.', w_s3: 'Conversa de onboarding', w_s3none: 'Vamos combinar o horário com você.', w_s4: 'Aprovação e contrato', w_s4d: 'Definimos a sua comissão e você assina o contrato de parceria online.', pct_tbd: 'A definir', ref_pending: 'Você poderá enviar indicações assim que a sua conta for aprovada, depois da conversa de onboarding.', k_contract: 'Contrato de parceria', ct_sent: 'Aguardando a sua assinatura', ct_sign: 'Assinar contrato', ct_partner_signed: 'Você assinou. Aguardando a assinatura da Endeavor.', ct_signed: 'Assinado pelas duas partes', ct_download: 'Baixar contrato assinado', p_readyMsg: 'Tudo certo! Sua conta Stripe está habilitada e as comissões caem direto nela.', p_need: 'O que você vai precisar', p_needNote: 'Você informa esses dados direto no Stripe; a Endeavor nunca vê. O Stripe também coleta o seu formulário fiscal W-9 ou W-8.',
       r_nav_home: 'Painel', r_nav_refs: 'Minhas indicações', r_nav_new: 'Nova indicação', r_nav_comm: 'Comissões', r_nav_pay: 'Recebimentos Stripe', r_sep_clients: 'Clientes compartilhados',
       r_hello: 'Olá, {n}', r_homeLead: 'Seu pipeline de indicações com a Endeavor Business Solutions.',
@@ -61,6 +63,7 @@
       p_sharePct: 'Comissão padrão', p_accountId: 'Conta', yes: 'Sim', no: 'Não', p_payouts: 'Saques para o banco', p_transfers: 'Recebe repasses'
     },
     es: {
+      o_pixKey: 'Clave', o_nav: 'Empiece aquí', o_title: 'Bienvenido(a) al Programa de Socios', o_lead: 'Mire el video y siga los pasos para activar su cuenta.', o_noVideo: 'El video de bienvenida estará aquí pronto.', o_seen: 'Ya lo vi', o_steps: 'Pasos para activar su cuenta', o_s1: 'Acceso al portal', o_s1d: 'Contraseña y verificación en dos pasos activas.', o_s2: 'Mire el video de bienvenida', o_s2d: 'Cómo recomendar, seguir a cada cliente y recibir.', o_s3: 'Cómo recibe', o_s3d: 'Elija el país de la cuenta bancaria que recibirá sus comisiones.', o_country: 'País de su cuenta bancaria', o_us: 'Usted recibe por Stripe: su parte va automáticamente a su cuenta Stripe cuando el cliente paga.', o_gp: 'Para cuentas en Brasil y América Latina, Endeavor envía su comisión por Stripe Global Payouts después de que el cliente paga. Recibirá por correo un enlace de Stripe para registrar su banco. Endeavor no ve estos datos.', o_pix: 'Clave Pix (opcional)', o_pixNote: 'Para pagos por Pix, disponibles pronto. Use correo, celular o clave aleatoria (no use el CPF).', o_pixType: 'Tipo de clave', pt_email: 'Correo', pt_phone: 'Celular', pt_random: 'Clave aleatoria', o_save: 'Guardar', o_saved: 'Guardado.', o_gpRequested: 'Solicitud recibida: recibirá por correo el enlace de Stripe para registrar su banco.', o_gpLink: 'Enlace enviado: revise su correo para registrar su banco.', o_gpReady: 'Todo listo para recibir.', o_s4: 'Contrato de socio', o_s4none: 'Lo enviamos después de la llamada de onboarding.', o_s5: 'Cuenta activada', o_s5d: 'Después de la aprobación ya puede recomendar clientes.', o_s5wait: 'Esperando la aprobación de Endeavor.', o_done: '¡Todo listo! Su cuenta está activa.', o_tour: 'Conozca el portal', o_t1: 'Envíe el contacto de un cliente en menos de un minuto.', o_t2: 'Siga a cada cliente paso a paso. También recibe un correo en cada etapa.', o_t3: 'Vea lo que ya recibió y lo que va a recibir.', o_t4: 'Su cuenta Stripe y el estado de los pagos.', o_banner: 'Falta poco: termine el onboarding para empezar a recomendar.', o_continue: 'Continuar', e_pix: 'Clave Pix inválida para el tipo elegido.', o_change: 'Cambiar',
       w_title: '¡Bienvenido(a)! Su registro está en revisión', w_lead: 'Siga los pasos de abajo. Después de la llamada de onboarding, aprobamos su cuenta y enviamos el contrato de socio.', w_s1: 'Acceso al portal creado', w_s1d: 'Contraseña y verificación en dos pasos activas.', w_s2: 'Cree su cuenta Stripe', w_s2d: 'Ahí recibe sus comisiones.', w_s2ok: 'Su cuenta Stripe está habilitada para recibir.', w_s2rev: 'Stripe está revisando sus datos.', w_s2btn: 'Crear mi cuenta en Stripe', w_need: 'Tenga a mano:', need1: 'Un documento con foto', need2: 'Los datos de su cuenta bancaria', need3: 'Su número fiscal: SSN, ITIN o EIN (si está en EE. UU.)', w_needNote: 'Usted ingresa todo directamente en Stripe. Endeavor no recibe estos datos. Stripe también recoge su formulario fiscal (W-9 o W-8) y emite el 1099 cuando corresponde.', w_s3: 'Llamada de onboarding', w_s3none: 'Acordaremos un horario con usted.', w_s4: 'Aprobación y contrato', w_s4d: 'Definimos su comisión y usted firma el contrato de socio en línea.', pct_tbd: 'Por definir', ref_pending: 'Podrá enviar recomendaciones en cuanto su cuenta sea aprobada, después de la llamada de onboarding.', k_contract: 'Contrato de socio', ct_sent: 'Esperando su firma', ct_sign: 'Firmar el contrato', ct_partner_signed: 'Usted firmó. Esperando la firma de Endeavor.', ct_signed: 'Firmado por ambas partes', ct_download: 'Descargar contrato firmado', p_readyMsg: '¡Todo listo! Su cuenta Stripe está habilitada y sus comisiones llegan directo a ella.', p_need: 'Lo que va a necesitar', p_needNote: 'Usted ingresa estos datos directamente en Stripe; Endeavor nunca los ve. Stripe también recoge su formulario fiscal W-9 o W-8.',
       r_nav_home: 'Panel', r_nav_refs: 'Mis referidos', r_nav_new: 'Nuevo referido', r_nav_comm: 'Comisiones', r_nav_pay: 'Pagos Stripe', r_sep_clients: 'Clientes compartidos',
       r_hello: 'Hola, {n}', r_homeLead: 'Su pipeline de referidos con Endeavor Business Solutions.',
@@ -115,14 +118,6 @@
         return j;
       }
       function needList() { return '<p style="margin:.5rem 0 0;font-weight:600;font-size:.9rem">' + t('w_need') + '</p><ul class="pw-need"><li>' + t('need1') + '</li><li>' + t('need2') + '</li><li>' + t('need3') + '</li></ul><p class="portal-muted" style="font-size:.85rem;margin:.4rem 0 0">' + t('w_needNote') + '</p>'; }
-      function welcomeCard() {
-        var ss = stripeState(), stripeDone = ss[0] === 'ok', step = function (cls, n, title, body) { return '<li class="' + cls + '"><span class="pw-dot" aria-hidden="true">' + (cls === 'is-done' ? '✓' : n) + '</span><div><strong>' + title + '</strong>' + body + '</div></li>'; };
-        return '<section class="portal-card pw" style="margin-bottom:1.25rem"><h2 class="portal-h2" style="margin:0">' + t('w_title') + '</h2><p class="portal-muted" style="margin:.3rem 0 0">' + t('w_lead') + '</p><ol class="pw-steps">' +
-          step('is-done', 1, t('w_s1'), '<p>' + t('w_s1d') + '</p>') +
-          step(stripeDone ? 'is-done' : 'is-now', 2, t('w_s2'), '<p>' + (stripeDone ? t('w_s2ok') : ss[0] === 'review' ? t('w_s2rev') : t('w_s2d')) + '</p>' + (stripeDone ? '' : (ss[0] === 'review' ? '' : needList()) + '<a class="btn btn--navy btn--xs" style="margin-top:.6rem" href="#/payouts">' + t(ss[0] === 'review' ? 'r_nav_pay' : 'w_s2btn') + '</a>')) +
-          step(P.onboarding_at && new Date(P.onboarding_at) < new Date() ? 'is-done' : '', 3, t('w_s3'), '<p>' + (P.onboarding_at ? esc(C.fmtDT(P.onboarding_at)) : t('w_s3none')) + '</p>') +
-          step('', 4, t('w_s4'), '<p>' + t('w_s4d') + '</p>') + '</ol></section>';
-      }
       function contractBox() {
         if (!P.contract_status || P.contract_status === 'none') return '';
         var st = P.contract_status;
@@ -149,6 +144,76 @@
       }
       async function loadRefs() { return q(sb.from('referrals').select('*').order('created_at', { ascending: false })); }
 
+      /* ---------- onboarding: video, checklist, how to get paid ---------- */
+      var STRIPE_C = ['US', 'CA', 'GB', 'PT', 'ES', 'IE', 'FR', 'DE', 'IT', 'NL', 'CH'];
+      var GP_C = [['BR', 'Brasil'], ['PY', 'Paraguay'], ['MX', 'México'], ['CO', 'Colombia'], ['AR', 'Argentina'], ['CL', 'Chile'], ['PE', 'Perú'], ['UY', 'Uruguay']];
+      var OB_C = [['US', 'United States'], ['BR', 'Brasil']].concat(GP_C.slice(1)).concat([['CA', 'Canada'], ['GB', 'United Kingdom'], ['PT', 'Portugal'], ['ES', 'España'], ['IE', 'Ireland'], ['FR', 'France'], ['DE', 'Deutschland'], ['IT', 'Italia'], ['NL', 'Nederland'], ['CH', 'Schweiz']]);
+      function videoHtml(url) {
+        if (!url) return '<div class="ob-video ob-video--empty"><span aria-hidden="true">▶</span><p>' + t('o_noVideo') + '</p></div>';
+        var yt = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/.exec(url), vm = /vimeo\.com\/(?:video\/)?(\d+)/.exec(url);
+        if (yt) return '<div class="ob-video"><iframe src="https://www.youtube-nocookie.com/embed/' + yt[1] + '?rel=0" title="' + esc(t('o_title')) + '" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>';
+        if (vm) return '<div class="ob-video"><iframe src="https://player.vimeo.com/video/' + vm[1] + '" title="' + esc(t('o_title')) + '" allow="fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
+        return '<div class="ob-video"><video controls preload="metadata" playsinline src="' + esc(url) + '"></video></div>';
+      }
+      function obState(video) {
+        var ss = stripeState()[0];
+        var pay = !P.payout_method ? '' : P.payout_method === 'stripe' ? (ss === 'ok' ? 'done' : 'now') : (P.global_payouts_status === 'ready' ? 'done' : 'now');
+        var st = { access: true, video: !video || !!P.video_seen_at, pay: pay === 'done', payNow: pay, contract: P.contract_status === 'signed', approved: P.program_status === 'approved' };
+        st.all = st.video && st.pay && st.contract && st.approved;
+        return st;
+      }
+      async function vOnb(view) {
+        var cfg = (await sb.from('crm_settings').select('partner_video_url').eq('id', 1).maybeSingle()).data || {};
+        var video = cfg.partner_video_url || '', st = obState(video);
+        if (st.all && !P.onboarding_done_at) { var rr = await sb.rpc('partner_onboarding_mark', { p_step: 'done' }); if (!rr.error && rr.data && rr.data[0]) { P = rr.data[0]; C.S.partner = P; } }
+        var step = function (done, now, n, title, body) { return '<li class="' + (done ? 'is-done' : now ? 'is-now' : '') + '"><span class="pw-dot" aria-hidden="true">' + (done ? '✓' : n) + '</span><div><strong>' + title + '</strong>' + body + '</div></li>'; };
+        var ctry = P.payout_country || (L === 'pt' ? 'BR' : 'US'), gp = function (c) { return STRIPE_C.indexOf(c) < 0; };
+        var payStatus = !P.payout_method ? '' : P.payout_method === 'stripe'
+          ? '<p><span class="stripe-st stripe-st--' + stripeState()[0] + '">' + esc(stripeState()[1]) + '</span></p>' + (st.pay ? '' : '<a class="btn btn--navy btn--xs" href="#/payouts">' + t('p_connect') + '</a>')
+          : '<p><span class="stripe-st stripe-st--' + (st.pay ? 'ok' : 'review') + '">' + esc(t(P.global_payouts_status === 'ready' ? 'o_gpReady' : P.global_payouts_status === 'link_sent' ? 'o_gpLink' : 'o_gpRequested')) + '</span></p>';
+        var payForm = '<form class="ob-pay" id="ob-pay"' + (P.payout_method ? ' hidden' : '') + ' novalidate><div class="field"><label for="ob-c">' + t('o_country') + '</label><select id="ob-c">' + OB_C.map(function (c) { return '<option value="' + c[0] + '"' + (c[0] === ctry ? ' selected' : '') + '>' + esc(c[1]) + '</option>'; }).join('') + '</select></div>' +
+          '<p class="portal-muted ob-how" id="ob-how"></p>' +
+          '<fieldset class="ob-pix" id="ob-pixbox"><legend>' + t('o_pix') + '</legend><div class="ob-pix__row"><div class="field"><label for="ob-pt">' + t('o_pixType') + '</label><select id="ob-pt"><option value="email">' + t('pt_email') + '</option><option value="phone">' + t('pt_phone') + '</option><option value="random">' + t('pt_random') + '</option></select></div>' +
+          '<div class="field"><label for="ob-pk">' + t('o_pixKey') + '</label><input id="ob-pk" maxlength="140" autocomplete="off" value="' + esc(P.pix_key || '') + '"></div></div><p class="portal-muted" style="font-size:.82rem;margin:.2rem 0 0">' + t('o_pixNote') + '</p></fieldset>' +
+          '<div class="portal-alert" id="ob-m" role="alert"></div><button class="btn btn--navy btn--xs" type="submit">' + t('o_save') + '</button></form>';
+        var contract = P.contract_status === 'sent' && P.contract_partner_token ? '<p>' + t('ct_sent') + '</p><a class="btn btn--navy btn--xs" href="sign.html?t=' + esc(P.contract_partner_token) + '&lang=' + L + '&ret=partner">' + t('ct_sign') + '</a>'
+          : '<p>' + t(P.contract_status === 'signed' ? 'ct_signed' : P.contract_status === 'partner_signed' ? 'ct_partner_signed' : 'o_s4none') + '</p>';
+        var tour = [['ref-new', 'r_nav_new', 'o_t1', 'i-plus'], ['referrals', 'r_nav_refs', 'o_t2', 'i-users'], ['commissions', 'r_nav_comm', 'o_t3', 'i-chart'], ['payouts', 'r_nav_pay', 'o_t4', 'i-card']];
+        view.innerHTML = C.head(t('o_title'), t('o_lead'), st.all ? '<a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a>' : '') +
+          (st.all ? '<div class="portal-alert portal-alert--ok" style="display:block;margin-bottom:1rem">' + t('o_done') + '</div>' : '') +
+          '<div class="ob-grid"><section class="portal-card ob-main">' + videoHtml(video) +
+            (video && !P.video_seen_at ? '<div class="portal-btn-row" style="margin-top:.75rem"><button class="btn btn--ghost btn--xs" type="button" id="ob-seen">✓ ' + t('o_seen') + '</button></div>' : '') +
+            '</section><section class="portal-card ob-tourc"><h2 class="portal-h2" style="margin:0">' + t('o_tour') + '</h2><ul class="ob-tour">' + tour.map(function (x) { return '<li><a href="#/' + x[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + x[3] + '"/></svg><span><strong>' + t(x[1]) + '</strong><span>' + t(x[2]) + '</span></span></a></li>'; }).join('') + '</ul></section>' +
+          '<section class="portal-card pw ob-steps"><h2 class="portal-h2" style="margin:0">' + t('o_steps') + '</h2><ol class="pw-steps">' +
+            step(true, false, 1, t('o_s1'), '<p>' + t('o_s1d') + '</p>') +
+            (video ? step(st.video, !st.video, 2, t('o_s2'), '<p>' + t('o_s2d') + '</p>') : '') +
+            step(st.pay, !st.pay, video ? 3 : 2, t('o_s3'), (P.payout_method ? payStatus + '<button class="linklike" type="button" id="ob-edit">' + t('o_change') + '</button>' : '<p>' + t('o_s3d') + '</p>') + payForm) +
+            step(st.contract, P.contract_status === 'sent', video ? 4 : 3, t('o_s4'), contract) +
+            step(st.approved, false, video ? 5 : 4, t('o_s5'), '<p>' + t(st.approved ? 'o_s5d' : 'o_s5wait') + '</p>') +
+          '</ol></section></div>';
+        var how = function () { var c = $('#ob-c').value, g = gp(c); $('#ob-how').textContent = t(g ? 'o_gp' : 'o_us'); $('#ob-pixbox').hidden = c !== 'BR'; };
+        $('#ob-c').onchange = how; how();
+        if (P.pix_key_type) $('#ob-pt').value = P.pix_key_type;
+        if ($('#ob-edit')) $('#ob-edit').onclick = function () { $('#ob-pay').hidden = false; this.hidden = true; };
+        if ($('#ob-seen')) $('#ob-seen').onclick = async function () { this.disabled = true; var r = await sb.rpc('partner_onboarding_mark', { p_step: 'video' }); if (!r.error && r.data && r.data[0]) { P = r.data[0]; C.S.partner = P; } vOnb(view); };
+        var vid = view.querySelector('.ob-video video'); if (vid && !P.video_seen_at) vid.addEventListener('ended', function () { var b = $('#ob-seen'); if (b) b.click(); });
+        $('#ob-pay').onsubmit = async function (e) {
+          e.preventDefault();
+          var c = $('#ob-c').value, pk = c === 'BR' ? $('#ob-pk').value.trim() : '', b = this.querySelector('button[type=submit]');
+          b.disabled = true;
+          var r = await sb.rpc('partner_set_payout', { p_method: gp(c) ? 'global_payouts' : 'stripe', p_country: c, p_pix: pk || null, p_pix_type: pk ? $('#ob-pt').value : null });
+          b.disabled = false;
+          if (r.error) return C.msg($('#ob-m'), /invalid_pix/.test(r.error.message) ? t('e_pix') : C.errText(r.error), 'error');
+          if (r.data && r.data[0]) { P = r.data[0]; C.S.partner = P; }
+          if (!gp(c) && stripeState()[0] !== 'ok') { ERoute.set('#/payouts', true); return C.route(); }
+          vOnb(view);
+        };
+      }
+      function obBanner() {
+        if (P.onboarding_done_at) return '';
+        return '<div class="portal-alert portal-alert--info ob-banner" style="display:flex;margin-bottom:1.25rem"><span>' + t('o_banner') + '</span><a class="btn btn--navy btn--xs" href="#/onboarding">' + t('o_continue') + '</a></div>';
+      }
+
       /* ---------- dashboard ---------- */
       async function vHome(view) {
         var res = await Promise.all([loadRefs(), sb.rpc('partner_commissions')]);
@@ -158,7 +223,7 @@
         var earned = comm.filter(function (c) { return c.transfer_status === 'paid'; }).reduce(function (s, c) { return s + c.partner_amount_cents; }, 0);
         var due = comm.filter(function (c) { return c.status !== 'void' && c.status !== 'uncollectible' && c.transfer_status !== 'paid' && c.transfer_status !== 'reversed'; }).reduce(function (s, c) { return s + c.partner_amount_cents; }, 0);
         var ss = stripeState();
-        view.innerHTML = C.head(t('r_hello', { n: P.name.split(' ')[0] }), t('r_homeLead'), pending() ? '' : '<a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a>') + (pending() ? welcomeCard() : '') +
+        view.innerHTML = C.head(t('r_hello', { n: P.name.split(' ')[0] }), t('r_homeLead'), pending() ? '' : '<a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a>') + obBanner() +
           '<div class="dash"><div><div class="kpis">' + C.kpi(t('k_refs'), refs.length) + C.kpi(t('k_active'), active) + C.kpi(t('k_won'), won) + C.kpi(t('k_earned'), money(earned), true) + '</div>' +
           '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('r_recent') + '</h2><a href="#/referrals">' + t('r_seeAll') + '</a></div>' +
           (refs.length ? '<ul class="ref-list">' + refs.slice(0, 6).map(refRow).join('') + '</ul>' : '<div class="empty-state"><strong>' + t('r_none') + '</strong><p>' + (pending() ? t('ref_pending') : t('r_noneText')) + '</p>' + (pending() ? '' : '<a class="btn btn--navy" href="#/ref-new">' + t('r_newBtn') + '</a>') + '</div>') + '</section></div>' +
@@ -289,9 +354,9 @@
       }
 
       return {
-        nav: [['ref-home', t('r_nav_home'), 'i-grid'], ['referrals', t('r_nav_refs'), 'i-users'], ['ref-new', t('r_nav_new'), 'i-plus'], ['commissions', t('r_nav_comm'), 'i-chart'], ['payouts', t('r_nav_pay'), 'i-card']],
+        nav: (P.onboarding_done_at ? [] : [['onboarding', t('o_nav'), 'i-play']]).concat([['ref-home', t('r_nav_home'), 'i-grid'], ['referrals', t('r_nav_refs'), 'i-users'], ['ref-new', t('r_nav_new'), 'i-plus'], ['commissions', t('r_nav_comm'), 'i-chart'], ['payouts', t('r_nav_pay'), 'i-card']]).concat(P.onboarding_done_at ? [['onboarding', t('o_nav'), 'i-play']] : []),
         sep: t('r_sep_clients'),
-        views: { 'ref-home': vHome, referrals: vRefs, 'ref-new': vNew, commissions: vComm, payouts: vPayRoute }
+        views: { onboarding: vOnb, 'ref-home': vHome, referrals: vRefs, 'ref-new': vNew, commissions: vComm, payouts: vPayRoute }
       };
     }
   };

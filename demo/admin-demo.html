@@ -1842,6 +1842,63 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 .pp-book__list { margin: .8rem 0 0; padding-left: 1.2rem; display: grid; gap: .35rem; color: var(--muted); }
 #cadastro:focus { outline: none; }
 
+/* ---------- partner onboarding ---------- */
+.ob-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+@media (max-width: 1023.98px) { .ob-grid { grid-template-columns: 1fr; } }
+.ob-video { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: #0b1f3a; }
+.ob-video iframe, .ob-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; }
+.ob-video--empty { display: grid; place-items: center; text-align: center; color: #d6deea; padding: 1rem; }
+.ob-video--empty span { display: grid; place-items: center; width: 4rem; height: 4rem; border-radius: 50%; border: 2px solid var(--gold); color: var(--gold); font-size: 1.4rem; margin: 0 auto .75rem; }
+.ob-video--empty p { margin: 0; max-width: 22rem; }
+.ob-tour { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .6rem; }
+@media (max-width: 599.98px) { .ob-tour { grid-template-columns: 1fr; } }
+.ob-tour a { display: flex; gap: .65rem; align-items: flex-start; padding: .75rem .85rem; border: 1px solid var(--line, #e3e7ee); border-radius: 10px; color: inherit; text-decoration: none; height: 100%; }
+.ob-tour a:hover, .ob-tour a:focus-visible { border-color: var(--gold); background: #fbf8f0; }
+.ob-tour .icon { width: 1.3rem; height: 1.3rem; flex: none; color: var(--navy-900); margin-top: .1rem; }
+.ob-tour strong { display: block; color: var(--navy-900); }
+.ob-tour span span { display: block; color: var(--muted); font-size: .88rem; line-height: 1.45; }
+.ob-steps .pw-steps li > div { min-width: 0; }
+.ob-pay { margin-top: .6rem; display: grid; gap: .5rem; }
+.ob-pay .field { margin: 0; }
+.ob-how { font-size: .88rem; margin: 0; }
+.ob-pix { border: 1px solid var(--line, #e3e7ee); border-radius: 10px; padding: .6rem .75rem .7rem; margin: 0; }
+.ob-pix legend { font-weight: 600; font-size: .88rem; padding: 0 .3rem; color: var(--navy-900); }
+.ob-pix[hidden] { display: none; }
+.ob-banner { align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+.linklike { background: none; border: 0; padding: 0; margin: .3rem 0 0; color: var(--navy-700, #1d3a66); text-decoration: underline; cursor: pointer; font: inherit; font-size: .88rem; }
+
+/* ---------- smart CRM (admin) ---------- */
+.pill--kind-partner { background: #f6efdc; color: #6b4e12; }
+.crm-next { margin-bottom: 1.25rem; }
+.crm-next__head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.crm-next__n { display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.5rem; padding: 0 .4rem; border-radius: 999px; background: var(--navy-900); color: #fff; font: 600 .78rem/1 Inter, sans-serif; vertical-align: middle; margin-left: .3rem; }
+.crm-next__list { list-style: none; margin: .7rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: .5rem; }
+.crm-next__item { display: flex; gap: .6rem; align-items: flex-start; width: 100%; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: .6rem .75rem; cursor: pointer; font: inherit; color: inherit; height: 100%; }
+.crm-next__item:hover, .crm-next__item:focus-visible { border-color: var(--gold); background: #fbf8f0; }
+.crm-next__item strong { display: block; color: var(--navy-900); font-size: .92rem; line-height: 1.35; }
+.crm-next__item span span { display: block; color: var(--muted); font-size: .82rem; line-height: 1.4; margin-top: .1rem; }
+.crm-next__dot { flex: none; width: .6rem; height: .6rem; border-radius: 50%; margin-top: .35rem; background: #9aa6b8; }
+.crm-next__dot--3 { background: #c2410c; } .crm-next__dot--2 { background: var(--gold); } .crm-next__dot--1 { background: #2563eb; }
+.crm-ai { border-top: 1px solid var(--line); padding-top: 1rem; }
+.crm-ai__head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .6rem; }
+.crm-ai__card { background: #f7f8fb; border-left: 4px solid var(--gold); border-radius: 8px; padding: .75rem .9rem; margin-bottom: .6rem; font-size: .93rem; }
+.crm-ai__card--high { border-left-color: #c2410c; } .crm-ai__card--low { border-left-color: #9aa6b8; }
+.crm-reply { border: 1px solid var(--line); border-radius: 10px; padding: .5rem .8rem; }
+.crm-reply summary { cursor: pointer; font-weight: 600; color: var(--navy-900); padding: .2rem 0; }
+.crm-reply[open] summary { margin-bottom: .5rem; }
+.crm-reply .field { margin-bottom: .6rem; }
+.au-row { align-items: flex-start; margin: .5rem 0; }
+.au-row label strong { display: block; color: var(--navy-900); }
+.au-row label span { display: block; color: var(--muted); font-size: .86rem; line-height: 1.45; }
+.au-days { max-width: 26rem; margin-left: 1.8rem; }
+.ob-grid > .portal-card { margin: 0; }
+.ob-pix__row { display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: .6rem; }
+@media (max-width: 399.98px) { .ob-pix__row { grid-template-columns: 1fr; } }
+.ob-grid { grid-template-areas: "main steps" "tour steps"; }
+.ob-main { grid-area: main; } .ob-steps { grid-area: steps; } .ob-tourc { grid-area: tour; }
+@media (max-width: 1023.98px) { .ob-grid { grid-template-areas: "main" "steps" "tour"; } }
+@media (min-width: 1024px) { .ob-grid { grid-template-rows: auto 1fr; } .ob-tourc { align-self: start; } }
+
 </style>
 </head>
 <body class="portal">
@@ -2035,6 +2092,18 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   INV(C1, R1, P1, 15, [['Abertura de LLC (Lima Real Estate LLC)', 1500]], 'draft', 'scheduled', 1, 'Segunda empresa');
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
+  // smart CRM: automations, partner onboarding (video, payout method), a partner prospect from the booking page
+  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30) }];
+  Object.assign(DB.partners[0], { payout_method: 'stripe', payout_country: 'US', onboarding_done_at: iso(-50), video_seen_at: iso(-55) });
+  Object.assign(DB.partners[1], { payout_method: 'global_payouts', payout_country: 'BR', global_payouts_status: 'requested', pix_key: 'marcos@example.com', pix_key_type: 'email' });
+  Object.assign(DB.partners[3], { payout_method: null, global_payouts_status: 'none' });
+  DB.leads.push(Object.assign(L('b9000000-0000-4000-8000-000000000009', 'Fernanda Albuquerque', 'fernanda.alb@example.com', '+55 11 97777-4321', 'Brazil', 'Albuquerque Imóveis', 'Partner Program', 'Sou corretora em São Paulo e tenho clientes querendo investir em Orlando.', 'booking', 'new', 3, 'pt'), { kind: 'partner' }));
+  DB.bookings.push({ id: uuid(), lead_id: 'b9000000-0000-4000-8000-000000000009', starts_at: iso(-1, 15), ends_at: iso(-1, 15, 30), name: 'Fernanda Albuquerque', email: 'fernanda.alb@example.com', phone: '+5511977774321', topic: 'Partner Program', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-3) });
+  DB.crm_messages = [
+    { id: 1, created_at: iso(-2, 11), kind: 'referral_contacted', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Pedro Alves: Em contato', status: 'sent', sent_at: iso(-2, 11) },
+    { id: 2, created_at: iso(-4, 9), kind: 'referral_proposal', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Laura Gómez: Proposta enviada', status: 'sent', sent_at: iso(-4, 9) },
+    { id: 3, created_at: iso(-1, 9), kind: 'followup_1', channel: 'email', lead_id: 'b9000000-0000-4000-8000-000000000009', to_addr: 'fernanda.alb@example.com', subject: 'Fernanda, podemos conversar?', status: 'sent', sent_at: iso(-1, 9) },
+    { id: 4, created_at: iso(-12, 10), kind: 'invoice_paid', channel: 'email', partner_id: DB.partners[1].id, to_addr: 'marcos@example.com', subject: 'Pagamento confirmado: Michael Turner', status: 'sent', sent_at: iso(-12, 10) }];
   var PME = MODE === 'partner' ? (/[?&]pending=1/.test(location.search) ? DB.partners[3] : DB.partners[0]) : null;
   var DEMO_TOKEN = 'demo4f9c2a7b1e8d6c3f0a5b9e2d7c4f1a8b6e3d0c9f';
   window.DEMO_PROPOSAL_TOKEN = DEMO_TOKEN;
@@ -2202,6 +2271,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       case 'company_documents': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && ((r.visible_to_client && can(r.client_id, r.category)) || r.uploaded_by === ME.id); });
       case 'financial_reports': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'report'); });
       case 'partners': return rows.filter(function (r) { return PME && r.id === PME.id; });
+      case 'crm_settings': return rows;
       case 'referrals': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
       case 'referral_items': case 'referral_events': return rows.filter(function (r) { var ref = DB.referrals.find(function (x) { return x.id === r.referral_id; }); return PME && ref && ref.partner_id === PME.id && (table === 'referral_items' || r.visible_to_partner); });
       case 'invoices': return rows.filter(function (r) { return r.status !== 'draft' && r.status !== 'void' && role(r.client_id) === 'owner'; });
@@ -2373,6 +2443,7 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
   var storage = { from: function () {
     return {
       upload: function (path, blob) { FILES[path] = blob; return ok({ path: path }); },
+      getPublicUrl: function (path) { return { data: { publicUrl: FILES[path] ? URL.createObjectURL(FILES[path]) : 'https://onaewjlozioderwlvgfm.supabase.co/storage/v1/object/public/media/' + path } }; },
       createSignedUrl: async function (path) { if (!FILES[path]) FILES[path] = GEN[path] ? await bytesOf(path) : await samplePdf(path); return { data: { signedUrl: URL.createObjectURL(FILES[path]) }, error: null }; },
       download: async function (path) { if (!FILES[path]) FILES[path] = GEN[path] ? await bytesOf(path) : await samplePdf(path); return { data: FILES[path], error: null }; },
       remove: function (paths) { (paths || []).forEach(function (p) { delete FILES[p]; }); return ok([]); }
@@ -2391,6 +2462,18 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
+    else if (name === 'partner_set_payout' || name === 'partner_onboarding_mark') {
+      if (!PME) return Promise.resolve({ data: null, error: { message: 'forbidden' } });
+      var row0 = DB.partners.find(function (x) { return x.id === PME.id; }) || PME;
+      if (name === 'partner_onboarding_mark') { if (args.p_step === 'video') row0.video_seen_at = row0.video_seen_at || new Date().toISOString(); else row0.onboarding_done_at = row0.onboarding_done_at || new Date().toISOString(); }
+      else {
+        var pk = (args.p_pix || '').trim();
+        if (pk && !(args.p_pix_type === 'email' ? /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(pk) : args.p_pix_type === 'phone' ? /^\+?[0-9 ()-]{10,20}$/.test(pk) : /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(pk))) return Promise.resolve({ data: null, error: { message: 'invalid_pix' } });
+        Object.assign(row0, { payout_method: args.p_method, payout_country: args.p_country, pix_key: pk || null, pix_key_type: pk ? args.p_pix_type : null, global_payouts_status: args.p_method === 'global_payouts' ? (row0.global_payouts_status && row0.global_payouts_status !== 'none' ? row0.global_payouts_status : 'requested') : 'none' });
+        toast(args.p_method === 'global_payouts' ? 'Demo: a Endeavor recebe o aviso para enviar o link do Stripe Global Payouts.' : 'Demo: agora o parceiro conecta a conta Stripe.');
+      }
+      Object.assign(PME, row0); r = [JSON.parse(JSON.stringify(row0))];
+    }
     else if (name === 'partner_commissions') r = !PME ? [] : DB.invoices.filter(function (i) { return i.partner_id === PME.id && i.status !== 'draft'; }).sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; }).map(function (i) {
       var ref = DB.referrals.find(function (x) { return x.id === i.referral_id; }), c = DB.clients.find(function (x) { return x.id === i.client_id; });
       return { invoice_id: i.id, number: i.number, created_at: i.created_at, client_label: ref ? ref.name : c.name, currency: i.currency, total_cents: i.total_cents, partner_pct: i.partner_pct, partner_amount_cents: i.partner_amount_cents, status: i.status, paid_at: i.paid_at, transfer_status: i.transfer_status };
@@ -2906,6 +2989,24 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
       if (ib.action === 'contract_url') { toast('Demo: abriria o PDF do contrato assinado.'); return later2({ url: '#' }); }
       if (ib.action === 'delete') { DB.partners = DB.partners.filter(function (x) { return x !== ip; }); return later2({ ok: true }); }
       toast('Demo: o convite com o link para criar a senha seria enviado para ' + (ip ? ip.email : '') + '.'); return later2({ ok: true, sent: 'invite' });
+    }
+    if (/\/functions\/v1\/crm/.test(u)) {
+      var cb = {}; try { cb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      var slow2 = function (b, ms) { return new Promise(function (res) { setTimeout(function () { res(json(b)); }, ms || 500); }); };
+      if (cb.action === 'status') return slow2({ email: true, via: 'ses', whatsapp: false, ai: true }, 200);
+      if (cb.action === 'run_now') { toast('Demo: no site real as automações rodam a cada 10 minutos.'); return slow2({ referral: 1, paid: 0, commission: 0, followup: 1, partner: 1 }, 900); }
+      if (cb.action === 'send_email') { var ld = DB.leads.find(function (x) { return x.id === cb.lead_id; }); if (ld && ld.status === 'new') ld.status = 'contacted';
+        DB.crm_messages.unshift({ id: Date.now(), created_at: new Date().toISOString(), kind: 'manual', channel: 'email', lead_id: cb.lead_id, to_addr: ld && ld.email, subject: cb.subject, status: 'sent' });
+        toast('Demo: o e-mail sairia de support@endeavorbiz.com com o layout da Endeavor.'); return slow2({ ok: true }); }
+      if (cb.action === 'ai_suggest') {
+        var l2 = DB.leads.find(function (x) { return x.id === cb.lead_id; }) || {}, nm = String(l2.name || '').split(' ')[0], pt = (l2.language || 'pt') === 'pt', partner = l2.kind === 'partner';
+        toast('Demo: no site real a IA (Claude) lê o histórico do contato.');
+        return slow2(partner ? { ok: true, kind: 'partner', status: 'qualified', service: 'Programa de Parceiros', urgency: 'high', summary: nm + ' é corretora em São Paulo com clientes interessados em investir em Orlando. Já fez a conversa sobre o Programa de Parceiros.', next_action: 'Cadastrar como parceira (comissão a definir) e enviar o contrato para assinatura.',
+          reply_subject: 'Próximos passos do Programa de Parceiros', reply_body: 'Olá, ' + nm + '!\n\nObrigado pela conversa. Como combinamos, vamos criar o seu acesso ao Portal do Parceiro. Você vai receber um e-mail com o link para criar a senha.\n\nNo primeiro acesso, o portal abre na página "Comece aqui", com um vídeo curto sobre como indicar clientes e como as comissões são pagas.\n\nQualquer dúvida, é só responder este e-mail ou chamar no WhatsApp.\n\nEquipe Endeavor Business Solutions' }
+          : { ok: true, kind: 'lead', status: 'contacted', service: l2.assistance || '', urgency: 'normal', summary: nm + ' quer ' + (l2.assistance || 'ajuda') + '. Mensagem: "' + String(l2.message || '').slice(0, 120) + '"', next_action: 'Responder e convidar para uma conversa de 30 minutos.',
+          reply_subject: pt ? nm + ', vamos conversar sobre o seu projeto?' : 'Next steps', reply_body: (pt ? 'Olá, ' + nm + '!\n\nObrigado pelo contato. Para entender melhor o seu caso, sugerimos uma conversa de 30 minutos por vídeo, telefone ou WhatsApp. Escolha o melhor horário em https://endeavorbiz.com/schedule.html\n\nEquipe Endeavor Business Solutions' : 'Hi ' + nm + ',\n\nThanks for reaching out. Book a 30-minute call at https://endeavorbiz.com/schedule.html\n\nThe Endeavor Business Solutions team') }, 1100);
+      }
+      return json({ error: 'forbidden' }, 403);
     }
     if (/\/functions\/v1\/marketing/.test(u)) {
       var mb = {}; try { mb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
@@ -3548,10 +3649,89 @@ window.ADMIN_EN = {
   'Comissão do contrato (%):': 'Agreement commission (%):', 'Gerar um novo contrato? O link anterior deixa de valer.': 'Generate a new agreement? The previous link stops working.', 'Sem contrato': 'No agreement', 'Enviado ao parceiro': 'Sent to partner', 'Parceiro assinou: falta a Endeavor': 'Partner signed: Endeavor pending', 'Assinado pelas duas partes': 'Signed by both parties',
   'País': 'Country', 'Origem': 'Source', 'Cadastro pelo site': 'Website sign-up', 'Convite do admin': 'Admin invitation', 'Aprovado em': 'Approved on', 'Aguardando': 'Waiting', 'Parceiros': 'Partners', 'A definir na aprovação': 'Set at approval', 'Envio de e-mails (Amazon SES)': 'Email sending (Amazon SES)',
   'IA (Claude Console)': 'AI (Claude Console)',
-    'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
+    "Próximas ações": "Next actions",
+  "Nada pendente. Tudo em dia.": "Nothing pending. All caught up.",
+  "Ver todas": "See all",
+  "Automações": "Automations",
+  "Automações do CRM": "CRM automations",
+  "Parceiro (prospect)": "Partner (prospect)",
+  "Virou parceiro": "Became a partner",
+  "Criar parceiro e enviar convite": "Create partner and send invitation",
+  "Assistente do CRM": "CRM assistant",
+  "✦ Sugerir com IA": "✦ Suggest with AI",
+  "Analisando…": "Analyzing…",
+  "Responder por e-mail": "Reply by email",
+  "Assunto": "Subject",
+  "Mensagem": "Message",
+  "Enviar e-mail": "Send email",
+  "Sai de support@endeavorbiz.com com o layout da Endeavor. As respostas do cliente chegam no support@.": "Sent from support@endeavorbiz.com with the Endeavor layout. Client replies arrive at support@.",
+  "Parar follow-ups automáticos para este contato": "Stop automatic follow-ups for this contact",
+  "Mensagens do CRM": "CRM messages",
+  "Aplicar tipo e status": "Apply type and status",
+  "Aplicado (clique em Salvar)": "Applied (click Save)",
+  "Próximo passo:": "Next step:",
+  "Enviado": "Sent",
+  "Falhou": "Failed",
+  "Ignorado": "Skipped",
+  "Enviando": "Sending",
+  "Clientes e leads": "Clients and leads",
+  "Follow-up automático de leads": "Automatic lead follow-up",
+  "1º follow-up (dias)": "1st follow-up (days)",
+  "2º follow-up (dias)": "2nd follow-up (days)",
+  "Avisar o parceiro a cada etapa": "Notify the partner at every step",
+  "Lembretes de onboarding": "Onboarding reminders",
+  "Também por WhatsApp": "Also by WhatsApp",
+  "Vídeo de onboarding do parceiro": "Partner onboarding video",
+  "Link do vídeo": "Video link",
+  "Enviar arquivo de vídeo": "Upload video file",
+  "Remover vídeo": "Remove video",
+  "Rodar agora": "Run now",
+  "Mensagens automáticas recentes": "Recent automatic messages",
+  "Nenhuma mensagem automática ainda.": "No automatic messages yet.",
+  "Quando": "When",
+  "Para": "To",
+  "E-mail: Amazon SES": "Email: Amazon SES",
+  "E-mail: Gmail": "Email: Gmail",
+  "E-mail não configurado": "Email not configured",
+  "WhatsApp conectado": "WhatsApp connected",
+  "WhatsApp: aguardando a Meta": "WhatsApp: waiting for Meta",
+  "IA ativa": "AI on",
+  "IA não configurada": "AI not configured",
+  "Rodando as automações…": "Running the automations…",
+  "Vídeo enviado e salvo.": "Video uploaded and saved.",
+  "Vídeo removido.": "Video removed.",
+  "Usa o modelo de mensagem aprovado na Meta.": "Uses the message template approved by Meta.",
+  "Liga depois que a Meta aprovar a conta e o modelo de mensagem.": "Turn on after Meta approves the account and the message template.",
+  "No 3º e no 7º dia: criar a senha, escolher como recebe, conectar o Stripe e assinar o contrato.": "On day 3 and day 7: create the password, choose how to get paid, connect Stripe and sign the agreement.",
+  "E-mail quando a indicação dele avança (em contato, proposta, virou cliente, concluída), quando o cliente paga e quando a comissão é enviada.": "Email when their referral moves forward (in contact, proposal, became a client, completed), when the client pays and when the commission is sent.",
+  "Aparece no topo da página \"Comece aqui\" do Portal do Parceiro. Cole um link do YouTube ou Vimeo, ou envie o arquivo (MP4, até 50 MB).": "Shown at the top of the \"Start here\" page in the Partner Portal. Paste a YouTube or Vimeo link, or upload the file (MP4, up to 50 MB).",
+  "Vídeo e automações": "Video and automations",
+  "Marcar repasse feito": "Mark payout as sent",
+  "Como o parceiro recebe": "How the partner gets paid",
+  "Forma escolhida": "Chosen method",
+  "País da conta": "Account country",
+  "Chave Pix (opcional)": "Pix key (optional)",
+  "Stripe Global Payouts (conta fora dos EUA)": "Stripe Global Payouts (account outside the U.S.)",
+  "Stripe Connect (automático)": "Stripe Connect (automatic)",
+  "Ainda não escolheu (no onboarding do portal)": "Not chosen yet (in the portal onboarding)",
+  "Situação": "Status",
+  "Abrir Global Payouts no Stripe": "Open Global Payouts in Stripe",
+  "Global Payouts: enviar link": "Global Payouts: send link",
+  "Global Payouts: link enviado": "Global Payouts: link sent",
+  "Global Payouts pronto": "Global Payouts ready",
+  "A conversa já aconteceu. Crie o parceiro e envie o convite.": "The call already happened. Create the partner and send the invitation.",
+  "Definir a comissão e enviar o contrato.": "Set the commission and send the agreement.",
+  "O parceiro já assinou.": "The partner already signed.",
+  "Parceiro com conta bancária fora dos EUA.": "Partner with a bank account outside the U.S.",
+  'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
 };
 // Dynamic messages (regular expressions applied to whole texts)
 window.ADMIN_EN_RX = [
+  [/^Responder (lead|interessado no Programa de Parceiros): (.+)$/, function (m, k, n) { return (k === 'lead' ? 'Reply to lead: ' : 'Reply to Partner Program prospect: ') + n; }],
+  [/^(Fazer follow-up|Cadastrar parceiro|Contatar indicação|Aprovar parceiro|Assinar contrato pela Endeavor|Enviar link Global Payouts|Proposta sem resposta|Repassar comissão): (.*)$/, function (m, a, n) { return ({ 'Fazer follow-up': 'Follow up', 'Cadastrar parceiro': 'Create partner', 'Contatar indicação': 'Contact referral', 'Aprovar parceiro': 'Approve partner', 'Assinar contrato pela Endeavor': 'Sign agreement for Endeavor', 'Enviar link Global Payouts': 'Send Global Payouts link', 'Proposta sem resposta': 'Proposal without reply', 'Repassar comissão': 'Pay commission' })[a] + ': ' + n; }],
+  [/^Chegou (hoje|há 1 dia|há (\d+) dias) · (.*)$/, function (m, a, n, r) { return 'Arrived ' + (a === 'hoje' ? 'today' : a === 'há 1 dia' ? '1 day ago' : n + ' days ago') + ' · ' + r; }],
+  [/^Indicada por (.+) (hoje|há 1 dia|há (\d+) dias)$/, function (m, p, a, n) { return 'Referred by ' + p + ' ' + (a === 'hoje' ? 'today' : a === 'há 1 dia' ? '1 day ago' : n + ' days ago'); }],
+  [/^E-mail enviado para (.+)\.$/, 'Email sent to $1.'],
   [/^Convite enviado em (.+), aguardando o primeiro acesso$/, 'Invitation sent on $1, waiting for the first sign-in'],
   [/^Ativo no portal desde (.+)$/, 'Active in the portal since $1'],
   [/^(\d+) empresas?$/, function (m, n) { return n + (n === '1' ? ' company' : ' companies'); }],
@@ -5929,7 +6109,9 @@ window.ADMIN_EN_RX = [
   var money = function (c, cur) { return new Intl.NumberFormat((window.ADMIN_LOCALE || 'pt-BR'), { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((c || 0) / 100); };
   var fmtD = function (d) { if (!d) return ''; var x = new Date(d.length === 10 ? d + 'T12:00:00' : d); return x.toLocaleDateString((window.ADMIN_LOCALE || 'pt-BR')); };
   var pill = function (cls, s, label) { return '<span class="' + cls + ' ' + cls + '--' + s + '">' + label + '</span>'; };
+  var GPS = { none: 'Global Payouts', requested: 'Global Payouts: enviar link', link_sent: 'Global Payouts: link enviado', ready: 'Global Payouts pronto' };
   function stripeOf(p) {
+    if (p.payout_method === 'global_payouts') return pill('stripe-st', p.global_payouts_status === 'ready' ? 'ok' : p.global_payouts_status === 'link_sent' ? 'review' : 'incomplete', GPS[p.global_payouts_status] + (p.payout_country ? ' (' + p.payout_country + ')' : ''));
     if (!p.stripe_account_id) return pill('stripe-st', 'none', 'Stripe não conectado');
     if (p.stripe_transfers_active) return pill('stripe-st', 'ok', 'Stripe pronto');
     if (p.stripe_details_submitted) return pill('stripe-st', 'review', 'Stripe em análise');
@@ -6010,7 +6192,7 @@ window.ADMIN_EN_RX = [
     var parts = res[0], refs = res[1], invs = res[2];
     var total = function (pid, f) { return invs.filter(function (i) { return i.partner_id === pid && f(i); }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0); };
     var pendingAll = invs.filter(function (i) { return i.status === 'paid' && i.transfer_status === 'pending'; }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0);
-    view.innerHTML = head(esc, 'Parceiros', 'Programa de indicações: convide parceiros, acompanhe as indicações e os repasses de comissão via Stripe Connect.', '<button class="btn btn--navy" type="button" id="pt-new">Novo parceiro</button>') +
+    view.innerHTML = head(esc, 'Parceiros', 'Programa de indicações: convide parceiros, acompanhe as indicações e os repasses de comissão via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/crm?auto=1">Vídeo e automações</a><button class="btn btn--navy" type="button" id="pt-new">Novo parceiro</button></div>') +
       '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Parceiros ativos', parts.filter(function (p) { return p.status === 'active' && p.program_status !== 'pending'; }).length) + kpi(esc, 'Aguardando aprovação', parts.filter(function (p) { return p.program_status === 'pending'; }).length) + kpi(esc, 'Indicações', refs.length) +
       kpi(esc, 'Viraram clientes', refs.filter(function (r) { return ['onboarding', 'in_process', 'completed'].indexOf(r.status) > -1; }).length) + kpi(esc, 'Repasses pendentes', money(pendingAll)) + '</div>' +
       (parts.length ? '<div class="table-wrap"><table class="data data--partners"><thead><tr><th>Parceiro</th><th>Tipo</th><th>Status</th><th class="num">Comissão</th><th>Stripe</th><th class="num">Indicações</th><th class="num">Repassado</th><th class="num">A repassar</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody>' +
@@ -6057,7 +6239,11 @@ window.ADMIN_EN_RX = [
       document.addEventListener('scroll', function () { var m = document.getElementById('pt-menu'); if (m && m._place) m._place(); }, true);
     }
     ctx.$('#pt-new').onclick = function () { partnerForm(ctx, null); };
-    if (param('novo')) partnerForm(ctx, null);
+    if (param('novo')) {
+      var lid = param('lead');
+      if (lid) sb.from('leads').select('*').eq('id', lid).maybeSingle().then(function (r) { var l = r.data; partnerForm(ctx, null, l ? { name: l.name, email: l.email, phone: l.phone, company: l.company, language: /^(pt|en|es)$/.test(l.language || '') ? l.language : 'pt', notes: l.message ? 'Do CRM: ' + String(l.message).slice(0, 1500) : null, lead_id: l.id } : null); });
+      else partnerForm(ctx, null);
+    }
   }
 
   /* row actions: Abrir, Editar, Reenviar convite, Suspender/Reativar, Excluir */
@@ -6125,8 +6311,8 @@ window.ADMIN_EN_RX = [
     });
   }
 
-  function partnerForm(ctx, p) {
-    var esc = ctx.esc, edit = !!p; p = p || { language: 'pt', partner_type: 'referral', default_share_pct: 10 };
+  function partnerForm(ctx, p, pre) {
+    var esc = ctx.esc, edit = !!p; p = p || Object.assign({ language: 'pt', partner_type: 'referral', default_share_pct: 10 }, pre || {});
     var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (edit ? 'Editar parceiro' : 'Novo parceiro') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<form class="portal-form" id="pf" novalidate><div class="field"><label for="pf-name">Nome</label><input id="pf-name" required maxlength="200" value="' + esc(p.name || '') + '"></div>' +
       '<div class="field"><label for="pf-email">E-mail (login do parceiro)</label><input id="pf-email" type="email" required value="' + esc(p.email || '') + '"' + (edit && p.user_id ? ' readonly' : '') + '></div>' +
@@ -6152,6 +6338,7 @@ window.ADMIN_EN_RX = [
       if (r.error) { btn.disabled = false; btn.textContent = label; return ctx.msg(m, /duplicate|unique/i.test(r.error.message) ? 'Já existe um parceiro com este e-mail.' : ctx.errText(r.error), 'error'); }
       if (edit) { ctx.closeOverlay(); ctx.route(); return; }
       var ok = await sendInvite(ctx, Object.assign({ id: r.data.id }, row));
+      if (p.lead_id) await ctx.sb.from('leads').update({ kind: 'partner', status: 'partner', partner_id: r.data.id }).eq('id', p.lead_id);
       // confirmation stays open until the admin closes it (Fechar or X)
       var finish = function () { ctx.closeOverlay(); ctx.route(); };
       form.innerHTML = '<div class="portal-alert portal-alert--' + (ok ? 'ok' : 'error') + '" role="status" style="display:block">' +
@@ -6269,7 +6456,7 @@ window.ADMIN_EN_RX = [
 
   async function tabCommissions(body, ctx, p) {
     var esc = ctx.esc;
-    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active)').eq('partner_id', p.id).neq('status', 'draft').order('created_at', { ascending: false }));
+    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active, payout_method)').eq('partner_id', p.id).neq('status', 'draft').order('created_at', { ascending: false }));
     body.innerHTML = rows.length ? invoiceTable(ctx, rows, true) : '<div class="empty-state portal-card"><strong>Nenhuma fatura com este parceiro</strong><p>Ao criar uma fatura em Pagamentos, selecione o parceiro para registrar a comissão.</p></div>';
     wireInvoiceActions(body, ctx, rows);
   }
@@ -6280,8 +6467,15 @@ window.ADMIN_EN_RX = [
       '<dl class="kv" style="margin-top:1rem"><dt>Conta</dt><dd>' + (p.stripe_account_id ? '<code>' + esc(p.stripe_account_id) + '</code>' : '—') + '</dd><dt>Cadastro enviado</dt><dd>' + (p.stripe_details_submitted ? 'Sim' : 'Não') + '</dd>' +
       '<dt>Recebe repasses</dt><dd>' + (p.stripe_transfers_active ? 'Sim' : 'Não') + '</dd><dt>Saques para o banco</dt><dd>' + (p.stripe_payouts_enabled ? 'Sim' : 'Não') + '</dd></dl>' +
       '<p class="portal-muted">O próprio parceiro conecta a conta no Portal do Parceiro, em "Recebimentos Stripe". Se preferir, gere aqui um link de cadastro e envie para ele.</p>' +
-      '<div class="portal-alert" id="ps-m" role="status"></div><div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ps-link">Gerar link de cadastro Stripe</button>' + (p.stripe_account_id ? '<button class="btn btn--ghost" type="button" id="ps-ref">Atualizar status</button>' : '') + '</div></section>';
+      '<div class="portal-alert" id="ps-m" role="status"></div><div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ps-link">Gerar link de cadastro Stripe</button>' + (p.stripe_account_id ? '<button class="btn btn--ghost" type="button" id="ps-ref">Atualizar status</button>' : '') + '</div></section>' +
+      '<section class="portal-card" style="margin-top:1.25rem"><h2 class="portal-h2">Como o parceiro recebe</h2>' +
+      '<dl class="kv"><dt>Forma escolhida</dt><dd>' + (p.payout_method === 'global_payouts' ? 'Stripe Global Payouts (conta fora dos EUA)' : p.payout_method === 'stripe' ? 'Stripe Connect (automático)' : 'Ainda não escolheu (no onboarding do portal)') + '</dd><dt>País da conta</dt><dd>' + esc(p.payout_country || '—') + '</dd>' +
+      '<dt>Chave Pix (opcional)</dt><dd>' + (p.pix_key ? esc(p.pix_key) + ' <span class="portal-muted">(' + esc({ email: 'e-mail', phone: 'celular', random: 'aleatória' }[p.pix_key_type] || '') + ')</span>' : '—') + '</dd></dl>' +
+      (p.payout_method === 'global_payouts' ? '<p class="portal-muted" style="font-size:.88rem">No painel do Stripe, em Global Payouts, cadastre o parceiro como destinatário pelo e-mail dele: o Stripe manda o link para ele informar o banco. Quando o cliente pagar, envie a comissão por lá e use "Marcar repasse feito" na fatura. Pagamentos em reais (BRL) dependem da liberação do Stripe.</p>' +
+        '<div class="field" style="max-width:20rem"><label for="gp-st">Situação</label><select id="gp-st">' + Object.keys(GPS).filter(function (k) { return k !== 'none'; }).map(function (k) { return '<option value="' + k + '"' + (p.global_payouts_status === k ? ' selected' : '') + '>' + GPS[k] + '</option>'; }).join('') + '</select></div><div class="portal-alert" id="gp-m" role="status"></div>' +
+        '<a class="btn btn--ghost btn--xs" href="https://dashboard.stripe.com/global-payouts" target="_blank" rel="noopener">Abrir Global Payouts no Stripe</a>' : '') + '</section>';
     var m = ctx.$('#ps-m');
+    if (ctx.$('#gp-st')) ctx.$('#gp-st').onchange = async function () { var r = await ctx.sb.from('partners').update({ global_payouts_status: this.value }).eq('id', p.id); ctx.msg(ctx.$('#gp-m'), r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok'); if (!r.error) p.global_payouts_status = this.value; };
     ctx.$('#ps-link').onclick = async function () {
       try { var j = await call(ctx, { action: 'partner_onboard', partner_id: p.id, return_to: ctx.siteUrl('partner.html') }); m.className = 'portal-alert portal-alert--ok'; m.innerHTML = 'Link válido por alguns minutos: <a href="' + esc(j.url) + '" target="_blank" rel="noopener">abrir</a> <button class="btn btn--ghost btn--xs" type="button" id="ps-copy">Copiar</button>'; ctx.$('#ps-copy').onclick = function () { ctx.copy(j.url, this); }; }
       catch (e) { ctx.msg(m, errMsg(ctx, e), 'error'); }
@@ -6298,7 +6492,9 @@ window.ADMIN_EN_RX = [
         if (i.status === 'draft') acts.push('<button class="btn btn--navy btn--xs" data-act="invoice_send" data-i="' + i.id + '">Enviar</button>');
         if (i.hosted_invoice_url) acts.push('<a class="btn btn--ghost btn--xs" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">Ver</a>');
         var ready = i.partners && i.partners.stripe_transfers_active;
-        if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed')) acts.push(ready ? '<button class="btn btn--navy btn--xs" data-act="transfer" data-i="' + i.id + '">Repassar</button>' : '<span class="portal-muted" style="font-size:.82rem">Aguardando Stripe do parceiro</span>');
+        var gp = i.partners && i.partners.payout_method === 'global_payouts';
+        if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed') && gp) acts.push('<button class="btn btn--navy btn--xs" data-act="manual_paid" data-i="' + i.id + '">Marcar repasse feito</button>');
+        else if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed')) acts.push(ready ? '<button class="btn btn--navy btn--xs" data-act="transfer" data-i="' + i.id + '">Repassar</button>' : '<span class="portal-muted" style="font-size:.82rem">Aguardando Stripe do parceiro</span>');
         if (i.status === 'open' || i.status === 'uncollectible') acts.push('<button class="btn btn--ghost btn--xs" data-act="invoice_sync" data-i="' + i.id + '">Sincronizar</button>');
         if (i.status !== 'paid' && i.status !== 'void') acts.push('<button class="btn btn--danger btn--xs" data-act="invoice_void" data-i="' + i.id + '">Anular</button>');
         return '<tr><td><strong>' + esc(i.number || 'Rascunho') + '</strong><span class="sub">' + esc(fmtD(i.created_at)) + (i.due_date ? ' · vence ' + esc(fmtD(i.due_date)) : '') + '</span></td><td>' + esc(i.clients ? i.clients.name : '') + '</td>' +
@@ -6313,6 +6509,14 @@ window.ADMIN_EN_RX = [
         e.stopPropagation();
         if (b.dataset.act === 'invoice_void' && !confirm('Anular esta fatura no Stripe? O cliente não poderá mais pagá-la.')) return;
         if (b.dataset.act === 'transfer' && !confirm('Repassar agora a comissão do parceiro para a conta Stripe dele?')) return;
+        if (b.dataset.act === 'manual_paid') {
+          var note = prompt('Repasse feito fora do Stripe Connect (Global Payouts ou Pix). Anote uma referência (ex.: ID do pagamento no Stripe):', '');
+          if (note === null) return;
+          b.disabled = true;
+          var ru = await ctx.sb.from('invoices').update({ transfer_status: 'paid', payout_channel: 'global_payouts', payout_note: note.trim().slice(0, 500) || null, payout_paid_at: new Date().toISOString() }).eq('id', b.dataset.i);
+          if (ru.error) { b.disabled = false; return ctx.msg(ctx.$('#ia-' + b.dataset.i), ctx.errText(ru.error), 'error'); }
+          return ctx.route();
+        }
         b.disabled = true;
         try { await call(ctx, { action: b.dataset.act, invoice_id: b.dataset.i }); ctx.route(); }
         catch (x) { b.disabled = false; ctx.msg(ctx.$('#ia-' + b.dataset.i), errMsg(ctx, x), 'error'); }
@@ -6331,7 +6535,7 @@ window.ADMIN_EN_RX = [
     if (tab === 'nova-proposta') return proposalForm(body, ctx, null);
     if (tab === 'modelos') return param('tpl') ? templateForm(body, ctx, param('tpl')) : templatesTab(body, ctx);
     if (tab === 'stripe') return stripeTab(body, ctx);
-    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active)').order('created_at', { ascending: false }));
+    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active, payout_method)').order('created_at', { ascending: false }));
     var st = param('status') || '';
     var shown = rows.filter(function (i) { return !st || i.status === st; });
     var now = new Date(), ym = now.toISOString().slice(0, 7);
@@ -7530,6 +7734,177 @@ window.ADMIN_EN_RX = [
 
 </script>
 <script>
+/* Smart CRM (admin): next actions, automations (follow-ups, partner reminders, partner step notifications),
+   onboarding video for partners, and the AI assistant + e-mail reply inside a lead. Server side: supabase function "crm". */
+(function () {
+  'use strict';
+  var DAY = 864e5;
+  async function call(ctx, payload) {
+    var sess = (await ctx.sb.auth.getSession()).data.session;
+    var r = await fetch(ctx.CFG.functionsUrl + '/crm', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + (sess ? sess.access_token : ctx.CFG.supabaseKey) }, body: JSON.stringify(payload) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.error) { var e = new Error(j.error || 'HTTP ' + r.status); e.detail = j.detail; throw e; }
+    return j;
+  }
+  var ERR = { no_ai_key: 'A IA ainda não está configurada (chave da Anthropic no Supabase).', ai_failed: 'A IA não respondeu agora. Tente de novo em instantes.', ai_format: 'A IA respondeu num formato inesperado. Tente de novo.',
+    no_sender: 'O envio de e-mails não está configurado.', send_failed: 'O e-mail não saiu. Tente de novo em instantes.', empty: 'Preencha o assunto e a mensagem.', forbidden: 'Sem permissão.' };
+  var err = function (ctx, e) { return ERR[e.message] || ctx.errText(e); };
+  var ago = function (d) { var n = Math.floor((Date.now() - new Date(d)) / DAY); return n <= 0 ? 'hoje' : n === 1 ? 'há 1 dia' : 'há ' + n + ' dias'; };
+  var KIND_MSG = { referral_contacted: 'Parceiro: indicação em contato', referral_proposal: 'Parceiro: proposta enviada', referral_onboarding: 'Parceiro: virou cliente', referral_in_process: 'Parceiro: em processamento', referral_completed: 'Parceiro: concluída', referral_lost: 'Parceiro: encerrada',
+    invoice_paid: 'Parceiro: pagamento confirmado', commission_paid: 'Parceiro: comissão enviada', followup_1: 'Follow-up 1 (lead)', followup_2: 'Follow-up 2 (lead)', partner_invite_reminder: 'Lembrete: criar senha (parceiro)', partner_onboarding_reminder: 'Lembrete: terminar onboarding (parceiro)', manual: 'E-mail enviado pelo CRM' };
+
+  /* ---------- next actions ---------- */
+  async function nextActions(ctx, el, leads, onLead) {
+    var sb = ctx.sb, esc = ctx.esc, now = Date.now();
+    var res = await Promise.all([
+      sb.from('bookings').select('lead_id, starts_at, status').not('lead_id', 'is', null),
+      sb.from('partners').select('id, name, program_status, contract_status, global_payouts_status, payout_method, status'),
+      sb.from('proposals').select('*').eq('status', 'sent'),
+      sb.from('invoices').select('id, number, status, transfer_status, partner_id, partners(name, stripe_transfers_active, payout_method)').eq('status', 'paid').in('transfer_status', ['pending', 'failed']),
+      sb.from('referrals').select('id, name, status, created_at, partner_id, lead_id, partners(name)').eq('status', 'submitted')
+    ]);
+    var bk = res[0].data || [], parts = res[1].data || [], props = res[2].data || [], invs = res[3].data || [], refs = res[4].data || [];
+    var booked = {}, pastCall = {}; bk.forEach(function (b) { booked[b.lead_id] = 1; if (b.status !== 'cancelled' && new Date(b.starts_at) < now) pastCall[b.lead_id] = 1; });
+    var A = [];
+    var add = function (prio, title, sub, act) { A.push({ p: prio, title: title, sub: sub, act: act }); };
+    leads.forEach(function (l) {
+      var age = (now - new Date(l.last_contact_at || l.created_at)) / DAY;
+      if (l.status === 'new' && !booked[l.id] && age >= 1) add(age >= 3 ? 3 : 2, 'Responder ' + (l.kind === 'partner' ? 'interessado no Programa de Parceiros' : 'lead') + ': ' + l.name, 'Chegou ' + ago(l.created_at) + ' · ' + (l.assistance || l.email), { lead: l.id });
+      else if ((l.status === 'contacted' || l.status === 'qualified') && (now - new Date(l.updated_at || l.created_at)) / DAY >= 7 && l.kind !== 'partner') add(1, 'Fazer follow-up: ' + l.name, 'Sem movimento ' + ago(l.updated_at || l.created_at), { lead: l.id });
+      if (l.kind === 'partner' && l.status !== 'partner' && l.status !== 'lost' && pastCall[l.id]) add(3, 'Cadastrar parceiro: ' + l.name, 'A conversa já aconteceu. Crie o parceiro e envie o convite.', { lead: l.id });
+    });
+    refs.forEach(function (r) { if ((now - new Date(r.created_at)) / DAY >= 1) add(3, 'Contatar indicação: ' + r.name, 'Indicada por ' + (r.partners ? r.partners.name : 'parceiro') + ' ' + ago(r.created_at), r.lead_id ? { lead: r.lead_id } : { href: '#/parceiros?id=' + r.partner_id + '&ref=' + r.id }); });
+    parts.forEach(function (p) {
+      if (p.status === 'suspended') return;
+      if (p.program_status === 'pending') add(2, 'Aprovar parceiro: ' + p.name, 'Definir a comissão e enviar o contrato.', { href: '#/parceiros?id=' + p.id + '&tab=contrato' });
+      if (p.contract_status === 'partner_signed') add(3, 'Assinar contrato pela Endeavor: ' + p.name, 'O parceiro já assinou.', { href: '#/parceiros?id=' + p.id + '&tab=contrato' });
+      if (p.payout_method === 'global_payouts' && p.global_payouts_status === 'requested') add(2, 'Enviar link Global Payouts: ' + p.name, 'Parceiro com conta bancária fora dos EUA.', { href: '#/parceiros?id=' + p.id + '&tab=stripe' });
+    });
+    props.forEach(function (pr) { var d = pr.sent_at || pr.updated_at || pr.created_at; if ((now - new Date(d)) / DAY >= 5) add(1, 'Proposta sem resposta: ' + (pr.title || 'Proposta'), 'Enviada ' + ago(d), { href: '#/pagamentos?tab=propostas' }); });
+    invs.forEach(function (i) { var p = i.partners || {}; if (p.stripe_transfers_active || p.payout_method === 'global_payouts') add(2, 'Repassar comissão: ' + (p.name || ''), 'Fatura ' + (i.number || '') + ' paga', { href: '#/pagamentos' }); });
+    A.sort(function (a, b) { return b.p - a.p; });
+    if (!A.length) { el.innerHTML = '<section class="portal-card crm-next"><h2 class="portal-h2" style="margin:0">Próximas ações</h2><p class="portal-muted" style="margin:.3rem 0 0">Nada pendente. Tudo em dia.</p></section>'; return A; }
+    var item = function (a, i) { return '<li><button type="button" class="crm-next__item" data-i="' + i + '"><span class="crm-next__dot crm-next__dot--' + a.p + '" aria-hidden="true"></span><span><strong>' + esc(a.title) + '</strong><span>' + esc(a.sub) + '</span></span></button></li>'; };
+    el.innerHTML = '<section class="portal-card crm-next"><div class="crm-next__head"><h2 class="portal-h2" style="margin:0">Próximas ações <span class="crm-next__n">' + A.length + '</span></h2>' + (A.length > 6 ? '<button type="button" class="linklike" id="crm-next-all">Ver todas</button>' : '') + '</div>' +
+      '<ul class="crm-next__list" id="crm-next-list">' + A.slice(0, 6).map(item).join('') + '</ul></section>';
+    var wire = function () {
+      el.querySelectorAll('[data-i]').forEach(function (b) { b.onclick = function () { var a = A[+b.dataset.i].act; if (a.lead && onLead) onLead(a.lead); else if (a.href) ERoute.go(a.href); }; });
+    };
+    if (el.querySelector('#crm-next-all')) el.querySelector('#crm-next-all').onclick = function () { el.querySelector('#crm-next-list').innerHTML = A.map(item).join(''); this.remove(); wire(); };
+    wire();
+    return A;
+  }
+
+  /* ---------- automations + onboarding video ---------- */
+  async function automations(ctx) {
+    var sb = ctx.sb, esc = ctx.esc;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Automações do CRM</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div><div id="au-body"><p class="portal-muted">Carregando…</p></div>');
+    var res = await Promise.all([sb.from('crm_settings').select('*').eq('id', 1).single(), call(ctx, { action: 'status' }).catch(function () { return {}; }),
+      sb.from('crm_messages').select('created_at, kind, channel, to_addr, subject, status, error').order('created_at', { ascending: false }).limit(40)]);
+    var s = res[0].data || {}, st = res[1] || {}, log = res[2].data || [], dd = s.followup_days || [2, 7];
+    var chk = function (id, on, label, note, dis) { return '<div class="check-row au-row"><input type="checkbox" id="' + id + '"' + (on ? ' checked' : '') + (dis ? ' disabled' : '') + '><label for="' + id + '"><strong>' + label + '</strong><span>' + note + '</span></label></div>'; };
+    var B = ctx.$('#au-body', o);
+    B.innerHTML =
+      '<p class="mk-status">' + '<span class="pill">' + (st.email ? 'E-mail: ' + (st.via === 'ses' ? 'Amazon SES' : 'Gmail') : 'E-mail não configurado') + '</span> <span class="pill">' + (st.whatsapp ? 'WhatsApp conectado' : 'WhatsApp: aguardando a Meta') + '</span> <span class="pill">' + (st.ai ? 'IA ativa' : 'IA não configurada') + '</span></p>' +
+      '<form class="portal-form" id="au-f" novalidate>' +
+      '<h3 class="portal-h2" style="font-size:1rem;margin:.5rem 0 0">Clientes e leads</h3>' +
+      chk('au-fu', s.followup_enabled !== false, 'Follow-up automático de leads', 'Para quem chegou pelo site, agendamento ou indicação e ainda está como <em>Novo</em>, sem agendamento. O e-mail convida para agendar a conversa. Para quando o lead agenda, muda de status ou você marca "Parar follow-ups".') +
+      '<div class="portal-grid2 au-days"><div class="field"><label for="au-d1">1º follow-up (dias)</label><input id="au-d1" type="number" min="1" max="30" value="' + (+dd[0] || 2) + '"></div><div class="field"><label for="au-d2">2º follow-up (dias)</label><input id="au-d2" type="number" min="2" max="60" value="' + (+dd[1] || 7) + '"></div></div>' +
+      '<h3 class="portal-h2" style="font-size:1rem;margin:.75rem 0 0">Parceiros</h3>' +
+      chk('au-pn', s.partner_notify !== false, 'Avisar o parceiro a cada etapa', 'E-mail quando a indicação dele avança (em contato, proposta, virou cliente, concluída), quando o cliente paga e quando a comissão é enviada.') +
+      chk('au-pr', s.partner_reminders !== false, 'Lembretes de onboarding', 'No 3º e no 7º dia: criar a senha, escolher como recebe, conectar o Stripe e assinar o contrato.') +
+      chk('au-wa', !!s.whatsapp_enabled, 'Também por WhatsApp', st.whatsapp ? 'Usa o modelo de mensagem aprovado na Meta.' : 'Liga depois que a Meta aprovar a conta e o modelo de mensagem.', !st.whatsapp) +
+      '<h3 class="portal-h2" style="font-size:1rem;margin:.75rem 0 0">Vídeo de onboarding do parceiro</h3>' +
+      '<p class="portal-muted" style="font-size:.88rem;margin:.2rem 0 .4rem">Aparece no topo da página "Comece aqui" do Portal do Parceiro. Cole um link do YouTube ou Vimeo, ou envie o arquivo (MP4, até 50 MB).</p>' +
+      '<div class="field"><label for="au-vurl">Link do vídeo</label><input id="au-vurl" type="url" placeholder="https://www.youtube.com/watch?v=…" value="' + esc(s.partner_video_url || '') + '"></div>' +
+      '<div class="portal-btn-row" style="align-items:center"><label class="btn btn--ghost btn--xs" for="au-vfile" style="cursor:pointer">Enviar arquivo de vídeo</label><input type="file" id="au-vfile" accept="video/mp4,video/webm,video/quicktime" hidden>' +
+        (s.partner_video_url ? '<button type="button" class="btn btn--ghost btn--xs" id="au-vdel">Remover vídeo</button>' : '') + '<span class="portal-muted" id="au-vst" style="font-size:.85rem"></span></div>' +
+      '<div id="au-vprev" style="margin-top:.6rem"></div>' +
+      '<div class="portal-alert" id="au-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button><button class="btn btn--ghost" type="button" id="au-run">Rodar agora</button></div></form>' +
+      '<h3 class="portal-h2" style="font-size:1rem;margin-top:1.5rem">Mensagens automáticas recentes</h3>' +
+      (log.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Quando</th><th>Mensagem</th><th>Para</th><th>Status</th></tr></thead><tbody>' + log.map(function (m) {
+        return '<tr><td>' + esc(ctx.fmtDT(m.created_at)) + '</td><td>' + esc(KIND_MSG[m.kind] || m.kind) + '<span class="sub">' + esc(m.subject || '') + '</span></td><td>' + esc(m.channel === 'whatsapp' ? 'WhatsApp ' : '') + esc(m.to_addr || '') + '</td><td><span class="badge badge--' + (m.status === 'sent' ? 'client' : m.status === 'failed' ? 'lost' : 'new') + '"' + (m.error ? ' title="' + esc(m.error) + '"' : '') + '>' + ({ sent: 'Enviado', failed: 'Falhou', skipped: 'Ignorado', sending: 'Enviando' })[m.status] + '</span></td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="empty">Nenhuma mensagem automática ainda.</p>');
+    var m = ctx.$('#au-m', o), url = ctx.$('#au-vurl', o);
+    var prev = function () { var v = url.value.trim(); ctx.$('#au-vprev', o).innerHTML = v ? '<div class="ob-video" style="max-width:26rem">' + (/youtu|vimeo/.test(v) ? '<iframe src="' + esc(embed(v)) + '" title="Prévia" allowfullscreen></iframe>' : '<video controls preload="metadata" src="' + esc(v) + '"></video>') + '</div>' : ''; };
+    url.oninput = prev; prev();
+    var save = async function (extra) {
+      var d1 = Math.max(1, Math.min(30, +ctx.$('#au-d1', o).value || 2)), d2 = Math.max(d1 + 1, Math.min(60, +ctx.$('#au-d2', o).value || 7)), v = url.value.trim();
+      if (v && !/^https:\/\//.test(v)) throw new Error('O link do vídeo precisa começar com https://');
+      var u = (await sb.auth.getUser()).data.user;
+      var row = Object.assign({ followup_enabled: ctx.$('#au-fu', o).checked, followup_days: [d1, d2], partner_notify: ctx.$('#au-pn', o).checked, partner_reminders: ctx.$('#au-pr', o).checked, whatsapp_enabled: ctx.$('#au-wa', o).checked,
+        partner_video_url: v || null, updated_at: new Date().toISOString(), updated_by: u && u.email }, v !== (s.partner_video_url || '') ? { partner_video_updated_at: new Date().toISOString() } : {}, extra || {});
+      var r = await sb.from('crm_settings').update(row).eq('id', 1);
+      if (r.error) throw r.error;
+      Object.assign(s, row);
+    };
+    ctx.$('#au-f', o).onsubmit = async function (e) { e.preventDefault(); var b = this.querySelector('button[type=submit]'); b.disabled = true; try { await save(); ctx.msg(m, 'Salvo.', 'ok'); } catch (x) { ctx.msg(m, x.message && !x.code ? x.message : ctx.errText(x), 'error'); } b.disabled = false; };
+    ctx.$('#au-run', o).onclick = async function () {
+      var b = this; b.disabled = true; ctx.msg(m, 'Rodando as automações…', 'info');
+      try { var r = await call(ctx, { action: 'run_now' }); ctx.msg(m, r.waiting ? 'O envio de e-mails não está configurado.' : 'Pronto: ' + (r.referral + r.paid + r.commission) + ' aviso(s) a parceiros, ' + r.followup + ' follow-up(s), ' + r.partner + ' lembrete(s).', 'ok'); }
+      catch (x) { ctx.msg(m, err(ctx, x), 'error'); }
+      b.disabled = false;
+    };
+    ctx.$('#au-vfile', o).onchange = async function () {
+      var f = this.files[0]; if (!f) return;
+      var vst = ctx.$('#au-vst', o);
+      if (f.size > 50 * 1024 * 1024) { vst.textContent = ''; return ctx.msg(m, 'O arquivo passa de 50 MB. Comprima o vídeo ou use um link do YouTube.', 'error'); }
+      vst.textContent = 'Enviando ' + f.name + '…';
+      var path = 'partner-onboarding/' + Date.now() + '-' + f.name.toLowerCase().replace(/[^a-z0-9.]+/g, '-').slice(-60);
+      var up = await sb.storage.from('media').upload(path, f, { contentType: f.type || 'video/mp4', upsert: false });
+      if (up.error) { vst.textContent = ''; return ctx.msg(m, ctx.errText(up.error), 'error'); }
+      url.value = sb.storage.from('media').getPublicUrl(path).data.publicUrl; prev();
+      try { await save(); vst.textContent = 'Vídeo enviado e salvo.'; } catch (x) { ctx.msg(m, ctx.errText(x), 'error'); }
+    };
+    if (ctx.$('#au-vdel', o)) ctx.$('#au-vdel', o).onclick = async function () { if (!confirm('Remover o vídeo do onboarding dos parceiros?')) return; url.value = ''; prev(); try { await save(); ctx.msg(m, 'Vídeo removido.', 'ok'); this.remove(); } catch (x) { ctx.msg(m, ctx.errText(x), 'error'); } };
+  }
+  function embed(u) {
+    var yt = /(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/.exec(u), vm = /vimeo\.com\/(?:video\/)?(\d+)/.exec(u);
+    return yt ? 'https://www.youtube-nocookie.com/embed/' + yt[1] : vm ? 'https://player.vimeo.com/video/' + vm[1] : u;
+  }
+
+  /* ---------- inside a lead: AI assistant, reply by e-mail, automatic messages ---------- */
+  var KIND_PT = { lead: 'Lead', prospect: 'Prospect', partner: 'Parceiro (prospect)' }, ST_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', lost: 'Perdido' };
+  async function leadPanel(ctx, l, el, onApply) {
+    var sb = ctx.sb, esc = ctx.esc;
+    var msgs = (await sb.from('crm_messages').select('created_at, kind, channel, subject, status').eq('lead_id', l.id).order('created_at', { ascending: false }).limit(20)).data || [];
+    el.innerHTML = '<section class="crm-ai"><div class="crm-ai__head"><h3 style="margin:0">Assistente do CRM</h3><button class="btn btn--ghost btn--xs" type="button" id="ai-go">✦ Sugerir com IA</button></div>' +
+      '<div id="ai-out"></div>' +
+      '<details class="crm-reply" id="ai-reply"><summary>Responder por e-mail</summary><div class="field"><label for="ai-subj">Assunto</label><input id="ai-subj" maxlength="150"></div><div class="field"><label for="ai-body">Mensagem</label><textarea id="ai-body" rows="8" maxlength="6000"></textarea></div>' +
+        '<p class="portal-muted" style="font-size:.82rem;margin:0">Sai de support@endeavorbiz.com com o layout da Endeavor. As respostas do cliente chegam no support@.</p><div class="portal-alert" id="ai-sm" role="alert"></div><button class="btn btn--navy btn--xs" type="button" id="ai-send">Enviar e-mail</button></details>' +
+      '<div class="check-row" style="margin-top:.6rem"><input type="checkbox" id="ai-stop"' + (l.followup_stop ? ' checked' : '') + '><label for="ai-stop">Parar follow-ups automáticos para este contato</label></div>' +
+      (msgs.length ? '<h3 style="margin:1rem 0 .3rem;font-size:.95rem">Mensagens do CRM</h3><ul class="list">' + msgs.map(function (x) { return '<li><div class="list__main"><strong>' + esc(KIND_MSG[x.kind] || x.kind) + '</strong><span>' + esc(ctx.fmtDT(x.created_at)) + ' · ' + esc(x.subject || '') + (x.channel === 'whatsapp' ? ' · WhatsApp' : '') + '</span></div><span class="badge badge--' + (x.status === 'sent' ? 'client' : x.status === 'failed' ? 'lost' : 'new') + '">' + ({ sent: 'Enviado', failed: 'Falhou', skipped: 'Ignorado', sending: 'Enviando' })[x.status] + '</span></li>'; }).join('') + '</ul>' : '') + '</section>';
+    ctx.$('#ai-stop', el).onchange = async function () { var r = await sb.from('leads').update({ followup_stop: this.checked }).eq('id', l.id); if (!r.error) l.followup_stop = this.checked; };
+    ctx.$('#ai-go', el).onclick = async function () {
+      var b = this, out = ctx.$('#ai-out', el); b.disabled = true; b.textContent = 'Analisando…';
+      try {
+        var r = await call(ctx, { action: 'ai_suggest', lead_id: l.id });
+        out.innerHTML = '<div class="crm-ai__card crm-ai__card--' + r.urgency + '"><p style="margin:0 0 .4rem">' + esc(r.summary) + '</p><p style="margin:0"><strong>Próximo passo:</strong> ' + esc(r.next_action) + '</p>' +
+          '<p class="portal-muted" style="margin:.4rem 0 0;font-size:.86rem">Sugestão: ' + esc(KIND_PT[r.kind] || r.kind) + ' · ' + esc(ST_PT[r.status] || r.status) + (r.service ? ' · ' + esc(r.service) : '') + '</p>' +
+          '<div class="portal-btn-row" style="margin-top:.5rem"><button class="btn btn--ghost btn--xs" type="button" id="ai-apply">Aplicar tipo e status</button></div></div>';
+        ctx.$('#ai-apply', el).onclick = function () { if (onApply) onApply(r); this.textContent = 'Aplicado (clique em Salvar)'; this.disabled = true; };
+        if (r.reply_subject) ctx.$('#ai-subj', el).value = r.reply_subject;
+        if (r.reply_body) ctx.$('#ai-body', el).value = r.reply_body;
+        ctx.$('#ai-reply', el).open = true;
+      } catch (x) { out.innerHTML = '<div class="portal-alert portal-alert--error" style="display:block">' + esc(err(ctx, x)) + '</div>'; }
+      b.disabled = false; b.textContent = '✦ Sugerir com IA';
+    };
+    ctx.$('#ai-send', el).onclick = async function () {
+      var b = this, sm = ctx.$('#ai-sm', el), subj = ctx.$('#ai-subj', el).value.trim(), body = ctx.$('#ai-body', el).value.trim();
+      if (subj.length < 3 || body.length < 10) return ctx.msg(sm, ERR.empty, 'error');
+      if (!confirm('Enviar este e-mail para ' + l.email + '?')) return;
+      b.disabled = true;
+      try { await call(ctx, { action: 'send_email', lead_id: l.id, subject: subj, body: body }); ctx.msg(sm, 'E-mail enviado para ' + l.email + '.', 'ok'); if (l.status === 'new') l.status = 'contacted'; }
+      catch (x) { ctx.msg(sm, err(ctx, x), 'error'); }
+      b.disabled = false;
+    };
+  }
+
+  window.AdminCRM = { nextActions: nextActions, automations: automations, leadPanel: leadPanel, call: call };
+})();
+
+</script>
+<script>
 /* Endeavor admin console: login + MFA, dashboard, CRM, scheduling and e-signature. */
 (function () {
   'use strict';
@@ -7545,7 +7920,7 @@ window.ADMIN_EN_RX = [
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', client: 'Cliente', lost: 'Perdido',
+  var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', client: 'Cliente', partner: 'Virou parceiro', lost: 'Perdido',
     sent: 'Enviado', viewed: 'Visualizado', signed: 'Assinado', voided: 'Anulado', expired: 'Expirado',
     confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído', no_show: 'Não compareceu' };
   var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro' };
@@ -7808,6 +8183,7 @@ window.ADMIN_EN_RX = [
     view.innerHTML =
       '<div class="console__head"><div><h1>Dashboard</h1><p class="portal-muted">' + esc(new Intl.DateTimeFormat((window.ADMIN_LOCALE || 'pt-BR'), { dateStyle: 'full' }).format(now)) + '</p></div></div>' +
       '<div class="dash"><div>' +
+        '<div id="dash-next" style="margin-bottom:1.25rem"></div>' +
         '<div class="kpis">' +
           kpi('Novos leads (7 dias)', newLeads) + kpi('Próximos agendamentos', upcoming) + kpi('Assinaturas pendentes', pending) + kpi('Assinados (30 dias)', signed30) +
         '</div>' +
@@ -7837,6 +8213,7 @@ window.ADMIN_EN_RX = [
         '<li><a href="https://platform.claude.com/" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>IA (Claude Console)</a></li>' +
       '</ul></aside></div>';
     $('#ql-copy').addEventListener('click', function (e) { copy(schedUrl, e.currentTarget); });
+    if (window.AdminCRM) sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000).then(function (r) { state.leads = r.data || []; return AdminCRM.nextActions(clientsCtx(), $('#dash-next'), state.leads, function (lid) { ERoute.go('#/crm?lead=' + lid); }); }).catch(function (e) { console.error(e); });
     $('#ql-csv').addEventListener('click', exportCsv);
   }
   function kpi(label, value) { return '<div class="kpi"><div class="kpi__label">' + esc(label) + '</div><div class="kpi__value">' + esc(value) + '</div></div>'; }
@@ -7852,10 +8229,10 @@ window.ADMIN_EN_RX = [
 
   /* ---------- CRM ---------- */
   // CRM types and the statuses of each type
-  var KIND_PT = { lead: 'Lead', prospect: 'Prospect', client: 'Cliente' };
-  var KIND_ST = { lead: ['new', 'contacted', 'lost'], prospect: ['qualified', 'proposal', 'lost'], client: ['active', 'archived'] };
+  var KIND_PT = { lead: 'Lead', prospect: 'Prospect', partner: 'Parceiro (prospect)', client: 'Cliente' };
+  var KIND_ST = { lead: ['new', 'contacted', 'lost'], prospect: ['qualified', 'proposal', 'lost'], partner: ['new', 'contacted', 'qualified', 'partner', 'lost'], client: ['active', 'archived'] };
   var CST_PT = { active: 'Ativo', archived: 'Arquivado' };
-  function kindOf(l) { return l.status === 'client' ? 'client' : /qualified|proposal/.test(l.status) ? 'prospect' : /new|contacted/.test(l.status) ? 'lead' : (l.kind === 'prospect' ? 'prospect' : 'lead'); }
+  function kindOf(l) { return l.status === 'client' ? 'client' : l.kind === 'partner' || l.status === 'partner' ? 'partner' : /qualified|proposal/.test(l.status) ? 'prospect' : /new|contacted/.test(l.status) ? 'lead' : (l.kind === 'prospect' ? 'prospect' : 'lead'); }
   function stLabel(st) { return CST_PT[st] || STATUS_PT[st] || st; }
   function crmBadges(kind, st) {
     return '<span class="pill pill--kind-' + kind + '">' + KIND_PT[kind] + '</span> <span class="badge badge--' + (st === 'active' ? 'client' : st === 'archived' ? 'lost' : esc(st)) + '">' + esc(stLabel(st)) + '</span>';
@@ -7884,7 +8261,8 @@ window.ADMIN_EN_RX = [
     })).sort(function (x, y) { return String(y.at || '').localeCompare(String(x.at || '')); });
 
     view.innerHTML = '<div class="console__head"><div><h1>CRM</h1><p class="portal-muted">Leads, prospects e clientes. Em <strong>Novo</strong> você escolhe o tipo; como Cliente, a conta do portal é criada e o convite sai na hora.</p></div>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--navy btn--xs" type="button" id="crm-new">Novo</button></div></div>' +
+      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-auto">Automações</button><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--navy btn--xs" type="button" id="crm-new">Novo</button></div></div>' +
+      '<div id="crm-next"></div>' +
       '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar">' +
       '<select id="crm-kind" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>' + Object.keys(KIND_PT).map(function (k) { return '<option value="' + k + '">' + KIND_PT[k] + '</option>'; }).join('') + '</select>' +
       '<select id="crm-status" aria-label="Filtrar por status"></select>' +
@@ -7917,7 +8295,10 @@ window.ADMIN_EN_RX = [
     ['#crm-q', '#crm-status', '#crm-source'].forEach(function (x) { $(x).addEventListener('input', draw); });
     $('#crm-csv').addEventListener('click', exportCsv);
     $('#crm-new').addEventListener('click', function () { openLead(null); });
+    $('#crm-auto').addEventListener('click', function () { AdminCRM.automations(clientsCtx()); });
     draw();
+    if (window.AdminCRM) AdminCRM.nextActions(clientsCtx(), $('#crm-next'), state.leads, function (id) { openLead(id); }).catch(function (e) { console.error(e); });
+    if (/[?&]auto=1/.test(ERoute.get()) && window.AdminCRM) AdminCRM.automations(clientsCtx());
     if (/novo=1/.test(ERoute.get())) openLead(null);
     if (/cliente=1/.test(ERoute.get())) openLead(null, 'client');
     var lq = (ERoute.get().match(/[?&]lead=([0-9a-f-]{36})/) || [])[1]; if (lq && state.leads.some(function (x) { return x.id === lq; })) openLead(lq);
@@ -7949,7 +8330,8 @@ window.ADMIN_EN_RX = [
       '<div class="field"><label for="ld-notes">Notas internas</label><textarea id="ld-notes" rows="4">' + esc(l.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="ld-msg" role="alert"></div>' +
       '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
-      (id ? '<a class="btn btn--ghost" href="mailto:' + esc(l.email) + '">Enviar e-mail</a><a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + '</div></form>' +
+      (id ? '<a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + (id && kind0 === 'partner' && !l.partner_id ? '<a class="btn btn--ghost" id="ld-mkpartner" href="#/parceiros?novo=1&lead=' + esc(id) + '">Criar parceiro e enviar convite</a>' : '') + '</div></form>' +
+      (id ? '<div id="ld-crm" style="margin-top:1.25rem"></div>' : '') +
       (id ? '<h3 style="margin-top:1.5rem">Agendamentos</h3>' + (related[0].length ? '<ul class="list">' + related[0].map(function (b) { return '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at)) + '</strong><span>' + esc(b.topic || '') + '</span></div>' + badge(b.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') +
         '<h3>Documentos</h3>' + (related[1].length ? '<ul class="list">' + related[1].map(function (e) { return '<li><div class="list__main"><strong>' + esc(e.title) + '</strong><span>' + esc(fmtDT(e.created_at)) + '</span></div>' + badge(e.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') : ''));
     $('#ld-lang', o).value = l.language && /^(pt|en|es)$/.test(l.language) ? l.language : 'pt';
@@ -7962,6 +8344,8 @@ window.ADMIN_EN_RX = [
       save.textContent = k === 'client' ? 'Salvar e criar conta do cliente' : 'Salvar';
     }
     kSel.onchange = function () { sSel.value = ''; sync(); }; sync();
+    if (id && window.AdminCRM) AdminCRM.leadPanel(clientsCtx(), l, $('#ld-crm', o), function (r) { if (KIND_ST[r.kind]) { kSel.value = r.kind; sSel.value = ''; sync(); if (KIND_ST[r.kind].indexOf(r.status) > -1) sSel.value = r.status; } }).catch(function (e) { console.error(e); });
+    if ($('#ld-mkpartner', o)) $('#ld-mkpartner', o).onclick = function () { closeOverlay(); };
     $('#lead-form', o).addEventListener('submit', async function (e) {
       e.preventDefault();
       var m = $('#ld-msg', o), k = kSel.value;

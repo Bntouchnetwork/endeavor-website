@@ -13,7 +13,7 @@
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', client: 'Cliente', lost: 'Perdido',
+  var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', client: 'Cliente', partner: 'Virou parceiro', lost: 'Perdido',
     sent: 'Enviado', viewed: 'Visualizado', signed: 'Assinado', voided: 'Anulado', expired: 'Expirado',
     confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído', no_show: 'Não compareceu' };
   var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro' };
@@ -276,6 +276,7 @@
     view.innerHTML =
       '<div class="console__head"><div><h1>Dashboard</h1><p class="portal-muted">' + esc(new Intl.DateTimeFormat((window.ADMIN_LOCALE || 'pt-BR'), { dateStyle: 'full' }).format(now)) + '</p></div></div>' +
       '<div class="dash"><div>' +
+        '<div id="dash-next" style="margin-bottom:1.25rem"></div>' +
         '<div class="kpis">' +
           kpi('Novos leads (7 dias)', newLeads) + kpi('Próximos agendamentos', upcoming) + kpi('Assinaturas pendentes', pending) + kpi('Assinados (30 dias)', signed30) +
         '</div>' +
@@ -305,6 +306,7 @@
         '<li><a href="https://platform.claude.com/" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>IA (Claude Console)</a></li>' +
       '</ul></aside></div>';
     $('#ql-copy').addEventListener('click', function (e) { copy(schedUrl, e.currentTarget); });
+    if (window.AdminCRM) sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000).then(function (r) { state.leads = r.data || []; return AdminCRM.nextActions(clientsCtx(), $('#dash-next'), state.leads, function (lid) { ERoute.go('#/crm?lead=' + lid); }); }).catch(function (e) { console.error(e); });
     $('#ql-csv').addEventListener('click', exportCsv);
   }
   function kpi(label, value) { return '<div class="kpi"><div class="kpi__label">' + esc(label) + '</div><div class="kpi__value">' + esc(value) + '</div></div>'; }
@@ -320,10 +322,10 @@
 
   /* ---------- CRM ---------- */
   // CRM types and the statuses of each type
-  var KIND_PT = { lead: 'Lead', prospect: 'Prospect', client: 'Cliente' };
-  var KIND_ST = { lead: ['new', 'contacted', 'lost'], prospect: ['qualified', 'proposal', 'lost'], client: ['active', 'archived'] };
+  var KIND_PT = { lead: 'Lead', prospect: 'Prospect', partner: 'Parceiro (prospect)', client: 'Cliente' };
+  var KIND_ST = { lead: ['new', 'contacted', 'lost'], prospect: ['qualified', 'proposal', 'lost'], partner: ['new', 'contacted', 'qualified', 'partner', 'lost'], client: ['active', 'archived'] };
   var CST_PT = { active: 'Ativo', archived: 'Arquivado' };
-  function kindOf(l) { return l.status === 'client' ? 'client' : /qualified|proposal/.test(l.status) ? 'prospect' : /new|contacted/.test(l.status) ? 'lead' : (l.kind === 'prospect' ? 'prospect' : 'lead'); }
+  function kindOf(l) { return l.status === 'client' ? 'client' : l.kind === 'partner' || l.status === 'partner' ? 'partner' : /qualified|proposal/.test(l.status) ? 'prospect' : /new|contacted/.test(l.status) ? 'lead' : (l.kind === 'prospect' ? 'prospect' : 'lead'); }
   function stLabel(st) { return CST_PT[st] || STATUS_PT[st] || st; }
   function crmBadges(kind, st) {
     return '<span class="pill pill--kind-' + kind + '">' + KIND_PT[kind] + '</span> <span class="badge badge--' + (st === 'active' ? 'client' : st === 'archived' ? 'lost' : esc(st)) + '">' + esc(stLabel(st)) + '</span>';
@@ -352,7 +354,8 @@
     })).sort(function (x, y) { return String(y.at || '').localeCompare(String(x.at || '')); });
 
     view.innerHTML = '<div class="console__head"><div><h1>CRM</h1><p class="portal-muted">Leads, prospects e clientes. Em <strong>Novo</strong> você escolhe o tipo; como Cliente, a conta do portal é criada e o convite sai na hora.</p></div>' +
-      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--navy btn--xs" type="button" id="crm-new">Novo</button></div></div>' +
+      '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="crm-auto">Automações</button><button class="btn btn--ghost btn--xs" type="button" id="crm-csv">Exportar CSV</button><button class="btn btn--navy btn--xs" type="button" id="crm-new">Novo</button></div></div>' +
+      '<div id="crm-next"></div>' +
       '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar">' +
       '<select id="crm-kind" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>' + Object.keys(KIND_PT).map(function (k) { return '<option value="' + k + '">' + KIND_PT[k] + '</option>'; }).join('') + '</select>' +
       '<select id="crm-status" aria-label="Filtrar por status"></select>' +
@@ -385,7 +388,10 @@
     ['#crm-q', '#crm-status', '#crm-source'].forEach(function (x) { $(x).addEventListener('input', draw); });
     $('#crm-csv').addEventListener('click', exportCsv);
     $('#crm-new').addEventListener('click', function () { openLead(null); });
+    $('#crm-auto').addEventListener('click', function () { AdminCRM.automations(clientsCtx()); });
     draw();
+    if (window.AdminCRM) AdminCRM.nextActions(clientsCtx(), $('#crm-next'), state.leads, function (id) { openLead(id); }).catch(function (e) { console.error(e); });
+    if (/[?&]auto=1/.test(ERoute.get()) && window.AdminCRM) AdminCRM.automations(clientsCtx());
     if (/novo=1/.test(ERoute.get())) openLead(null);
     if (/cliente=1/.test(ERoute.get())) openLead(null, 'client');
     var lq = (ERoute.get().match(/[?&]lead=([0-9a-f-]{36})/) || [])[1]; if (lq && state.leads.some(function (x) { return x.id === lq; })) openLead(lq);
@@ -417,7 +423,8 @@
       '<div class="field"><label for="ld-notes">Notas internas</label><textarea id="ld-notes" rows="4">' + esc(l.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="ld-msg" role="alert"></div>' +
       '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
-      (id ? '<a class="btn btn--ghost" href="mailto:' + esc(l.email) + '">Enviar e-mail</a><a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + '</div></form>' +
+      (id ? '<a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + (id && kind0 === 'partner' && !l.partner_id ? '<a class="btn btn--ghost" id="ld-mkpartner" href="#/parceiros?novo=1&lead=' + esc(id) + '">Criar parceiro e enviar convite</a>' : '') + '</div></form>' +
+      (id ? '<div id="ld-crm" style="margin-top:1.25rem"></div>' : '') +
       (id ? '<h3 style="margin-top:1.5rem">Agendamentos</h3>' + (related[0].length ? '<ul class="list">' + related[0].map(function (b) { return '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at)) + '</strong><span>' + esc(b.topic || '') + '</span></div>' + badge(b.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') +
         '<h3>Documentos</h3>' + (related[1].length ? '<ul class="list">' + related[1].map(function (e) { return '<li><div class="list__main"><strong>' + esc(e.title) + '</strong><span>' + esc(fmtDT(e.created_at)) + '</span></div>' + badge(e.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') : ''));
     $('#ld-lang', o).value = l.language && /^(pt|en|es)$/.test(l.language) ? l.language : 'pt';
@@ -430,6 +437,8 @@
       save.textContent = k === 'client' ? 'Salvar e criar conta do cliente' : 'Salvar';
     }
     kSel.onchange = function () { sSel.value = ''; sync(); }; sync();
+    if (id && window.AdminCRM) AdminCRM.leadPanel(clientsCtx(), l, $('#ld-crm', o), function (r) { if (KIND_ST[r.kind]) { kSel.value = r.kind; sSel.value = ''; sync(); if (KIND_ST[r.kind].indexOf(r.status) > -1) sSel.value = r.status; } }).catch(function (e) { console.error(e); });
+    if ($('#ld-mkpartner', o)) $('#ld-mkpartner', o).onclick = function () { closeOverlay(); };
     $('#lead-form', o).addEventListener('submit', async function (e) {
       e.preventDefault();
       var m = $('#ld-msg', o), k = kSel.value;

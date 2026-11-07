@@ -149,6 +149,18 @@
   INV(C1, R1, P1, 15, [['Abertura de LLC (Lima Real Estate LLC)', 1500]], 'draft', 'scheduled', 1, 'Segunda empresa');
   DB.stripe_settings = [{ id: 1, account_id: 'acct_1EndeavorDemo', account_name: 'Endeavor Business Solutions', livemode: false, charges_enabled: true, payouts_enabled: true, connect_ready: true, webhook_configured: true,
     default_days_until_due: 7, default_partner_pct: 10, checked_at: iso(-1), last_error: null }];
+  // smart CRM: automations, partner onboarding (video, payout method), a partner prospect from the booking page
+  DB.crm_settings = [{ id: 1, followup_enabled: true, followup_days: [2, 7], partner_reminders: true, partner_notify: true, whatsapp_enabled: false, partner_video_url: /[?&]video=1/.test(location.search) ? 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' : null, notify_since: iso(-30) }];
+  Object.assign(DB.partners[0], { payout_method: 'stripe', payout_country: 'US', onboarding_done_at: iso(-50), video_seen_at: iso(-55) });
+  Object.assign(DB.partners[1], { payout_method: 'global_payouts', payout_country: 'BR', global_payouts_status: 'requested', pix_key: 'marcos@example.com', pix_key_type: 'email' });
+  Object.assign(DB.partners[3], { payout_method: null, global_payouts_status: 'none' });
+  DB.leads.push(Object.assign(L('b9000000-0000-4000-8000-000000000009', 'Fernanda Albuquerque', 'fernanda.alb@example.com', '+55 11 97777-4321', 'Brazil', 'Albuquerque Imóveis', 'Partner Program', 'Sou corretora em São Paulo e tenho clientes querendo investir em Orlando.', 'booking', 'new', 3, 'pt'), { kind: 'partner' }));
+  DB.bookings.push({ id: uuid(), lead_id: 'b9000000-0000-4000-8000-000000000009', starts_at: iso(-1, 15), ends_at: iso(-1, 15, 30), name: 'Fernanda Albuquerque', email: 'fernanda.alb@example.com', phone: '+5511977774321', topic: 'Partner Program', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-3) });
+  DB.crm_messages = [
+    { id: 1, created_at: iso(-2, 11), kind: 'referral_contacted', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Pedro Alves: Em contato', status: 'sent', sent_at: iso(-2, 11) },
+    { id: 2, created_at: iso(-4, 9), kind: 'referral_proposal', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Laura Gómez: Proposta enviada', status: 'sent', sent_at: iso(-4, 9) },
+    { id: 3, created_at: iso(-1, 9), kind: 'followup_1', channel: 'email', lead_id: 'b9000000-0000-4000-8000-000000000009', to_addr: 'fernanda.alb@example.com', subject: 'Fernanda, podemos conversar?', status: 'sent', sent_at: iso(-1, 9) },
+    { id: 4, created_at: iso(-12, 10), kind: 'invoice_paid', channel: 'email', partner_id: DB.partners[1].id, to_addr: 'marcos@example.com', subject: 'Pagamento confirmado: Michael Turner', status: 'sent', sent_at: iso(-12, 10) }];
   var PME = MODE === 'partner' ? (/[?&]pending=1/.test(location.search) ? DB.partners[3] : DB.partners[0]) : null;
   var DEMO_TOKEN = 'demo4f9c2a7b1e8d6c3f0a5b9e2d7c4f1a8b6e3d0c9f';
   window.DEMO_PROPOSAL_TOKEN = DEMO_TOKEN;
@@ -316,6 +328,7 @@
       case 'company_documents': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && ((r.visible_to_client && can(r.client_id, r.category)) || r.uploaded_by === ME.id); });
       case 'financial_reports': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'report'); });
       case 'partners': return rows.filter(function (r) { return PME && r.id === PME.id; });
+      case 'crm_settings': return rows;
       case 'referrals': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
       case 'referral_items': case 'referral_events': return rows.filter(function (r) { var ref = DB.referrals.find(function (x) { return x.id === r.referral_id; }); return PME && ref && ref.partner_id === PME.id && (table === 'referral_items' || r.visible_to_partner); });
       case 'invoices': return rows.filter(function (r) { return r.status !== 'draft' && r.status !== 'void' && role(r.client_id) === 'owner'; });
@@ -487,6 +500,7 @@
   var storage = { from: function () {
     return {
       upload: function (path, blob) { FILES[path] = blob; return ok({ path: path }); },
+      getPublicUrl: function (path) { return { data: { publicUrl: FILES[path] ? URL.createObjectURL(FILES[path]) : 'https://onaewjlozioderwlvgfm.supabase.co/storage/v1/object/public/media/' + path } }; },
       createSignedUrl: async function (path) { if (!FILES[path]) FILES[path] = GEN[path] ? await bytesOf(path) : await samplePdf(path); return { data: { signedUrl: URL.createObjectURL(FILES[path]) }, error: null }; },
       download: async function (path) { if (!FILES[path]) FILES[path] = GEN[path] ? await bytesOf(path) : await samplePdf(path); return { data: FILES[path], error: null }; },
       remove: function (paths) { (paths || []).forEach(function (p) { delete FILES[p]; }); return ok([]); }
@@ -505,6 +519,18 @@
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
+    else if (name === 'partner_set_payout' || name === 'partner_onboarding_mark') {
+      if (!PME) return Promise.resolve({ data: null, error: { message: 'forbidden' } });
+      var row0 = DB.partners.find(function (x) { return x.id === PME.id; }) || PME;
+      if (name === 'partner_onboarding_mark') { if (args.p_step === 'video') row0.video_seen_at = row0.video_seen_at || new Date().toISOString(); else row0.onboarding_done_at = row0.onboarding_done_at || new Date().toISOString(); }
+      else {
+        var pk = (args.p_pix || '').trim();
+        if (pk && !(args.p_pix_type === 'email' ? /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(pk) : args.p_pix_type === 'phone' ? /^\+?[0-9 ()-]{10,20}$/.test(pk) : /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(pk))) return Promise.resolve({ data: null, error: { message: 'invalid_pix' } });
+        Object.assign(row0, { payout_method: args.p_method, payout_country: args.p_country, pix_key: pk || null, pix_key_type: pk ? args.p_pix_type : null, global_payouts_status: args.p_method === 'global_payouts' ? (row0.global_payouts_status && row0.global_payouts_status !== 'none' ? row0.global_payouts_status : 'requested') : 'none' });
+        toast(args.p_method === 'global_payouts' ? 'Demo: a Endeavor recebe o aviso para enviar o link do Stripe Global Payouts.' : 'Demo: agora o parceiro conecta a conta Stripe.');
+      }
+      Object.assign(PME, row0); r = [JSON.parse(JSON.stringify(row0))];
+    }
     else if (name === 'partner_commissions') r = !PME ? [] : DB.invoices.filter(function (i) { return i.partner_id === PME.id && i.status !== 'draft'; }).sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; }).map(function (i) {
       var ref = DB.referrals.find(function (x) { return x.id === i.referral_id; }), c = DB.clients.find(function (x) { return x.id === i.client_id; });
       return { invoice_id: i.id, number: i.number, created_at: i.created_at, client_label: ref ? ref.name : c.name, currency: i.currency, total_cents: i.total_cents, partner_pct: i.partner_pct, partner_amount_cents: i.partner_amount_cents, status: i.status, paid_at: i.paid_at, transfer_status: i.transfer_status };
@@ -1020,6 +1046,24 @@
       if (ib.action === 'contract_url') { toast('Demo: abriria o PDF do contrato assinado.'); return later2({ url: '#' }); }
       if (ib.action === 'delete') { DB.partners = DB.partners.filter(function (x) { return x !== ip; }); return later2({ ok: true }); }
       toast('Demo: o convite com o link para criar a senha seria enviado para ' + (ip ? ip.email : '') + '.'); return later2({ ok: true, sent: 'invite' });
+    }
+    if (/\/functions\/v1\/crm/.test(u)) {
+      var cb = {}; try { cb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      var slow2 = function (b, ms) { return new Promise(function (res) { setTimeout(function () { res(json(b)); }, ms || 500); }); };
+      if (cb.action === 'status') return slow2({ email: true, via: 'ses', whatsapp: false, ai: true }, 200);
+      if (cb.action === 'run_now') { toast('Demo: no site real as automações rodam a cada 10 minutos.'); return slow2({ referral: 1, paid: 0, commission: 0, followup: 1, partner: 1 }, 900); }
+      if (cb.action === 'send_email') { var ld = DB.leads.find(function (x) { return x.id === cb.lead_id; }); if (ld && ld.status === 'new') ld.status = 'contacted';
+        DB.crm_messages.unshift({ id: Date.now(), created_at: new Date().toISOString(), kind: 'manual', channel: 'email', lead_id: cb.lead_id, to_addr: ld && ld.email, subject: cb.subject, status: 'sent' });
+        toast('Demo: o e-mail sairia de support@endeavorbiz.com com o layout da Endeavor.'); return slow2({ ok: true }); }
+      if (cb.action === 'ai_suggest') {
+        var l2 = DB.leads.find(function (x) { return x.id === cb.lead_id; }) || {}, nm = String(l2.name || '').split(' ')[0], pt = (l2.language || 'pt') === 'pt', partner = l2.kind === 'partner';
+        toast('Demo: no site real a IA (Claude) lê o histórico do contato.');
+        return slow2(partner ? { ok: true, kind: 'partner', status: 'qualified', service: 'Programa de Parceiros', urgency: 'high', summary: nm + ' é corretora em São Paulo com clientes interessados em investir em Orlando. Já fez a conversa sobre o Programa de Parceiros.', next_action: 'Cadastrar como parceira (comissão a definir) e enviar o contrato para assinatura.',
+          reply_subject: 'Próximos passos do Programa de Parceiros', reply_body: 'Olá, ' + nm + '!\n\nObrigado pela conversa. Como combinamos, vamos criar o seu acesso ao Portal do Parceiro. Você vai receber um e-mail com o link para criar a senha.\n\nNo primeiro acesso, o portal abre na página "Comece aqui", com um vídeo curto sobre como indicar clientes e como as comissões são pagas.\n\nQualquer dúvida, é só responder este e-mail ou chamar no WhatsApp.\n\nEquipe Endeavor Business Solutions' }
+          : { ok: true, kind: 'lead', status: 'contacted', service: l2.assistance || '', urgency: 'normal', summary: nm + ' quer ' + (l2.assistance || 'ajuda') + '. Mensagem: "' + String(l2.message || '').slice(0, 120) + '"', next_action: 'Responder e convidar para uma conversa de 30 minutos.',
+          reply_subject: pt ? nm + ', vamos conversar sobre o seu projeto?' : 'Next steps', reply_body: (pt ? 'Olá, ' + nm + '!\n\nObrigado pelo contato. Para entender melhor o seu caso, sugerimos uma conversa de 30 minutos por vídeo, telefone ou WhatsApp. Escolha o melhor horário em https://endeavorbiz.com/schedule.html\n\nEquipe Endeavor Business Solutions' : 'Hi ' + nm + ',\n\nThanks for reaching out. Book a 30-minute call at https://endeavorbiz.com/schedule.html\n\nThe Endeavor Business Solutions team') }, 1100);
+      }
+      return json({ error: 'forbidden' }, 403);
     }
     if (/\/functions\/v1\/marketing/.test(u)) {
       var mb = {}; try { mb = JSON.parse(opts.body); } catch (e) { /* ignore */ }

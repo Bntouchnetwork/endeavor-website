@@ -15,7 +15,9 @@
   var money = function (c, cur) { return new Intl.NumberFormat((window.ADMIN_LOCALE || 'pt-BR'), { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format((c || 0) / 100); };
   var fmtD = function (d) { if (!d) return ''; var x = new Date(d.length === 10 ? d + 'T12:00:00' : d); return x.toLocaleDateString((window.ADMIN_LOCALE || 'pt-BR')); };
   var pill = function (cls, s, label) { return '<span class="' + cls + ' ' + cls + '--' + s + '">' + label + '</span>'; };
+  var GPS = { none: 'Global Payouts', requested: 'Global Payouts: enviar link', link_sent: 'Global Payouts: link enviado', ready: 'Global Payouts pronto' };
   function stripeOf(p) {
+    if (p.payout_method === 'global_payouts') return pill('stripe-st', p.global_payouts_status === 'ready' ? 'ok' : p.global_payouts_status === 'link_sent' ? 'review' : 'incomplete', GPS[p.global_payouts_status] + (p.payout_country ? ' (' + p.payout_country + ')' : ''));
     if (!p.stripe_account_id) return pill('stripe-st', 'none', 'Stripe não conectado');
     if (p.stripe_transfers_active) return pill('stripe-st', 'ok', 'Stripe pronto');
     if (p.stripe_details_submitted) return pill('stripe-st', 'review', 'Stripe em análise');
@@ -96,7 +98,7 @@
     var parts = res[0], refs = res[1], invs = res[2];
     var total = function (pid, f) { return invs.filter(function (i) { return i.partner_id === pid && f(i); }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0); };
     var pendingAll = invs.filter(function (i) { return i.status === 'paid' && i.transfer_status === 'pending'; }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0);
-    view.innerHTML = head(esc, 'Parceiros', 'Programa de indicações: convide parceiros, acompanhe as indicações e os repasses de comissão via Stripe Connect.', '<button class="btn btn--navy" type="button" id="pt-new">Novo parceiro</button>') +
+    view.innerHTML = head(esc, 'Parceiros', 'Programa de indicações: convide parceiros, acompanhe as indicações e os repasses de comissão via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/crm?auto=1">Vídeo e automações</a><button class="btn btn--navy" type="button" id="pt-new">Novo parceiro</button></div>') +
       '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Parceiros ativos', parts.filter(function (p) { return p.status === 'active' && p.program_status !== 'pending'; }).length) + kpi(esc, 'Aguardando aprovação', parts.filter(function (p) { return p.program_status === 'pending'; }).length) + kpi(esc, 'Indicações', refs.length) +
       kpi(esc, 'Viraram clientes', refs.filter(function (r) { return ['onboarding', 'in_process', 'completed'].indexOf(r.status) > -1; }).length) + kpi(esc, 'Repasses pendentes', money(pendingAll)) + '</div>' +
       (parts.length ? '<div class="table-wrap"><table class="data data--partners"><thead><tr><th>Parceiro</th><th>Tipo</th><th>Status</th><th class="num">Comissão</th><th>Stripe</th><th class="num">Indicações</th><th class="num">Repassado</th><th class="num">A repassar</th><th><span class="sr-only">Ações</span></th></tr></thead><tbody>' +
@@ -143,7 +145,11 @@
       document.addEventListener('scroll', function () { var m = document.getElementById('pt-menu'); if (m && m._place) m._place(); }, true);
     }
     ctx.$('#pt-new').onclick = function () { partnerForm(ctx, null); };
-    if (param('novo')) partnerForm(ctx, null);
+    if (param('novo')) {
+      var lid = param('lead');
+      if (lid) sb.from('leads').select('*').eq('id', lid).maybeSingle().then(function (r) { var l = r.data; partnerForm(ctx, null, l ? { name: l.name, email: l.email, phone: l.phone, company: l.company, language: /^(pt|en|es)$/.test(l.language || '') ? l.language : 'pt', notes: l.message ? 'Do CRM: ' + String(l.message).slice(0, 1500) : null, lead_id: l.id } : null); });
+      else partnerForm(ctx, null);
+    }
   }
 
   /* row actions: Abrir, Editar, Reenviar convite, Suspender/Reativar, Excluir */
@@ -211,8 +217,8 @@
     });
   }
 
-  function partnerForm(ctx, p) {
-    var esc = ctx.esc, edit = !!p; p = p || { language: 'pt', partner_type: 'referral', default_share_pct: 10 };
+  function partnerForm(ctx, p, pre) {
+    var esc = ctx.esc, edit = !!p; p = p || Object.assign({ language: 'pt', partner_type: 'referral', default_share_pct: 10 }, pre || {});
     var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (edit ? 'Editar parceiro' : 'Novo parceiro') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<form class="portal-form" id="pf" novalidate><div class="field"><label for="pf-name">Nome</label><input id="pf-name" required maxlength="200" value="' + esc(p.name || '') + '"></div>' +
       '<div class="field"><label for="pf-email">E-mail (login do parceiro)</label><input id="pf-email" type="email" required value="' + esc(p.email || '') + '"' + (edit && p.user_id ? ' readonly' : '') + '></div>' +
@@ -238,6 +244,7 @@
       if (r.error) { btn.disabled = false; btn.textContent = label; return ctx.msg(m, /duplicate|unique/i.test(r.error.message) ? 'Já existe um parceiro com este e-mail.' : ctx.errText(r.error), 'error'); }
       if (edit) { ctx.closeOverlay(); ctx.route(); return; }
       var ok = await sendInvite(ctx, Object.assign({ id: r.data.id }, row));
+      if (p.lead_id) await ctx.sb.from('leads').update({ kind: 'partner', status: 'partner', partner_id: r.data.id }).eq('id', p.lead_id);
       // confirmation stays open until the admin closes it (Fechar or X)
       var finish = function () { ctx.closeOverlay(); ctx.route(); };
       form.innerHTML = '<div class="portal-alert portal-alert--' + (ok ? 'ok' : 'error') + '" role="status" style="display:block">' +
@@ -355,7 +362,7 @@
 
   async function tabCommissions(body, ctx, p) {
     var esc = ctx.esc;
-    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active)').eq('partner_id', p.id).neq('status', 'draft').order('created_at', { ascending: false }));
+    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active, payout_method)').eq('partner_id', p.id).neq('status', 'draft').order('created_at', { ascending: false }));
     body.innerHTML = rows.length ? invoiceTable(ctx, rows, true) : '<div class="empty-state portal-card"><strong>Nenhuma fatura com este parceiro</strong><p>Ao criar uma fatura em Pagamentos, selecione o parceiro para registrar a comissão.</p></div>';
     wireInvoiceActions(body, ctx, rows);
   }
@@ -366,8 +373,15 @@
       '<dl class="kv" style="margin-top:1rem"><dt>Conta</dt><dd>' + (p.stripe_account_id ? '<code>' + esc(p.stripe_account_id) + '</code>' : '—') + '</dd><dt>Cadastro enviado</dt><dd>' + (p.stripe_details_submitted ? 'Sim' : 'Não') + '</dd>' +
       '<dt>Recebe repasses</dt><dd>' + (p.stripe_transfers_active ? 'Sim' : 'Não') + '</dd><dt>Saques para o banco</dt><dd>' + (p.stripe_payouts_enabled ? 'Sim' : 'Não') + '</dd></dl>' +
       '<p class="portal-muted">O próprio parceiro conecta a conta no Portal do Parceiro, em "Recebimentos Stripe". Se preferir, gere aqui um link de cadastro e envie para ele.</p>' +
-      '<div class="portal-alert" id="ps-m" role="status"></div><div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ps-link">Gerar link de cadastro Stripe</button>' + (p.stripe_account_id ? '<button class="btn btn--ghost" type="button" id="ps-ref">Atualizar status</button>' : '') + '</div></section>';
+      '<div class="portal-alert" id="ps-m" role="status"></div><div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ps-link">Gerar link de cadastro Stripe</button>' + (p.stripe_account_id ? '<button class="btn btn--ghost" type="button" id="ps-ref">Atualizar status</button>' : '') + '</div></section>' +
+      '<section class="portal-card" style="margin-top:1.25rem"><h2 class="portal-h2">Como o parceiro recebe</h2>' +
+      '<dl class="kv"><dt>Forma escolhida</dt><dd>' + (p.payout_method === 'global_payouts' ? 'Stripe Global Payouts (conta fora dos EUA)' : p.payout_method === 'stripe' ? 'Stripe Connect (automático)' : 'Ainda não escolheu (no onboarding do portal)') + '</dd><dt>País da conta</dt><dd>' + esc(p.payout_country || '—') + '</dd>' +
+      '<dt>Chave Pix (opcional)</dt><dd>' + (p.pix_key ? esc(p.pix_key) + ' <span class="portal-muted">(' + esc({ email: 'e-mail', phone: 'celular', random: 'aleatória' }[p.pix_key_type] || '') + ')</span>' : '—') + '</dd></dl>' +
+      (p.payout_method === 'global_payouts' ? '<p class="portal-muted" style="font-size:.88rem">No painel do Stripe, em Global Payouts, cadastre o parceiro como destinatário pelo e-mail dele: o Stripe manda o link para ele informar o banco. Quando o cliente pagar, envie a comissão por lá e use "Marcar repasse feito" na fatura. Pagamentos em reais (BRL) dependem da liberação do Stripe.</p>' +
+        '<div class="field" style="max-width:20rem"><label for="gp-st">Situação</label><select id="gp-st">' + Object.keys(GPS).filter(function (k) { return k !== 'none'; }).map(function (k) { return '<option value="' + k + '"' + (p.global_payouts_status === k ? ' selected' : '') + '>' + GPS[k] + '</option>'; }).join('') + '</select></div><div class="portal-alert" id="gp-m" role="status"></div>' +
+        '<a class="btn btn--ghost btn--xs" href="https://dashboard.stripe.com/global-payouts" target="_blank" rel="noopener">Abrir Global Payouts no Stripe</a>' : '') + '</section>';
     var m = ctx.$('#ps-m');
+    if (ctx.$('#gp-st')) ctx.$('#gp-st').onchange = async function () { var r = await ctx.sb.from('partners').update({ global_payouts_status: this.value }).eq('id', p.id); ctx.msg(ctx.$('#gp-m'), r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok'); if (!r.error) p.global_payouts_status = this.value; };
     ctx.$('#ps-link').onclick = async function () {
       try { var j = await call(ctx, { action: 'partner_onboard', partner_id: p.id, return_to: ctx.siteUrl('partner.html') }); m.className = 'portal-alert portal-alert--ok'; m.innerHTML = 'Link válido por alguns minutos: <a href="' + esc(j.url) + '" target="_blank" rel="noopener">abrir</a> <button class="btn btn--ghost btn--xs" type="button" id="ps-copy">Copiar</button>'; ctx.$('#ps-copy').onclick = function () { ctx.copy(j.url, this); }; }
       catch (e) { ctx.msg(m, errMsg(ctx, e), 'error'); }
@@ -384,7 +398,9 @@
         if (i.status === 'draft') acts.push('<button class="btn btn--navy btn--xs" data-act="invoice_send" data-i="' + i.id + '">Enviar</button>');
         if (i.hosted_invoice_url) acts.push('<a class="btn btn--ghost btn--xs" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">Ver</a>');
         var ready = i.partners && i.partners.stripe_transfers_active;
-        if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed')) acts.push(ready ? '<button class="btn btn--navy btn--xs" data-act="transfer" data-i="' + i.id + '">Repassar</button>' : '<span class="portal-muted" style="font-size:.82rem">Aguardando Stripe do parceiro</span>');
+        var gp = i.partners && i.partners.payout_method === 'global_payouts';
+        if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed') && gp) acts.push('<button class="btn btn--navy btn--xs" data-act="manual_paid" data-i="' + i.id + '">Marcar repasse feito</button>');
+        else if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed')) acts.push(ready ? '<button class="btn btn--navy btn--xs" data-act="transfer" data-i="' + i.id + '">Repassar</button>' : '<span class="portal-muted" style="font-size:.82rem">Aguardando Stripe do parceiro</span>');
         if (i.status === 'open' || i.status === 'uncollectible') acts.push('<button class="btn btn--ghost btn--xs" data-act="invoice_sync" data-i="' + i.id + '">Sincronizar</button>');
         if (i.status !== 'paid' && i.status !== 'void') acts.push('<button class="btn btn--danger btn--xs" data-act="invoice_void" data-i="' + i.id + '">Anular</button>');
         return '<tr><td><strong>' + esc(i.number || 'Rascunho') + '</strong><span class="sub">' + esc(fmtD(i.created_at)) + (i.due_date ? ' · vence ' + esc(fmtD(i.due_date)) : '') + '</span></td><td>' + esc(i.clients ? i.clients.name : '') + '</td>' +
@@ -399,6 +415,14 @@
         e.stopPropagation();
         if (b.dataset.act === 'invoice_void' && !confirm('Anular esta fatura no Stripe? O cliente não poderá mais pagá-la.')) return;
         if (b.dataset.act === 'transfer' && !confirm('Repassar agora a comissão do parceiro para a conta Stripe dele?')) return;
+        if (b.dataset.act === 'manual_paid') {
+          var note = prompt('Repasse feito fora do Stripe Connect (Global Payouts ou Pix). Anote uma referência (ex.: ID do pagamento no Stripe):', '');
+          if (note === null) return;
+          b.disabled = true;
+          var ru = await ctx.sb.from('invoices').update({ transfer_status: 'paid', payout_channel: 'global_payouts', payout_note: note.trim().slice(0, 500) || null, payout_paid_at: new Date().toISOString() }).eq('id', b.dataset.i);
+          if (ru.error) { b.disabled = false; return ctx.msg(ctx.$('#ia-' + b.dataset.i), ctx.errText(ru.error), 'error'); }
+          return ctx.route();
+        }
         b.disabled = true;
         try { await call(ctx, { action: b.dataset.act, invoice_id: b.dataset.i }); ctx.route(); }
         catch (x) { b.disabled = false; ctx.msg(ctx.$('#ia-' + b.dataset.i), errMsg(ctx, x), 'error'); }
@@ -417,7 +441,7 @@
     if (tab === 'nova-proposta') return proposalForm(body, ctx, null);
     if (tab === 'modelos') return param('tpl') ? templateForm(body, ctx, param('tpl')) : templatesTab(body, ctx);
     if (tab === 'stripe') return stripeTab(body, ctx);
-    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active)').order('created_at', { ascending: false }));
+    var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active, payout_method)').order('created_at', { ascending: false }));
     var st = param('status') || '';
     var shown = rows.filter(function (i) { return !st || i.status === st; });
     var now = new Date(), ym = now.toISOString().slice(0, 7);
