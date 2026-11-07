@@ -76,3 +76,19 @@ Nada anterior a 07/11/2026 é enviado, para não disparar mensagens antigas.
   - Modelo de mensagem aprovado: `endeavor_status_update`, com 2 variáveis (nome e mensagem).
   - Depois, ligar a opção "Também por WhatsApp" em CRM → Automações.
 - **Billing e Marketing:** já aparecem na página como "Em breve".
+
+---
+
+# Atualização: "Minha conta" do parceiro
+
+Página única, sem rolagem no computador (no celular as caixas ficam uma embaixo da outra).
+- **Dados de contato:** nome, WhatsApp (com seletor de país), empresa e um **segundo e-mail**. Todos os avisos automáticos vão para os dois e-mails.
+- **E-mail de login:** o parceiro digita o novo e-mail e a senha atual. O Supabase manda um link de confirmação, e o login só muda depois do clique. No próximo acesso, o cadastro do parceiro é atualizado e você recebe um aviso no sino.
+- **Senha:** pede a senha atual, a nova (mínimo de 12 caracteres) e a repetição. Depois de 5 tentativas erradas, o sistema bloqueia por 15 minutos.
+- **Encerrar conta:** pede a senha e a palavra ENCERRAR (CLOSE em inglês, CERRAR em espanhol). Depois disso:
+  - novas indicações ficam bloqueadas na hora;
+  - a conta continua aberta só até a última comissão ser paga, e então fecha sozinha (automação a cada 10 minutos);
+  - o parceiro recebe um e-mail e o acesso ao portal é removido;
+  - o contrato e o histórico de pagamentos ficam guardados (1099);
+  - até o fechamento, o parceiro pode clicar em "Manter minha conta".
+- **No admin:** a lista de parceiros mostra "Encerrando" ou "Conta encerrada", e a ficha mostra o segundo e-mail e as datas. Você recebe um aviso no sino quando o parceiro pede o encerramento, quando cancela e quando a conta fecha.
