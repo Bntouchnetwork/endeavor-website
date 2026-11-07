@@ -42,3 +42,37 @@ Nada anterior a 07/11/2026 é enviado, para não disparar mensagens antigas.
   - Brasil e América Latina: Stripe Global Payouts. A Endeavor cadastra o parceiro como destinatário no Stripe, o Stripe manda o link para ele informar o banco, e você usa "Marcar repasse feito" na fatura. O pagamento em reais (BRL) depende da liberação do Stripe.
   - Chave Pix opcional, só do tipo e-mail, celular ou aleatória (CPF não), guardada para quando a integração Pix existir (dLocal ou outro).
 - Quando tudo está concluído, a conta fica ativa e a página sai do topo do menu.
+
+---
+
+# Atualização: cadastro automático do parceiro e Agente Admin (IA)
+
+## Fluxo do parceiro (sem agendamento antes)
+1. **Cadastro:**
+   - Pelo "Quero ser parceiro" (partners.html e home). O formulário é curto, com WhatsApp obrigatório e seletor de país.
+   - Comissão padrão de **10%**, que você pode mudar por parceiro no admin, na edição do parceiro.
+   - O parceiro também entra no CRM, como "Parceiro".
+2. **E-mail de boas-vindas:** traz o link para criar a senha. A criação da senha valida o e-mail e ativa a verificação em duas etapas.
+3. **"Comece aqui" no portal:** uma linha do tempo de tarefas, em que cada passo só abre depois do anterior:
+   1. Acesso e e-mail validado.
+   2. Vídeo.
+   3. Contrato (rascunho de exemplo, gerado na hora com a comissão do parceiro e assinado online; a Endeavor contra-assina depois).
+   4. Como recebe: Stripe Connect nos EUA, Canadá, Reino Unido e Europa; Global Payouts nos outros países, com chave Pix opcional.
+4. **Ativação automática:** quando tudo está concluído, a conta é ativada sozinha. As indicações são liberadas e você recebe o aviso no sino.
+5. **Conversa de boas-vindas:** depois da ativação aparece o botão "Agende a conversa de boas-vindas", que abre a agenda já com o nome e o e-mail preenchidos.
+
+## Agente Admin (Agentes IA no menu do admin)
+- **Acompanha cada parceiro** e mostra o passo atual, os dias parado e os lembretes já enviados.
+- **Lembretes:** depois de 2 dias sem avanço (ajustável), a IA escreve um e-mail personalizado sobre o passo que falta, no idioma do parceiro. São no máximo 3.
+- **Aviso para a equipe:** depois de 6 dias sem avanço (ajustável), você recebe um aviso no sino para fazer um contato pessoal.
+- **Chat no portal:**
+  - Responde dúvidas a qualquer hora.
+  - Nunca pede documentos ou dados bancários.
+  - Quando o parceiro pede uma pessoa, ou quer negociar comissão ou contrato, o agente avisa a equipe.
+- **Respostas da equipe:** você responde pela página do agente. A resposta aparece no chat do portal e também no WhatsApp, se o parceiro escreveu lá nas últimas 24 h.
+- **WhatsApp:** o código já está pronto e fica desligado até a Meta liberar. Para ligar:
+  - Secrets no Supabase: `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_ID`, `WHATSAPP_VERIFY_TOKEN` e `WHATSAPP_APP_SECRET`.
+  - Webhook na Meta: `https://onaewjlozioderwlvgfm.supabase.co/functions/v1/crm`.
+  - Modelo de mensagem aprovado: `endeavor_status_update`, com 2 variáveis (nome e mensagem).
+  - Depois, ligar a opção "Também por WhatsApp" em CRM → Automações.
+- **Billing e Marketing:** já aparecem na página como "Em breve".
