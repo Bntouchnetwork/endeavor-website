@@ -55,6 +55,12 @@
     var q = function (k) { var r = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search); try { return r ? decodeURIComponent(r[1].replace(/\+/g, ' ')) : ''; } catch (e) { return ''; } };
     var nm = q('name'), em = q('email'), bn = document.getElementById('b-name'), be = document.getElementById('b-email');
     if (bn && nm && !bn.value) bn.value = nm.slice(0, 120); if (be && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em) && !be.value) be.value = em.slice(0, 200); })();
+  // ?reschedule=<token>: same calendar; the new time replaces the existing booking (used by the Partner Portal)
+  var RS = (/[?&]reschedule=([0-9a-f-]{36})/i.exec(location.search) || [])[1] || null;
+  var RSX = { en: ['Choose the new time', 'Confirm new time', 'Booking rescheduled', 'Your call was moved. We sent the updated confirmation to your email.'],
+    pt: ['Escolha o novo horário', 'Confirmar novo horário', 'Agendamento remarcado', 'A sua conversa foi remarcada. Enviamos a confirmação atualizada para o seu e-mail.'],
+    es: ['Elija el nuevo horario', 'Confirmar nuevo horario', 'Cita reprogramada', 'Su llamada fue reprogramada. Enviamos la confirmación actualizada a su correo.'] }[EP.lang] || null;
+  if (RS) { document.documentElement.classList.add('is-resched'); var hh = document.querySelector('#book-form h2'); if (hh) hh.textContent = RSX[0]; var bs = document.getElementById('b-submit'); if (bs) bs.textContent = RSX[1]; }
   var userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
   var info = { timezone: 'America/New_York', slot_minutes: 30, max_days_ahead: 30, meeting_note: '' };
   var byDay = {}, selectedDay = null, selectedSlot = null, view = new Date(); view.setDate(1);
@@ -145,7 +151,7 @@
     $('slots').querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
     selectedSlot = new Date(btn.dataset.iso);
     $('chosen').textContent = whenText(selectedSlot);
-    $('book-form').hidden = false; $('b-name').focus();
+    $('book-form').hidden = false; if (RS) $('b-submit').focus(); else $('b-name').focus();
   }
 
   $('cal-prev').onclick = function () { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); selectedDay = null; $('slots').innerHTML = ''; $('book-form').hidden = true; loadMonth(); };
@@ -159,6 +165,20 @@
 
   $('book-form').addEventListener('submit', async function (ev) {
     ev.preventDefault();
+    if (RS) {
+      var rb = $('b-submit'), rm = $('b-msg'); rb.disabled = true; rm.className = 'portal-alert'; rm.textContent = '';
+      try {
+        var rr = await EP.rpc('reschedule_booking_by_token', { p_token: RS, p_new_start: selectedSlot.toISOString() }); rr = Array.isArray(rr) ? rr[0] : rr;
+        var rs = new Date(rr.starts_at), re = new Date(rr.ends_at);
+        showDone(rs, re, rr.meeting_type || 'video', 'Partner Program');
+        var dt = document.querySelector('#done h2, #done .portal-h1'); if (dt) dt.textContent = RSX[2];
+        $('done-text').textContent = RSX[3];
+      } catch (e) {
+        var c2 = String(e.code || e.message || ''); rm.className = 'portal-alert portal-alert--error'; rm.textContent = t(/slot_unavailable/.test(c2) ? 'slot_unavailable' : 'generic');
+        rb.disabled = false; if (/slot_unavailable/.test(c2)) { delete (byDay[selectedDay] || {})[selectedSlot.toISOString()]; selectDay(selectedDay); }
+      }
+      return;
+    }
     var name = $('b-name').value.trim(), email = $('b-email').value.trim();
     var okName = fieldErr('b-name', name.length < 2 ? t('errName') : ''), okMail = fieldErr('b-email', /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) ? '' : t('errEmail'));
     var okPhone = fieldErr('b-phone', phone.valid() ? '' : t('errPhone'));

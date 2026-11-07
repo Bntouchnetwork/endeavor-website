@@ -214,7 +214,7 @@
         var openCall = function (url) { obModal({ title: t('o2_call'), body: '<iframe class="ob-sched" src="' + esc(url) + '" title="' + esc(t('o2_call')) + '"></iframe>' }, refresh, true); };
         var openStep = function (x) {
           if (x.locked) return;
-          if (x.k === 'call') { if (call) openCall(C.siteUrl('booking.html') + '?embed=1&lang=' + L + '&t=' + call.manage_token); else openCall(callUrl); return; }
+          if (x.k === 'call') { openCall(call ? callUrl + '&reschedule=' + call.manage_token : callUrl); return; }
           var o = obModal({ title: x.title, body: '<div class="ob-modal__body">' + x.body() + '</div>' }, null);
           var close = function () { C.closeOverlay(); refresh(); };
           var q = function (sel) { return o.querySelector(sel); };
@@ -242,7 +242,7 @@
         };
         view.querySelectorAll('[data-st]').forEach(function (b) { b.onclick = function () { openStep(steps[+b.dataset.st]); }; });
         if ($('#ob-go')) $('#ob-go').onclick = function () { if (cur.k === 'video') { var v = view.querySelector('.ob-video'); if (v) v.scrollIntoView({ block: 'nearest' }); var sb2 = $('#ob-seen'); if (sb2) sb2.focus(); } else openStep(cur); };
-        if ($('#ob-resched')) $('#ob-resched').onclick = function () { openCall(C.siteUrl('booking.html') + '?embed=1&lang=' + L + '&t=' + call.manage_token); };
+        if ($('#ob-resched')) $('#ob-resched').onclick = function () { openCall(callUrl + '&reschedule=' + call.manage_token); };
         if ($('#ob-seen')) $('#ob-seen').onclick = async function () { await markSeen(this); refresh(); };
         var vid = view.querySelector('.ob-video video'); if (vid && !P.video_seen_at) vid.addEventListener('ended', function () { var b = $('#ob-seen'); if (b) b.click(); });
         if (chatOn) chat($('#ob-chat'));
