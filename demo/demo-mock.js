@@ -170,6 +170,7 @@
     { id: 2, created_at: iso(-4, 9), kind: 'referral_proposal', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Laura Gómez: Proposta enviada', status: 'sent', sent_at: iso(-4, 9) },
     { id: 3, created_at: iso(-1, 9), kind: 'followup_1', channel: 'email', lead_id: 'b9000000-0000-4000-8000-000000000009', to_addr: 'fernanda.alb@example.com', subject: 'Fernanda, podemos conversar?', status: 'sent', sent_at: iso(-1, 9) },
     { id: 4, created_at: iso(-12, 10), kind: 'invoice_paid', channel: 'email', partner_id: DB.partners[1].id, to_addr: 'marcos@example.com', subject: 'Pagamento confirmado: Michael Turner', status: 'sent', sent_at: iso(-12, 10) }];
+  if (!DB.partners[0].phone) DB.partners[0].phone = '+5531966661111';
   var PME = MODE === 'partner' ? (/[?&]pending=1/.test(location.search) ? DB.partners[3] : DB.partners[0]) : null;
   var DEMO_TOKEN = 'demo4f9c2a7b1e8d6c3f0a5b9e2d7c4f1a8b6e3d0c9f';
   window.DEMO_PROPOSAL_TOKEN = DEMO_TOKEN;
@@ -529,6 +530,24 @@
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
+    else if (name === 'verify_my_password') r = !!args.p_password && args.p_password !== 'errada';
+    else if (name === 'partner_sync_email') r = PME ? [JSON.parse(JSON.stringify(PME))] : [];
+    else if (name === 'partner_update_profile' || name === 'partner_request_closure' || name === 'partner_cancel_closure') {
+      if (!PME) return Promise.resolve({ data: null, error: { message: 'forbidden' } });
+      var rowA = DB.partners.find(function (x) { return x.id === PME.id; }) || PME;
+      if (name === 'partner_update_profile') {
+        if (String(args.p_name || '').trim().length < 2) return Promise.resolve({ data: null, error: { message: 'invalid_name' } });
+        if (!/^\+[1-9][0-9]{6,14}$/.test(args.p_phone || '')) return Promise.resolve({ data: null, error: { message: 'invalid_phone' } });
+        var e2 = String(args.p_email2 || '').trim().toLowerCase();
+        if (e2 && !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e2)) return Promise.resolve({ data: null, error: { message: 'invalid_email' } });
+        Object.assign(rowA, { name: args.p_name.trim(), phone: args.p_phone, company: (args.p_company || '').trim() || null, email2: e2 || null });
+      } else if (name === 'partner_request_closure') {
+        if (!args.p_password || args.p_password === 'errada') return Promise.resolve({ data: null, error: { message: 'wrong_password' } });
+        rowA.closure_requested_at = rowA.closure_requested_at || new Date().toISOString();
+      } else rowA.closure_requested_at = null;
+      if (rowA !== PME) Object.assign(PME, rowA);
+      r = [JSON.parse(JSON.stringify(rowA))];
+    }
     else if (name === 'partner_welcome_booking') { r = /[?&]booked=1/.test(location.search) ? [{ starts_at: iso(2, 14), ends_at: iso(2, 14, 30), meeting_type: 'video', manage_token: '00000000-0000-4000-8000-0000000000aa' }] : []; }
     else if (name === 'partner_set_payout' || name === 'partner_onboarding_mark' || name === 'partner_onboarding_check') {
       if (!PME) return Promise.resolve({ data: null, error: { message: 'forbidden' } });

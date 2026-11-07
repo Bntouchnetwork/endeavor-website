@@ -239,7 +239,7 @@
     var mem = await sb.rpc('claim_invitations');
     var allMem = mem.data || [];
     S.memberships = allMem.filter(function (x) { return PARTNER ? x.role === 'collaborator' : x.role === 'owner'; });
-    if (PARTNER && window.EPartnerRef) { var pr = await sb.rpc('claim_partner'); S.partner = (pr.data || [])[0] || null; }
+    if (PARTNER && window.EPartnerRef) { var pr = await sb.rpc('claim_partner'); S.partner = (pr.data || [])[0] || null; if (S.partner) { var se = await sb.rpc('partner_sync_email'); if (!se.error && se.data && se.data[0]) S.partner = se.data[0]; } }
     if (S.partner) { S.ref = EPartnerRef.init(refCtx()); if (!S.memberships.length) { S.client = null; S.perms = {}; S.companies = []; S.me = {}; startShell(); return; } }
     if (!S.memberships.length && allMem.length) {
       var other = PARTNER ? 'client.html' : 'partner.html';
@@ -381,9 +381,10 @@
   /* ---------------- shell ---------------- */
   function navItems() {
     var out = S.ref ? S.ref.nav.slice() : [];
-    if (!S.client) return out.concat([['settings', t('nav_settings'), 'i-gear']]);
+    var setL = S.ref && S.ref.accLabel ? S.ref.accLabel : t('nav_settings');
+    if (!S.client) return out.concat([['settings', setL, 'i-gear']]);
     if (S.ref) out.push(['-', S.ref.sep]);
-    return out.concat(clientNav().map(function (x) { return [x[0], t(x[1]), x[2]]; }));
+    return out.concat(clientNav().map(function (x) { return [x[0], x[0] === 'settings' ? setL : t(x[1]), x[2]]; }));
   }
   function clientNav() {
     var n = [['overview', 'nav_overview', 'i-grid'], ['companies', 'nav_companies', 'i-brief']];

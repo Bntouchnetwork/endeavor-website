@@ -103,7 +103,7 @@ const STD: Record<Lang, Record<string, string>> = {
   es: { contacted: "Nuestro equipo ya contactó al cliente.", proposal: "Enviamos la propuesta al cliente.", onboarding: "El cliente aceptó y comenzó el registro con Endeavor.", in_process: "Los servicios del cliente están en curso.", completed: "Los servicios del cliente fueron concluidos. ¡Gracias por la recomendación!", lost: "Esta recomendación fue cerrada. Si tiene información nueva, escríbanos." },
 };
 const T: Record<Lang, Record<string, string>> = {
-  pt: { hi: "Olá, {n}!", hiAnon: "Olá!", kRef: "SUA INDICAÇÃO", refSubj: "{c}: {s}", refH1: "{c}: {s}", refCta: "Ver no portal",
+  pt: { closeSubj: "Sua conta de parceiro foi encerrada", closeH1: "Conta de parceiro encerrada", closeP: "Como você pediu, encerramos a sua conta no Programa de Parceiros. Todas as comissões foram pagas e o seu acesso ao portal foi removido. O contrato e o histórico de pagamentos ficam guardados pelo prazo exigido por lei. Se quiser voltar, é só se cadastrar de novo.", hi: "Olá, {n}!", hiAnon: "Olá!", kRef: "SUA INDICAÇÃO", refSubj: "{c}: {s}", refH1: "{c}: {s}", refCta: "Ver no portal",
     paidSubj: "Pagamento confirmado: {c}", paidH1: "{c} pagou a fatura", paidP: "A fatura {i} de {c} foi paga. A sua comissão é de <strong>{a}</strong>.",
     paidAuto: "Ela vai automaticamente para a sua conta Stripe.", paidManual: "Vamos fazer o repasse e avisamos quando for enviado.", paidStripe: "Conecte a sua conta Stripe no portal para receber.",
     commSubj: "Comissão enviada: {a}", commH1: "Sua comissão foi enviada", commP: "Enviamos <strong>{a}</strong> referente à fatura {i} de {c}.", commStripe: "O valor está no seu saldo Stripe e vai para o seu banco no próximo saque automático.", commOther: "O valor deve chegar na sua conta nos próximos dias úteis.",
@@ -113,7 +113,7 @@ const T: Record<Lang, Record<string, string>> = {
     kPartner: "PORTAL DO PARCEIRO", invSubj: "Seu acesso ao Portal do Parceiro está esperando", invH1: "Seu acesso está pronto", invP: "Você ainda não criou a sua senha do Portal do Parceiro. Use o link do e-mail de convite. Se ele expirou, responda este e-mail que enviamos um novo.", invCta: "Abrir o portal",
     obSubj: "Falta pouco para ativar a sua conta de parceiro", obH1: "Falta pouco para ativar a sua conta", obP: "Para começar a indicar e receber, ainda falta:", obCta: "Continuar o onboarding",
     m_payout: "Escolher como você recebe as comissões", m_stripe: "Terminar o cadastro no Stripe", m_contract: "Assinar o contrato de parceria", m_video: "Assistir ao vídeo de apresentação" },
-  en: { hi: "Hi {n},", hiAnon: "Hello,", kRef: "YOUR REFERRAL", refSubj: "{c}: {s}", refH1: "{c}: {s}", refCta: "View in the portal",
+  en: { closeSubj: "Your partner account was closed", closeH1: "Partner account closed", closeP: "As you requested, we closed your Partner Program account. All commissions were paid and your portal access was removed. The agreement and payment history are kept for the period required by law. If you want to come back, just sign up again.", hi: "Hi {n},", hiAnon: "Hello,", kRef: "YOUR REFERRAL", refSubj: "{c}: {s}", refH1: "{c}: {s}", refCta: "View in the portal",
     paidSubj: "Payment confirmed: {c}", paidH1: "{c} paid the invoice", paidP: "Invoice {i} from {c} was paid. Your commission is <strong>{a}</strong>.",
     paidAuto: "It goes automatically to your Stripe account.", paidManual: "We will send your payout and let you know when it is on the way.", paidStripe: "Connect your Stripe account in the portal to get paid.",
     commSubj: "Commission sent: {a}", commH1: "Your commission was sent", commP: "We sent <strong>{a}</strong> for invoice {i} from {c}.", commStripe: "It is in your Stripe balance and goes to your bank with the next automatic payout.", commOther: "It should reach your account in the next business days.",
@@ -123,7 +123,7 @@ const T: Record<Lang, Record<string, string>> = {
     kPartner: "PARTNER PORTAL", invSubj: "Your Partner Portal access is waiting", invH1: "Your access is ready", invP: "You have not created your Partner Portal password yet. Use the link in the invitation email. If it expired, reply to this email and we will send a new one.", invCta: "Open the portal",
     obSubj: "Almost there: activate your partner account", obH1: "Almost there", obP: "To start referring and getting paid, you still need to:", obCta: "Continue onboarding",
     m_payout: "Choose how you receive your commissions", m_stripe: "Finish your Stripe setup", m_contract: "Sign the partner agreement", m_video: "Watch the welcome video" },
-  es: { hi: "¡Hola, {n}!", hiAnon: "¡Hola!", kRef: "SU RECOMENDACIÓN", refSubj: "{c}: {s}", refH1: "{c}: {s}", refCta: "Ver en el portal",
+  es: { closeSubj: "Su cuenta de socio fue cerrada", closeH1: "Cuenta de socio cerrada", closeP: "Como usted lo pidió, cerramos su cuenta en el Programa de Socios. Todas las comisiones fueron pagadas y se eliminó su acceso al portal. El contrato y el historial de pagos se conservan por el plazo que exige la ley. Si desea volver, solo regístrese de nuevo.", hi: "¡Hola, {n}!", hiAnon: "¡Hola!", kRef: "SU RECOMENDACIÓN", refSubj: "{c}: {s}", refH1: "{c}: {s}", refCta: "Ver en el portal",
     paidSubj: "Pago confirmado: {c}", paidH1: "{c} pagó la factura", paidP: "La factura {i} de {c} fue pagada. Su comisión es de <strong>{a}</strong>.",
     paidAuto: "Va automáticamente a su cuenta Stripe.", paidManual: "Haremos la transferencia y le avisaremos cuando salga.", paidStripe: "Conecte su cuenta Stripe en el portal para recibir.",
     commSubj: "Comisión enviada: {a}", commH1: "Su comisión fue enviada", commP: "Enviamos <strong>{a}</strong> de la factura {i} de {c}.", commStripe: "Está en su saldo Stripe y va a su banco con el próximo retiro automático.", commOther: "Debe llegar a su cuenta en los próximos días hábiles.",
@@ -137,6 +137,8 @@ const T: Record<Lang, Record<string, string>> = {
 const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w)\}/g, (_, k) => v[k] ?? "");
 const hi = (l: Lang, name: unknown) => { const n = first(name); return esc(n ? fill(T[l].hi, { n }) : T[l].hiAnon); };
 const portal = (l: Lang, h: string) => `${SITE}/partner.html?lang=${l}${h}`;
+// partner messages also go to the optional second e-mail
+const pto = (p: Row) => [p.email, p.email2].filter(Boolean).join(", ");
 
 /* ---------- tick ---------- */
 let S: Row = {};
@@ -151,30 +153,30 @@ async function tick() {
 
   if (S.partner_notify !== false) {
     // 1a. referral steps
-    const { data: evs } = await db.from("referral_events").select("id, at, label, referral_id, referrals(id, name, status, partner_id, partners(id, name, email, phone, language, status))")
+    const { data: evs } = await db.from("referral_events").select("id, at, label, referral_id, referrals(id, name, status, partner_id, partners(id, name, email, email2, phone, language, status))")
       .eq("kind", "status").gte("at", since).in("label", ["contacted", "proposal", "onboarding", "in_process", "completed", "lost"]).order("at").limit(200);
     for (const e of evs ?? []) {
       const r = e.referrals as Row | null, p = r?.partners as Row | null;
       if (!r || !p || p.status === "suspended") continue;
       const l = lang(p.language), v = { c: r.name, s: ST[l][e.label] };
-      const res = await deliver({ dedupe: `ref:${e.id}`, kind: "referral_" + e.label, partner_id: p.id, referral_id: r.id, name: p.name, to: p.email, l, subject: fill(T[l].refSubj, v), phone: p.phone, waText: `${v.c}: ${v.s}`,
+      const res = await deliver({ dedupe: `ref:${e.id}`, kind: "referral_" + e.label, partner_id: p.id, referral_id: r.id, name: p.name, to: pto(p), l, subject: fill(T[l].refSubj, v), phone: p.phone, waText: `${v.c}: ${v.s}`,
         mail: { kicker: T[l].kRef, h1: fill(T[l].refH1, v), pre: STD[l][e.label], paras: [hi(l, p.name), esc(STD[l][e.label])], cta: T[l].refCta, url: portal(l, `#/referrals?id=${r.id}`) } });
       if (res.email === "sent") out.referral++;
     }
     // 1b. client paid / 1c. commission paid
-    const { data: invs } = await db.from("invoices").select("id, number, status, paid_at, payout_paid_at, transfer_status, partner_amount_cents, currency, updated_at, partner_id, referral_id, clients(name), partners(id, name, email, phone, language, status, stripe_transfers_active, payout_method)")
+    const { data: invs } = await db.from("invoices").select("id, number, status, paid_at, payout_paid_at, transfer_status, partner_amount_cents, currency, updated_at, partner_id, referral_id, clients(name), partners(id, name, email, email2, phone, language, status, stripe_transfers_active, payout_method)")
       .not("partner_id", "is", null).gt("partner_amount_cents", 0).gte("updated_at", since).limit(200);
     for (const i of invs ?? []) {
       const p = i.partners as Row | null; if (!p || p.status === "suspended") continue;
       const l = lang(p.language), c = (i.clients as Row | null)?.name || "", a = money(i.partner_amount_cents, i.currency, l), v = { c, a, i: i.number || "" };
       if (i.status === "paid") {
         const how = i.transfer_status === "scheduled" || i.transfer_status === "paid" ? T[l].paidAuto : p.payout_method === "global_payouts" ? T[l].paidManual : p.stripe_transfers_active ? T[l].paidManual : T[l].paidStripe;
-        const res = await deliver({ dedupe: `paid:${i.id}`, kind: "invoice_paid", partner_id: p.id, referral_id: i.referral_id, name: p.name, to: p.email, l, subject: fill(T[l].paidSubj, v), phone: p.phone, waText: fill(T[l].paidP, v).replace(/<[^>]+>/g, ""),
+        const res = await deliver({ dedupe: `paid:${i.id}`, kind: "invoice_paid", partner_id: p.id, referral_id: i.referral_id, name: p.name, to: pto(p), l, subject: fill(T[l].paidSubj, v), phone: p.phone, waText: fill(T[l].paidP, v).replace(/<[^>]+>/g, ""),
           mail: { kicker: T[l].kRef, h1: fill(T[l].paidH1, v), pre: fill(T[l].paidP, v).replace(/<[^>]+>/g, ""), paras: [hi(l, p.name), fill(T[l].paidP, { c: esc(c), a: esc(a), i: esc(v.i) }), esc(how)], cta: T[l].refCta, url: portal(l, "#/commissions") } });
         if (res.email === "sent") out.paid++;
       }
       if (i.transfer_status === "paid") {
-        const res = await deliver({ dedupe: `comm:${i.id}`, kind: "commission_paid", partner_id: p.id, referral_id: i.referral_id, name: p.name, to: p.email, l, subject: fill(T[l].commSubj, v), phone: p.phone, waText: fill(T[l].commP, v).replace(/<[^>]+>/g, ""),
+        const res = await deliver({ dedupe: `comm:${i.id}`, kind: "commission_paid", partner_id: p.id, referral_id: i.referral_id, name: p.name, to: pto(p), l, subject: fill(T[l].commSubj, v), phone: p.phone, waText: fill(T[l].commP, v).replace(/<[^>]+>/g, ""),
           mail: { kicker: T[l].kRef, h1: T[l].commH1, pre: fill(T[l].commP, v).replace(/<[^>]+>/g, ""), paras: [hi(l, p.name), fill(T[l].commP, { c: esc(c), a: esc(a), i: esc(v.i) }), esc(p.payout_method === "global_payouts" ? T[l].commOther : T[l].commStripe)], cta: T[l].refCta, url: portal(l, "#/commissions") } });
         if (res.email === "sent") out.commission++;
       }
@@ -214,7 +216,7 @@ async function tick() {
       if (p.status === "invited") {
         if (S.partner_reminders === false) continue;
         for (const d of [7, 3]) if (days(p.invited_at) >= d) {
-          const res = await deliver({ dedupe: `pinv${d}:${p.id}`, kind: "partner_invite_reminder", partner_id: p.id, name: p.name, to: p.email, l, subject: T[l].invSubj, phone: p.phone, waText: T[l].invP,
+          const res = await deliver({ dedupe: `pinv${d}:${p.id}`, kind: "partner_invite_reminder", partner_id: p.id, name: p.name, to: pto(p), l, subject: T[l].invSubj, phone: p.phone, waText: T[l].invP,
             mail: { kicker: T[l].kPartner, h1: T[l].invH1, pre: T[l].invP, paras: [hi(l, p.name), esc(T[l].invP)], cta: T[l].invCta, url: portal(l, "") } });
           if (res.email === "sent") out.partner++; break;
         }
@@ -231,7 +233,7 @@ async function tick() {
       if (S.agent_enabled === false) {
         if (S.partner_reminders === false) continue;
         for (const d of [7, 3]) if (days(p.accepted_at) >= d) {
-          const res = await deliver({ dedupe: `pob${d}:${p.id}`, kind: "partner_onboarding_reminder", partner_id: p.id, name: p.name, to: p.email, l, subject: T[l].obSubj,
+          const res = await deliver({ dedupe: `pob${d}:${p.id}`, kind: "partner_onboarding_reminder", partner_id: p.id, name: p.name, to: pto(p), l, subject: T[l].obSubj,
             mail: { kicker: T[l].kPartner, h1: T[l].obH1, pre: T[l].obP, paras: [hi(l, p.name), esc(T[l].obP), "• " + esc(T[l]["m_" + step])], cta: T[l].obCta, url: portal(l, "#/onboarding") } });
           if (res.email === "sent") out.partner++; break;
         }
@@ -241,7 +243,7 @@ async function tick() {
       if (idle >= stuck && (p.agent_nudges || 0) < 3 && (!p.agent_last_nudge_at || days(p.agent_last_nudge_at) >= stuck)) {
         const n = (p.agent_nudges || 0) + 1;
         const m = await agentNudge(p, step, n);
-        const res = await deliver({ dedupe: `agent:${p.id}:${n}`, kind: "agent_nudge", partner_id: p.id, name: p.name, to: p.email, l, subject: m.subject, phone: p.phone, waText: m.short,
+        const res = await deliver({ dedupe: `agent:${p.id}:${n}`, kind: "agent_nudge", partner_id: p.id, name: p.name, to: pto(p), l, subject: m.subject, phone: p.phone, waText: m.short,
           mail: { kicker: T[l].kPartner, h1: m.subject, pre: m.short, paras: m.body.split(/\n\s*\n/).map((x) => esc(x.trim()).replace(/\n/g, "<br>")).filter(Boolean), cta: T[l].obCta, url: portal(l, "#/onboarding"), sign: false } });
         if (res.email === "sent" || res.email === "dup") {
           await db.from("partners").update({ agent_nudges: n, agent_last_nudge_at: new Date().toISOString() }).eq("id", p.id);
@@ -256,6 +258,24 @@ async function tick() {
         await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel: "system", role: "system", content: "Escalado para a equipe: sem avanço em " + STEP_PT[step] + "." });
         out.escalated = (out.escalated || 0) + 1;
       }
+    }
+  }
+
+  // 4. accounts the partner asked to close: closed automatically after the last commission is paid
+  {
+    const { data: cs } = await db.from("partners").select("*").not("closure_requested_at", "is", null).is("closed_at", null).limit(100);
+    for (const p of cs ?? []) {
+      const { data: open } = await db.rpc("partner_open_commissions", { p_partner: p.id });
+      if (Number(open) > 0) continue;
+      const l = lang(p.language);
+      await deliver({ dedupe: `closed:${p.id}`, kind: "partner_closed", partner_id: p.id, name: p.name, to: pto(p), l, subject: T[l].closeSubj,
+        mail: { kicker: T[l].kPartner, h1: T[l].closeH1, pre: T[l].closeP, paras: [hi(l, p.name), esc(T[l].closeP)] } });
+      const { data: uid } = await db.rpc("partner_login_free", { p_email: p.email, p_partner: p.id });
+      if (uid) await db.auth.admin.deleteUser(String(uid));
+      await db.from("partners").update({ status: "suspended", closed_at: new Date().toISOString(), user_id: null }).eq("id", p.id);
+      await db.from("admin_events").insert({ kind: "partner_new", title: ("Conta de parceiro encerrada: " + p.name).slice(0, 300), body: "Todas as comissões foram pagas. O acesso ao portal foi removido; contrato e histórico continuam guardados.", link: "#/parceiros?id=" + p.id });
+      await db.from("agent_messages").insert({ agent: "admin", partner_id: p.id, channel: "system", role: "system", content: "Conta encerrada a pedido do parceiro, depois do último repasse." });
+      out.closed = (out.closed || 0) + 1;
     }
   }
   return out;

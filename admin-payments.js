@@ -24,6 +24,8 @@
     return pill('stripe-st', 'incomplete', 'Cadastro Stripe incompleto');
   }
   function pBadge(p) {
+    if (p.closed_at) return '<span class="badge badge--lost" title="Encerrada em ' + new Date(p.closed_at).toLocaleDateString('pt-BR') + '">Conta encerrada</span>';
+    if (p.closure_requested_at) return '<span class="badge badge--contacted" title="Sem novas indicações. Fecha sozinha depois do último repasse.">Encerrando</span>';
     if (p.program_status === 'pending') return '<span class="badge badge--contacted">Aguardando aprovação</span>';
     return '<span class="badge badge--' + (p.status === 'active' ? 'client' : p.status === 'invited' ? 'new' : 'lost') + '">' + PSTATUS[p.status] + '</span>';
   }
@@ -278,7 +280,7 @@
     if (tab === 'comissoes') return tabCommissions(body, ctx, p);
     if (tab === 'stripe') return tabStripe(body, ctx, p);
     if (tab === 'contrato') return tabContract(body, ctx, p);
-    body.innerHTML = '<section class="portal-card"><dl class="kv"><dt>E-mail</dt><dd>' + esc(p.email) + '</dd><dt>Telefone</dt><dd>' + esc(p.phone || '—') + '</dd><dt>Empresa</dt><dd>' + esc(p.company || '—') + '</dd><dt>Idioma</dt><dd>' + esc(p.language) + '</dd>' +
+    body.innerHTML = '<section class="portal-card"><dl class="kv"><dt>E-mail</dt><dd>' + esc(p.email) + '</dd>' + (p.email2 ? '<dt>Segundo e-mail</dt><dd>' + esc(p.email2) + '</dd>' : '') + (p.closure_requested_at ? '<dt>Encerramento</dt><dd>' + (p.closed_at ? 'Conta encerrada em ' + esc(ctx.fmtDT(p.closed_at)) + '. Contrato e histórico de pagamentos guardados.' : 'Pedido em ' + esc(ctx.fmtDT(p.closure_requested_at)) + '. Sem novas indicações; fecha sozinha depois do último repasse.') + '</dd>' : '') + '<dt>Telefone</dt><dd>' + esc(p.phone || '—') + '</dd><dt>Empresa</dt><dd>' + esc(p.company || '—') + '</dd><dt>Idioma</dt><dd>' + esc(p.language) + '</dd>' +
       '<dt>País</dt><dd>' + esc(p.country || '—') + '</dd><dt>Origem</dt><dd>' + (p.signup_source === 'site' ? 'Cadastro pelo site' : 'Convite do admin') + '</dd>' +
       '<dt>Conversa de onboarding</dt><dd>' + (p.onboarding_at ? '<a href="#/agenda">' + esc(ctx.fmtDT(p.onboarding_at)) + '</a>' : '—') + '</dd><dt>Aprovado em</dt><dd>' + esc(p.approved_at ? ctx.fmtDT(p.approved_at) + (p.approved_by ? ' · ' + p.approved_by : '') : (p.program_status === 'pending' ? 'Aguardando' : '—')) + '</dd>' +
       '<dt>Convidado em</dt><dd>' + esc(ctx.fmtDT(p.invited_at)) + '</dd><dt>Aceitou em</dt><dd>' + esc(p.accepted_at ? ctx.fmtDT(p.accepted_at) : '—') + '</dd><dt>Notas</dt><dd>' + esc(p.notes || '—') + '</dd></dl></section>';
