@@ -92,3 +92,23 @@ Página única, sem rolagem no computador (no celular as caixas ficam uma embaix
   - o contrato e o histórico de pagamentos ficam guardados (1099);
   - até o fechamento, o parceiro pode clicar em "Manter minha conta".
 - **No admin:** a lista de parceiros mostra "Encerrando" ou "Conta encerrada", e a ficha mostra o segundo e-mail e as datas. Você recebe um aviso no sino quando o parceiro pede o encerramento, quando cancela e quando a conta fecha.
+
+---
+
+# Atualização: Agente de Vendas (chat com IA no site)
+
+- **Onde aparece:** balão no canto inferior direito da home e da página de parceiros. Abre sozinho depois de 8 segundos com "Tem alguma dúvida?". O tempo é ajustável, e 0 desliga a abertura automática. Quem fechar o convite não vê de novo por 3 dias. No celular, o chat abre em tela cheia.
+- **O que faz:** responde sobre os serviços e o Programa de Parceiros em português, inglês e espanhol, com o conteúdo do site.
+  - **Nunca informa preços.** Quando a pessoa mostra interesse ou pergunta o valor, oferece enviar a proposta por e-mail e mostra um formulário curto: nome, e-mail, WhatsApp (opcional) e interesse.
+  - Também mostra botões para agendar uma conversa, para o cadastro de parceiro e para o WhatsApp.
+- **Quando alguém pede a proposta:**
+  - vira lead no CRM, com origem "Chat do site" e a conversa inteira na mensagem;
+  - você recebe um aviso no sino;
+  - chega um e-mail em support@endeavorbiz.com com o histórico;
+  - o follow-up automático de leads também vale para esses contatos.
+- **Admin → Agentes IA → Agente de Vendas:** liga e desliga o chat, ajusta o tempo do balão e mostra as conversas do site, que você pode abrir para ler.
+- **Proteções:**
+  - limite de 40 mensagens por conversa, 120 por visitante por dia e 3.000 por dia no total;
+  - números de SSN, ITIN, CPF e cartão são apagados antes de salvar ou de enviar para a IA;
+  - a IA ignora pedidos para mudar as regras.
+- **Modelo:** Claude Haiku 5.5, rápido e de menor custo. Para trocar, crie no Supabase o secret `SITE_CHAT_MODEL`.
