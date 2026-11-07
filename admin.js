@@ -302,6 +302,7 @@
         '<li><a href="https://supabase.com/dashboard/project/onaewjlozioderwlvgfm" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-db"/></svg>Banco de dados (Supabase)</a></li>' +
         '<li><a href="https://us-east-2.console.aws.amazon.com/ses/home?region=us-east-2#/account" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-mail"/></svg>Envio de e-mails (Amazon SES)</a></li>' +
         '<li><a href="https://github.com/Bntouchnetwork/endeavor-website" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>Código do site (GitHub)</a></li>' +
+        '<li><a href="https://platform.claude.com/" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="#i-code"/></svg>IA (Claude Console)</a></li>' +
       '</ul></aside></div>';
     $('#ql-copy').addEventListener('click', function (e) { copy(schedUrl, e.currentTarget); });
     $('#ql-csv').addEventListener('click', exportCsv);

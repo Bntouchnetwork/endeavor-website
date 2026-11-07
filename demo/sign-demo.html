@@ -939,6 +939,15 @@ html.a11y-contrast .wa-float { background: #000; border: 2px solid #fff; }
   html:not(.a11y-large) .login__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 }
 
+/* ---------- Trust bar: taller, aligned with the page content ---------- */
+.trustbar .trustbar__list { width: 100%; max-width: calc(var(--container) + var(--gutter) * 2); margin-inline: auto; }
+.trustbar__list { padding-block: clamp(1.1rem, .9rem + .8vw, 1.6rem); row-gap: .4rem; }
+.trustbar__list li { font-size: 0.98rem; padding-block: 0.4rem; }
+.trustbar__list .icon { width: 1.25rem; height: 1.25rem; flex: none; }
+/* while the trust bar is on screen, the floating buttons sit above it */
+.a11y, .wa-float { transition: bottom .3s var(--ease), transform .2s var(--ease), background-color .2s var(--ease); }
+html.fab-raise .a11y, html.fab-raise .wa-float { bottom: calc(var(--fab-raise, 5rem) + 0.75rem); }
+
 /* Endeavor portal (admin console, scheduling, e-signature). Builds on the tokens in styles.css. */
 body.portal { background: var(--gray-50); min-height: 100vh; }
 .portal-top {

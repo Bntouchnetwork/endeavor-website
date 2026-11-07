@@ -304,7 +304,8 @@ window.ADMIN_EN = {
   'Modelo: Referral Partner Agreement v2026-11-06 (em inglês). Precisa da revisão de um advogado antes do uso com parceiros reais. Os dados fiscais (W-9/W-8) e o 1099 ficam com o Stripe.': 'Template: Referral Partner Agreement v2026-11-06 (in English). Needs an attorney review before use with real partners. Tax details (W-9/W-8) and Form 1099 are handled by Stripe.',
   'Comissão do contrato (%):': 'Agreement commission (%):', 'Gerar um novo contrato? O link anterior deixa de valer.': 'Generate a new agreement? The previous link stops working.', 'Sem contrato': 'No agreement', 'Enviado ao parceiro': 'Sent to partner', 'Parceiro assinou: falta a Endeavor': 'Partner signed: Endeavor pending', 'Assinado pelas duas partes': 'Signed by both parties',
   'País': 'Country', 'Origem': 'Source', 'Cadastro pelo site': 'Website sign-up', 'Convite do admin': 'Admin invitation', 'Aprovado em': 'Approved on', 'Aguardando': 'Waiting', 'Parceiros': 'Partners', 'A definir na aprovação': 'Set at approval', 'Envio de e-mails (Amazon SES)': 'Email sending (Amazon SES)',
-  'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
+  'IA (Claude Console)': 'AI (Claude Console)',
+    'Voltar para a lista': 'Back to the list', 'Ver lista': 'See list', 'Teste da Agenda Endeavor': 'Endeavor Calendar test', 'Dúvidas? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702': 'Questions? support@endeavorbiz.com · WhatsApp +1 (630) 689-8702'
 };
 // Dynamic messages (regular expressions applied to whole texts)
 window.ADMIN_EN_RX = [
