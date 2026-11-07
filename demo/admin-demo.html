@@ -2013,6 +2013,20 @@ table.prop-table td:nth-child(5) { min-width: 14rem; }
 @media (max-width: 720px) { .acc-grid, .acc-form--2 { grid-template-columns: minmax(0, 1fr); } }
 .acc-card .portal-alert { padding: .35rem .65rem; font-size: .82rem; margin: 0; }
 
+/* partner "New referral": whole form on one screen */
+.rf-card { padding: 1rem 1.2rem; }
+.rf-form { grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 1rem; }
+.rf-form .field { grid-column: span 3; }
+.rf-form .rf-w2 { grid-column: span 4; }
+.rf-form .rf-em { grid-column: span 3; }
+.rf-form .rf-ph { grid-column: span 5; }
+.rf-form .rf-full, .rf-form .acc-foot { grid-column: 1 / -1; }
+.rf-form textarea { min-height: 4.6rem; resize: vertical; }
+.rf-note { display: block; margin: 0; padding: .45rem .7rem; font-size: .82rem; }
+.rf-form .check-row { font-size: .86rem; }
+@media (max-width: 1100px) { .rf-form .field, .rf-form .rf-w2, .rf-form .rf-em, .rf-form .rf-ph { grid-column: span 6; } }
+@media (max-width: 720px) { .rf-form { grid-template-columns: minmax(0, 1fr); } .rf-form .field, .rf-form .rf-w2, .rf-form .rf-em, .rf-form .rf-ph { grid-column: 1 / -1; } }
+
 </style>
 </head>
 <body class="portal">

@@ -360,22 +360,24 @@
       async function vNew(view) {
         if (noNew()) { view.innerHTML = C.head(t('r_nav_new'), '') + '<div class="portal-alert portal-alert--info" style="display:block;max-width:44rem">' + noNewMsg() + '</div>'; return; }
         view.innerHTML = C.head(t('r_nav_new'), t('r_newLead')) +
-          '<section class="portal-card" style="max-width:44rem"><form class="portal-form" id="rf-form" novalidate>' +
-          '<div class="portal-grid2"><div class="field"><label for="rf-name">' + t('f_name') + '</label><input id="rf-name" autocomplete="off" required maxlength="200"></div>' +
-          '<div class="field"><label for="rf-email">' + t('f_email') + '</label><input id="rf-email" type="email" autocomplete="off" required maxlength="254"></div>' +
-          '<div class="field"><label for="rf-phone">' + t('f_phone') + '</label><input id="rf-phone" type="tel" autocomplete="off" maxlength="50"></div>' +
+          '<section class="portal-card acc-card rf-card"><form class="portal-form acc-form rf-form" id="rf-form" novalidate>' +
+          '<div class="field rf-w2"><label for="rf-name">' + t('f_name') + '</label><input id="rf-name" autocomplete="off" required maxlength="200"></div>' +
+          '<div class="field rf-em"><label for="rf-email">' + t('f_email') + '</label><input id="rf-email" type="email" autocomplete="off" required maxlength="254"></div>' +
+          '<div class="field rf-ph"><label for="rf-phone">' + t('f_phone') + '</label><div id="rf-phone-box"></div></div>' +
           '<div class="field"><label for="rf-country">' + t('f_country') + '</label><input id="rf-country" maxlength="100"></div>' +
           '<div class="field"><label for="rf-company">' + t('f_company') + '</label><input id="rf-company" maxlength="200"></div>' +
           '<div class="field"><label for="rf-service">' + t('f_service') + '</label><select id="rf-service"><option value="">' + t('f_select') + '</option>' + SERVICES.map(function (s) { return '<option>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
-          '<div class="field"><label for="rf-lang">' + t('f_lang') + '</label><select id="rf-lang"><option value="pt"' + (L === 'pt' ? ' selected' : '') + '>Português</option><option value="en"' + (L === 'en' ? ' selected' : '') + '>English</option><option value="es"' + (L === 'es' ? ' selected' : '') + '>Español</option></select></div></div>' +
-          '<div class="field"><label for="rf-msg">' + t('f_msg') + '</label><textarea id="rf-msg" rows="4" maxlength="3000"></textarea></div>' +
-          '<p class="portal-alert portal-alert--info" style="display:block">' + t('f_privacy') + '</p>' +
-          '<div class="check-row"><input type="checkbox" id="rf-consent" required><label for="rf-consent">' + t('f_consent') + '</label></div>' +
-          '<div class="portal-alert" id="rf-msgbox" role="alert"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('f_submit') + '</button></form></section>';
+          '<div class="field"><label for="rf-lang">' + t('f_lang') + '</label><select id="rf-lang"><option value="pt"' + (L === 'pt' ? ' selected' : '') + '>Português</option><option value="en"' + (L === 'en' ? ' selected' : '') + '>English</option><option value="es"' + (L === 'es' ? ' selected' : '') + '>Español</option></select></div>' +
+          '<div class="field rf-full"><label for="rf-msg">' + t('f_msg') + '</label><textarea id="rf-msg" rows="3" maxlength="3000"></textarea></div>' +
+          '<p class="portal-alert portal-alert--info rf-full rf-note">' + t('f_privacy') + '</p>' +
+          '<div class="check-row rf-full"><input type="checkbox" id="rf-consent" required><label for="rf-consent">' + t('f_consent') + '</label></div>' +
+          '<div class="acc-foot"><button class="btn btn--navy" type="submit">' + t('f_submit') + '</button><div class="portal-alert" id="rf-msgbox" role="alert"></div></div></form></section>';
+        var rfPhone = window.EPhone ? EPhone.mount($('#rf-phone-box'), { id: 'rf-phone', lang: L }) : null;
+        if (!rfPhone) $('#rf-phone-box').innerHTML = '<input id="rf-phone" type="tel" autocomplete="off" maxlength="50">';
         $('#rf-form').onsubmit = async function (e) {
           e.preventDefault();
           var v = function (id) { return $('#' + id).value.trim(); };
-          var p = { name: v('rf-name'), email: v('rf-email').toLowerCase(), phone: v('rf-phone'), country: v('rf-country'), company: v('rf-company'), service: v('rf-service'), message: v('rf-msg'), language: v('rf-lang'), consent: $('#rf-consent').checked };
+          var p = { name: v('rf-name'), email: v('rf-email').toLowerCase(), phone: rfPhone ? (rfPhone.empty() ? '' : rfPhone.valid() ? rfPhone.e164() : v('rf-phone')) : v('rf-phone'), country: v('rf-country'), company: v('rf-company'), service: v('rf-service'), message: v('rf-msg'), language: v('rf-lang'), consent: $('#rf-consent').checked };
           if (p.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(p.email)) return C.msg($('#rf-msgbox'), t('e_name'), 'error');
           if (!p.consent) return C.msg($('#rf-msgbox'), t('e_consent'), 'error');
           var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
