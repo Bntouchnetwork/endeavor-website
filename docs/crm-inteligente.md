@@ -112,3 +112,17 @@ Página única, sem rolagem no computador (no celular as caixas ficam uma embaix
   - números de SSN, ITIN, CPF e cartão são apagados antes de salvar ou de enviar para a IA;
   - a IA ignora pedidos para mudar as regras.
 - **Modelo:** Claude Haiku 5.5, rápido e de menor custo. Para trocar, crie no Supabase o secret `SITE_CHAT_MODEL`.
+
+---
+
+# Atualização: lead → prospect → proposta → cliente
+
+1. **Lead:** o contato chega pelo chat, pelo formulário, pela agenda ou por indicação.
+2. **Enviar proposta:** no card do lead tem o botão "Enviar proposta". Quando você clica:
+   - o lead vira **prospect** e os follow-ups automáticos param;
+   - abre a tela de proposta com a pessoa já selecionada (aparece "· prospect" ao lado do nome);
+   - se o contato veio de um parceiro, a comissão já vem ligada à proposta.
+3. **Proposta enviada:** o status do prospect muda sozinho para "Proposta enviada".
+4. **Proposta aceita:** a pessoa vira **cliente** automaticamente. Ela recebe o acesso ao portal e a fatura é criada para pagamento.
+
+Enquanto é prospect, a pessoa não aparece em Clientes e não tem acesso ao portal. Se você criar a conta de cliente manualmente para um prospect, o sistema aproveita o mesmo cadastro.

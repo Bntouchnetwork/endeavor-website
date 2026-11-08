@@ -592,7 +592,7 @@
 
   async function proposalForm(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb, editId = param('id');
-    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
+    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language, status').in('status', ['active', 'prospect']).order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
       editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null),
       ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name'))]);
@@ -603,7 +603,8 @@
         '</select></div><button class="btn btn--navy" type="button" id="pp-apply">Usar modelo</button><a class="btn btn--ghost" href="#/pagamentos?tab=modelos">Gerenciar modelos</a></div>' +
       '<p class="portal-muted" id="pp-tplmsg" style="font-size:.85rem;margin:-.25rem 0 1rem">O modelo preenche título, apresentação, o que está incluso, itens, valores e condições. Cliente e parceiro continuam como estão, e você pode ajustar tudo antes de enviar.</p>' +
       '<form class="portal-form" id="pp" novalidate>' +
-      '<div class="portal-grid2"><div class="field"><label for="pp-client">Cliente</label><select id="pp-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')</option>'; }).join('') + '</select></div>' +
+      '<div class="portal-grid2"><div class="field"><label for="pp-client">Cliente ou prospect</label><select id="pp-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')' + (c.status === 'prospect' ? ' · prospect' : '') + '</option>'; }).join('') + '</select>' +
+        '<p class="portal-muted" style="font-size:.82rem;margin:.3rem 0 0">Prospect vira cliente, com acesso ao portal, só quando aceitar a proposta.</p></div>' +
       '<div class="field"><label for="pp-lang">Idioma da proposta</label><select id="pp-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
       '<div class="field"><label for="pp-title">Título do pacote</label><input id="pp-title" maxlength="200" placeholder="Ex.: Pacote Abertura de LLC na Flórida" value="' + esc(ed ? ed.title : '') + '"></div>' +
       '<div class="field"><label for="pp-intro">Apresentação (opcional)</label><textarea id="pp-intro" rows="3" maxlength="4000">' + esc(ed ? ed.intro || '' : '') + '</textarea></div>' +

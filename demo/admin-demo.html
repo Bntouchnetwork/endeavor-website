@@ -2436,8 +2436,15 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
   var FLOW_KEY = 'endeavor-demo-flow';
   function flowGet() { try { return JSON.parse(sessionStorage.getItem(FLOW_KEY) || '{}'); } catch (e) { return {}; } }
   function flowSet(o) { try { sessionStorage.setItem(FLOW_KEY, JSON.stringify(Object.assign(flowGet(), o))); } catch (e) { /* ignore */ } }
+  // mirrors the proposal_lead_sync trigger: sent -> lead "proposal"; accepted -> client active, lead "client"
+  function proposalLeadSync(pr) {
+    var c = DB.clients.find(function (x) { return x.id === pr.client_id; }); if (!c) return;
+    var ld = c.lead_id && DB.leads.find(function (x) { return x.id === c.lead_id; });
+    if (pr.status === 'sent' && ld && (ld.kind || 'lead') !== 'partner' && ld.status !== 'client') { ld.kind = 'prospect'; ld.status = 'proposal'; }
+    if (pr.status === 'accepted') { if (c.status === 'prospect') c.status = 'active'; if (ld && ld.kind !== 'partner') { ld.kind = 'client'; ld.status = 'client'; } }
+  }
   function acceptProposal(pr, name, at) {
-    pr.status = 'accepted'; pr.accepted_name = name; pr.accepted_at = at; pr.viewed_at = pr.viewed_at || at;
+    pr.status = 'accepted'; pr.accepted_name = name; pr.accepted_at = at; pr.viewed_at = pr.viewed_at || at; proposalLeadSync(pr);
     if (!pr.invoice_id) {
       var n = DB.invoices.length + 1, tot = pr.total_cents, share = pr.partner_id ? Math.round(tot * pr.partner_pct / 100) : 0, pp = DB.partners.find(function (x) { return x.id === pr.partner_id; });
       var inv = { id: 'f9000000-0000-4000-8000-00000000000' + (DB.proposals.indexOf(pr) + 1), created_at: at, updated_at: at, client_id: pr.client_id, referral_id: pr.referral_id, partner_id: pr.partner_id, partner_pct: pr.partner_pct, partner_amount_cents: share,
@@ -2739,6 +2746,15 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
+    else if (name === 'admin_prospect_for_proposal') {
+      var lq = DB.leads.find(function (x) { return x.id === args.p_lead; });
+      if (!lq) return Promise.resolve({ data: null, error: { message: 'not_found' } });
+      var cq = DB.clients.find(function (x) { return x.lead_id === lq.id && x.status !== 'archived'; }) || DB.clients.find(function (x) { return x.primary_email.toLowerCase() === lq.email.toLowerCase() && x.status !== 'archived'; });
+      if (!cq) { cq = { id: uuid(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), name: lq.name, primary_email: lq.email.toLowerCase(), phone: lq.phone, language: /^(pt|en|es)$/.test(lq.language) ? lq.language : 'pt', lead_id: lq.id, status: 'prospect', notes: '' }; DB.clients.push(cq); }
+      DB.referrals.forEach(function (rf) { if (rf.lead_id === lq.id && !rf.client_id) rf.client_id = cq.id; });
+      if ((lq.kind || 'lead') !== 'client' && lq.kind !== 'partner' && lq.status !== 'client') { lq.kind = 'prospect'; if (!/qualified|proposal/.test(lq.status)) lq.status = 'qualified'; lq.followup_stop = true; }
+      r = cq.id;
+    }
     else if (name === 'partner_referral_deals') {
       var rr = PME && DB.referrals.find(function (x) { return x.id === args.p_referral && x.partner_id === PME.id; });
       r = !rr ? [] : DB.proposals.filter(function (pr) { return pr.referral_id === rr.id && pr.status === 'accepted'; }).map(function (pr) { var iv = DB.invoices.find(function (i) { return i.id === pr.invoice_id; }) || {};
@@ -3253,7 +3269,7 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
         case 'proposal_send':
           var ps = DB.proposals.find(function (x) { return x.id === pb.proposal_id; });
           ps.token = ps.token || (ps.id === DB.proposals[0].id ? DEMO_TOKEN : 'demo' + ps.id.replace(/-/g, '').slice(0, 36));
-          Object.assign(ps, { status: 'sent', sent_at: new Date().toISOString(), valid_until: ps.valid_until || day(30) });
+          Object.assign(ps, { status: 'sent', sent_at: new Date().toISOString(), valid_until: ps.valid_until || day(30) }); proposalLeadSync(ps);
           return later({ ok: true, url: 'https://endeavorbiz.com/proposal.html?t=' + ps.token + '&lang=' + ps.language });
         case 'proposal_invoice':
           var pi2 = DB.proposals.find(function (x) { return x.id === pb.proposal_id; }); acceptProposal(pi2, pi2.accepted_name, pi2.accepted_at); return later({ ok: true });
@@ -3697,6 +3713,7 @@ window.ADMIN_EN = {
   'Filtrar por tipo': 'Filter by type', 'Filtrar por status': 'Filter by status', 'Filtrar por origem': 'Filter by source', 'Filtrar por empresa': 'Filter by company', 'Filtrar': 'Filter',
   'Data': 'Date', 'Nome': 'Name', 'Contato': 'Contact', 'Assistência': 'Assistance', 'Assistência / empresas': 'Assistance / companies', 'Origem': 'Source', 'Tipo e status': 'Type and status', 'Nada encontrado.': 'Nothing found.',
   'Chat do site': 'Website chat', 'Agente de Vendas': 'Sales agent', 'Chat do site com IA: tira dúvidas e capta pedidos de proposta': 'AI website chat: answers questions and captures proposal requests', 'Conversas do chat do site': 'Website chat conversations', 'Pediu proposta': 'Asked for a proposal', 'Pediu a equipe': 'Asked for the team', 'Chat no site ligado': 'Website chat on', 'Abrir o balão sozinho após (segundos, 0 = nunca)': 'Open the bubble by itself after (seconds, 0 = never)', 'Visitante': 'Visitor', 'Assistente': 'Assistant', 'Nenhuma conversa no site ainda.': 'No website conversations yet.', 'Abrir lead': 'Open lead',
+  'Cliente ou prospect': 'Client or prospect', 'Preparando…': 'Preparing…', 'Prospect vira cliente, com acesso ao portal, só quando aceitar a proposta.': 'A prospect becomes a client, with portal access, only after accepting the proposal.',
   'Formulário': 'Form', 'Agendamento': 'Booking', 'Manual': 'Manual', 'Parceiro': 'Partner', 'Lead': 'Lead', 'Prospect': 'Prospect', 'Cliente': 'Client',
   'Novo': 'New', 'Contatado': 'Contacted', 'Qualificado': 'Qualified', 'Proposta': 'Proposal', 'Perdido': 'Lost', 'Ativo': 'Active', 'Arquivado': 'Archived',
   'Tipo': 'Type', 'Status': 'Status', 'Telefone': 'Phone', 'País': 'Country', 'Empresa': 'Company', 'Idioma': 'Language', 'Notas internas': 'Internal notes', 'Mensagem enviada': 'Message sent', 'Salvar': 'Save',
@@ -6071,15 +6088,19 @@ window.ADMIN_EN_RX = [
     invite: function (ctx, o) { return sendInvite(ctx, o); },
     /* create the portal account from the CRM card (no company yet) and optionally send the invite */
     createAccount: async function (ctx, o) {
-      var c = await ctx.q(ctx.sb.from('clients').insert({ name: o.name, primary_email: o.email, phone: o.phone || null, language: o.lang || 'pt', lead_id: o.leadId || null, status: o.status === 'archived' ? 'archived' : 'active' }).select('*').single());
-      await ctx.q(ctx.sb.from('client_users').insert({ client_id: c.id, email: o.email, name: o.name, role: 'owner', can_view: true, can_upload: true }));
+      // a prospect (proposal not accepted yet) with this e-mail becomes the client account
+      var pr = (await ctx.sb.from('clients').select('*').eq('status', 'prospect').ilike('primary_email', o.email).limit(1)).data || [];
+      var c = pr[0] ? await ctx.q(ctx.sb.from('clients').update({ name: o.name, phone: o.phone || pr[0].phone, language: o.lang || pr[0].language, lead_id: o.leadId || pr[0].lead_id, status: o.status === 'archived' ? 'archived' : 'active' }).eq('id', pr[0].id).select('*').single())
+        : await ctx.q(ctx.sb.from('clients').insert({ name: o.name, primary_email: o.email, phone: o.phone || null, language: o.lang || 'pt', lead_id: o.leadId || null, status: o.status === 'archived' ? 'archived' : 'active' }).select('*').single());
+      var own = (await ctx.sb.from('client_users').select('id').eq('client_id', c.id).eq('role', 'owner').ilike('email', o.email).limit(1)).data || [];
+      if (!own.length) await ctx.q(ctx.sb.from('client_users').insert({ client_id: c.id, email: o.email, name: o.name, role: 'owner', can_view: true, can_upload: true }));
       var sent = o.invite ? await sendInvite(ctx, { clientId: c.id, email: o.email, name: o.name, clientName: o.name, role: 'owner', lang: o.lang || 'pt' }) : false;
       return { client: c, sent: sent };
     },
     list: async function (view, ctx) {
       var esc = ctx.esc, sb = ctx.sb;
       var res = await Promise.all([
-        ctx.q(sb.from('clients').select('*').order('name')),
+        ctx.q(sb.from('clients').select('*').neq('status', 'prospect').order('name')),
         ctx.q(sb.from('companies').select('id, client_id')),
         ctx.q(sb.from('client_users').select('client_id, status, role')),
         ctx.q(sb.from('compliance_items').select('client_id, due_date, status').neq('status', 'done').neq('status', 'not_applicable'))
@@ -7056,7 +7077,7 @@ window.ADMIN_EN_RX = [
 
   async function proposalForm(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb, editId = param('id');
-    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
+    var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language, status').in('status', ['active', 'prospect']).order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
       editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null),
       ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name'))]);
@@ -7067,7 +7088,8 @@ window.ADMIN_EN_RX = [
         '</select></div><button class="btn btn--navy" type="button" id="pp-apply">Usar modelo</button><a class="btn btn--ghost" href="#/pagamentos?tab=modelos">Gerenciar modelos</a></div>' +
       '<p class="portal-muted" id="pp-tplmsg" style="font-size:.85rem;margin:-.25rem 0 1rem">O modelo preenche título, apresentação, o que está incluso, itens, valores e condições. Cliente e parceiro continuam como estão, e você pode ajustar tudo antes de enviar.</p>' +
       '<form class="portal-form" id="pp" novalidate>' +
-      '<div class="portal-grid2"><div class="field"><label for="pp-client">Cliente</label><select id="pp-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')</option>'; }).join('') + '</select></div>' +
+      '<div class="portal-grid2"><div class="field"><label for="pp-client">Cliente ou prospect</label><select id="pp-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')' + (c.status === 'prospect' ? ' · prospect' : '') + '</option>'; }).join('') + '</select>' +
+        '<p class="portal-muted" style="font-size:.82rem;margin:.3rem 0 0">Prospect vira cliente, com acesso ao portal, só quando aceitar a proposta.</p></div>' +
       '<div class="field"><label for="pp-lang">Idioma da proposta</label><select id="pp-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
       '<div class="field"><label for="pp-title">Título do pacote</label><input id="pp-title" maxlength="200" placeholder="Ex.: Pacote Abertura de LLC na Flórida" value="' + esc(ed ? ed.title : '') + '"></div>' +
       '<div class="field"><label for="pp-intro">Apresentação (opcional)</label><textarea id="pp-intro" rows="3" maxlength="4000">' + esc(ed ? ed.intro || '' : '') + '</textarea></div>' +
@@ -8719,7 +8741,7 @@ window.ADMIN_EN_RX = [
   async function viewCrm(view) {
     var res = await Promise.all([
       q(sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000)),
-      q(sb.from('clients').select('*').order('created_at', { ascending: false })),
+      q(sb.from('clients').select('*').neq('status', 'prospect').order('created_at', { ascending: false })),
       q(sb.from('companies').select('id, client_id')),
       q(sb.from('compliance_items').select('client_id, due_date, status').neq('status', 'done').neq('status', 'not_applicable'))
     ]);
@@ -8808,7 +8830,7 @@ window.ADMIN_EN_RX = [
       '<div class="field"><label for="ld-notes">Notas internas</label><textarea id="ld-notes" rows="4">' + esc(l.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="ld-msg" role="alert"></div>' +
       '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
-      (id ? '<a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + (id && kind0 === 'partner' && !l.partner_id ? '<a class="btn btn--ghost" id="ld-mkpartner" href="#/parceiros?novo=1&lead=' + esc(id) + '">Criar parceiro e enviar convite</a>' : '') + '</div></form>' +
+      (id ? '<a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + (id && (kind0 === 'lead' || kind0 === 'prospect') ? '<button class="btn btn--gold" type="button" id="ld-prop">Enviar proposta</button>' : '') + (id && kind0 === 'partner' && !l.partner_id ? '<a class="btn btn--ghost" id="ld-mkpartner" href="#/parceiros?novo=1&lead=' + esc(id) + '">Criar parceiro e enviar convite</a>' : '') + '</div></form>' +
       (id ? '<div id="ld-crm" style="margin-top:1.25rem"></div>' : '') +
       (id ? '<h3 style="margin-top:1.5rem">Agendamentos</h3>' + (related[0].length ? '<ul class="list">' + related[0].map(function (b) { return '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at)) + '</strong><span>' + esc(b.topic || '') + '</span></div>' + badge(b.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') +
         '<h3>Documentos</h3>' + (related[1].length ? '<ul class="list">' + related[1].map(function (e) { return '<li><div class="list__main"><strong>' + esc(e.title) + '</strong><span>' + esc(fmtDT(e.created_at)) + '</span></div>' + badge(e.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') : ''));
@@ -8824,6 +8846,13 @@ window.ADMIN_EN_RX = [
     kSel.onchange = function () { sSel.value = ''; sync(); }; sync();
     if (id && window.AdminCRM) AdminCRM.leadPanel(clientsCtx(), l, $('#ld-crm', o), function (r) { if (KIND_ST[r.kind]) { kSel.value = r.kind; sSel.value = ''; sync(); if (KIND_ST[r.kind].indexOf(r.status) > -1) sSel.value = r.status; } }).catch(function (e) { console.error(e); });
     if ($('#ld-mkpartner', o)) $('#ld-mkpartner', o).onclick = function () { closeOverlay(); };
+    // lead -> prospect: a prospect record holds the proposal; it becomes a client (with portal access) only when the proposal is accepted
+    if ($('#ld-prop', o)) $('#ld-prop', o).onclick = async function () {
+      var btn = this; btn.disabled = true; btn.textContent = 'Preparando…';
+      var r = await sb.rpc('admin_prospect_for_proposal', { p_lead: id });
+      if (r.error) { btn.disabled = false; btn.textContent = 'Enviar proposta'; return msg($('#ld-msg', o), errText(r.error), 'error'); }
+      closeOverlay(); ERoute.set('#/pagamentos?tab=nova-proposta&client=' + r.data);
+    };
     $('#lead-form', o).addEventListener('submit', async function (e) {
       e.preventDefault();
       var m = $('#ld-msg', o), k = kSel.value;

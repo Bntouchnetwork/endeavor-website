@@ -2434,8 +2434,15 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
   var FLOW_KEY = 'endeavor-demo-flow';
   function flowGet() { try { return JSON.parse(sessionStorage.getItem(FLOW_KEY) || '{}'); } catch (e) { return {}; } }
   function flowSet(o) { try { sessionStorage.setItem(FLOW_KEY, JSON.stringify(Object.assign(flowGet(), o))); } catch (e) { /* ignore */ } }
+  // mirrors the proposal_lead_sync trigger: sent -> lead "proposal"; accepted -> client active, lead "client"
+  function proposalLeadSync(pr) {
+    var c = DB.clients.find(function (x) { return x.id === pr.client_id; }); if (!c) return;
+    var ld = c.lead_id && DB.leads.find(function (x) { return x.id === c.lead_id; });
+    if (pr.status === 'sent' && ld && (ld.kind || 'lead') !== 'partner' && ld.status !== 'client') { ld.kind = 'prospect'; ld.status = 'proposal'; }
+    if (pr.status === 'accepted') { if (c.status === 'prospect') c.status = 'active'; if (ld && ld.kind !== 'partner') { ld.kind = 'client'; ld.status = 'client'; } }
+  }
   function acceptProposal(pr, name, at) {
-    pr.status = 'accepted'; pr.accepted_name = name; pr.accepted_at = at; pr.viewed_at = pr.viewed_at || at;
+    pr.status = 'accepted'; pr.accepted_name = name; pr.accepted_at = at; pr.viewed_at = pr.viewed_at || at; proposalLeadSync(pr);
     if (!pr.invoice_id) {
       var n = DB.invoices.length + 1, tot = pr.total_cents, share = pr.partner_id ? Math.round(tot * pr.partner_pct / 100) : 0, pp = DB.partners.find(function (x) { return x.id === pr.partner_id; });
       var inv = { id: 'f9000000-0000-4000-8000-00000000000' + (DB.proposals.indexOf(pr) + 1), created_at: at, updated_at: at, client_id: pr.client_id, referral_id: pr.referral_id, partner_id: pr.partner_id, partner_pct: pr.partner_pct, partner_amount_cents: share,
@@ -2737,6 +2744,15 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
       return { campaign_id: id, total: ss.length, sent: n(function (x) { return x.status === 'sent'; }), failed: n(function (x) { return x.status === 'failed'; }), queued: n(function (x) { return x.status === 'queued'; }), opened: n(function (x) { return x.opened_at; }), clicked: n(function (x) { return x.clicked_at; }), unsubscribed: n(function (x) { return x.unsubscribed_at; }) }; });
     else if (name === 'qbo_status') { var s = QBO[args.p_company]; r = [s ? Object.assign({ connected: true }, s) : { connected: false }]; }
     else if (name === 'claim_partner' || name === 'my_partner_id') r = PME && AUTH.user === ME ? (name === 'claim_partner' ? [JSON.parse(JSON.stringify(PME))] : PME.id) : (name === 'claim_partner' ? [] : null);
+    else if (name === 'admin_prospect_for_proposal') {
+      var lq = DB.leads.find(function (x) { return x.id === args.p_lead; });
+      if (!lq) return Promise.resolve({ data: null, error: { message: 'not_found' } });
+      var cq = DB.clients.find(function (x) { return x.lead_id === lq.id && x.status !== 'archived'; }) || DB.clients.find(function (x) { return x.primary_email.toLowerCase() === lq.email.toLowerCase() && x.status !== 'archived'; });
+      if (!cq) { cq = { id: uuid(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), name: lq.name, primary_email: lq.email.toLowerCase(), phone: lq.phone, language: /^(pt|en|es)$/.test(lq.language) ? lq.language : 'pt', lead_id: lq.id, status: 'prospect', notes: '' }; DB.clients.push(cq); }
+      DB.referrals.forEach(function (rf) { if (rf.lead_id === lq.id && !rf.client_id) rf.client_id = cq.id; });
+      if ((lq.kind || 'lead') !== 'client' && lq.kind !== 'partner' && lq.status !== 'client') { lq.kind = 'prospect'; if (!/qualified|proposal/.test(lq.status)) lq.status = 'qualified'; lq.followup_stop = true; }
+      r = cq.id;
+    }
     else if (name === 'partner_referral_deals') {
       var rr = PME && DB.referrals.find(function (x) { return x.id === args.p_referral && x.partner_id === PME.id; });
       r = !rr ? [] : DB.proposals.filter(function (pr) { return pr.referral_id === rr.id && pr.status === 'accepted'; }).map(function (pr) { var iv = DB.invoices.find(function (i) { return i.id === pr.invoice_id; }) || {};
@@ -3251,7 +3267,7 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
         case 'proposal_send':
           var ps = DB.proposals.find(function (x) { return x.id === pb.proposal_id; });
           ps.token = ps.token || (ps.id === DB.proposals[0].id ? DEMO_TOKEN : 'demo' + ps.id.replace(/-/g, '').slice(0, 36));
-          Object.assign(ps, { status: 'sent', sent_at: new Date().toISOString(), valid_until: ps.valid_until || day(30) });
+          Object.assign(ps, { status: 'sent', sent_at: new Date().toISOString(), valid_until: ps.valid_until || day(30) }); proposalLeadSync(ps);
           return later({ ok: true, url: 'https://endeavorbiz.com/proposal.html?t=' + ps.token + '&lang=' + ps.language });
         case 'proposal_invoice':
           var pi2 = DB.proposals.find(function (x) { return x.id === pb.proposal_id; }); acceptProposal(pi2, pi2.accepted_name, pi2.accepted_at); return later({ ok: true });

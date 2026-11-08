@@ -79,15 +79,19 @@
     invite: function (ctx, o) { return sendInvite(ctx, o); },
     /* create the portal account from the CRM card (no company yet) and optionally send the invite */
     createAccount: async function (ctx, o) {
-      var c = await ctx.q(ctx.sb.from('clients').insert({ name: o.name, primary_email: o.email, phone: o.phone || null, language: o.lang || 'pt', lead_id: o.leadId || null, status: o.status === 'archived' ? 'archived' : 'active' }).select('*').single());
-      await ctx.q(ctx.sb.from('client_users').insert({ client_id: c.id, email: o.email, name: o.name, role: 'owner', can_view: true, can_upload: true }));
+      // a prospect (proposal not accepted yet) with this e-mail becomes the client account
+      var pr = (await ctx.sb.from('clients').select('*').eq('status', 'prospect').ilike('primary_email', o.email).limit(1)).data || [];
+      var c = pr[0] ? await ctx.q(ctx.sb.from('clients').update({ name: o.name, phone: o.phone || pr[0].phone, language: o.lang || pr[0].language, lead_id: o.leadId || pr[0].lead_id, status: o.status === 'archived' ? 'archived' : 'active' }).eq('id', pr[0].id).select('*').single())
+        : await ctx.q(ctx.sb.from('clients').insert({ name: o.name, primary_email: o.email, phone: o.phone || null, language: o.lang || 'pt', lead_id: o.leadId || null, status: o.status === 'archived' ? 'archived' : 'active' }).select('*').single());
+      var own = (await ctx.sb.from('client_users').select('id').eq('client_id', c.id).eq('role', 'owner').ilike('email', o.email).limit(1)).data || [];
+      if (!own.length) await ctx.q(ctx.sb.from('client_users').insert({ client_id: c.id, email: o.email, name: o.name, role: 'owner', can_view: true, can_upload: true }));
       var sent = o.invite ? await sendInvite(ctx, { clientId: c.id, email: o.email, name: o.name, clientName: o.name, role: 'owner', lang: o.lang || 'pt' }) : false;
       return { client: c, sent: sent };
     },
     list: async function (view, ctx) {
       var esc = ctx.esc, sb = ctx.sb;
       var res = await Promise.all([
-        ctx.q(sb.from('clients').select('*').order('name')),
+        ctx.q(sb.from('clients').select('*').neq('status', 'prospect').order('name')),
         ctx.q(sb.from('companies').select('id, client_id')),
         ctx.q(sb.from('client_users').select('client_id, status, role')),
         ctx.q(sb.from('compliance_items').select('client_id, due_date, status').neq('status', 'done').neq('status', 'not_applicable'))

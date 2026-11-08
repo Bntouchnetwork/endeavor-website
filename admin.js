@@ -334,7 +334,7 @@
   async function viewCrm(view) {
     var res = await Promise.all([
       q(sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000)),
-      q(sb.from('clients').select('*').order('created_at', { ascending: false })),
+      q(sb.from('clients').select('*').neq('status', 'prospect').order('created_at', { ascending: false })),
       q(sb.from('companies').select('id, client_id')),
       q(sb.from('compliance_items').select('client_id, due_date, status').neq('status', 'done').neq('status', 'not_applicable'))
     ]);
@@ -423,7 +423,7 @@
       '<div class="field"><label for="ld-notes">Notas internas</label><textarea id="ld-notes" rows="4">' + esc(l.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="ld-msg" role="alert"></div>' +
       '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
-      (id ? '<a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + (id && kind0 === 'partner' && !l.partner_id ? '<a class="btn btn--ghost" id="ld-mkpartner" href="#/parceiros?novo=1&lead=' + esc(id) + '">Criar parceiro e enviar convite</a>' : '') + '</div></form>' +
+      (id ? '<a class="btn btn--ghost" href="#/assinaturas?novo=1&lead=' + esc(id) + '">Enviar documento</a>' : '') + (id && (kind0 === 'lead' || kind0 === 'prospect') ? '<button class="btn btn--gold" type="button" id="ld-prop">Enviar proposta</button>' : '') + (id && kind0 === 'partner' && !l.partner_id ? '<a class="btn btn--ghost" id="ld-mkpartner" href="#/parceiros?novo=1&lead=' + esc(id) + '">Criar parceiro e enviar convite</a>' : '') + '</div></form>' +
       (id ? '<div id="ld-crm" style="margin-top:1.25rem"></div>' : '') +
       (id ? '<h3 style="margin-top:1.5rem">Agendamentos</h3>' + (related[0].length ? '<ul class="list">' + related[0].map(function (b) { return '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at)) + '</strong><span>' + esc(b.topic || '') + '</span></div>' + badge(b.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') +
         '<h3>Documentos</h3>' + (related[1].length ? '<ul class="list">' + related[1].map(function (e) { return '<li><div class="list__main"><strong>' + esc(e.title) + '</strong><span>' + esc(fmtDT(e.created_at)) + '</span></div>' + badge(e.status) + '</li>'; }).join('') + '</ul>' : '<p class="empty">Nenhum.</p>') : ''));
@@ -439,6 +439,13 @@
     kSel.onchange = function () { sSel.value = ''; sync(); }; sync();
     if (id && window.AdminCRM) AdminCRM.leadPanel(clientsCtx(), l, $('#ld-crm', o), function (r) { if (KIND_ST[r.kind]) { kSel.value = r.kind; sSel.value = ''; sync(); if (KIND_ST[r.kind].indexOf(r.status) > -1) sSel.value = r.status; } }).catch(function (e) { console.error(e); });
     if ($('#ld-mkpartner', o)) $('#ld-mkpartner', o).onclick = function () { closeOverlay(); };
+    // lead -> prospect: a prospect record holds the proposal; it becomes a client (with portal access) only when the proposal is accepted
+    if ($('#ld-prop', o)) $('#ld-prop', o).onclick = async function () {
+      var btn = this; btn.disabled = true; btn.textContent = 'Preparando…';
+      var r = await sb.rpc('admin_prospect_for_proposal', { p_lead: id });
+      if (r.error) { btn.disabled = false; btn.textContent = 'Enviar proposta'; return msg($('#ld-msg', o), errText(r.error), 'error'); }
+      closeOverlay(); ERoute.set('#/pagamentos?tab=nova-proposta&client=' + r.data);
+    };
     $('#lead-form', o).addEventListener('submit', async function (e) {
       e.preventDefault();
       var m = $('#ld-msg', o), k = kSel.value;
