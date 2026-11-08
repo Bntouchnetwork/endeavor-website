@@ -23,7 +23,7 @@
     if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
     return j;
   }
-  function errMsg(ctx, e) { var m = (e && e.message) || String(e); return ERR[m] || ctx.errText(e); }
+  function errMsg(ctx, e) { var m = (e && e.message) || String(e); if (ERR[m]) return ERR[m]; if (/JSON|tool|ai_\d|overloaded|timeout|Failed to fetch|504|546/i.test(m)) return 'A IA não conseguiu terminar agora. Tente de novo em instantes (ou peça menos itens).'; return ctx.errText(e); }
 
   /* ---------------- art renderer (canvas) ---------------- */
   function wrap(c, text, maxW) {
@@ -168,7 +168,7 @@
     ctx.$('#igp-f', o).onsubmit = async function (e) {
       e.preventDefault(); var b = this.querySelector('button'), m = ctx.$('#igp-m', o); b.disabled = true; b.textContent = 'Pesquisando e criando… (1 a 3 minutos)';
       ctx.msg(m, 'O agente está pesquisando tendências e escrevendo os posts. Pode deixar esta janela aberta.', 'info');
-      try { var r = await call(ctx, { action: 'plan', posts: +ctx.$('#igp-n', o).value, stories: +ctx.$('#igp-s', o).value, focus: ctx.$('#igp-f2', o).value.trim() }); ctx.closeOverlay(); ctx.toast && ctx.toast(r.created + ' itens criados.'); done(); }
+      try { var r = await call(ctx, { action: 'plan', posts: +ctx.$('#igp-n', o).value, stories: +ctx.$('#igp-s', o).value, focus: ctx.$('#igp-f2', o).value.trim() }); ctx.closeOverlay(); done(); }
       catch (er) { b.disabled = false; b.textContent = 'Criar plano'; ctx.msg(m, errMsg(ctx, er), 'error'); }
     };
   }

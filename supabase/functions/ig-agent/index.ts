@@ -48,13 +48,34 @@ Palette per post: "navy" (dark), "cream" (light) or "gold" (accent).`;
 
 async function claude(system: string, user: string, opts: { max?: number; search?: boolean; model?: string } = {}) {
   const body: Row = { model: opts.model || MODEL, max_tokens: opts.max ?? 4000, system, messages: [{ role: "user", content: user }] };
-  if (opts.search) body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 6 }];
+  if (opts.search) body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }];
   const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" }, body: JSON.stringify(body) });
   const j = await r.json().catch(() => null);
   if (!r.ok) throw new Error(j?.error?.message || `ai_${r.status}`);
   return (j.content || []).filter((b: Row) => b.type === "text").map((b: Row) => b.text).join("").trim();
 }
-const parseJson = (t: string) => { const m = t.match(/```json\s*([\s\S]*?)```/) || t.match(/(\{[\s\S]*\})\s*$/) || t.match(/\{[\s\S]*\}/); return JSON.parse(m ? (m[1] || m[0]) : t); };
+
+// structured output: the AI fills a tool whose input is always valid JSON (no hand-written JSON to parse)
+const SLIDE = { type: "object", properties: { template: { type: "string", enum: ["statement", "list", "compare", "stat", "quote", "cta"] }, kicker: { type: "string" }, title: { type: "string" }, body: { type: "string" },
+  bullets: { type: "array", items: { type: "string" } }, left: { type: "string" }, right: { type: "string" }, rows: { type: "array", items: { type: "array", items: { type: "string" } } }, stat: { type: "string" } }, required: ["template", "title"] };
+const ITEM = { type: "object", properties: { format: { type: "string", enum: ["post", "carousel", "story"] }, language: { type: "string", enum: ["pt", "en", "es"] }, topic: { type: "string" }, hook: { type: "string" },
+  palette: { type: "string", enum: ["navy", "cream", "gold"] }, slides: { type: "array", items: SLIDE }, caption: { type: "string" }, hashtags: { type: "array", items: { type: "string" } }, why: { type: "string" },
+  reel_script: { type: "string" }, video_style: { type: "string", enum: ["scenes", "presenter"] } }, required: ["format", "topic", "hook", "palette", "slides", "caption", "hashtags", "why"] };
+async function claudeItems(system: string, user: string, max = 8000): Promise<Row[]> {
+  const tool = { name: "save_items", description: "Save the Instagram items you created.", input_schema: { type: "object", properties: { items: { type: "array", items: ITEM } }, required: ["items"] } };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+      body: JSON.stringify({ model: MODEL, max_tokens: max, system: system + "\n\nAlways deliver your work by calling the save_items tool exactly once (never write JSON in the text).", messages: [{ role: "user", content: user + (attempt ? "\n\nIMPORTANT: call the save_items tool now." : "") }], tools: [tool], tool_choice: { type: "auto" } }) });
+    const j = await r.json().catch(() => null);
+    if (!r.ok) throw new Error(j?.error?.message || `ai_${r.status}`);
+    const use = (j.content || []).find((b: Row) => b.type === "tool_use");
+    const items = use?.input?.items;
+    if (Array.isArray(items) && items.length) return items;
+    if (j.stop_reason === "max_tokens") max = Math.min(16000, max + 4000);
+  }
+  throw new Error("ai_format");
+}
+const chunk = <T,>(a: T[], n: number) => { const out: T[][] = []; for (let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
 
 function normPost(o: Row, lang: string) {
   const fmt = ["post", "carousel", "story"].includes(o.format) ? o.format : "post";
@@ -90,31 +111,43 @@ function slots(cfg: Row, n: number, taken: string[]) {
   return out;
 }
 
+
 async function plan(by: string, b: Row) {
   if (!ANTHROPIC) return { error: "no_ai_key" };
   const cfg: Row = (await db.from("ig_settings").select("*").eq("id", 1).single()).data ?? {};
   const nPosts = Math.min(10, Math.max(1, Number(b.posts) || cfg.posts_per_week || 4)), nStories = Math.min(10, Math.max(0, b.stories != null ? Number(b.stories) : cfg.stories_per_week ?? 3));
   const lang = (cfg.languages || ["pt"])[0] || "pt";
-  const { data: recent } = await db.from("ig_posts").select("topic, hook, format, status, created_at").order("created_at", { ascending: false }).limit(30);
+  const { data: recent } = await db.from("ig_posts").select("topic, hook, format").order("created_at", { ascending: false }).limit(30);
   const { data: future } = await db.from("ig_posts").select("scheduled_at").in("status", ["pending", "approved"]).not("scheduled_at", "is", null);
-  const sys = `You are the Marketing agent of Endeavor Business Solutions: a senior social media strategist and copywriter specialized in the niche of Brazilians doing business, investing and protecting wealth in the United States. You know Instagram growth (hooks, carousels, saves and shares, Stories engagement) and you research before writing.\n\n${BRAND}\n\n${RULES_CONTENT}\n\n${DESIGN}\n\nBrand notes from the admin: ${cfg.brand_notes || "-"}`;
-  const user = `Plan the next ${nPosts} feed posts (mix of "carousel" and "post"; carousels perform best for saves) and ${nStories} "story" items, language "${lang}"${b.focus ? `, with extra focus on: ${String(b.focus).slice(0, 300)}` : ""}.
-Themes to rotate (choose the best ones for this week, do not repeat recent topics): ${(cfg.topics || []).map((t: string) => "\n- " + t).join("")}
-Recent posts (avoid repeating): ${JSON.stringify(recent ?? []).slice(0, 3000)}
-First, use web search to check what is trending now in this niche (news about dollar, taxes, real estate in Florida, U.S. company rules, visa news, what Brazilian investors are searching, popular hashtags in Portuguese for this niche). Then write the plan.
-Reply with ONLY one JSON object: {"research_summary": "3-5 lines on what you found and why the plan fits", "items": [{"format": "carousel|post|story", "language": "${lang}", "topic": "...", "hook": "the scroll-stopping first line", "palette": "navy|cream|gold", "slides": [{"template": "...", "kicker": "...", "title": "...", "body": "...", "bullets": ["..."], "left": "...", "right": "...", "rows": [["...", "..."]], "stat": "..."}], "caption": "full caption with line breaks, value first, soft CTA at the end, no hashtags here", "hashtags": ["#..."], "why": "1-2 lines: trend / search intent behind it", "reel_script": "optional: 60-120 s narration script if this topic would also work as a Reel", "video_style": "scenes|presenter"}]}`;
-  const txt = await claude(sys, user, { max: 12000, search: true });
-  const o = parseJson(txt);
-  const items: Row[] = Array.isArray(o.items) ? o.items : [];
+  const role = `You are the Marketing agent of Endeavor Business Solutions: a senior social media strategist and copywriter specialized in the niche of Brazilians doing business, investing and protecting wealth in the United States. You know Instagram growth (hooks, carousels, saves and shares, Stories engagement).\n\n${BRAND}\n\n${RULES_CONTENT}`;
+  const themes = (cfg.topics || []).map((t: string) => "\n- " + t).join("");
+  // 1. research (web search): a short brief with trends, angles and hashtags
+  let brief = "";
+  try {
+    brief = await claude(role, `Research what is trending right now for this niche on Instagram and in the news (dollar and exchange rate, U.S. taxes for foreigners, Florida real estate, U.S. company rules, visa news for entrepreneurs, what Brazilian investors are searching, popular Portuguese hashtags for this niche).${b.focus ? " Extra focus: " + String(b.focus).slice(0, 300) + "." : ""}
+Themes we cover: ${themes}
+Write a short brief in Portuguese (max 250 words): 1) 5-8 trending angles with one line each, 2) 20 hashtags people actually use in this niche, 3) what to avoid. Plain text, no JSON.`, { max: 3000, search: true });
+  } catch (e) { console.error("ig research", e); }
+  // 2. the items, in small batches run in parallel (always valid JSON via tool use)
+  const sys = role + "\n\n" + DESIGN + "\n\nBrand notes from the admin: " + (cfg.brand_notes || "-");
+  const ctxText = `Language: "${lang}". Themes to rotate (pick the best for now, do not repeat recent topics): ${themes}
+Recent posts (avoid repeating): ${JSON.stringify(recent ?? []).slice(0, 2500)}
+Research brief: ${brief.slice(0, 3000) || "(not available: stay evergreen and general)"}${b.focus ? "\nExtra focus: " + String(b.focus).slice(0, 300) : ""}`;
+  const jobs: Promise<Row[]>[] = [];
+  const postBatches = chunk(Array.from({ length: nPosts }, (_, i) => i), 3);
+  postBatches.forEach((bt, k) => jobs.push(claudeItems(sys, `${ctxText}\n\nCreate ${bt.length} feed item(s) (mix "carousel" and "post"; carousels 3-7 slides with a "cta" last slide). Batch ${k + 1} of ${postBatches.length}: choose different themes from other batches (start from theme number ${k * 3 + 1} of the list). Captions: value first, line breaks, soft CTA at the end, no hashtags inside. 8-15 hashtags each. Add reel_script only when the topic also works as a 60-120 s Reel. Save them with the tool.`)));
+  if (nStories) jobs.push(claudeItems(sys, `${ctxText}\n\nCreate ${nStories} "story" item(s): 1 slide each, short, with a question or an invitation to reply. Caption can be empty. Save them with the tool.`, 5000));
+  const settled = await Promise.allSettled(jobs);
+  const items: Row[] = settled.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
+  if (!items.length) { const e = settled.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined; throw new Error(e ? String(e.reason?.message || e.reason) : "ai_format"); }
   const feed = items.filter((x) => x.format !== "story"), st = items.filter((x) => x.format === "story");
   const taken = (future ?? []).map((x) => x.scheduled_at);
   const fs = slots(cfg, feed.length, taken), ss = slots({ ...cfg, post_time: "18:30", post_days: [0, 1, 2, 3, 4, 5, 6] }, st.length, []);
-  const rows = feed.map((x, i) => ({ ...normPost(x, lang), scheduled_at: fs[i] || null, created_by: by, research: (clean(x.why, 600) + (o.research_summary ? "\n\nPesquisa: " + clean(o.research_summary, 600) : "")).trim() }))
+  const rows = feed.map((x, i) => ({ ...normPost(x, lang), scheduled_at: fs[i] || null, created_by: by, research: (clean(x.why, 600) + (brief ? "\n\nPesquisa da semana:\n" + brief.slice(0, 900) : "")).trim() }))
     .concat(st.map((x, i) => ({ ...normPost({ ...x, format: "story" }, lang), scheduled_at: ss[i] || null, created_by: by, research: clean(x.why, 600) })));
-  if (!rows.length) return { error: "ai_format" };
   const ins = await db.from("ig_posts").insert(rows).select("id");
   if (ins.error) throw ins.error;
-  return { ok: true, created: ins.data?.length ?? 0, research: clean(o.research_summary, 1500) };
+  return { ok: true, created: ins.data?.length ?? 0, partial: settled.some((r) => r.status === "rejected"), research: brief.slice(0, 1500) };
 }
 
 async function redo(id: string, feedback: string, by: string) {
@@ -122,8 +155,8 @@ async function redo(id: string, feedback: string, by: string) {
   const { data: p } = await db.from("ig_posts").select("*").eq("id", id).single();
   if (!p) return { error: "not_found" };
   const sys = `You are the Marketing agent of Endeavor Business Solutions (Instagram).\n\n${BRAND}\n\n${RULES_CONTENT}\n\n${DESIGN}`;
-  const txt = await claude(sys, `Rewrite this ${p.format} following the admin's feedback. Keep what works. Feedback: "${feedback.slice(0, 800)}"\nCurrent: ${JSON.stringify({ format: p.format, language: p.language, topic: p.topic, hook: p.hook, palette: p.design?.palette, slides: p.design?.slides, caption: p.caption, hashtags: p.hashtags })}\nReply with ONLY the JSON object of the post (same keys: format, language, topic, hook, palette, slides, caption, hashtags, why).`, { max: 5000, search: /pesquis|search|tend|trend|hashtag/i.test(feedback) });
-  const n = normPost(parseJson(txt), p.language);
+  const items = await claudeItems(sys, `Rewrite this ${p.format} following the admin's feedback. Keep what works. Feedback: "${feedback.slice(0, 800)}"\nCurrent: ${JSON.stringify({ format: p.format, language: p.language, topic: p.topic, hook: p.hook, palette: p.design?.palette, slides: p.design?.slides, caption: p.caption, hashtags: p.hashtags })}\nSave exactly 1 item with the tool.`, 6000);
+  const n = normPost(items[0], p.language);
   const upd = await db.from("ig_posts").update({ ...n, research: n.research || p.research, feedback: (p.feedback ? p.feedback + "\n" : "") + "• " + feedback.slice(0, 500), image_urls: [], status: "pending", updated_at: new Date().toISOString(), video: n.video ?? p.video }).eq("id", id).select("*").single();
   return { ok: true, post: upd.data, by };
 }
@@ -258,6 +291,12 @@ Deno.serve(async (req) => {
       const { data: ok } = await db.rpc("booking_hook_key_ok", { p_key: req.headers.get("x-booking-key") ?? "" });
       if (!ok) return json({ error: "forbidden" }, 403);
       return json(await publishDue());
+    }
+    if (b.event === "plan") {
+      // scheduled planning (internal key): same as the admin button
+      const { data: ok } = await db.rpc("booking_hook_key_ok", { p_key: req.headers.get("x-booking-key") ?? "" });
+      if (!ok) return json({ error: "forbidden" }, 403);
+      const r = await plan("agente (automático)", b); return json(r, (r as Row).error ? 400 : 200);
     }
     const user = createClient(SB_URL, SB_ANON || SB_SERVICE, { global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } }, auth: { persistSession: false } });
     const { data: isAdmin } = await user.rpc("is_admin");
