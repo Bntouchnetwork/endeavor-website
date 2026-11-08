@@ -126,3 +126,52 @@ Página única, sem rolagem no computador (no celular as caixas ficam uma embaix
 4. **Proposta aceita:** a pessoa vira **cliente** automaticamente. Ela recebe o acesso ao portal e a fatura é criada para pagamento.
 
 Enquanto é prospect, a pessoa não aparece em Clientes e não tem acesso ao portal. Se você criar a conta de cliente manualmente para um prospect, o sistema aproveita o mesmo cadastro.
+
+---
+
+# Agente de Marketing (Instagram)
+
+**Onde fica:** Admin → Instagram. Também dá para abrir pelo card em Agentes IA.
+
+1. **✦ Planejar com IA:**
+   - O agente pesquisa na internet o que está em alta no nicho: dólar, impostos, imóveis na Flórida, regras para empresas, notícias de vistos e as hashtags mais buscadas.
+   - Depois cria os posts, carrosséis e stories da semana: tema, gancho, arte (com as cores da Endeavor), legenda, hashtags, dia e horário.
+   - Ele explica por que escolheu cada tema. Quando o assunto também rende um Reel, já deixa o roteiro.
+2. **Para aprovar:** você vê a arte, edita os textos e a legenda, troca a cor e muda a data. Também pode pedir um ajuste para a IA ("gancho mais forte", "vire carrossel Brasil x EUA").
+3. **Aprovar e agendar:** a arte final é gerada e o post fica em "Agendados". A publicação é automática no horário marcado, com verificação a cada 10 minutos. Também existe o botão "Publicar agora".
+4. **Comentários e directs:**
+   - a IA responde sozinha, sem falar de preço;
+   - quando a pessoa quer proposta, a IA pede nome e e-mail no direct, e isso vira lead no CRM com origem "Instagram";
+   - pedidos para falar com a equipe chegam no sino.
+5. **Configurações:**
+   - posts e stories por semana, dias, horário, idioma;
+   - lista de temas;
+   - tom da marca;
+   - respostas automáticas ligadas ou desligadas.
+
+**Temas iniciais:**
+- abertura de empresa e tipos de empresa;
+- filial e expansão;
+- dolarização;
+- proteção patrimonial;
+- impostos;
+- Brasil x EUA;
+- imóvel e empresa nos EUA;
+- diversificação;
+- estrutura pronta;
+- vistos de trabalho para empresários (sempre informativo, com advogado de imigração);
+- Registered Agent e compliance;
+- Programa de Parceiros.
+
+**Regras do agente:** nunca promete visto, resultado fiscal ou retorno, e nunca informa preços.
+
+**Para ligar a publicação (Meta):**
+- A conta do Instagram precisa ser profissional e estar ligada a uma página do Facebook.
+- É preciso um app na Meta, que pode ser o mesmo do WhatsApp, com as permissões de publicação, comentários e mensagens aprovadas.
+- Secrets no Supabase: `IG_ACCESS_TOKEN`, `IG_USER_ID`, `IG_VERIFY_TOKEN` e `IG_APP_SECRET`.
+- Webhook: `https://onaewjlozioderwlvgfm.supabase.co/functions/v1/ig-agent`, com os campos comments e messages.
+
+**Vídeos (fase 2), prontos para ligar:**
+- `CREATOMATE_API_KEY`: montagem dos vídeos;
+- `ELEVENLABS_API_KEY`: narração;
+- `HEYGEN_API_KEY`: vídeos com apresentador.

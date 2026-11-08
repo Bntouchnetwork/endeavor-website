@@ -181,6 +181,45 @@
     { id: 5, chat_id: 'sc000000-0000-4000-8000-000000000001', created_at: iso(0, 9, 6), role: 'system', content: 'Contato deixado: Rafael Nogueira <rafael.nogueira@example.com> · +5531988776655' },
     { id: 6, chat_id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16, 2), role: 'user', content: 'How does the commission work for realtors?' },
     { id: 7, chat_id: 'sc000000-0000-4000-8000-000000000002', created_at: iso(-1, 16, 2), role: 'assistant', content: 'You earn a commission on the invoices paid by the clients you refer (standard 10%, set in your partner agreement). No cost to join and no minimum. Want to sign up?' }];
+
+  // Instagram (Marketing agent): settings, AI-planned posts waiting for approval, inbox
+  DB.ig_settings = [{ id: 1, posts_per_week: 4, stories_per_week: 3, post_days: [1, 3, 5, 6], post_time: '12:30:00', timezone: 'America/New_York', languages: ['pt'], require_approval: true, auto_reply: true, handle: '@endeavorbiz', video_enabled: false,
+    topics: ['Abertura de empresa nos EUA (LLC x Corporation, tipos de empresa e diferenças)', 'Filial nos EUA e expansão de negócios brasileiros', 'Dolarização do patrimônio', 'Proteção patrimonial e estruturas (holding, LLC para imóveis)', 'Impostos nos EUA para estrangeiros (EIN, ITIN, declarações) em linguagem simples', 'Brasil x EUA: comparações (segurança jurídica, burocracia, custo, moeda)', 'Vantagens de ter imóvel e empresa nos EUA', 'Diversificação: patrimônio distribuído em países e moedas diferentes', 'A importância de ter uma estrutura pronta antes de precisar', 'Empresa nos EUA como possível caminho para vistos de trabalho para empresários (sempre informativo, com advogado de imigração)', 'Registered Agent, compliance e Annual Report', 'Programa de Parceiros: corretores, contadores e advogados que indicam clientes'],
+    brand_notes: 'Tom: confiável, claro e próximo; nada de promessas. Cores: azul-marinho #0b1f3a e dourado #c8a45d.' }];
+  var IGS = function (fmt, pal, topic, hook, slides, caption, tags, d, h, why, video) {
+    return { id: uuid(), created_at: iso(0, 8), updated_at: iso(0, 8), status: 'pending', format: fmt, language: 'pt', topic: topic, hook: hook, design: { palette: pal, slides: slides }, caption: caption, hashtags: tags, scheduled_at: iso(d, h, 30), image_urls: [], video: video || null, research: why, feedback: null, ig_media_id: null, ig_permalink: null, published_at: null, error: null, created_by: 'agente' };
+  };
+  var SL = function (t, o) { return Object.assign({ template: t, kicker: '', title: '', body: '', stat: '', bullets: [], left: '', right: '', rows: [] }, o); };
+  DB.ig_posts = [
+    IGS('carousel', 'navy', 'Brasil x EUA: abrir e manter uma empresa', 'Abrir empresa no Brasil x nos EUA: a diferença que quase ninguém conta',
+      [SL('statement', { kicker: 'Brasil x EUA', title: 'Abrir empresa: onde é mais simples?', body: 'Compare antes de decidir onde colocar o seu próximo negócio.' }),
+       SL('compare', { title: 'Na prática', left: 'Brasil', right: 'EUA (Flórida)', rows: [['Abertura em semanas', 'Abertura em poucos dias'], ['Muitos tributos e obrigações', 'Regras mais simples'], ['Receita em reais', 'Receita em dólar'], ['Sócio precisa morar aqui?', 'Pode ser 100% remoto']] }),
+       SL('list', { title: 'O que você precisa para começar', bullets: ['Escolher o tipo de empresa', 'Registered Agent na Flórida', 'EIN no IRS', 'Operating Agreement', 'Conta bancária americana'] }),
+       SL('cta', { title: 'Quer saber qual estrutura faz sentido para você?', body: 'Fale com a Endeavor e receba uma proposta personalizada.', bullets: ['Link na bio'] })],
+      'Abrir uma empresa nos EUA costuma ser mais rápido e simples do que muita gente imagina — e pode ser feito 100% à distância.\n\nNo carrossel, a comparação lado a lado e o que você precisa para começar.\n\nCada caso é único: tipo de empresa, sócios e impostos dependem do seu objetivo.\n\n👉 Comente QUERO ou fale com a gente pelo link na bio.',
+      ['#empresanoseua', '#llc', '#abrirempresanoseua', '#negociosnoseua', '#empreendedorismo', '#brasileirosnoseua', '#orlando', '#florida', '#internacionalizacao', '#endeavorbiz'], 1, 12,
+      'Buscas por "abrir empresa nos EUA" e "LLC na Flórida" seguem altas entre brasileiros; carrosséis comparativos geram muitos salvamentos.'),
+    IGS('post', 'cream', 'Dolarização do patrimônio', 'Seu patrimônio está 100% em reais?',
+      [SL('statement', { kicker: 'Dolarização', title: 'Seu patrimônio está 100% em reais?', body: 'Ter parte dos seus ativos em dólar é uma forma de diversificar moeda e país. Uma empresa nos EUA pode ser o primeiro passo.' })],
+      'Concentrar tudo em uma só moeda e um só país é um risco que muita gente nem percebe.\n\nDiversificar em dólar — com uma empresa, investimentos ou imóveis nos EUA — é uma estratégia usada por empresários do mundo inteiro.\n\nQuer entender como montar essa estrutura do jeito certo? Link na bio.\n\n*Conteúdo informativo. Fale com seu assessor de investimentos e contador.',
+      ['#dolarizacao', '#diversificacao', '#patrimonio', '#investirnoseua', '#protecaopatrimonial', '#planejamentofinanceiro', '#empresanoseua', '#endeavorbiz'], 3, 12,
+      'Alta procura por "dolarizar patrimônio" com a volatilidade do câmbio.'),
+    IGS('carousel', 'gold', 'Erros comuns ao abrir LLC', '5 erros de quem abre LLC nos EUA sozinho',
+      [SL('statement', { kicker: 'Antes de abrir', title: '5 erros de quem abre LLC nos EUA sozinho' }),
+       SL('list', { title: 'Evite estes erros', bullets: ['Escolher o estado errado', 'Ignorar o Annual Report', 'Não ter Operating Agreement', 'Misturar contas pessoais', 'Esquecer as obrigações no IRS'] }),
+       SL('cta', { title: 'Abra do jeito certo desde o primeiro dia', body: 'A Endeavor coordena tudo com profissionais licenciados.', bullets: ['Fale com a gente'] })],
+      'Abrir a LLC é só o começo. Os erros mais caros aparecem depois: multas, empresa inativa no estado e problemas com o IRS.\n\nSalve este post para consultar depois. 📌\n\nTem dúvida sobre a sua empresa? Manda um direct.',
+      ['#llc', '#llcnoseua', '#empresanoseua', '#irs', '#compliance', '#annualreport', '#florida', '#empreendedorbrasileiro', '#endeavorbiz'], 5, 12,
+      'Posts de "erros comuns" têm alto índice de salvamento.', { script: 'Cena 1: Você abriu sua LLC nos EUA... e agora? Cena 2: erro número 1, escolher o estado só pelo preço...', style: 'scenes', status: 'idea' }),
+    IGS('story', 'navy', 'Vistos de trabalho para empresários', 'Sabia que uma empresa nos EUA pode abrir caminhos?',
+      [SL('stat', { kicker: 'Você sabia?', stat: 'E-2 · L-1', title: 'Vistos de trabalho ligados a empresas', body: 'Cada caso depende de análise com um advogado de imigração. Quer entender o seu? Responda este story.' })],
+      '', [], 2, 18, 'Interesse crescente em "visto de investidor" entre empresários brasileiros; tratado de forma informativa.')
+  ];
+  DB.ig_inbox = [
+    { id: 1, created_at: iso(0, 9, 12), kind: 'comment', ig_id: 'c1', thread_id: 'u1', username: 'marcos.empreende', media_id: 'm1', text: 'Dá pra abrir morando no Brasil?', reply: 'Dá sim, Marcos! Todo o processo pode ser feito à distância. Manda um direct que a gente explica o passo a passo. 🙌', replied_at: iso(0, 9, 13), status: 'replied', lead_id: null, error: null },
+    { id: 2, created_at: iso(0, 10, 2), kind: 'dm', ig_id: 'd1', thread_id: 'u2', username: 'ana.investe', media_id: null, text: 'Oi! Quanto custa para abrir uma LLC?', reply: 'Oi, Ana! O valor depende do seu caso (estado, sócios e serviços). Se quiser, me passa seu nome completo e e-mail que a equipe envia uma proposta personalizada. 😊', replied_at: iso(0, 10, 3), status: 'replied', lead_id: null, error: null },
+    { id: 3, created_at: iso(-1, 16, 40), kind: 'dm', ig_id: 'd2', thread_id: 'u3', username: 'cliente.endeavor', media_id: null, text: 'Preciso falar com alguém sobre minha fatura', reply: 'Claro! A nossa equipe vai te responder por aqui em breve. 🙏', replied_at: iso(-1, 16, 41), status: 'handoff', lead_id: null, error: null }
+  ];
   DB.bookings.push({ id: uuid(), lead_id: 'b9000000-0000-4000-8000-000000000009', starts_at: iso(-1, 15), ends_at: iso(-1, 15, 30), name: 'Fernanda Albuquerque', email: 'fernanda.alb@example.com', phone: '+5511977774321', topic: 'Partner Program', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-3) });
   DB.crm_messages = [
     { id: 1, created_at: iso(-2, 11), kind: 'referral_contacted', channel: 'email', partner_id: DB.partners[0].id, to_addr: 'ana.cpa@example.com', subject: 'Pedro Alves: Em contato', status: 'sent', sent_at: iso(-2, 11) },
@@ -1043,6 +1082,19 @@
     if (/\/functions\/v1\/(oa|esign)$/.test(u)) {
       var ob = {}; try { ob = JSON.parse(opts.body); } catch (e) { /* ignore */ }
       return (/\/oa$/.test(u) ? oaFn : esignFn)(ob).then(function (r) { return json(r); }, function (e) { if (!e.status) console.error(e); return json({ error: e.message, detail: e.detail }, e.status || 500); });
+    }
+    if (/\/functions\/v1\/ig-agent/.test(u)) {
+      var ib = {}; try { ib = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      var slow = function (b, ms, st) { return new Promise(function (res) { setTimeout(function () { res(json(b, st)); }, ms || 700); }); };
+      if (ib.action === 'status') return json({ ai: true, instagram: false, webhook: false, video: { creatomate: false, elevenlabs: false, heygen: false } });
+      if (ib.action === 'plan') {
+        var base = DB.ig_posts.slice(0, Math.min(2, +ib.posts || 2)).map(function (x) { return Object.assign(JSON.parse(JSON.stringify(x)), { id: uuid(), status: 'pending', created_at: new Date().toISOString(), scheduled_at: iso(7 + DB.ig_posts.length % 5, 12, 30), image_urls: [], hook: x.hook + ' (nova versão)' }); });
+        base.forEach(function (x) { DB.ig_posts.push(x); });
+        return slow({ ok: true, created: base.length, research: 'Demo: o agente pesquisou tendências e hashtags do nicho.' }, 1500);
+      }
+      if (ib.action === 'redo') { var rp = DB.ig_posts.find(function (x) { return x.id === ib.id; }); if (rp) { rp.hook = rp.hook.replace(/^(✨ )?/, '✨ '); rp.design.slides[0].title = rp.hook; rp.feedback = (rp.feedback ? rp.feedback + '\n' : '') + '• ' + ib.feedback; rp.status = 'pending'; rp.image_urls = []; } return slow({ ok: true, post: rp }, 1200); }
+      if (ib.action === 'publish_now') return slow({ error: 'instagram_not_connected' }, 600, 400);
+      return json({ error: 'action' }, 400);
     }
     if (/\/functions\/v1\/payments/.test(u)) {
       var pb = {}; try { pb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
