@@ -1051,6 +1051,8 @@ html.fab-raise .sc { --sc-bottom: calc(var(--fab-raise, 5rem) + 1.25rem); }
 .sc-teaser, .sc-panel { right: var(--sc-right); bottom: calc(var(--sc-bottom) + 4.6rem); transition: bottom .3s var(--ease, ease); }
 .sc-panel { height: min(38rem, calc(100vh - var(--sc-bottom) - 6.5rem)); height: min(38rem, calc(100dvh - var(--sc-bottom) - 6.5rem)); }
 @media (max-width: 600px) { .sc { --sc-right: max(1rem, env(safe-area-inset-right)); --sc-bottom: max(1rem, env(safe-area-inset-bottom)); } .sc-panel { right: 0; bottom: 0; height: 100%; height: 100dvh; } }
+.sc-teaser__opts { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; margin-top: .5rem; }
+.sc-teaser__opts .sc-chip { box-shadow: 0 6px 16px rgb(7 22 43 / .14); text-align: right; }
 
 /* Endeavor portal (admin console, scheduling, e-signature). Builds on the tokens in styles.css. */
 body.portal { background: var(--gray-50); min-height: 100vh; }

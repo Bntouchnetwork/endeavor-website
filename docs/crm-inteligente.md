@@ -97,7 +97,11 @@ Página única, sem rolagem no computador (no celular as caixas ficam uma embaix
 
 # Atualização: Agente de Vendas (chat com IA no site)
 
-- **Onde aparece:** balão no canto inferior direito da home e da página de parceiros. Abre sozinho depois de 8 segundos com "Tem alguma dúvida?". O tempo é ajustável, e 0 desliga a abertura automática. Quem fechar o convite não vê de novo por 3 dias. No celular, o chat abre em tela cheia.
+- **Onde aparece:** balão no canto inferior direito da home e da página de parceiros.
+  - Abre sozinho **6 segundos depois que o visitante rola a página**. O tempo é ajustável, e 0 desliga a abertura automática.
+  - No computador, abre a janela do chat. No celular, mostra o balão com as opções.
+  - A primeira mensagem pergunta se a pessoa precisa de ajuda com a empresa nos EUA ou quer ser parceira, com três botões: "Quero abrir ou cuidar da minha empresa nos EUA", "Quero ser parceiro" e "Tenho outra dúvida".
+  - Abre uma vez por visita. Quem fecha o convite não vê de novo por 1 dia.
 - **O que faz:** responde sobre os serviços e o Programa de Parceiros em português, inglês e espanhol, com o conteúdo do site.
   - **Nunca informa preços.** Quando a pessoa mostra interesse ou pergunta o valor, oferece enviar a proposta por e-mail e mostra um formulário curto: nome, e-mail, WhatsApp (opcional) e interesse.
   - Também mostra botões para agendar uma conversa, para o cadastro de parceiro e para o WhatsApp.

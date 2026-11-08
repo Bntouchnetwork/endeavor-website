@@ -5,23 +5,23 @@
   if (!CFG.functionsUrl || document.getElementById('sc-root')) return;
   var doc = document.documentElement;
   var T = {
-    pt: { title: 'Assistente Endeavor', sub: 'Online · responde na hora', open: 'Abrir o chat', close: 'Fechar o chat', min: 'Minimizar', teaser: 'Olá! 👋 Tem alguma dúvida sobre abrir ou manter sua empresa nos EUA, ou sobre o Programa de Parceiros?', teaserX: 'Dispensar',
-      hi: 'Olá! Sou o assistente da Endeavor. Posso explicar nossos serviços, como funciona a abertura de empresa nos EUA e o Programa de Parceiros. Como posso ajudar?',
-      chips: ['Abrir empresa nos EUA', 'Registered Agent', 'Impostos, EIN e ITIN', 'Programa de Parceiros'], ph: 'Escreva a sua mensagem…', send: 'Enviar', typing: 'Digitando…',
+    pt: { title: 'Assistente Endeavor', sub: 'Online · responde na hora', open: 'Abrir o chat', close: 'Fechar o chat', min: 'Minimizar', teaser: 'Olá! 👋 Posso ajudar? Você procura ajuda com a sua empresa nos EUA ou quer ser nosso parceiro?', teaserX: 'Dispensar',
+      hi: 'Olá! 👋 Sou o assistente da Endeavor. Você está procurando ajuda com a sua empresa nos EUA ou quer ser nosso parceiro?',
+      chips: ['Quero abrir ou cuidar da minha empresa nos EUA', 'Quero ser parceiro', 'Tenho outra dúvida'], other: 'Tenho outra dúvida', otherReply: 'Claro! Escreva a sua dúvida abaixo. 😊', ph: 'Escreva a sua mensagem…', send: 'Enviar', typing: 'Digitando…',
       leadT: 'Receba a sua proposta por e-mail', leadD: 'Nossa equipe prepara uma proposta personalizada e envia no seu e-mail.', name: 'Nome', email: 'E-mail', phone: 'WhatsApp (opcional)', interest: 'Interesse',
       leadBtn: 'Quero receber a proposta', leadNo: 'Agora não', leadOk: 'Pronto, {n}! Recebemos o seu pedido. A nossa equipe vai enviar a proposta para {e} em breve.', priv: 'Não envie SSN, ITIN, passaporte ou dados bancários pelo chat.',
       book: 'Agendar uma conversa', partner: 'Quero ser parceiro', human: 'Falar no WhatsApp', err: 'Não consegui responder agora. Tente de novo ou fale pelo WhatsApp +1 (630) 689-8702.',
       eName: 'Informe o seu nome.', eEmail: 'Confira o e-mail.', ePhone: 'Confira o WhatsApp, com o código do país (ex.: +55 11 99999-9999).', eRate: 'Muitos pedidos agora. Tente mais tarde.', foot: 'Assistente com IA. Pode cometer erros.', restart: 'Nova conversa' },
-    en: { title: 'Endeavor Assistant', sub: 'Online · replies instantly', open: 'Open chat', close: 'Close chat', min: 'Minimize', teaser: 'Hi! 👋 Any questions about opening or running your company in the U.S., or about our Partner Program?', teaserX: 'Dismiss',
-      hi: 'Hi! I am the Endeavor assistant. I can explain our services, how forming a U.S. company works and our Partner Program. How can I help?',
-      chips: ['Form a U.S. company', 'Registered Agent', 'Taxes, EIN and ITIN', 'Partner Program'], ph: 'Type your message…', send: 'Send', typing: 'Typing…',
+    en: { title: 'Endeavor Assistant', sub: 'Online · replies instantly', open: 'Open chat', close: 'Close chat', min: 'Minimize', teaser: 'Hi! 👋 Can I help? Are you looking for help with your U.S. company, or do you want to become a partner?', teaserX: 'Dismiss',
+      hi: 'Hi! 👋 I am the Endeavor assistant. Are you looking for help with your company in the U.S., or do you want to become our partner?',
+      chips: ['I want to open or manage my U.S. company', 'I want to become a partner', 'I have another question'], other: 'I have another question', otherReply: 'Sure! Type your question below. 😊', ph: 'Type your message…', send: 'Send', typing: 'Typing…',
       leadT: 'Get your proposal by email', leadD: 'Our team prepares a personalized proposal and sends it to your email.', name: 'Name', email: 'Email', phone: 'WhatsApp (optional)', interest: 'Interest',
       leadBtn: 'Send me the proposal', leadNo: 'Not now', leadOk: 'All set, {n}! We received your request. Our team will email the proposal to {e} soon.', priv: 'Do not send SSN, ITIN, passport or bank details in the chat.',
       book: 'Book a call', partner: 'Become a partner', human: 'Chat on WhatsApp', err: 'I could not reply right now. Try again or message us on WhatsApp +1 (630) 689-8702.',
       eName: 'Enter your name.', eEmail: 'Check the email.', ePhone: 'Check the WhatsApp number, with the country code (e.g. +1 407 555 0100).', eRate: 'Too many requests right now. Please try later.', foot: 'AI assistant. It can make mistakes.', restart: 'New chat' },
-    es: { title: 'Asistente Endeavor', sub: 'En línea · responde al instante', open: 'Abrir el chat', close: 'Cerrar el chat', min: 'Minimizar', teaser: '¡Hola! 👋 ¿Tiene dudas sobre abrir o mantener su empresa en EE. UU., o sobre el Programa de Socios?', teaserX: 'Descartar',
-      hi: '¡Hola! Soy el asistente de Endeavor. Puedo explicarle nuestros servicios, cómo se abre una empresa en EE. UU. y el Programa de Socios. ¿En qué le ayudo?',
-      chips: ['Abrir empresa en EE. UU.', 'Registered Agent', 'Impuestos, EIN e ITIN', 'Programa de Socios'], ph: 'Escriba su mensaje…', send: 'Enviar', typing: 'Escribiendo…',
+    es: { title: 'Asistente Endeavor', sub: 'En línea · responde al instante', open: 'Abrir el chat', close: 'Cerrar el chat', min: 'Minimizar', teaser: '¡Hola! 👋 ¿Le ayudo? ¿Busca ayuda con su empresa en EE. UU. o quiere ser nuestro socio?', teaserX: 'Descartar',
+      hi: '¡Hola! 👋 Soy el asistente de Endeavor. ¿Busca ayuda con su empresa en EE. UU. o quiere ser nuestro socio?',
+      chips: ['Quiero abrir o cuidar mi empresa en EE. UU.', 'Quiero ser socio', 'Tengo otra pregunta'], other: 'Tengo otra pregunta', otherReply: '¡Claro! Escriba su pregunta abajo. 😊', ph: 'Escriba su mensaje…', send: 'Enviar', typing: 'Escribiendo…',
       leadT: 'Reciba su propuesta por correo', leadD: 'Nuestro equipo prepara una propuesta personalizada y la envía a su correo.', name: 'Nombre', email: 'Correo', phone: 'WhatsApp (opcional)', interest: 'Interés',
       leadBtn: 'Quiero recibir la propuesta', leadNo: 'Ahora no', leadOk: '¡Listo, {n}! Recibimos su pedido. Nuestro equipo enviará la propuesta a {e} pronto.', priv: 'No envíe SSN, ITIN, pasaporte ni datos bancarios por el chat.',
       book: 'Agendar una conversación', partner: 'Quiero ser socio', human: 'Hablar por WhatsApp', err: 'No pude responder ahora. Intente de nuevo o escríbanos por WhatsApp +1 (630) 689-8702.',
@@ -55,7 +55,7 @@
 
   var root = document.createElement('div'); root.id = 'sc-root'; root.className = 'sc';
   root.innerHTML =
-    '<div class="sc-teaser" id="sc-teaser" hidden><button type="button" class="sc-teaser__x" id="sc-teaser-x"></button><button type="button" class="sc-teaser__body" id="sc-teaser-b"><span class="sc-av sc-av--sm" aria-hidden="true">E</span><span id="sc-teaser-t"></span></button></div>' +
+    '<div class="sc-teaser" id="sc-teaser" role="dialog" aria-labelledby="sc-teaser-t" hidden><button type="button" class="sc-teaser__x" id="sc-teaser-x"></button><button type="button" class="sc-teaser__body" id="sc-teaser-b"><span class="sc-av sc-av--sm" aria-hidden="true">E</span><span id="sc-teaser-t"></span></button><div class="sc-teaser__opts" id="sc-teaser-o"></div></div>' +
     '<section class="sc-panel" id="sc-panel" role="dialog" aria-modal="false" aria-labelledby="sc-title" hidden>' +
       '<header class="sc-head"><span class="sc-av" aria-hidden="true">E<i class="sc-dot"></i></span><div class="sc-head__t"><h2 id="sc-title"></h2><p id="sc-sub"></p></div>' +
         '<button type="button" class="sc-icon-btn sc-restart" id="sc-restart"></button><button type="button" class="sc-icon-btn" id="sc-x">' + ICON_X + '</button></header>' +
@@ -73,7 +73,7 @@
   function texts() {
     $('sc-title').textContent = t('title'); $('sc-sub').textContent = t('sub'); $('sc-in').placeholder = t('ph'); $('sc-in-l').textContent = t('ph');
     $('sc-send-l').textContent = t('send'); $('sc-foot').textContent = t('priv'); $('sc-x').setAttribute('aria-label', t('min'));
-    $('sc-restart').textContent = t('restart'); $('sc-teaser-t').textContent = t('teaser'); $('sc-teaser-x').setAttribute('aria-label', t('teaserX')); $('sc-teaser-x').innerHTML = ICON_X;
+    $('sc-restart').textContent = t('restart'); $('sc-teaser-t').textContent = t('teaser'); $('sc-teaser-o').innerHTML = T[L()].chips.map(function (c) { return '<button type="button" class="sc-chip">' + esc(c) + '</button>'; }).join(''); Array.prototype.forEach.call($('sc-teaser-o').querySelectorAll('button'), function (b) { b.onclick = function () { setOpen(true); pick(b.textContent); }; }); $('sc-teaser-x').setAttribute('aria-label', t('teaserX')); $('sc-teaser-x').innerHTML = ICON_X;
     launch.setAttribute('aria-label', state.open ? t('close') : t('open'));
   }
   function bubble(role, html, cls) {
@@ -90,7 +90,12 @@
   function chips() {
     var box = $('sc-chips'); var show = !state.log.some(function (m) { return m.r === 'u'; });
     box.hidden = !show; box.innerHTML = show ? T[L()].chips.map(function (c) { return '<button type="button" class="sc-chip">' + esc(c) + '</button>'; }).join('') : '';
-    Array.prototype.forEach.call(box.querySelectorAll('button'), function (b) { b.onclick = function () { send(b.textContent); }; });
+    Array.prototype.forEach.call(box.querySelectorAll('button'), function (b) { b.onclick = function () { pick(b.textContent); }; });
+  }
+  // a first-message option: "other question" only opens the field to type; the others start the conversation
+  function pick(text) {
+    if (text === t('other')) { $('sc-chips').hidden = true; bubble('bot', esc(t('otherReply'))); inp.focus(); return; }
+    send(text);
   }
   function actionCard(a, restoring) {
     var l = L();
@@ -145,11 +150,11 @@
       .then(function () { state.busy = false; $('sc-send').disabled = false; if (state.open && !matchMedia('(max-width: 600px)').matches) inp.focus(); });
   }
   function grow() { inp.style.height = 'auto'; inp.style.height = Math.min(inp.scrollHeight, 120) + 'px'; }
-  function setOpen(o) {
+  function setOpen(o, auto) {
     state.open = o; panel.hidden = !o; root.classList.toggle('is-open', o); launch.setAttribute('aria-expanded', String(o)); texts();
     document.body.classList.toggle('sc-lock', o && matchMedia('(max-width: 600px)').matches); document.body.classList.toggle('sc-open', o);
-    if (o) { hideTeaser(true); $('sc-badge').hidden = true; if (!log.childElementCount) render(); log.scrollTop = log.scrollHeight; setTimeout(function () { inp.focus(); }, 60); }
-    else launch.focus();
+    if (o) { hideTeaser(true); $('sc-badge').hidden = true; if (!log.childElementCount) render(); log.scrollTop = log.scrollHeight; if (!auto) setTimeout(function () { inp.focus(); }, 60); }
+    else if (!auto) launch.focus();
   }
   function hideTeaser(seen) { teaser.hidden = true; if (seen) ss.set(KEY + '-teased', '1'); }
   launch.onclick = function () { setOpen(!state.open); };
@@ -168,11 +173,17 @@
   // chat on/off and the popup delay come from the admin (Agentes IA)
   fetch(CFG.supabaseUrl + '/rest/v1/rpc/site_chat_config', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey }, body: '{}' })
     .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }).then(function (rows) {
-      var c = (rows && rows[0]) || { enabled: true, popup_seconds: 8 };
+      var c = (rows && rows[0]) || { enabled: true, popup_seconds: 6 };
       if (c.enabled === false) { root.remove(); document.body.classList.remove('has-sc'); return; }
       root.classList.add('is-ready');
-      var dismissed = +(ls.get(KEY + '-dismissed') || 0), recently = Date.now() - dismissed < 3 * 864e5;
+      var dismissed = +(ls.get(KEY + '-dismissed') || 0), recently = Date.now() - dismissed < 864e5;
       if (state.log.length || ss.get(KEY + '-teased') || recently || c.popup_seconds === 0) return;
-      setTimeout(function () { if (state.open) return; teaser.hidden = false; $('sc-badge').hidden = false; ss.set(KEY + '-teased', '1'); }, Math.max(2, c.popup_seconds || 8) * 1000);
+      var armed = false, wait = Math.max(2, c.popup_seconds || 6) * 1000;
+      var pop = function () {
+        if (state.open || ss.get(KEY + '-teased')) return; ss.set(KEY + '-teased', '1');
+        if (matchMedia('(min-width: 601px)').matches) setOpen(true, true); else { teaser.hidden = false; $('sc-badge').hidden = false; }
+      };
+      var onScroll = function () { if (armed || window.scrollY < 40) return; armed = true; removeEventListener('scroll', onScroll); setTimeout(pop, wait); };
+      addEventListener('scroll', onScroll, { passive: true }); onScroll();
     });
 })();
