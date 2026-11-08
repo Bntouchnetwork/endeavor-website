@@ -72,7 +72,7 @@
 
   function texts() {
     $('sc-title').textContent = t('title'); $('sc-sub').textContent = t('sub'); $('sc-in').placeholder = t('ph'); $('sc-in-l').textContent = t('ph');
-    $('sc-send-l').textContent = t('send'); $('sc-foot').textContent = t('foot') + ' ' + t('priv'); $('sc-x').setAttribute('aria-label', t('min'));
+    $('sc-send-l').textContent = t('send'); $('sc-foot').textContent = t('priv'); $('sc-x').setAttribute('aria-label', t('min'));
     $('sc-restart').textContent = t('restart'); $('sc-teaser-t').textContent = t('teaser'); $('sc-teaser-x').setAttribute('aria-label', t('teaserX')); $('sc-teaser-x').innerHTML = ICON_X;
     launch.setAttribute('aria-label', state.open ? t('close') : t('open'));
   }
@@ -134,7 +134,12 @@
     state.busy = true; $('sc-send').disabled = true; $('sc-chips').hidden = true;
     state.log.push({ r: 'u', c: text }); save(); bubble('me', esc(text)); inp.value = ''; grow();
     var ty = bubble('bot', '<span class="sc-typing" aria-label="' + esc(t('typing')) + '"><i></i><i></i><i></i></span>', 'sc-msg--typing');
+    var t0 = Date.now();
     api({ action: 'msg', chat_id: state.id, lang: L(), message: text, page: location.pathname }).then(function (j) {
+      // a short "typing" pause, longer for longer answers, so it does not feel instant
+      var want = Math.min(4200, 1400 + String(j.reply || '').length * 9), wait = Math.max(0, want - (Date.now() - t0));
+      return new Promise(function (res) { setTimeout(function () { res(j); }, wait); });
+    }).then(function (j) {
       ty.remove(); var m = { r: 'b', c: j.reply || t('err'), a: j.action || null }; state.log.push(m); save(); bubble('bot', fmt(m.c)); if (m.a) actionCard(m.a);
     }).catch(function () { ty.remove(); bubble('bot', esc(t('err')), 'sc-msg--err'); })
       .then(function () { state.busy = false; $('sc-send').disabled = false; if (state.open && !matchMedia('(max-width: 600px)').matches) inp.focus(); });
