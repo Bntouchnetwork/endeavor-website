@@ -78,6 +78,21 @@ const ADM: Record<Lang, Record<string, string>> = {
   en: { confirmation: "New booking", reminder: "Reminder", cancelled: "Booking cancelled", rescheduled: "Booking rescheduled", clientTime: "Client's time", notes: "Notes", reason: "Reason", open: "Open the Calendar" },
   es: { confirmation: "Nueva cita", reminder: "Recordatorio", cancelled: "Cita cancelada", rescheduled: "Cita reprogramada", clientTime: "Hora del cliente", notes: "Notas", reason: "Motivo", open: "Abrir la Agenda" },
 };
+// consultations with an attorney partner (booked in the Client Portal)
+const AT: Record<Lang, Record<string, string>> = {
+  pt: { title: "Consulta com {a}", s_confirmation: "Confirmado: consulta com {a} em {w}", s_reminder: "Lembrete: sua consulta com {a} é {r}", s_cancelled: "Cancelado: consulta com {a} em {w}", s_rescheduled: "Remarcado: consulta com {a} agora em {w}",
+    h_confirmation: "Sua consulta com {a} está confirmada.", h_reminder: "Sua consulta com {a} é {r}.", h_cancelled: "Sua consulta com {a} foi cancelada.", h_rescheduled: "Sua consulta com {a} foi remarcada.",
+    fee: "O agendamento pela plataforma Endeavor não tem custo. Os honorários, se houver, são combinados diretamente com o advogado.", how: "Como vai ser", manage: "Gerenciar no portal", by: "Cancelado por",
+    att_new: "Nova consulta agendada", att_rem: "Lembrete de consulta", att_can: "Consulta cancelada", att_res: "Consulta remarcada", att_open: "Abrir minha agenda", client: "Cliente", att_note: "O cliente agendou pela plataforma Endeavor. Os honorários, se houver, são combinados diretamente com ele." },
+  en: { title: "Consultation with {a}", s_confirmation: "Confirmed: consultation with {a} on {w}", s_reminder: "Reminder: your consultation with {a} is {r}", s_cancelled: "Cancelled: consultation with {a} on {w}", s_rescheduled: "Rescheduled: consultation with {a} now on {w}",
+    h_confirmation: "Your consultation with {a} is confirmed.", h_reminder: "Your consultation with {a} is {r}.", h_cancelled: "Your consultation with {a} was cancelled.", h_rescheduled: "Your consultation with {a} was rescheduled.",
+    fee: "Booking through the Endeavor platform is free. Any fees are agreed directly with the attorney.", how: "How it works", manage: "Manage in the portal", by: "Cancelled by",
+    att_new: "New consultation booked", att_rem: "Consultation reminder", att_can: "Consultation cancelled", att_res: "Consultation rescheduled", att_open: "Open my calendar", client: "Client", att_note: "The client booked through the Endeavor platform. Any fees are agreed directly with the client." },
+  es: { title: "Consulta con {a}", s_confirmation: "Confirmado: consulta con {a} el {w}", s_reminder: "Recordatorio: su consulta con {a} es {r}", s_cancelled: "Cancelado: consulta con {a} el {w}", s_rescheduled: "Reprogramado: consulta con {a} ahora el {w}",
+    h_confirmation: "Su consulta con {a} está confirmada.", h_reminder: "Su consulta con {a} es {r}.", h_cancelled: "Su consulta con {a} fue cancelada.", h_rescheduled: "Su consulta con {a} fue reprogramada.",
+    fee: "Agendar por la plataforma Endeavor no tiene costo. Los honorarios, si los hay, se acuerdan directamente con el abogado.", how: "Cómo será", manage: "Gestionar en el portal", by: "Cancelado por",
+    att_new: "Nueva consulta agendada", att_rem: "Recordatorio de consulta", att_can: "Consulta cancelada", att_res: "Consulta reprogramada", att_open: "Abrir mi agenda", client: "Cliente", att_note: "El cliente agendó por la plataforma Endeavor. Los honorarios, si los hay, se acuerdan directamente con él." },
+};
 const L = (l: string | null): Lang => (l === "pt" || l === "es" ? l : "en");
 const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -148,7 +163,7 @@ async function sendWhatsApp(to: string, template: string, lang: Lang, params: st
 }
 
 /* ---------------- one message ---------------- */
-async function claim(b: Row, kind: Kind, off: number, channel: "email" | "whatsapp", audience: "client" | "admin") {
+async function claim(b: Row, kind: Kind, off: number, channel: "email" | "whatsapp", audience: "client" | "admin" | "attorney") {
   const { error } = await db.from("booking_messages").insert({ booking_id: b.id, version: b.schedule_version ?? 1, kind, offset_min: off, channel, audience, status: "sending" });
   if (error) { if (error.code === "23505") return false; throw error; }
   return true;
@@ -159,6 +174,7 @@ async function mark(b: Row, kind: Kind, off: number, channel: string, audience: 
 }
 
 async function deliver(b: Row, s: Row, kind: Kind, off = 0) {
+  if (b.attorney_id) return deliverAttorney(b, s, kind, off);
   const lang = L(b.language), t = T[lang], org = s.timezone || "America/New_York";
   const first = String(b.name || "").split(" ")[0] || b.name;
   const w = when(b, lang, org), r = kind === "reminder" ? rel(lang, off) : "";
@@ -222,6 +238,65 @@ ${kind !== "cancelled" ? btn(gcalUrl(b, "Endeavor · " + b.name, details), t.gca
       await sendWhatsApp(s.notify_whatsapp, WA_TPL.admin, lang, [lbl, b.name, whenOrg(b, org, lang), [b.phone, b.email].filter(Boolean).join(" · ")]);
       await mark(b, kind, off, "whatsapp", "admin", "sent"); out.admin_whatsapp = "sent";
     } catch (e) { await mark(b, kind, off, "whatsapp", "admin", "failed", String((e as Error).message)); out.admin_whatsapp = "failed"; }
+  }
+  return out;
+}
+
+/* ---------------- consultation with an attorney partner ---------------- */
+async function deliverAttorney(b: Row, s: Row, kind: Kind, off: number) {
+  const { data: a } = await db.from("partners").select("id, name, email, email2, language, company, attorney_meeting_info, attorney_timezone").eq("id", b.attorney_id).single();
+  if (!a) return { error: "attorney_not_found" };
+  const out: Row = {}, org = s.timezone || "America/New_York";
+  const lang = L(b.language), t = T[lang], A = AT[lang], first = String(b.name || "").split(" ")[0] || b.name;
+  const w = when(b, lang, org), r = kind === "reminder" ? rel(lang, off) : "";
+  const portal = `${SITE}/client.html?lang=${lang}#/advogados`;
+  const title = fill(A.title, { a: a.name });
+  const typ = t[b.meeting_type] || b.meeting_type;
+  const details = `${typ}${b.topic ? " · " + b.topic : ""}\n${a.attorney_meeting_info || ""}\n${A.fee}\n${portal}`;
+  const live = kind !== "cancelled";
+  // client
+  if (emailOn() && b.email && await claim(b, kind, off, "email", "client")) {
+    try {
+      const html = layout(`<p style="margin:0 0 6px">${esc(fill(t.hi, { n: first }))}</p><h1 style="font:700 21px/1.35 Georgia,serif;color:#0b1f3a;margin:0 0 16px">${esc(fill(A["h_" + kind], { a: a.name, r }))}</h1>
+<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:0 0 16px;background:#f7f8fb;border-radius:10px"><tr><td style="padding:14px 16px;font:14px/1.6 Arial,sans-serif">
+<strong>${esc(t.when)}:</strong> ${esc(w)}<br><strong>${esc(t.type)}:</strong> ${esc(typ)}${b.topic ? `<br><strong>${esc(t.topic)}:</strong> ${esc(b.topic)}` : ""}${a.company ? `<br>${esc(a.company)}` : ""}</td></tr></table>
+${live && a.attorney_meeting_info ? `<p style="margin:0 0 14px"><strong>${esc(A.how)}:</strong> ${esc(a.attorney_meeting_info)}</p>` : ""}
+<p style="margin:0 0 16px;font-size:13px;color:#6b7280">${esc(A.fee)}</p>
+${live ? btn(gcalUrl(b, title, details), t.gcal, true) : ""}${btn(portal, live ? A.manage : t.book, !live)}
+<p style="margin:22px 0 0">${esc(t.sign)}</p>`);
+      await sendEmail(b.email, fill(A["s_" + kind], { a: a.name, w, r }), html, `${fill(A["h_" + kind], { a: a.name, r })}\n${t.when}: ${w}\n${t.type}: ${typ}\n${a.attorney_meeting_info || ""}\n${A.fee}\n${portal}`,
+        kind === "reminder" ? undefined : { name: "consulta.ics", content: ics(b, title, details, !live), cancel: !live });
+      await mark(b, kind, off, "email", "client", "sent"); out.client_email = "sent";
+    } catch (e) { await mark(b, kind, off, "email", "client", "failed", String((e as Error).message)); out.client_email = "failed"; }
+  }
+  // attorney (in the attorney's language and time zone)
+  const to = [a.email, a.email2].filter(Boolean).join(", ");
+  if (emailOn() && to && await claim(b, kind, off, "email", "attorney")) {
+    try {
+      const la = L(a.language), ta = T[la], Aa = AT[la], tz = a.attorney_timezone || org;
+      const lbl = kind === "confirmation" ? Aa.att_new : kind === "reminder" ? Aa.att_rem + " (" + rel(la, off) + ")" : kind === "cancelled" ? Aa.att_can : Aa.att_res;
+      const wa = when({ ...b, timezone: tz }, la, tz);
+      const html = layout(`<h1 style="font:700 20px/1.35 Georgia,serif;color:#0b1f3a;margin:0 0 14px">${esc(lbl)}</h1>
+<p style="margin:0 0 14px"><strong>${esc(Aa.client)}:</strong> ${esc(b.name)}<br>${esc(b.email)}${b.phone ? " · " + esc(b.phone) : ""}</p>
+<p style="margin:0 0 14px"><strong>${esc(ta.when)}:</strong> ${esc(wa)}<br><strong>${esc(ta.type)}:</strong> ${esc(ta[b.meeting_type] || b.meeting_type)}${b.topic ? `<br><strong>${esc(ta.topic)}:</strong> ${esc(b.topic)}` : ""}${b.notes ? `<br><strong>${esc(ADM[la].notes)}:</strong> ${esc(b.notes)}` : ""}${b.cancel_reason ? `<br><strong>${esc(ADM[la].reason)}:</strong> ${esc(b.cancel_reason)}` : ""}</p>
+<p style="margin:0 0 16px;font-size:13px;color:#6b7280">${esc(Aa.att_note)}</p>
+${live ? btn(gcalUrl(b, "Endeavor · " + b.name, details), ta.gcal, true) : ""}${btn(`${SITE}/partner.html?lang=${la}#/ref-agenda`, Aa.att_open)}`);
+      await sendEmail(to, `${lbl}: ${b.name} – ${wa}`, html, `${lbl}\n${b.name} · ${b.email} · ${b.phone ?? ""}\n${wa}\n${b.topic ?? ""}`,
+        kind === "reminder" ? undefined : { name: "consulta.ics", content: ics(b, "Endeavor · " + b.name, details, !live), cancel: !live });
+      await mark(b, kind, off, "email", "attorney", "sent"); out.attorney_email = "sent";
+    } catch (e) { await mark(b, kind, off, "email", "attorney", "failed", String((e as Error).message)); out.attorney_email = "failed"; }
+  }
+  // Endeavor (no reminders for the team)
+  if (kind !== "reminder" && emailOn() && s.notify_email && await claim(b, kind, off, "email", "admin")) {
+    try {
+      const Ad = ADM.pt, wEt = whenOrg(b, org, "pt"), lbl = Ad[kind] + " com o advogado " + a.name;
+      const html = layout(`<h1 style="font:700 20px/1.35 Georgia,serif;color:#0b1f3a;margin:0 0 14px">${esc(lbl)}</h1>
+<p style="margin:0 0 14px"><strong>${esc(b.name)}</strong><br>${esc(b.email)}${b.phone ? " · " + esc(b.phone) : ""}</p>
+<p style="margin:0 0 14px"><strong>Quando:</strong> ${esc(wEt)}<br><strong>Formato:</strong> ${esc(T.pt[b.meeting_type] || b.meeting_type)}${b.topic ? `<br><strong>Assunto:</strong> ${esc(b.topic)}` : ""}${b.cancel_reason ? `<br><strong>Motivo:</strong> ${esc(b.cancel_reason)}` : ""}${b.cancelled_by ? `<br><strong>${esc(AT.pt.by)}:</strong> ${esc(b.cancelled_by === "attorney" ? "advogado" : b.cancelled_by === "client" ? "cliente" : "admin")}` : ""}</p>
+${btn(SITE + "/admin.html?lang=pt#/agenda", Ad.open)}`);
+      await sendEmail(s.notify_email, `${lbl}: ${b.name} – ${wEt}`, html, `${lbl}\n${b.name} · ${b.email}\n${wEt}`);
+      await mark(b, kind, off, "email", "admin", "sent"); out.admin_email = "sent";
+    } catch (e) { await mark(b, kind, off, "email", "admin", "failed", String((e as Error).message)); out.admin_email = "failed"; }
   }
   return out;
 }

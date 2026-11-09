@@ -1053,6 +1053,54 @@ html.fab-raise .sc { --sc-bottom: calc(var(--fab-raise, 5rem) + 1.25rem); }
 .sc-teaser__opts { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; margin-top: .5rem; }
 .sc-teaser__opts .sc-chip { box-shadow: 0 6px 16px rgb(7 22 43 / .14); text-align: right; }
 
+/* ---- Attorney consultations (client "Advogados" + attorney "Minha agenda") ---- */
+.att-fee{margin:.2rem 0 1rem;padding:.6rem .85rem;border-radius:8px;background:#f6f1e4;border-left:3px solid #b8913a;color:#3a3326;font-size:.88rem;line-height:1.45}
+.att-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem}
+.att-card{display:flex;flex-direction:column;gap:.5rem}
+.att-card .btn{margin-top:auto;align-self:flex-start}
+.att-card__top{display:flex;gap:.75rem;align-items:center}
+.att-card__top .portal-h2{margin:0}
+.att-card__top .portal-muted{margin:.1rem 0 0;font-size:.86rem}
+.att-av{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#0f2340;color:#e9d7a6;font-weight:700;letter-spacing:.02em}
+.att-practice{margin:0;font-size:.85rem;font-weight:600;color:#7a5d1f}
+.att-bio{margin:0;font-size:.9rem;line-height:1.5;color:#3d4757}
+.att-tz{margin:0 0 .4rem;font-size:.8rem;color:#5b6573}
+.att-step{margin:.6rem 0 .35rem;font-weight:600;font-size:.9rem}
+.att-days{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.35rem;scrollbar-width:thin}
+.att-day,.att-time{border:1px solid #cfd6e0;background:#fff;border-radius:8px;cursor:pointer;font:inherit;color:#1c2633}
+.att-day{flex:none;min-width:88px;padding:.45rem .55rem;font-size:.84rem;display:flex;flex-direction:column;align-items:center;gap:.1rem}
+.att-day small{font-size:.72rem;color:#5b6573}
+.att-times{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:.4rem;max-height:180px;overflow-y:auto}
+.att-time{padding:.5rem .3rem;font-size:.88rem}
+.att-day:hover,.att-time:hover{border-color:#0f2340}
+.att-day.is-on,.att-time.is-on{background:#0f2340;border-color:#0f2340;color:#fff}
+.att-day.is-on small{color:#e9d7a6}
+.att-day:focus-visible,.att-time:focus-visible{outline:2px solid #b8913a;outline-offset:2px}
+.att-chosen{margin:.8rem 0 .2rem;font-weight:700;color:#0f2340}
+.att-fmt{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem}
+.att-fmt label{display:flex;align-items:center;gap:.35rem;font-weight:400}
+.att-cols{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1rem;align-items:start}
+.att-week{display:flex;flex-direction:column;gap:.3rem}
+.att-wk{display:grid;grid-template-columns:110px auto auto;gap:.5rem;align-items:center;font-size:.88rem}
+.att-wk__day{display:flex;align-items:center;gap:.4rem;font-weight:600;margin:0}
+.att-wk__p{display:flex;align-items:center;gap:.3rem}
+.att-wk input[type=time]{min-height:2.1rem;padding:0 .3rem;font-size:.82rem;width:6.4rem;min-width:0}
+.att-wk:not(:has(.att-wk__on:checked)) .att-wk__p{opacity:.4}
+.att-blk{display:flex;gap:.5rem;align-items:center}
+.att-blk input{width:auto}
+.att-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.45rem}
+.att-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .3rem .2rem .6rem;border-radius:999px;background:#eef1f5;font-size:.82rem}
+.att-chip button{border:0;background:none;cursor:pointer;font-size:1rem;line-height:1;padding:0 .25rem;color:#5b6573}
+.att-next li{align-items:flex-start}
+@media (max-width:900px){.att-cols{grid-template-columns:1fr}}
+@media (max-width:560px){.att-wk{grid-template-columns:1fr 1fr;}.att-wk__day{grid-column:1/-1}}
+fieldset.field.att-set{border:0;padding:0;margin:0 0 .9rem;min-width:0}
+fieldset.field.att-set legend{padding:0;margin-bottom:.4rem;font-weight:600;font-size:.9rem}
+.att-fmt input[type=radio]{width:18px;height:18px;min-height:0;padding:0;margin:0;flex:none;accent-color:#0f2340}
+.att-wk__day.check-row{margin:0;align-items:center}.att-wk__day.check-row label{margin:0;font-weight:600}
+.att-wk__p2:has(input:placeholder-shown){}
+#atc-bio{min-height:4.2rem}
+
 /* Endeavor portal (admin console, scheduling, e-signature). Builds on the tokens in styles.css. */
 body.portal { background: var(--gray-50); min-height: 100vh; }
 .portal-top {
@@ -2184,6 +2232,7 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
 .ig-config fieldset.field legend { font-weight: 600; font-size: .9rem; margin-bottom: .35rem; padding: 0; }
 .ig-days .ig-day { min-height: 0; padding: .3rem .7rem; border-radius: 999px; font-weight: 500; }
 .ig-days .ig-day input { width: 1rem; height: 1rem; min-height: 0; margin: 0; }
+.att-tag{display:inline-block;margin:.15rem 0;padding:.1rem .5rem;border-radius:999px;background:#f6f1e4;color:#7a5d1f;font-size:.78rem;font-weight:600}
 
 </style>
 </head>
@@ -2192,7 +2241,7 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
   <symbol id="i-grid" viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
   <symbol id="i-brief" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8.5 7V5.5A1.5 1.5 0 0110 4h4a1.5 1.5 0 011.5 1.5V7M3 12.5h18" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14 3v4h4M9 12h6M9 16h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
-  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+  <symbol id="i-law" viewBox="0 0 24 24"><path d="M12 3.5v17M7 20.5h10M4.5 7h15M6.5 7l-3 6.5a3 3 0 0 0 6 0zM17.5 7l-3 6.5a3 3 0 0 0 6 0z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 10h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5M16 4.8a3.5 3.5 0 010 6.4M18 14.8c2 .7 3.2 2.5 3.5 5.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
@@ -2343,6 +2392,20 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
     Object.assign(PART(uuid(), 'Juliana Prado', 'juliana@pradocontabil.example.com', 'Prado Contabilidade', 'accountant', null, 'active', 'u-juliana', false, 1),
       { program_status: 'pending', signup_source: 'site', contract_status: 'none', contract_pct: null, contract_signed_at: null, approved_at: null, country: 'Brasil', phone: '+5511988887777', onboarding_at: iso(2, 14),
         notes: 'Sobre os clientes: atende empresas brasileiras abrindo LLC na Flórida.\nCadastro pelo site.' })];
+  // attorney partners that clients can book with
+  (function () {
+    var A1 = Object.assign(PART('a1000000-0000-4000-8000-0000000000a1', 'Dra. Helena Duarte', 'helena@duartelaw.example.com', 'Duarte Law PLLC', 'attorney', 10, 'active', 'u-helena', false, 90),
+      { attorney_bookable: true, attorney_practice: 'Direito empresarial · Contratos · Imobiliário', attorney_bio: 'Advogada licenciada na Flórida. Atende em português, inglês e espanhol empresários brasileiros que abrem ou compram negócios nos EUA.', attorney_meeting_info: 'Link do Zoom enviado no dia da consulta.', attorney_slot_minutes: 30, attorney_timezone: 'America/New_York' });
+    var A2 = Object.assign(PART('a2000000-0000-4000-8000-0000000000a2', 'Michael Grant', 'mgrant@grantlaw.example.com', 'Grant Immigration Law', 'attorney', 10, 'active', 'u-grant', false, 70),
+      { language: 'en', attorney_bookable: true, attorney_practice: 'Immigration · E-2 and L-1 business visas', attorney_bio: 'Immigration attorney focused on investors and business owners. Consultations in English and Spanish.', attorney_meeting_info: 'Phone or Zoom — you choose when booking.', attorney_slot_minutes: 45, attorney_timezone: 'America/New_York' });
+    DB.partners.push(A1, A2);
+    if (/[?&]attorney=1/.test(location.search)) Object.assign(DB.partners[0], { partner_type: 'attorney', attorney_bookable: true, attorney_practice: 'Direito tributário', attorney_bio: '', attorney_meeting_info: 'Zoom', attorney_slot_minutes: 30, attorney_timezone: 'America/New_York' });
+    DB.attorney_availability = [];
+    [[A1.id, [1, 2, 3, 4], '09:00', '12:00'], [A1.id, [2, 4], '14:00', '17:00'], [A2.id, [1, 3, 5], '10:00', '16:00'], [DB.partners[0].id, [1, 3], '09:00', '12:00']].forEach(function (x) { x[1].forEach(function (w) { DB.attorney_availability.push({ partner_id: x[0], weekday: w, start_time: x[2] + ':00', end_time: x[3] + ':00' }); }); });
+    DB.attorney_blackouts = [];
+    var nb = new Date(now); nb.setDate(nb.getDate() + 3); var b0 = new Date(nb); b0.setHours(10, 0, 0, 0);
+    DB.bookings.push({ id: uuid(), attorney_id: A1.id, client_id: null, starts_at: b0.toISOString(), ends_at: new Date(+b0 + 18e5).toISOString(), name: 'Marina Souza', email: 'marina@example.com', phone: '+55 11 97777-2222', topic: 'Contrato de compra de empresa', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-1) });
+  })();
   DB.referrals = []; DB.referral_events = []; DB.referral_items = []; DB.invoices = [];
   var REF = function (pid, lead, client, name, email, company, service, status, d, steps, items) {
     var id = uuid(), l = DB.leads.find(function (x) { return x.id === lead; }) || {};
@@ -2632,6 +2695,8 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
       case 'company_documents': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && ((r.visible_to_client && can(r.client_id, r.category)) || r.uploaded_by === ME.id); });
       case 'financial_reports': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'report'); });
       case 'partners': return rows.filter(function (r) { return PME && r.id === PME.id; });
+      case 'attorney_availability': case 'attorney_blackouts': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
+      case 'bookings': return rows.filter(function (r) { return (PME && r.attorney_id === PME.id) || (r.client_id && M(r.client_id)); });
       case 'crm_settings': return rows;
       case 'agent_messages': return rows.filter(function (r) { return PME && r.partner_id === PME.id && (r.channel === 'portal' || r.channel === 'whatsapp'); });
       case 'referrals': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
@@ -2839,6 +2904,45 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
         return { source: 'proposal', title: pr.title, total_cents: pr.total_cents, currency: pr.currency, partner_pct: iv.partner_pct != null ? iv.partner_pct : pr.partner_pct, commission_cents: iv.partner_amount_cents != null ? iv.partner_amount_cents : Math.round(pr.total_cents * (pr.partner_pct || 0) / 100), closed_at: pr.accepted_at, invoice_status: iv.status || null, transfer_status: iv.transfer_status || null }; })
         .concat(DB.invoices.filter(function (i) { return i.referral_id === rr.id && !i.proposal_id && (i.status === 'open' || i.status === 'paid'); }).map(function (i) { return { source: 'invoice', title: i.description || i.number, total_cents: i.total_cents, currency: i.currency, partner_pct: i.partner_pct, commission_cents: i.partner_amount_cents || 0, closed_at: i.sent_at || i.created_at, invoice_status: i.status, transfer_status: i.transfer_status }; }))
         .sort(function (a, b) { return new Date(a.closed_at) - new Date(b.closed_at); });
+    }
+    else if (/^attorney_|^client_book_attorney$|^client_(cancel|reschedule)_attorney_booking$|^partner_set_type$/.test(name)) {
+      var MEM = function (cid) { return DB.client_users.some(function (u) { return u.user_id === ME.id && u.client_id === cid && u.status === 'active'; }); };
+      var fail = function (m) { return Promise.resolve({ data: null, error: { message: m } }); };
+      var atts = function () { return DB.partners.filter(function (p) { return p.partner_type === 'attorney' && p.status === 'active' && p.program_status === 'approved' && p.attorney_bookable && !p.closure_requested_at; }); };
+      var slotsOf = function (a, from, to) {
+        var out = [], len = (a.attorney_slot_minutes || 30) * 6e4, d = new Date(from + 'T00:00:00'), end = new Date(to + 'T23:59:59'), soon = Date.now() + 12 * 36e5;
+        var blk = DB.attorney_blackouts.filter(function (b) { return b.partner_id === a.id; }).map(function (b) { return b.day; });
+        for (; d <= end; d.setDate(d.getDate() + 1)) {
+          var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); if (blk.indexOf(key) > -1) continue;
+          DB.attorney_availability.filter(function (r) { return r.partner_id === a.id && r.weekday === d.getDay(); }).forEach(function (r) {
+            var s0 = new Date(d), e0 = new Date(d); s0.setHours(+r.start_time.slice(0, 2), +r.start_time.slice(3, 5), 0, 0); e0.setHours(+r.end_time.slice(0, 2), +r.end_time.slice(3, 5), 0, 0);
+            for (var x = +s0; x + len <= +e0; x += len) { if (x < soon) continue; var iso0 = new Date(x).toISOString(); if (DB.bookings.some(function (b) { return b.attorney_id === a.id && b.status === 'confirmed' && b.starts_at === iso0; })) continue; out.push({ slot: iso0 }); }
+          });
+        }
+        return out;
+      };
+      if (name === 'attorney_list') r = atts().map(function (p) { return { id: p.id, name: p.name, company: p.company, practice: p.attorney_practice, bio: p.attorney_bio, language: p.language, slot_minutes: p.attorney_slot_minutes, timezone: p.attorney_timezone }; });
+      else if (name === 'attorney_slots') { var aa = atts().find(function (p) { return p.id === args.p_attorney; }); r = aa ? slotsOf(aa, args.p_from, args.p_to) : []; }
+      else if (name === 'client_book_attorney') {
+        var ab = atts().find(function (p) { return p.id === args.p_attorney; }); if (!ab || !MEM(args.p_client)) return fail('forbidden');
+        if (!slotsOf(ab, args.p_start.slice(0, 10), new Date(Date.parse(args.p_start) + 864e5).toISOString().slice(0, 10)).some(function (x) { return x.slot === new Date(args.p_start).toISOString(); })) return fail('slot_unavailable');
+        if (DB.bookings.filter(function (b) { return b.client_id === args.p_client && b.attorney_id === ab.id && b.status === 'confirmed' && Date.parse(b.starts_at) > Date.now(); }).length >= 2) return fail('too_many_bookings');
+        var cl = DB.clients.find(function (c) { return c.id === args.p_client; }) || {};
+        var nbk = { id: uuid(), attorney_id: ab.id, client_id: args.p_client, starts_at: new Date(args.p_start).toISOString(), ends_at: new Date(Date.parse(args.p_start) + (ab.attorney_slot_minutes || 30) * 6e4).toISOString(), name: cl.name || ME.email, email: ME.email, phone: args.p_phone, topic: args.p_topic, notes: args.p_notes, meeting_type: args.p_meeting_type, status: 'confirmed', language: 'pt', created_at: new Date().toISOString() };
+        DB.bookings.push(nbk); r = nbk.id;
+      } else if (name === 'client_cancel_attorney_booking' || name === 'attorney_cancel_booking') {
+        var bc = DB.bookings.find(function (b) { return b.id === args.p_booking && b.status === 'confirmed' && (name === 'attorney_cancel_booking' ? PME && b.attorney_id === PME.id : b.client_id && MEM(b.client_id)); });
+        if (!bc) return fail('not_found'); Object.assign(bc, { status: 'cancelled', cancelled_at: new Date().toISOString(), cancel_reason: args.p_reason || null }); r = true;
+      } else if (name === 'client_reschedule_attorney_booking') {
+        var br = DB.bookings.find(function (b) { return b.id === args.p_booking && b.status === 'confirmed' && b.client_id && MEM(b.client_id); }); if (!br) return fail('not_found');
+        var len2 = Date.parse(br.ends_at) - Date.parse(br.starts_at); br.starts_at = new Date(args.p_new_start).toISOString(); br.ends_at = new Date(Date.parse(args.p_new_start) + len2).toISOString(); r = true;
+      } else if (name === 'attorney_save_calendar') {
+        if (!PME || PME.partner_type !== 'attorney') return fail('forbidden');
+        Object.assign(PME, { attorney_bookable: !!args.p_bookable, attorney_practice: (args.p_practice || '').trim() || null, attorney_bio: (args.p_bio || '').trim() || null, attorney_meeting_info: (args.p_meeting_info || '').trim() || null, attorney_slot_minutes: args.p_slot, attorney_timezone: args.p_timezone });
+        DB.attorney_availability = DB.attorney_availability.filter(function (x) { return x.partner_id !== PME.id; }).concat((args.p_rules || []).map(function (x) { return { partner_id: PME.id, weekday: x.weekday, start_time: x.start + ':00', end_time: x.end + ':00' }; }));
+        DB.attorney_blackouts = DB.attorney_blackouts.filter(function (x) { return x.partner_id !== PME.id; }).concat((args.p_blackouts || []).map(function (d) { return { partner_id: PME.id, day: d }; }));
+        r = true;
+      } else if (name === 'partner_set_type') { if (!PME) return fail('forbidden'); PME.partner_type = args.p_type; r = [JSON.parse(JSON.stringify(PME))]; }
     }
     else if (name === 'verify_my_password') r = !!args.p_password && args.p_password !== 'errada';
     else if (name === 'partner_sync_email') r = PME ? [JSON.parse(JSON.stringify(PME))] : [];
@@ -4197,7 +4301,7 @@ window.ENDEAVOR_CFG = {
   var D = {
     en: {
       dl_title: "Closed package", dl_service: "Service contracted", dl_value: "Package value", dl_comm: "Your commission", dl_closed: "Closed on", dl_cs_wait: "Released when the client pays", dl_cs_due: "Client paid · commission to be sent", dl_cs_paid: "Commission paid", ev_closed: "Package closed: {t} · {v} · your commission {c}", 
-      ac_nav: "My account", ac_lead: "Your details, login and password.", ac_contact: "Contact details", ac_name: "Full name", ac_phone: "WhatsApp", ac_company: "Company", ac_email2: "Second email (optional)", ac_email2h: "Notifications go to both emails.", ac_save: "Save", ac_saved: "Saved.", ac_login: "Login email", ac_cur: "Current:", ac_newEmail: "New email", ac_curPass: "Current password", ac_changeEmail: "Change email", ac_emailSent: "We sent a confirmation link to the new email. Your login changes only after you click it.", ac_same: "This is already your login email.", ac_pass: "Password", ac_newPass: "New password (min. 12 characters)", ac_confPass: "Repeat the new password", ac_changePass: "Change password", ac_passOk: "Password changed.", ac_passShort: "Use at least 12 characters.", ac_passDiff: "The passwords do not match.", ac_wrong: "The current password is wrong.", ac_many: "Too many attempts. Wait 15 minutes and try again.", ac_close: "Close account", ac_closeTxt: "You stop sending referrals. The account stays open only until you receive the last commission, then it closes automatically. Your contract and payment history are kept for tax purposes (1099).", ac_closeBtn: "Close my account", ac_closeQ: "Close your account?", ac_closeWord: "CLOSE", ac_closeType: "Type {w} to confirm", ac_closeConfirm: "Confirm closing", ac_closing: "Closing requested on {d}. No new referrals. The account closes automatically after your last commission is paid.", ac_cancel: "Keep my account", ac_closingNoRef: "Your account is being closed, so new referrals are turned off.", ac_cancelled: "Your account stays active.", e_phone: "Check the WhatsApp number.", e_email: "Check the email.", e_name2: "Enter your full name.", 
+      ac_type: "I am a", ac_types: ["Real Estate Agent","Accountant","Attorney","Bookkeeping","Property management","Consultant / advisor","Other"], ac_nav: "My account", ac_lead: "Your details, login and password.", ac_contact: "Contact details", ac_name: "Full name", ac_phone: "WhatsApp", ac_company: "Company", ac_email2: "Second email (optional)", ac_email2h: "Notifications go to both emails.", ac_save: "Save", ac_saved: "Saved.", ac_login: "Login email", ac_cur: "Current:", ac_newEmail: "New email", ac_curPass: "Current password", ac_changeEmail: "Change email", ac_emailSent: "We sent a confirmation link to the new email. Your login changes only after you click it.", ac_same: "This is already your login email.", ac_pass: "Password", ac_newPass: "New password (min. 12 characters)", ac_confPass: "Repeat the new password", ac_changePass: "Change password", ac_passOk: "Password changed.", ac_passShort: "Use at least 12 characters.", ac_passDiff: "The passwords do not match.", ac_wrong: "The current password is wrong.", ac_many: "Too many attempts. Wait 15 minutes and try again.", ac_close: "Close account", ac_closeTxt: "You stop sending referrals. The account stays open only until you receive the last commission, then it closes automatically. Your contract and payment history are kept for tax purposes (1099).", ac_closeBtn: "Close my account", ac_closeQ: "Close your account?", ac_closeWord: "CLOSE", ac_closeType: "Type {w} to confirm", ac_closeConfirm: "Confirm closing", ac_closing: "Closing requested on {d}. No new referrals. The account closes automatically after your last commission is paid.", ac_cancel: "Keep my account", ac_closingNoRef: "Your account is being closed, so new referrals are turned off.", ac_cancelled: "Your account stays active.", e_phone: "Check the WhatsApp number.", e_email: "Check the email.", e_name2: "Enter your full name.", 
       o2_booked: 'Welcome call scheduled:', o2_resched: 'Reschedule', o2_next: 'Next step:', o2_s1: 'Access and email confirmed', o2_s1d: 'You created your password, which confirmed your email. Two-step verification is on.', o2_vid: 'Watch the video', o2_vidd: 'How the portal works: referrals, follow-up, commissions and services.', o2_ct: 'Sign the partner agreement', o2_ctd: 'Commission of {pct} on the invoices paid by the clients you refer. The agreement is in English (official version) and is signed online in 1 minute.', o2_ctBtn: 'Read and sign the agreement', o2_ctWait: 'Generating your agreement…', o2_pay: 'Set up how you get paid', o2_act: 'Account activated', o2_actd: 'Done automatically when the steps above are complete. Then you can refer clients.', o2_actOk: 'Your account is active. You can refer clients now.', o2_call: 'Book your welcome call', o2_calld: 'A 30-minute call with our team to plan your first referrals.', o2_lock: 'Finish the previous step first.', o2_stripeWait: 'Finish your registration on Stripe. As soon as Stripe receives your details, this step is done.', ref_pending: 'You can refer clients as soon as you finish the onboarding in "Start here".', ch_title: 'Onboarding assistant', ch_lead: 'Questions about any step? Ask here, any time.', ch_ph: 'Type your question…', ch_send: 'Send', ch_hi: 'Hi {n}! I am the Endeavor assistant. I can help you with every onboarding step. What would you like to know?', ch_err: 'The assistant is not available right now. Write to support@endeavorbiz.com.', ch_handoff: 'Our team was notified and will contact you.', ch_open: 'Assistant', ch_close: 'Close', ch_team: 'Endeavor team', ch_rate: 'Message limit reached for today. Write to support@endeavorbiz.com.',
       o_pixKey: 'Key', o_nav: 'Start here', o_title: 'Welcome to the Partner Program', o_lead: 'Watch the video and follow the steps to activate your account.', o_noVideo: 'The welcome video will be here soon.', o_seen: 'I watched it', o_steps: 'Steps to activate your account', o_s1: 'Portal access', o_s1d: 'Password and two-step verification are on.', o_s2: 'Watch the welcome video', o_s2d: 'How to refer, follow each client and get paid.', o_s3: 'How you get paid', o_s3d: 'Choose the country of the bank account that will receive your commissions.', o_country: 'Country of your bank account', o_us: 'You get paid through Stripe: your share goes automatically to your Stripe account when the client pays.', o_gp: 'For bank accounts in Brazil and Latin America, Endeavor sends your commission through Stripe Global Payouts after the client pays. You will receive a Stripe link by email to add your bank. Endeavor never sees these details.', o_pix: 'Pix key (optional)', o_pixNote: 'For Pix payouts, coming soon. Use an email, mobile number or random key (not your CPF).', o_pixType: 'Key type', pt_email: 'Email', pt_phone: 'Mobile', pt_random: 'Random key', o_save: 'Save', o_saved: 'Saved.', o_gpRequested: 'Request received: you will get the Stripe link by email to add your bank.', o_gpLink: 'Link sent: check your email to add your bank.', o_gpReady: 'All set to receive.', o_s4: 'Partner agreement', o_s4none: 'We send it after the onboarding call.', o_s5: 'Account activated', o_s5d: 'After approval you can start referring clients.', o_s5wait: 'Waiting for Endeavor approval.', o_done: 'All set! Your account is active.', o_tour: 'Get to know the portal', o_t1: 'Send a client\'s contact in under a minute.', o_t2: 'Follow each client step by step. You also get an email at every step.', o_t3: 'See what you have earned and what is coming.', o_t4: 'Your Stripe account and payout status.', o_banner: 'Almost there: finish your onboarding to start referring.', o_continue: 'Continue', e_pix: 'Invalid Pix key for the selected type.', o_change: 'Change',
       w_title: 'Welcome! Your registration is under review', w_lead: 'Follow the steps below. After the onboarding call we approve your account and send the partner agreement.', w_s1: 'Portal access created', w_s1d: 'Password and two-step verification are on.', w_s2: 'Create your Stripe account', w_s2d: 'This is where you receive your commissions.', w_s2ok: 'Your Stripe account is enabled to receive payouts.', w_s2rev: 'Stripe is reviewing your details.', w_s2btn: 'Create my Stripe account', w_need: 'Have at hand:', need1: 'A photo ID', need2: 'Your bank account details', need3: 'Your tax number: SSN, ITIN or EIN (if you are in the U.S.)', w_needNote: 'You enter everything directly with Stripe. Endeavor does not receive these details. Stripe also collects your tax form (W-9 or W-8) and issues Form 1099 when required.', w_s3: 'Onboarding call', w_s3none: 'We will agree on a time with you.', w_s4: 'Approval and agreement', w_s4d: 'We set your commission and you sign the partner agreement online.', pct_tbd: 'To be defined', k_contract: 'Partner agreement', ct_sent: 'Waiting for your signature', ct_sign: 'Sign the agreement', ct_partner_signed: 'You signed. Waiting for Endeavor\'s signature.', ct_signed: 'Signed by both parties', ct_download: 'Download signed agreement', p_readyMsg: 'All set! Your Stripe account is enabled and your commissions go straight to it.', p_need: 'What you will need', p_needNote: 'You enter these details directly with Stripe; Endeavor never sees them. Stripe also collects your W-9 or W-8 tax form.',
@@ -4228,7 +4332,7 @@ window.ENDEAVOR_CFG = {
     },
     pt: {
       dl_title: "Pacote fechado", dl_service: "Serviço contratado", dl_value: "Valor do pacote", dl_comm: "Sua comissão", dl_closed: "Fechado em", dl_cs_wait: "Liberada quando o cliente pagar", dl_cs_due: "Cliente pagou · comissão a enviar", dl_cs_paid: "Comissão paga", ev_closed: "Pacote fechado: {t} · {v} · sua comissão {c}", 
-      ac_nav: "Minha conta", ac_lead: "Seus dados, login e senha.", ac_contact: "Dados de contato", ac_name: "Nome completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo e-mail (opcional)", ac_email2h: "Os avisos vão para os dois e-mails.", ac_save: "Salvar", ac_saved: "Salvo.", ac_login: "E-mail de login", ac_cur: "Atual:", ac_newEmail: "Novo e-mail", ac_curPass: "Senha atual", ac_changeEmail: "Trocar e-mail", ac_emailSent: "Enviamos um link de confirmação para o novo e-mail. O login só muda depois que você clicar nele.", ac_same: "Este já é o seu e-mail de login.", ac_pass: "Senha", ac_newPass: "Nova senha (mín. 12 caracteres)", ac_confPass: "Repita a nova senha", ac_changePass: "Trocar senha", ac_passOk: "Senha alterada.", ac_passShort: "Use pelo menos 12 caracteres.", ac_passDiff: "As senhas não são iguais.", ac_wrong: "A senha atual está errada.", ac_many: "Muitas tentativas. Espere 15 minutos e tente de novo.", ac_close: "Encerrar conta", ac_closeTxt: "Você deixa de enviar indicações. A conta fica aberta só até você receber a última comissão e depois fecha sozinha. O contrato e o histórico de pagamentos ficam guardados para fins fiscais (1099).", ac_closeBtn: "Encerrar minha conta", ac_closeQ: "Encerrar a sua conta?", ac_closeWord: "ENCERRAR", ac_closeType: "Digite {w} para confirmar", ac_closeConfirm: "Confirmar encerramento", ac_closing: "Encerramento pedido em {d}. Sem novas indicações. A conta fecha sozinha depois que a última comissão for paga.", ac_cancel: "Manter minha conta", ac_closingNoRef: "A sua conta está sendo encerrada, por isso novas indicações estão desligadas.", ac_cancelled: "A sua conta continua ativa.", e_phone: "Confira o número de WhatsApp.", e_email: "Confira o e-mail.", e_name2: "Informe o seu nome completo.", 
+      ac_type: "Eu sou", ac_types: ["Corretor de imóveis","Contador","Advogado","Bookkeeping","Administração de imóveis","Consultor","Outro"], ac_nav: "Minha conta", ac_lead: "Seus dados, login e senha.", ac_contact: "Dados de contato", ac_name: "Nome completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo e-mail (opcional)", ac_email2h: "Os avisos vão para os dois e-mails.", ac_save: "Salvar", ac_saved: "Salvo.", ac_login: "E-mail de login", ac_cur: "Atual:", ac_newEmail: "Novo e-mail", ac_curPass: "Senha atual", ac_changeEmail: "Trocar e-mail", ac_emailSent: "Enviamos um link de confirmação para o novo e-mail. O login só muda depois que você clicar nele.", ac_same: "Este já é o seu e-mail de login.", ac_pass: "Senha", ac_newPass: "Nova senha (mín. 12 caracteres)", ac_confPass: "Repita a nova senha", ac_changePass: "Trocar senha", ac_passOk: "Senha alterada.", ac_passShort: "Use pelo menos 12 caracteres.", ac_passDiff: "As senhas não são iguais.", ac_wrong: "A senha atual está errada.", ac_many: "Muitas tentativas. Espere 15 minutos e tente de novo.", ac_close: "Encerrar conta", ac_closeTxt: "Você deixa de enviar indicações. A conta fica aberta só até você receber a última comissão e depois fecha sozinha. O contrato e o histórico de pagamentos ficam guardados para fins fiscais (1099).", ac_closeBtn: "Encerrar minha conta", ac_closeQ: "Encerrar a sua conta?", ac_closeWord: "ENCERRAR", ac_closeType: "Digite {w} para confirmar", ac_closeConfirm: "Confirmar encerramento", ac_closing: "Encerramento pedido em {d}. Sem novas indicações. A conta fecha sozinha depois que a última comissão for paga.", ac_cancel: "Manter minha conta", ac_closingNoRef: "A sua conta está sendo encerrada, por isso novas indicações estão desligadas.", ac_cancelled: "A sua conta continua ativa.", e_phone: "Confira o número de WhatsApp.", e_email: "Confira o e-mail.", e_name2: "Informe o seu nome completo.", 
       o2_booked: 'Conversa de boas-vindas agendada:', o2_resched: 'Reagendar', o2_next: 'Próximo passo:', o2_s1: 'Acesso e e-mail validado', o2_s1d: 'Você criou a sua senha, o que confirmou o seu e-mail. A verificação em duas etapas está ativa.', o2_vid: 'Assista ao vídeo', o2_vidd: 'Como o portal funciona: indicações, acompanhamento, comissões e serviços.', o2_ct: 'Assine o contrato de parceria', o2_ctd: 'Comissão de {pct} sobre as faturas pagas pelos clientes que você indicar. O contrato está em inglês (versão oficial) e é assinado online em 1 minuto.', o2_ctBtn: 'Ler e assinar o contrato', o2_ctWait: 'Gerando o seu contrato…', o2_pay: 'Configure como você recebe', o2_act: 'Conta ativada', o2_actd: 'Acontece automaticamente quando os passos acima estiverem concluídos. Aí você já pode indicar clientes.', o2_actOk: 'Sua conta está ativa. Você já pode indicar clientes.', o2_call: 'Agende a conversa de boas-vindas', o2_calld: 'Uma conversa de 30 minutos com a nossa equipe para planejar as suas primeiras indicações.', o2_lock: 'Conclua o passo anterior primeiro.', o2_stripeWait: 'Termine o cadastro no Stripe. Assim que o Stripe receber os seus dados, este passo fica concluído.', ref_pending: 'Você poderá indicar clientes assim que concluir o onboarding em "Comece aqui".', ch_title: 'Assistente de onboarding', ch_lead: 'Dúvida em algum passo? Pergunte aqui, a qualquer hora.', ch_ph: 'Escreva a sua dúvida…', ch_send: 'Enviar', ch_hi: 'Olá, {n}! Sou o assistente da Endeavor. Posso ajudar você em cada passo do onboarding. O que você quer saber?', ch_err: 'O assistente não está disponível agora. Escreva para support@endeavorbiz.com.', ch_handoff: 'A nossa equipe foi avisada e vai falar com você.', ch_open: 'Assistente', ch_close: 'Fechar', ch_team: 'Equipe Endeavor', ch_rate: 'Limite de mensagens de hoje atingido. Escreva para support@endeavorbiz.com.',
       o_pixKey: 'Chave', o_nav: 'Comece aqui', o_title: 'Boas-vindas ao Programa de Parceiros', o_lead: 'Assista ao vídeo e siga os passos para ativar a sua conta.', o_noVideo: 'O vídeo de apresentação vai aparecer aqui em breve.', o_seen: 'Já assisti', o_steps: 'Passos para ativar a sua conta', o_s1: 'Acesso ao portal', o_s1d: 'Senha e verificação em duas etapas ativas.', o_s2: 'Assista ao vídeo de apresentação', o_s2d: 'Como indicar, acompanhar cada cliente e receber.', o_s3: 'Como você recebe', o_s3d: 'Escolha o país da conta bancária que vai receber as comissões.', o_country: 'País da sua conta bancária', o_us: 'Você recebe pelo Stripe: a sua parte cai automaticamente na sua conta Stripe quando o cliente paga.', o_gp: 'Para contas no Brasil e na América Latina, a Endeavor envia a sua comissão pelo Stripe Global Payouts depois que o cliente paga. Você recebe por e-mail um link do Stripe para cadastrar o seu banco. A Endeavor não vê esses dados.', o_pix: 'Chave Pix (opcional)', o_pixNote: 'Para o recebimento por Pix, que estará disponível em breve. Use e-mail, celular ou chave aleatória (não use o CPF).', o_pixType: 'Tipo de chave', pt_email: 'E-mail', pt_phone: 'Celular', pt_random: 'Chave aleatória', o_save: 'Salvar', o_saved: 'Salvo.', o_gpRequested: 'Pedido recebido: você vai receber por e-mail o link do Stripe para cadastrar o seu banco.', o_gpLink: 'Link enviado: confira o seu e-mail para cadastrar o banco.', o_gpReady: 'Tudo certo para receber.', o_s4: 'Contrato de parceria', o_s4none: 'Enviamos depois da conversa de onboarding.', o_s5: 'Conta ativada', o_s5d: 'Depois da aprovação, você já pode indicar clientes.', o_s5wait: 'Aguardando a aprovação da Endeavor.', o_done: 'Tudo pronto! Sua conta está ativa.', o_tour: 'Conheça o portal', o_t1: 'Envie o contato de um cliente em menos de um minuto.', o_t2: 'Acompanhe cada cliente etapa por etapa. Você também recebe um e-mail a cada etapa.', o_t3: 'Veja o que já recebeu e o que vai receber.', o_t4: 'Sua conta Stripe e a situação dos repasses.', o_banner: 'Falta pouco: termine o onboarding para começar a indicar.', o_continue: 'Continuar', e_pix: 'Chave Pix inválida para o tipo escolhido.', o_change: 'Alterar',
       w_title: 'Boas-vindas! Seu cadastro está em análise', w_lead: 'Siga os passos abaixo. Depois da conversa de onboarding, aprovamos a sua conta e enviamos o contrato de parceria.', w_s1: 'Acesso ao portal criado', w_s1d: 'Senha e verificação em duas etapas ativas.', w_s2: 'Crie sua conta Stripe', w_s2d: 'É por ela que você recebe as comissões.', w_s2ok: 'Sua conta Stripe está habilitada para receber.', w_s2rev: 'O Stripe está analisando os seus dados.', w_s2btn: 'Criar minha conta no Stripe', w_need: 'Tenha em mãos:', need1: 'Documento com foto', need2: 'Dados da conta bancária', need3: 'Número fiscal: SSN, ITIN ou EIN (se estiver nos EUA)', w_needNote: 'Você informa tudo direto no Stripe. A Endeavor não recebe esses dados. O Stripe também coleta o seu formulário fiscal (W-9 ou W-8) e emite o 1099 quando for o caso.', w_s3: 'Conversa de onboarding', w_s3none: 'Vamos combinar o horário com você.', w_s4: 'Aprovação e contrato', w_s4d: 'Definimos a sua comissão e você assina o contrato de parceria online.', pct_tbd: 'A definir', k_contract: 'Contrato de parceria', ct_sent: 'Aguardando a sua assinatura', ct_sign: 'Assinar contrato', ct_partner_signed: 'Você assinou. Aguardando a assinatura da Endeavor.', ct_signed: 'Assinado pelas duas partes', ct_download: 'Baixar contrato assinado', p_readyMsg: 'Tudo certo! Sua conta Stripe está habilitada e as comissões caem direto nela.', p_need: 'O que você vai precisar', p_needNote: 'Você informa esses dados direto no Stripe; a Endeavor nunca vê. O Stripe também coleta o seu formulário fiscal W-9 ou W-8.',
@@ -4259,7 +4363,7 @@ window.ENDEAVOR_CFG = {
     },
     es: {
       dl_title: "Paquete cerrado", dl_service: "Servicio contratado", dl_value: "Valor del paquete", dl_comm: "Su comisión", dl_closed: "Cerrado el", dl_cs_wait: "Se libera cuando el cliente pague", dl_cs_due: "El cliente pagó · comisión por enviar", dl_cs_paid: "Comisión pagada", ev_closed: "Paquete cerrado: {t} · {v} · su comisión {c}", 
-      ac_nav: "Mi cuenta", ac_lead: "Sus datos, acceso y contraseña.", ac_contact: "Datos de contacto", ac_name: "Nombre completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo correo (opcional)", ac_email2h: "Los avisos van a los dos correos.", ac_save: "Guardar", ac_saved: "Guardado.", ac_login: "Correo de acceso", ac_cur: "Actual:", ac_newEmail: "Nuevo correo", ac_curPass: "Contraseña actual", ac_changeEmail: "Cambiar correo", ac_emailSent: "Enviamos un enlace de confirmación al nuevo correo. El acceso cambia solo después de que haga clic.", ac_same: "Este ya es su correo de acceso.", ac_pass: "Contraseña", ac_newPass: "Nueva contraseña (mín. 12 caracteres)", ac_confPass: "Repita la nueva contraseña", ac_changePass: "Cambiar contraseña", ac_passOk: "Contraseña cambiada.", ac_passShort: "Use al menos 12 caracteres.", ac_passDiff: "Las contraseñas no coinciden.", ac_wrong: "La contraseña actual es incorrecta.", ac_many: "Demasiados intentos. Espere 15 minutos e intente de nuevo.", ac_close: "Cerrar cuenta", ac_closeTxt: "Deja de enviar recomendaciones. La cuenta queda abierta solo hasta que reciba la última comisión y luego se cierra sola. El contrato y el historial de pagos se guardan para fines fiscales (1099).", ac_closeBtn: "Cerrar mi cuenta", ac_closeQ: "¿Cerrar su cuenta?", ac_closeWord: "CERRAR", ac_closeType: "Escriba {w} para confirmar", ac_closeConfirm: "Confirmar cierre", ac_closing: "Cierre solicitado el {d}. Sin nuevas recomendaciones. La cuenta se cierra sola después de pagar su última comisión.", ac_cancel: "Mantener mi cuenta", ac_closingNoRef: "Su cuenta se está cerrando, por eso las nuevas recomendaciones están desactivadas.", ac_cancelled: "Su cuenta sigue activa.", e_phone: "Revise el número de WhatsApp.", e_email: "Revise el correo.", e_name2: "Escriba su nombre completo.", 
+      ac_type: "Soy", ac_types: ["Agente inmobiliario","Contador","Abogado","Contabilidad (bookkeeping)","Administración de propiedades","Consultor","Otro"], ac_nav: "Mi cuenta", ac_lead: "Sus datos, acceso y contraseña.", ac_contact: "Datos de contacto", ac_name: "Nombre completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo correo (opcional)", ac_email2h: "Los avisos van a los dos correos.", ac_save: "Guardar", ac_saved: "Guardado.", ac_login: "Correo de acceso", ac_cur: "Actual:", ac_newEmail: "Nuevo correo", ac_curPass: "Contraseña actual", ac_changeEmail: "Cambiar correo", ac_emailSent: "Enviamos un enlace de confirmación al nuevo correo. El acceso cambia solo después de que haga clic.", ac_same: "Este ya es su correo de acceso.", ac_pass: "Contraseña", ac_newPass: "Nueva contraseña (mín. 12 caracteres)", ac_confPass: "Repita la nueva contraseña", ac_changePass: "Cambiar contraseña", ac_passOk: "Contraseña cambiada.", ac_passShort: "Use al menos 12 caracteres.", ac_passDiff: "Las contraseñas no coinciden.", ac_wrong: "La contraseña actual es incorrecta.", ac_many: "Demasiados intentos. Espere 15 minutos e intente de nuevo.", ac_close: "Cerrar cuenta", ac_closeTxt: "Deja de enviar recomendaciones. La cuenta queda abierta solo hasta que reciba la última comisión y luego se cierra sola. El contrato y el historial de pagos se guardan para fines fiscales (1099).", ac_closeBtn: "Cerrar mi cuenta", ac_closeQ: "¿Cerrar su cuenta?", ac_closeWord: "CERRAR", ac_closeType: "Escriba {w} para confirmar", ac_closeConfirm: "Confirmar cierre", ac_closing: "Cierre solicitado el {d}. Sin nuevas recomendaciones. La cuenta se cierra sola después de pagar su última comisión.", ac_cancel: "Mantener mi cuenta", ac_closingNoRef: "Su cuenta se está cerrando, por eso las nuevas recomendaciones están desactivadas.", ac_cancelled: "Su cuenta sigue activa.", e_phone: "Revise el número de WhatsApp.", e_email: "Revise el correo.", e_name2: "Escriba su nombre completo.", 
       o2_booked: 'Llamada de bienvenida agendada:', o2_resched: 'Reagendar', o2_next: 'Próximo paso:', o2_s1: 'Acceso y correo validado', o2_s1d: 'Usted creó su contraseña, lo que confirmó su correo. La verificación en dos pasos está activa.', o2_vid: 'Mire el video', o2_vidd: 'Cómo funciona el portal: recomendaciones, seguimiento, comisiones y servicios.', o2_ct: 'Firme el contrato de socio', o2_ctd: 'Comisión de {pct} sobre las facturas pagadas por los clientes que usted recomiende. El contrato está en inglés (versión oficial) y se firma en línea en 1 minuto.', o2_ctBtn: 'Leer y firmar el contrato', o2_ctWait: 'Generando su contrato…', o2_pay: 'Configure cómo recibe', o2_act: 'Cuenta activada', o2_actd: 'Ocurre automáticamente cuando los pasos de arriba estén completos. Entonces ya puede recomendar clientes.', o2_actOk: 'Su cuenta está activa. Ya puede recomendar clientes.', o2_call: 'Agende la llamada de bienvenida', o2_calld: 'Una conversación de 30 minutos con nuestro equipo para planear sus primeras recomendaciones.', o2_lock: 'Complete primero el paso anterior.', o2_stripeWait: 'Termine el registro en Stripe. En cuanto Stripe reciba sus datos, este paso queda completo.', ref_pending: 'Podrá recomendar clientes en cuanto complete el onboarding en "Empiece aquí".', ch_title: 'Asistente de onboarding', ch_lead: '¿Dudas en algún paso? Pregunte aquí, a cualquier hora.', ch_ph: 'Escriba su pregunta…', ch_send: 'Enviar', ch_hi: '¡Hola, {n}! Soy el asistente de Endeavor. Puedo ayudarle en cada paso del onboarding. ¿Qué le gustaría saber?', ch_err: 'El asistente no está disponible ahora. Escriba a support@endeavorbiz.com.', ch_handoff: 'Nuestro equipo fue avisado y se comunicará con usted.', ch_open: 'Asistente', ch_close: 'Cerrar', ch_team: 'Equipo Endeavor', ch_rate: 'Límite de mensajes de hoy alcanzado. Escriba a support@endeavorbiz.com.',
       o_pixKey: 'Clave', o_nav: 'Empiece aquí', o_title: 'Bienvenido(a) al Programa de Socios', o_lead: 'Mire el video y siga los pasos para activar su cuenta.', o_noVideo: 'El video de bienvenida estará aquí pronto.', o_seen: 'Ya lo vi', o_steps: 'Pasos para activar su cuenta', o_s1: 'Acceso al portal', o_s1d: 'Contraseña y verificación en dos pasos activas.', o_s2: 'Mire el video de bienvenida', o_s2d: 'Cómo recomendar, seguir a cada cliente y recibir.', o_s3: 'Cómo recibe', o_s3d: 'Elija el país de la cuenta bancaria que recibirá sus comisiones.', o_country: 'País de su cuenta bancaria', o_us: 'Usted recibe por Stripe: su parte va automáticamente a su cuenta Stripe cuando el cliente paga.', o_gp: 'Para cuentas en Brasil y América Latina, Endeavor envía su comisión por Stripe Global Payouts después de que el cliente paga. Recibirá por correo un enlace de Stripe para registrar su banco. Endeavor no ve estos datos.', o_pix: 'Clave Pix (opcional)', o_pixNote: 'Para pagos por Pix, disponibles pronto. Use correo, celular o clave aleatoria (no use el CPF).', o_pixType: 'Tipo de clave', pt_email: 'Correo', pt_phone: 'Celular', pt_random: 'Clave aleatoria', o_save: 'Guardar', o_saved: 'Guardado.', o_gpRequested: 'Solicitud recibida: recibirá por correo el enlace de Stripe para registrar su banco.', o_gpLink: 'Enlace enviado: revise su correo para registrar su banco.', o_gpReady: 'Todo listo para recibir.', o_s4: 'Contrato de socio', o_s4none: 'Lo enviamos después de la llamada de onboarding.', o_s5: 'Cuenta activada', o_s5d: 'Después de la aprobación ya puede recomendar clientes.', o_s5wait: 'Esperando la aprobación de Endeavor.', o_done: '¡Todo listo! Su cuenta está activa.', o_tour: 'Conozca el portal', o_t1: 'Envíe el contacto de un cliente en menos de un minuto.', o_t2: 'Siga a cada cliente paso a paso. También recibe un correo en cada etapa.', o_t3: 'Vea lo que ya recibió y lo que va a recibir.', o_t4: 'Su cuenta Stripe y el estado de los pagos.', o_banner: 'Falta poco: termine el onboarding para empezar a recomendar.', o_continue: 'Continuar', e_pix: 'Clave Pix inválida para el tipo elegido.', o_change: 'Cambiar',
       w_title: '¡Bienvenido(a)! Su registro está en revisión', w_lead: 'Siga los pasos de abajo. Después de la llamada de onboarding, aprobamos su cuenta y enviamos el contrato de socio.', w_s1: 'Acceso al portal creado', w_s1d: 'Contraseña y verificación en dos pasos activas.', w_s2: 'Cree su cuenta Stripe', w_s2d: 'Ahí recibe sus comisiones.', w_s2ok: 'Su cuenta Stripe está habilitada para recibir.', w_s2rev: 'Stripe está revisando sus datos.', w_s2btn: 'Crear mi cuenta en Stripe', w_need: 'Tenga a mano:', need1: 'Un documento con foto', need2: 'Los datos de su cuenta bancaria', need3: 'Su número fiscal: SSN, ITIN o EIN (si está en EE. UU.)', w_needNote: 'Usted ingresa todo directamente en Stripe. Endeavor no recibe estos datos. Stripe también recoge su formulario fiscal (W-9 o W-8) y emite el 1099 cuando corresponde.', w_s3: 'Llamada de onboarding', w_s3none: 'Acordaremos un horario con usted.', w_s4: 'Aprobación y contrato', w_s4d: 'Definimos su comisión y usted firma el contrato de socio en línea.', pct_tbd: 'Por definir', k_contract: 'Contrato de socio', ct_sent: 'Esperando su firma', ct_sign: 'Firmar el contrato', ct_partner_signed: 'Usted firmó. Esperando la firma de Endeavor.', ct_signed: 'Firmado por ambas partes', ct_download: 'Descargar contrato firmado', p_readyMsg: '¡Todo listo! Su cuenta Stripe está habilitada y sus comisiones llegan directo a ella.', p_need: 'Lo que va a necesitar', p_needNote: 'Usted ingresa estos datos directamente en Stripe; Endeavor nunca los ve. Stripe también recoge su formulario fiscal W-9 o W-8.',
@@ -4635,6 +4739,7 @@ window.ENDEAVOR_CFG = {
       // "My account": contact details, second e-mail, login e-mail, password, account closure — one page, no scrolling
       function accErr(e) { var m = (e && e.message) || String(e); return /too_many_attempts/.test(m) ? t('ac_many') : /wrong_password/.test(m) ? t('ac_wrong') : /invalid_phone/.test(m) ? t('e_phone') : /invalid_email/.test(m) ? t('e_email') : /invalid_name/.test(m) ? t('e_name2') : C.errText(e); }
       async function checkPass(pw) { var r = await sb.rpc('verify_my_password', { p_password: pw }); if (r.error) throw r.error; if (r.data !== true) throw new Error('wrong_password'); }
+      var TYPES = ['realtor', 'accountant', 'attorney', 'bookkeeping', 'property_management', 'referral', 'other'];
       async function vAccount(view) {
         var u = (await sb.auth.getUser()).data.user || {};
         var fld = function (id, label, type, val, extra) { return '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + type + '"' + (val != null ? ' value="' + esc(val) + '"' : '') + (extra || '') + '></div>'; };
@@ -4646,6 +4751,7 @@ window.ENDEAVOR_CFG = {
             fld('ac-name', t('ac_name'), 'text', P.name, ' autocomplete="name" maxlength="200" required') +
             '<div class="field"><label for="ac-phone">' + t('ac_phone') + '</label><div id="ac-phone-box"></div></div>' +
             fld('ac-company', t('ac_company'), 'text', P.company || '', ' autocomplete="organization" maxlength="200"') +
+            '<div class="field"><label for="ac-type">' + t('ac_type') + '</label><select id="ac-type">' + TYPES.map(function (k, i) { return '<option value="' + k + '"' + ((P.partner_type || 'other') === k ? ' selected' : '') + '>' + esc(t('ac_types')[i]) + '</option>'; }).join('') + '</select></div>' +
             fld('ac-email2', t('ac_email2'), 'email', P.email2 || '', ' autocomplete="email" maxlength="200" aria-describedby="ac-e2h"').replace('</div>', '<p class="acc-hint" id="ac-e2h">' + t('ac_email2h') + '</p></div>') +
             '<div class="acc-foot"><button class="btn btn--navy btn--sm" type="submit">' + t('ac_save') + '</button><div class="portal-alert" id="ac-m1" role="status"></div></div></form></section>' +
           '<section class="portal-card acc-card"><h2 class="portal-h2">' + t('ac_login') + '</h2><p class="acc-cur">' + t('ac_cur') + ' <strong>' + esc(u.email || P.email) + '</strong></p><form class="portal-form acc-form" id="ac-f2" novalidate>' +
@@ -4672,6 +4778,13 @@ window.ENDEAVOR_CFG = {
           busy(f, false);
           if (r.error) return C.msg(m, accErr(r.error), 'error');
           if (r.data && r.data[0]) { P = r.data[0]; C.S.partner = P; }
+          var nt = $('#ac-type').value, wasAtt = P.partner_type === 'attorney';
+          if (nt !== (P.partner_type || 'other')) {
+            var r2 = await sb.rpc('partner_set_type', { p_type: nt });
+            if (r2.error) return C.msg(m, accErr(r2.error), 'error');
+            if (r2.data && r2.data[0]) { P = r2.data[0]; C.S.partner = P; }
+            if (wasAtt !== (nt === 'attorney')) { location.reload(); return; }
+          }
           C.msg(m, t('ac_saved'), 'ok');
         };
         $('#ac-f2').onsubmit = async function (e) {
@@ -4730,12 +4843,216 @@ window.ENDEAVOR_CFG = {
       }
 
       return {
-        nav: (P.onboarding_done_at ? [] : [['onboarding', t('o_nav'), 'i-play']]).concat([['ref-home', t('r_nav_home'), 'i-grid'], ['referrals', t('r_nav_refs'), 'i-users'], ['ref-new', t('r_nav_new'), 'i-plus'], ['commissions', t('r_nav_comm'), 'i-chart'], ['payouts', t('r_nav_pay'), 'i-card']]).concat(P.onboarding_done_at ? [['onboarding', t('o_nav'), 'i-play']] : []),
+        nav: (P.onboarding_done_at ? [] : [['onboarding', t('o_nav'), 'i-play']]).concat([['ref-home', t('r_nav_home'), 'i-grid'], ['referrals', t('r_nav_refs'), 'i-users'], ['ref-new', t('r_nav_new'), 'i-plus'], ['commissions', t('r_nav_comm'), 'i-chart'], ['payouts', t('r_nav_pay'), 'i-card']]).concat(P.partner_type === 'attorney' && window.EAttorney ? [['ref-agenda', EAttorney.label(L, 'nav'), 'i-cal']] : []).concat(P.onboarding_done_at ? [['onboarding', t('o_nav'), 'i-play']] : []),
         sep: t('r_sep_clients'), accLabel: t('ac_nav'),
-        views: { onboarding: vOnb, 'ref-home': vHome, referrals: vRefs, 'ref-new': vNew, commissions: vComm, payouts: vPayRoute, settings: vAccount }
+        views: { onboarding: vOnb, 'ref-home': vHome, referrals: vRefs, 'ref-new': vNew, commissions: vComm, payouts: vPayRoute, settings: vAccount, 'ref-agenda': function (view) { return window.EAttorney && P.partner_type === 'attorney' ? EAttorney.partnerView(view, Object.assign({}, C, { S: Object.assign({}, C.S, { partner: P }) })) : ERoute.set('#/ref-home', true); } }
       };
     }
   };
+})();
+
+</script>
+<script>
+/* Attorney consultations.
+   - Partner Portal (attorney partners): "Minha agenda" — weekly availability, blocked dates, how the meeting happens, upcoming consultations.
+   - Client Portal: "Advogados" — all active attorney partners; the client books, reschedules or cancels a free consultation
+     (the platform does not charge; any fees are agreed directly with the attorney).
+   E-mails to the client, the attorney and Endeavor are sent by the booking-notify function. */
+(function () {
+  'use strict';
+  var T = {
+    en: {
+      c_title: 'Partner attorneys', c_lead: 'Book a free consultation through the platform with an Endeavor partner attorney.', fee: 'Booking through the platform is free. Any fees are agreed directly with the attorney.',
+      c_mine: 'My consultations', c_none: 'No attorney is available for booking right now. Please check back soon or talk to us.', c_book: 'Book a consultation', c_with: 'Consultation with {a}',
+      c_pickDay: 'Choose a day', c_pickTime: 'Choose a time', c_noSlots: 'No free times in the next 30 days.', c_format: 'Format', c_topic: 'Subject', c_notes: 'Anything the attorney should know (optional)', c_phone: 'Phone / WhatsApp (with country code)',
+      c_confirm: 'Confirm booking', c_done: 'Booked! You will receive the confirmation by email.', c_resched: 'Reschedule', c_cancel: 'Cancel', c_cancelQ: 'Cancel this consultation?', c_reason: 'Reason (optional)', c_cancelOk: 'Cancel consultation', c_keep: 'Keep',
+      c_cancelled: 'Consultation cancelled.', c_moved: 'Consultation rescheduled.', c_tz: 'Times shown in your time zone ({z}).', back: 'Back',
+      video: 'Video call', phone: 'Phone call', whatsapp: 'WhatsApp call', e_slot: 'This time was just taken. Please choose another one.', e_many: 'You already have 2 upcoming consultations with this attorney.', e_phone: 'Enter the phone with the country code, e.g. +1 407 555 0100.', e_changes: 'This consultation was changed too many times. Please cancel and book again.',
+      a_title: 'My calendar', a_lead: 'Set when clients of the Endeavor platform can book a consultation with you.', a_on: 'Receive bookings through the platform', a_practice: 'Practice areas', a_practiceP: 'e.g. Immigration, Business law, Real estate',
+      a_bio: 'Short bio (shown to clients)', a_how: 'How the meeting happens', a_howP: 'e.g. Zoom link, phone or office address', a_len: 'Length of each consultation', a_tz: 'Time zone', a_week: 'Weekly availability', a_second: '2nd period',
+      a_block: 'Days off', a_add: 'Add', a_save: 'Save calendar', a_saved: 'Calendar saved.', a_next: 'Upcoming consultations', a_noneNext: 'No consultations booked yet.', a_client: 'Client', a_cancelQ: 'Cancel this consultation? The client and Endeavor are notified by email.',
+      a_min: 'min', days: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], a_invalid: 'Check the times: the end must be after the start.', nav: 'My calendar', c_nav: 'Attorneys'
+    },
+    pt: {
+      c_title: 'Advogados parceiros', c_lead: 'Agende pela plataforma uma consulta gratuita com um advogado parceiro da Endeavor.', fee: 'O agendamento pela plataforma não tem custo. Os honorários, se houver, são combinados diretamente com o advogado.',
+      c_mine: 'Minhas consultas', c_none: 'Nenhum advogado está disponível para agendamento agora. Volte em breve ou fale com a gente.', c_book: 'Agendar consulta', c_with: 'Consulta com {a}',
+      c_pickDay: 'Escolha o dia', c_pickTime: 'Escolha o horário', c_noSlots: 'Sem horários livres nos próximos 30 dias.', c_format: 'Formato', c_topic: 'Assunto', c_notes: 'O que o advogado deve saber (opcional)', c_phone: 'Telefone / WhatsApp (com o código do país)',
+      c_confirm: 'Confirmar agendamento', c_done: 'Agendado! Você vai receber a confirmação por e-mail.', c_resched: 'Reagendar', c_cancel: 'Cancelar', c_cancelQ: 'Cancelar esta consulta?', c_reason: 'Motivo (opcional)', c_cancelOk: 'Cancelar consulta', c_keep: 'Manter',
+      c_cancelled: 'Consulta cancelada.', c_moved: 'Consulta remarcada.', c_tz: 'Horários no seu fuso ({z}).', back: 'Voltar',
+      video: 'Videochamada', phone: 'Ligação telefônica', whatsapp: 'Chamada por WhatsApp', e_slot: 'Esse horário acabou de ser ocupado. Escolha outro.', e_many: 'Você já tem 2 consultas marcadas com este advogado.', e_phone: 'Informe o telefone com o código do país, ex.: +55 11 99999-9999.', e_changes: 'Esta consulta já foi alterada muitas vezes. Cancele e agende de novo.',
+      a_title: 'Minha agenda', a_lead: 'Defina quando os clientes da plataforma Endeavor podem agendar uma consulta com você.', a_on: 'Receber agendamentos pela plataforma', a_practice: 'Áreas de atuação', a_practiceP: 'Ex.: Imigração, Direito empresarial, Imobiliário',
+      a_bio: 'Mini-bio (aparece para os clientes)', a_how: 'Como acontece a consulta', a_howP: 'Ex.: link do Zoom, telefone ou endereço do escritório', a_len: 'Duração de cada consulta', a_tz: 'Fuso horário', a_week: 'Disponibilidade semanal', a_second: '2º período',
+      a_block: 'Dias bloqueados', a_add: 'Adicionar', a_save: 'Salvar agenda', a_saved: 'Agenda salva.', a_next: 'Próximas consultas', a_noneNext: 'Nenhuma consulta agendada ainda.', a_client: 'Cliente', a_cancelQ: 'Cancelar esta consulta? O cliente e a Endeavor recebem um aviso por e-mail.',
+      a_min: 'min', days: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'], a_invalid: 'Confira os horários: o fim precisa ser depois do início.', nav: 'Minha agenda', c_nav: 'Advogados'
+    },
+    es: {
+      c_title: 'Abogados socios', c_lead: 'Agende por la plataforma una consulta gratuita con un abogado socio de Endeavor.', fee: 'Agendar por la plataforma no tiene costo. Los honorarios, si los hay, se acuerdan directamente con el abogado.',
+      c_mine: 'Mis consultas', c_none: 'Ningún abogado está disponible para agendar ahora. Vuelva pronto o escríbanos.', c_book: 'Agendar consulta', c_with: 'Consulta con {a}',
+      c_pickDay: 'Elija el día', c_pickTime: 'Elija la hora', c_noSlots: 'Sin horarios libres en los próximos 30 días.', c_format: 'Formato', c_topic: 'Tema', c_notes: 'Lo que el abogado debe saber (opcional)', c_phone: 'Teléfono / WhatsApp (con código de país)',
+      c_confirm: 'Confirmar cita', c_done: '¡Agendado! Recibirá la confirmación por correo.', c_resched: 'Reprogramar', c_cancel: 'Cancelar', c_cancelQ: '¿Cancelar esta consulta?', c_reason: 'Motivo (opcional)', c_cancelOk: 'Cancelar consulta', c_keep: 'Mantener',
+      c_cancelled: 'Consulta cancelada.', c_moved: 'Consulta reprogramada.', c_tz: 'Horarios en su zona ({z}).', back: 'Volver',
+      video: 'Videollamada', phone: 'Llamada telefónica', whatsapp: 'Llamada por WhatsApp', e_slot: 'Ese horario se acaba de ocupar. Elija otro.', e_many: 'Ya tiene 2 consultas agendadas con este abogado.', e_phone: 'Escriba el teléfono con el código de país, ej.: +595 981 000 000.', e_changes: 'Esta consulta ya se cambió muchas veces. Cancele y agende de nuevo.',
+      a_title: 'Mi agenda', a_lead: 'Defina cuándo los clientes de la plataforma Endeavor pueden agendar una consulta con usted.', a_on: 'Recibir citas por la plataforma', a_practice: 'Áreas de práctica', a_practiceP: 'Ej.: Inmigración, Derecho empresarial, Inmobiliario',
+      a_bio: 'Mini biografía (la ven los clientes)', a_how: 'Cómo será la consulta', a_howP: 'Ej.: enlace de Zoom, teléfono o dirección de la oficina', a_len: 'Duración de cada consulta', a_tz: 'Zona horaria', a_week: 'Disponibilidad semanal', a_second: '2º período',
+      a_block: 'Días bloqueados', a_add: 'Agregar', a_save: 'Guardar agenda', a_saved: 'Agenda guardada.', a_next: 'Próximas consultas', a_noneNext: 'Aún no hay consultas agendadas.', a_client: 'Cliente', a_cancelQ: '¿Cancelar esta consulta? El cliente y Endeavor reciben un aviso por correo.',
+      a_min: 'min', days: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'], a_invalid: 'Revise los horarios: el fin debe ser después del inicio.', nav: 'Mi agenda', c_nav: 'Abogados'
+    }
+  };
+  var TZS = ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Phoenix', 'America/Los_Angeles', 'America/Sao_Paulo', 'America/Manaus', 'America/Asuncion', 'America/Argentina/Buenos_Aires', 'America/Bogota', 'America/Mexico_City', 'America/Santiago', 'Europe/Lisbon', 'Europe/Madrid', 'Europe/London'];
+  function tt(ctx) { var D = T[ctx.L] || T.en; return function (k, v) { var s = D[k] != null ? D[k] : (T.en[k] || k); if (v && typeof s === 'string') Object.keys(v).forEach(function (x) { s = s.split('{' + x + '}').join(v[x]); }); return s; }; }
+  function loc(ctx) { return ctx.L === 'pt' ? 'pt-BR' : ctx.L === 'es' ? 'es' : 'en-US'; }
+  function errOf(ctx, t, e) { var m = (e && e.message) || ''; return /slot_unavailable/.test(m) ? t('e_slot') : /too_many_bookings/.test(m) ? t('e_many') : /invalid_phone/.test(m) ? t('e_phone') : /too_many_changes/.test(m) ? t('e_changes') : ctx.errText(e); }
+  function initials(n) { return String(n || '?').split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join(''); }
+  function myTz() { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'; } catch (e) { return 'America/New_York'; } }
+  function cap(x) { x = String(x || ''); return x.charAt(0).toUpperCase() + x.slice(1); }
+  function dayKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  /* ---------------- slot picker (shared by book and reschedule) ---------------- */
+  async function slotPicker(ctx, t, box, attorneyId, onPick) {
+    var esc = ctx.esc, from = new Date(), to = new Date(Date.now() + 30 * 864e5);
+    box.innerHTML = '<p class="portal-muted">…</p>';
+    var r = await ctx.sb.rpc('attorney_slots', { p_attorney: attorneyId, p_from: dayKey(from), p_to: dayKey(to) });
+    if (r.error) { box.innerHTML = '<div class="portal-alert portal-alert--error" style="display:block">' + esc(ctx.errText(r.error)) + '</div>'; return; }
+    var by = {}; (r.data || []).forEach(function (x) { var d = new Date(x.slot), k = dayKey(d); (by[k] = by[k] || []).push(d); });
+    var keys = Object.keys(by).sort();
+    if (!keys.length) { box.innerHTML = '<p class="empty">' + esc(t('c_noSlots')) + '</p>'; return; }
+    var dfmt = new Intl.DateTimeFormat(loc(ctx), { weekday: 'short', day: 'numeric', month: 'short' }), hfmt = new Intl.DateTimeFormat(loc(ctx), { hour: 'numeric', minute: '2-digit' });
+    box.innerHTML = '<p class="att-tz">' + esc(t('c_tz', { z: myTz() })) + '</p><p class="att-step">' + esc(t('c_pickDay')) + '</p><div class="att-days" role="listbox">' +
+      keys.map(function (k, i) { return '<button type="button" class="att-day' + (i === 0 ? ' is-on' : '') + '" data-k="' + k + '" aria-selected="' + (i === 0) + '">' + esc(cap(dfmt.format(by[k][0]))) + '<small>' + by[k].length + '</small></button>'; }).join('') +
+      '</div><p class="att-step">' + esc(t('c_pickTime')) + '</p><div class="att-times" id="att-times"></div>';
+    function times(k) {
+      box.querySelector('#att-times').innerHTML = by[k].map(function (d) { return '<button type="button" class="att-time" data-iso="' + d.toISOString() + '">' + esc(hfmt.format(d)) + '</button>'; }).join('');
+      box.querySelectorAll('.att-time').forEach(function (b) { b.onclick = function () { box.querySelectorAll('.att-time').forEach(function (x) { x.classList.remove('is-on'); }); b.classList.add('is-on'); onPick(b.dataset.iso, b.textContent, cap(dfmt.format(new Date(b.dataset.iso)))); }; });
+    }
+    box.querySelectorAll('.att-day').forEach(function (b) { b.onclick = function () { box.querySelectorAll('.att-day').forEach(function (x) { x.classList.toggle('is-on', x === b); x.setAttribute('aria-selected', String(x === b)); }); times(b.dataset.k); onPick(null); }; });
+    times(keys[0]);
+  }
+
+  /* ---------------- Client Portal ---------------- */
+  async function clientView(view, ctx) {
+    var t = tt(ctx), esc = ctx.esc, sb = ctx.sb, S = ctx.S;
+    view.innerHTML = '<p class="portal-muted">…</p>';
+    var res = await Promise.all([sb.rpc('attorney_list'), sb.from('bookings').select('id, starts_at, ends_at, status, meeting_type, topic, attorney_id').eq('client_id', S.client.id).not('attorney_id', 'is', null).eq('status', 'confirmed').gte('starts_at', new Date(Date.now() - 36e5).toISOString()).order('starts_at')]);
+    var list = (res[0].data || []), mine = (res[1].data || []);
+    var name = function (id) { var a = list.find(function (x) { return x.id === id; }); return a ? a.name : (ctx.L === 'pt' ? 'Advogado' : ctx.L === 'es' ? 'Abogado' : 'Attorney'); };
+    var dt = new Intl.DateTimeFormat(loc(ctx), { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
+    view.innerHTML = ctx.head(t('c_title'), t('c_lead')) + '<p class="att-fee">' + esc(t('fee')) + '</p>' +
+      (mine.length ? '<section class="portal-card"><h2 class="portal-h2">' + esc(t('c_mine')) + '</h2><ul class="list">' + mine.map(function (b) {
+        return '<li><div class="list__main"><strong>' + esc(t('c_with', { a: name(b.attorney_id) })) + '</strong><span>' + esc(cap(dt.format(new Date(b.starts_at)))) + ' · ' + esc(t(b.meeting_type)) + (b.topic ? ' · ' + esc(b.topic) : '') + '</span></div>' +
+          '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" data-rs="' + b.id + '" data-a="' + b.attorney_id + '">' + esc(t('c_resched')) + '</button><button class="btn btn--ghost btn--xs" type="button" data-cx="' + b.id + '">' + esc(t('c_cancel')) + '</button></div></li>';
+      }).join('') + '</ul></section>' : '') +
+      (list.length ? '<div class="att-grid">' + list.map(function (a) {
+        return '<article class="portal-card att-card"><div class="att-card__top"><span class="att-av" aria-hidden="true">' + esc(initials(a.name)) + '</span><div><h2 class="portal-h2">' + esc(a.name) + '</h2>' + (a.company ? '<p class="portal-muted">' + esc(a.company) + '</p>' : '') + '</div></div>' +
+          (a.practice ? '<p class="att-practice">' + esc(a.practice) + '</p>' : '') + (a.bio ? '<p class="att-bio">' + esc(a.bio) + '</p>' : '') +
+          '<button class="btn btn--navy btn--sm" type="button" data-book="' + a.id + '">' + esc(t('c_book')) + '</button></article>';
+      }).join('') + '</div>' : '<div class="empty-state"><p class="empty">' + esc(t('c_none')) + '</p></div>');
+    var reload = function () { clientView(view, ctx); };
+    view.querySelectorAll('[data-book]').forEach(function (b) { b.onclick = function () { book(ctx, t, list.find(function (a) { return a.id === b.dataset.book; }), reload); }; });
+    view.querySelectorAll('[data-rs]').forEach(function (b) { b.onclick = function () { resched(ctx, t, b.dataset.rs, b.dataset.a, name(b.dataset.a), reload); }; });
+    view.querySelectorAll('[data-cx]').forEach(function (b) { b.onclick = function () { cancelModal(ctx, t, t('c_cancelQ'), function (reason) { return sb.rpc('client_cancel_attorney_booking', { p_booking: b.dataset.cx, p_reason: reason }); }, reload); }; });
+  }
+  function book(ctx, t, a, done) {
+    var esc = ctx.esc, pick = null;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + esc(t('c_with', { a: a.name })) + '</h2><button class="close-x" type="button" aria-label="' + esc(t('back')) + '">×</button></div>' +
+      '<div id="att-pick"></div><form class="portal-form" id="att-f" novalidate hidden>' +
+      '<p class="att-chosen" id="att-chosen"></p>' +
+      '<fieldset class="field att-set"><legend>' + esc(t('c_format')) + '</legend><div class="att-fmt">' + ['video', 'phone', 'whatsapp'].map(function (m, i) { return '<label><input type="radio" name="fmt" value="' + m + '"' + (i === 0 ? ' checked' : '') + '> ' + esc(t(m)) + '</label>'; }).join('') + '</div></fieldset>' +
+      '<div class="field"><label for="att-topic">' + esc(t('c_topic')) + '</label><input id="att-topic" maxlength="100" required></div>' +
+      '<div class="field"><label for="att-phone">' + esc(t('c_phone')) + '</label><input id="att-phone" type="tel" autocomplete="tel" maxlength="24" placeholder="+1 407 555 0100"></div>' +
+      '<div class="field"><label for="att-notes">' + esc(t('c_notes')) + '</label><textarea id="att-notes" rows="3" maxlength="2000"></textarea></div>' +
+      '<p class="att-fee">' + esc(t('fee')) + '</p><div class="portal-alert" id="att-m" role="alert"></div><button class="btn btn--navy" type="submit">' + esc(t('c_confirm')) + '</button></form>');
+    var f = ctx.$('#att-f', o);
+    slotPicker(ctx, t, ctx.$('#att-pick', o), a.id, function (iso, time, day) {
+      pick = iso; f.hidden = !iso; if (iso) { ctx.$('#att-chosen', o).textContent = day + ' · ' + time; ctx.$('#att-topic', o).focus(); }
+    });
+    f.onsubmit = async function (e) {
+      e.preventDefault(); var m = ctx.$('#att-m', o), btn = f.querySelector('button[type=submit]');
+      var fmt = (f.querySelector('input[name=fmt]:checked') || {}).value || 'video', ph = ctx.$('#att-phone', o).value.trim(), phone = ph ? '+' + ph.replace(/\D/g, '').replace(/^00/, '') : '';
+      if (!pick) return; if (ctx.$('#att-topic', o).value.trim().length < 2) { ctx.$('#att-topic', o).focus(); return; }
+      if ((ph || fmt !== 'video') && !/^\+[1-9]\d{6,14}$/.test(phone)) { ctx.msg(m, t('e_phone'), 'error'); ctx.$('#att-phone', o).focus(); return; }
+      btn.disabled = true;
+      var r = await ctx.sb.rpc('client_book_attorney', { p_client: ctx.S.client.id, p_attorney: a.id, p_start: pick, p_meeting_type: fmt, p_topic: ctx.$('#att-topic', o).value.trim(), p_notes: ctx.$('#att-notes', o).value.trim(), p_timezone: myTz(), p_phone: phone || null });
+      btn.disabled = false;
+      if (r.error) { ctx.msg(m, errOf(ctx, t, r.error), 'error'); if (/slot_unavailable/.test(r.error.message)) slotPicker(ctx, t, ctx.$('#att-pick', o), a.id, function (iso, time, day) { pick = iso; f.hidden = !iso; if (iso) ctx.$('#att-chosen', o).textContent = day + ' · ' + time; }); return; }
+      ctx.closeOverlay(); done(); setTimeout(function () { var v = document.querySelector('.console__head, h1'); if (v) { var p = document.createElement('div'); p.className = 'portal-alert portal-alert--ok'; p.style.display = 'block'; p.setAttribute('role', 'status'); p.textContent = t('c_done'); v.parentNode.insertBefore(p, v.nextSibling); } }, 400);
+    };
+  }
+  function resched(ctx, t, id, attorneyId, name, done) {
+    var esc = ctx.esc, pick = null;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + esc(t('c_resched')) + ' · ' + esc(name) + '</h2><button class="close-x" type="button" aria-label="' + esc(t('back')) + '">×</button></div>' +
+      '<div id="att-pick"></div><div class="portal-alert" id="att-m" role="alert"></div><button class="btn btn--navy" type="button" id="att-go" disabled>' + esc(t('c_resched')) + '</button>');
+    slotPicker(ctx, t, ctx.$('#att-pick', o), attorneyId, function (iso) { pick = iso; ctx.$('#att-go', o).disabled = !iso; });
+    ctx.$('#att-go', o).onclick = async function () {
+      if (!pick) return; this.disabled = true;
+      var r = await ctx.sb.rpc('client_reschedule_attorney_booking', { p_booking: id, p_new_start: pick });
+      if (r.error) { this.disabled = false; return ctx.msg(ctx.$('#att-m', o), errOf(ctx, t, r.error), 'error'); }
+      ctx.closeOverlay(); done();
+    };
+  }
+  function cancelModal(ctx, t, question, run, done) {
+    var esc = ctx.esc;
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + esc(question) + '</h2><button class="close-x" type="button" aria-label="' + esc(t('c_keep')) + '">×</button></div>' +
+      '<div class="field"><label for="att-why">' + esc(t('c_reason')) + '</label><textarea id="att-why" rows="3" maxlength="500"></textarea></div><div class="portal-alert" id="att-m" role="alert"></div>' +
+      '<div class="portal-btn-row"><button class="btn btn--danger" type="button" id="att-ok">' + esc(t('c_cancelOk')) + '</button><button class="btn btn--ghost" type="button" id="att-no">' + esc(t('c_keep')) + '</button></div>', true);
+    ctx.$('#att-no', o).onclick = function () { ctx.closeOverlay(); };
+    ctx.$('#att-ok', o).onclick = async function () {
+      this.disabled = true; var r = await run(ctx.$('#att-why', o).value.trim());
+      if (r.error) { this.disabled = false; return ctx.msg(ctx.$('#att-m', o), errOf(ctx, t, r.error), 'error'); }
+      ctx.closeOverlay(); done();
+    };
+  }
+
+  /* ---------------- Partner Portal (attorney) ---------------- */
+  async function partnerView(view, ctx) {
+    var t = tt(ctx), esc = ctx.esc, sb = ctx.sb, P = ctx.S.partner;
+    view.innerHTML = '<p class="portal-muted">…</p>';
+    var res = await Promise.all([sb.from('attorney_availability').select('weekday, start_time, end_time').eq('partner_id', P.id).order('start_time'), sb.from('attorney_blackouts').select('day').eq('partner_id', P.id).order('day'),
+      sb.from('bookings').select('id, starts_at, ends_at, name, email, phone, topic, notes, meeting_type, status').eq('attorney_id', P.id).eq('status', 'confirmed').gte('starts_at', new Date(Date.now() - 36e5).toISOString()).order('starts_at').limit(50)]);
+    var rules = res[0].data || [], blocks = (res[1].data || []).map(function (x) { return x.day; }), next = res[2].data || [];
+    var tz = P.attorney_timezone || 'America/New_York', tzs = TZS.indexOf(tz) > -1 ? TZS : [tz].concat(TZS);
+    var hm = function (x) { return String(x || '').slice(0, 5); };
+    var row = function (d) {
+      var r = rules.filter(function (x) { return x.weekday === d; });
+      return '<div class="att-wk" data-d="' + d + '"><div class="check-row att-wk__day"><input type="checkbox" class="att-wk__on" id="atc-d' + d + '"' + (r.length ? ' checked' : '') + '><label for="atc-d' + d + '">' + esc(t('days')[d]) + '</label></div>' +
+        '<span class="att-wk__p"><input type="time" class="att-s1" value="' + hm(r[0] ? r[0].start_time : '09:00') + '" aria-label="' + esc(t('days')[d]) + ' 1"> – <input type="time" class="att-e1" value="' + hm(r[0] ? r[0].end_time : '12:00') + '" aria-label="' + esc(t('days')[d]) + ' 1"></span>' +
+        '<span class="att-wk__p att-wk__p2"><input type="time" class="att-s2" value="' + hm(r[1] ? r[1].start_time : '') + '" aria-label="' + esc(t('days')[d] + ' · ' + t('a_second')) + '"> – <input type="time" class="att-e2" value="' + hm(r[1] ? r[1].end_time : '') + '" aria-label="' + esc(t('days')[d] + ' · ' + t('a_second')) + '"></span></div>';
+    };
+    var dt = new Intl.DateTimeFormat(loc(ctx), { timeZone: tz, weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+    view.innerHTML = ctx.head(t('a_title'), t('a_lead')) + '<div class="att-cols"><section class="portal-card"><form class="portal-form" id="atc-f" novalidate>' +
+      '<div class="check-row"><input type="checkbox" id="atc-on"' + (P.attorney_bookable !== false ? ' checked' : '') + '><label for="atc-on">' + esc(t('a_on')) + '</label></div>' +
+      '<div class="portal-grid2"><div class="field"><label for="atc-pr">' + esc(t('a_practice')) + '</label><input id="atc-pr" maxlength="200" placeholder="' + esc(t('a_practiceP')) + '" value="' + esc(P.attorney_practice || '') + '"></div>' +
+      '<div class="field"><label for="atc-how">' + esc(t('a_how')) + '</label><input id="atc-how" maxlength="500" placeholder="' + esc(t('a_howP')) + '" value="' + esc(P.attorney_meeting_info || '') + '"></div></div>' +
+      '<div class="field"><label for="atc-bio">' + esc(t('a_bio')) + '</label><textarea id="atc-bio" rows="2" maxlength="1200">' + esc(P.attorney_bio || '') + '</textarea></div>' +
+      '<div class="portal-grid2"><div class="field"><label for="atc-len">' + esc(t('a_len')) + '</label><select id="atc-len">' + [15, 20, 30, 45, 60, 90].map(function (n) { return '<option value="' + n + '"' + ((P.attorney_slot_minutes || 30) === n ? ' selected' : '') + '>' + n + ' ' + esc(t('a_min')) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="atc-tz">' + esc(t('a_tz')) + '</label><select id="atc-tz">' + tzs.map(function (z) { return '<option' + (z === tz ? ' selected' : '') + '>' + esc(z) + '</option>'; }).join('') + '</select></div></div>' +
+      '<fieldset class="field att-set"><legend>' + esc(t('a_week')) + '</legend><div class="att-week">' + [1, 2, 3, 4, 5, 6, 0].map(row).join('') + '</div></fieldset>' +
+      '<fieldset class="field att-set"><legend>' + esc(t('a_block')) + '</legend><div class="att-blk"><input type="date" id="atc-day" min="' + dayKey(new Date()) + '"><button class="btn btn--ghost btn--xs" type="button" id="atc-add">' + esc(t('a_add')) + '</button></div><div class="att-chips" id="atc-chips"></div></fieldset>' +
+      '<div class="portal-alert" id="atc-m" role="alert"></div><button class="btn btn--navy" type="submit">' + esc(t('a_save')) + '</button></form></section>' +
+      '<section class="portal-card"><h2 class="portal-h2">' + esc(t('a_next')) + '</h2>' + (next.length ? '<ul class="list att-next">' + next.map(function (b) {
+        return '<li><div class="list__main"><strong>' + esc(dt.format(new Date(b.starts_at))) + ' · ' + esc(t(b.meeting_type)) + '</strong><span>' + esc(t('a_client')) + ': ' + esc(b.name) + ' · ' + esc(b.email) + (b.phone ? ' · ' + esc(b.phone) : '') + '</span>' +
+          (b.topic ? '<span>' + esc(b.topic) + '</span>' : '') + (b.notes ? '<span class="portal-muted">' + esc(b.notes) + '</span>' : '') + '</div><button class="btn btn--ghost btn--xs" type="button" data-cx="' + b.id + '">' + esc(t('c_cancel')) + '</button></li>';
+      }).join('') + '</ul>' : '<p class="empty">' + esc(t('a_noneNext')) + '</p>') + '<p class="att-fee">' + esc(t('fee')) + '</p></section></div>';
+    var chips = function () { ctx.$('#atc-chips').innerHTML = blocks.map(function (d, i) { return '<span class="att-chip">' + esc(new Intl.DateTimeFormat(loc(ctx), { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(d + 'T12:00:00Z'))) + '<button type="button" data-i="' + i + '" aria-label="×">×</button></span>'; }).join(''); ctx.$('#atc-chips').querySelectorAll('button').forEach(function (b) { b.onclick = function () { blocks.splice(+b.dataset.i, 1); chips(); }; }); };
+    chips();
+    ctx.$('#atc-add').onclick = function () { var v = ctx.$('#atc-day').value; if (v && blocks.indexOf(v) < 0) { blocks.push(v); blocks.sort(); chips(); } };
+    ctx.$('#atc-f').onsubmit = async function (e) {
+      e.preventDefault(); var m = ctx.$('#atc-m'), out = [], bad = false;
+      view.querySelectorAll('.att-wk').forEach(function (w) {
+        if (!w.querySelector('.att-wk__on').checked) return;
+        [['.att-s1', '.att-e1'], ['.att-s2', '.att-e2']].forEach(function (p) { var s = w.querySelector(p[0]).value, en = w.querySelector(p[1]).value; if (!s && !en) return; if (!s || !en || en <= s) { bad = true; return; } out.push({ weekday: +w.dataset.d, start: s, end: en }); });
+      });
+      if (bad) return ctx.msg(m, t('a_invalid'), 'error');
+      var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+      var r = await sb.rpc('attorney_save_calendar', { p_bookable: ctx.$('#atc-on').checked, p_practice: ctx.$('#atc-pr').value, p_bio: ctx.$('#atc-bio').value, p_meeting_info: ctx.$('#atc-how').value, p_slot: +ctx.$('#atc-len').value, p_timezone: ctx.$('#atc-tz').value, p_rules: out, p_blackouts: blocks });
+      btn.disabled = false;
+      if (r.error) return ctx.msg(m, ctx.errText(r.error), 'error');
+      Object.assign(P, { attorney_bookable: ctx.$('#atc-on').checked, attorney_practice: ctx.$('#atc-pr').value.trim(), attorney_bio: ctx.$('#atc-bio').value.trim(), attorney_meeting_info: ctx.$('#atc-how').value.trim(), attorney_slot_minutes: +ctx.$('#atc-len').value, attorney_timezone: ctx.$('#atc-tz').value });
+      ctx.msg(m, t('a_saved'), 'ok');
+    };
+    view.querySelectorAll('[data-cx]').forEach(function (b) { b.onclick = function () { cancelModal(ctx, t, t('a_cancelQ'), function (reason) { return sb.rpc('attorney_cancel_booking', { p_booking: b.dataset.cx, p_reason: reason }); }, function () { partnerView(view, ctx); }); }; });
+  }
+
+  window.EAttorney = { clientView: clientView, partnerView: partnerView, label: function (L, k) { return (T[L] || T.en)[k]; } };
 })();
 
 </script>
@@ -5603,7 +5920,7 @@ window.ENDEAVOR_CFG = {
       code: 'Code', verify: 'Verify', badCode: 'Invalid code. Check your phone time and try again.', enrollTitle: 'Turn on two-step verification',
       enrollLead: 'Required to protect your tax and company documents. Scan the QR code with Google Authenticator, Microsoft Authenticator or 1Password and enter the code.',
       noCamera: 'No camera? Enter this key in the app:', activate: 'Activate and continue', noAccess: 'No active access', noAccessText: 'Your account is not linked to an active client portal. If you received an invitation, confirm you used the same email. Questions: support@endeavorbiz.com.',
-      nav_overview: 'Overview', nav_companies: 'My Companies', nav_documents: 'Documents', nav_compliance: 'Tax Compliance', nav_reports: 'Financial Reports', nav_upload: 'Upload Documents', nav_collab: 'Collaborators', nav_settings: 'Settings',
+      nav_attorneys: 'Attorneys', nav_overview: 'Overview', nav_companies: 'My Companies', nav_documents: 'Documents', nav_compliance: 'Tax Compliance', nav_reports: 'Financial Reports', nav_upload: 'Upload Documents', nav_collab: 'Collaborators', nav_settings: 'Settings',
       account: 'Account', hello: 'Hello, {n}', overviewLead: 'Everything about your U.S. companies in one place.',
       k_companies: 'Companies', k_next: 'Next deadline', k_docs: 'Documents', k_reports: 'Financial reports', none: 'None',
       nextDeadlines: 'Next deadlines', recentDocs: 'Recent documents', seeAll: 'See all', quick: 'Quick actions', qUpload: 'Upload documents for your tax return', qInvite: 'Invite your accountant or bookkeeper', qQbo: 'Connect QuickBooks',
@@ -5654,7 +5971,7 @@ window.ENDEAVOR_CFG = {
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Confira o horário do celular e tente de novo.', enrollTitle: 'Ative a verificação em duas etapas',
       enrollLead: 'Obrigatória para proteger seus documentos fiscais e da empresa. Escaneie o QR code com Google Authenticator, Microsoft Authenticator ou 1Password e digite o código.',
       noCamera: 'Sem câmera? Digite esta chave no app:', activate: 'Ativar e continuar', noAccess: 'Sem acesso ativo', noAccessText: 'Sua conta não está ligada a um portal de cliente ativo. Se você recebeu um convite, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
-      nav_overview: 'Visão geral', nav_companies: 'Minhas empresas', nav_documents: 'Documentos', nav_compliance: 'Prazos fiscais', nav_reports: 'Relatórios financeiros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configurações',
+      nav_attorneys: 'Advogados', nav_overview: 'Visão geral', nav_companies: 'Minhas empresas', nav_documents: 'Documentos', nav_compliance: 'Prazos fiscais', nav_reports: 'Relatórios financeiros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configurações',
       account: 'Conta', hello: 'Olá, {n}', overviewLead: 'Tudo sobre as suas empresas nos EUA em um só lugar.',
       k_companies: 'Empresas', k_next: 'Próximo prazo', k_docs: 'Documentos', k_reports: 'Relatórios financeiros', none: 'Nenhum',
       nextDeadlines: 'Próximos prazos', recentDocs: 'Documentos recentes', seeAll: 'Ver todos', quick: 'Ações rápidas', qUpload: 'Enviar documentos para o imposto', qInvite: 'Convidar seu contador ou bookkeeper', qQbo: 'Conectar QuickBooks',
@@ -5705,7 +6022,7 @@ window.ENDEAVOR_CFG = {
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Revise la hora del celular e intente de nuevo.', enrollTitle: 'Active la verificación en dos pasos',
       enrollLead: 'Obligatoria para proteger sus documentos fiscales y de la empresa. Escanee el código QR con Google Authenticator, Microsoft Authenticator o 1Password e ingrese el código.',
       noCamera: '¿Sin cámara? Ingrese esta clave en la app:', activate: 'Activar y continuar', noAccess: 'Sin acceso activo', noAccessText: 'Su cuenta no está vinculada a un portal de cliente activo. Si recibió una invitación, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
-      nav_overview: 'Resumen', nav_companies: 'Mis empresas', nav_documents: 'Documentos', nav_compliance: 'Plazos fiscales', nav_reports: 'Reportes financieros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configuración',
+      nav_attorneys: 'Abogados', nav_overview: 'Resumen', nav_companies: 'Mis empresas', nav_documents: 'Documentos', nav_compliance: 'Plazos fiscales', nav_reports: 'Reportes financieros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configuración',
       account: 'Cuenta', hello: 'Hola, {n}', overviewLead: 'Todo sobre sus empresas en EE. UU. en un solo lugar.',
       k_companies: 'Empresas', k_next: 'Próximo plazo', k_docs: 'Documentos', k_reports: 'Reportes financieros', none: 'Ninguno',
       nextDeadlines: 'Próximos plazos', recentDocs: 'Documentos recientes', seeAll: 'Ver todos', quick: 'Acciones rápidas', qUpload: 'Enviar documentos para el impuesto', qInvite: 'Invitar a su contador o bookkeeper', qQbo: 'Conectar QuickBooks',
@@ -5964,6 +6281,7 @@ window.ENDEAVOR_CFG = {
     if (S.perms.reports) n.push(['reports', 'nav_reports', 'i-chart']);
     if (S.perms.upload) n.push(['upload', 'nav_upload', 'i-up']);
     if (S.perms.owner) n.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
+    if (window.EAttorney) n.push(['advogados', 'nav_attorneys', 'i-law']);
     n.push(['settings', 'nav_settings', 'i-gear']);
     return n;
   }
@@ -6005,6 +6323,7 @@ window.ENDEAVOR_CFG = {
     var view = $('#view'); if (!view) return;
     view.innerHTML = '<p class="portal-muted">' + t('loading') + '</p>'; view.scrollTop = 0;
     var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: vUpload, invoices: vInvoices, collaborators: vCollab, settings: vSettings };
+    if (window.EAttorney) V.advogados = function (view) { return EAttorney.clientView(view, refCtx()); };
     if (S.ref) Object.assign(V, S.ref.views);
     if (window.EClientOA) V.oa = EClientOA.view;
     if (v === 'oa') $$('.console__nav a').forEach(function (a) { if (a.dataset.view === 'companies') a.setAttribute('aria-current', 'page'); });

@@ -530,6 +530,8 @@
     var rows = await q(query);
     if (!rows.length) { body.innerHTML = '<p class="empty">Nenhum agendamento.</p>'; return; }
     var msgs = await q(sb.from('booking_messages').select('booking_id, version, kind, offset_min, channel, audience, status').in('booking_id', rows.map(function (b) { return b.id; })).eq('audience', 'client'));
+    var attIds = rows.map(function (b) { return b.attorney_id; }).filter(Boolean), attName = {};
+    if (attIds.length) (await q(sb.from('partners').select('id, name').in('id', attIds))).forEach(function (p) { attName[p.id] = p.name; });
     function sentLine(b) {
       var mine = msgs.filter(function (m) { return m.booking_id === b.id; }); if (!mine.length) return '';
       var lbl = function (m) { return m.kind === 'reminder' ? 'Lembrete ' + (m.offset_min % 1440 === 0 ? m.offset_min / 1440 + 'd' : m.offset_min % 60 === 0 ? m.offset_min / 60 + 'h' : m.offset_min + 'min') : { confirmation: 'Confirmação', cancelled: 'Cancelamento', rescheduled: 'Remarcação' }[m.kind]; };
@@ -542,9 +544,9 @@
     rows.forEach(function (b) {
       var d = fmtDay(b.starts_at);
       if (d !== lastDay) { html += (lastDay ? '</ul></section>' : '') + '<section class="portal-card"><h2 class="portal-h2">' + esc(d.charAt(0).toUpperCase() + d.slice(1)) + '</h2><ul class="list">'; lastDay = d; }
-      html += '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at, { dateStyle: undefined })) + ' – ' + esc(fmtDT(b.ends_at, { dateStyle: undefined })) + ' · ' + esc(b.name) + '</strong>' +
+      html += '<li><div class="list__main"><strong>' + esc(fmtDT(b.starts_at, { dateStyle: undefined })) + ' – ' + esc(fmtDT(b.ends_at, { dateStyle: undefined })) + ' · ' + esc(b.name) + '</strong>' + (b.attorney_id ? '<span class="att-tag"><span>Consulta com o advogado</span> ' + esc(attName[b.attorney_id] || '') + '</span>' : '') +
         '<span>' + esc(MEET_PT[b.meeting_type]) + ' · ' + esc(b.email) + (b.phone ? ' · ' + esc(b.phone) : '') + ' · ' + esc(b.topic || '') + (b.language ? ' · ' + esc(b.language) : '') + '</span>' +
-        (b.notes ? '<span>“' + esc(b.notes) + '”</span>' : '') + (b.status === 'cancelled' ? '<span class="cancel-line">' + (b.cancelled_by === 'client' ? 'Cancelado pelo cliente' : 'Cancelado pela Endeavor') + (b.cancel_reason ? ' · Motivo: ' + esc(b.cancel_reason) : ' · Motivo não informado') + '</span>' : '') + sentLine(b) + '</div><div class="portal-btn-row">' + badge(b.status) +
+        (b.notes ? '<span>“' + esc(b.notes) + '”</span>' : '') + (b.status === 'cancelled' ? '<span class="cancel-line">' + (b.cancelled_by === 'client' ? 'Cancelado pelo cliente' : b.cancelled_by === 'attorney' ? 'Cancelado pelo advogado' : 'Cancelado pela Endeavor') + (b.cancel_reason ? ' · Motivo: ' + esc(b.cancel_reason) : ' · Motivo não informado') + '</span>' : '') + sentLine(b) + '</div><div class="portal-btn-row">' + badge(b.status) +
         (tab === 'hist' ? '<button class="btn btn--danger btn--xs" data-delbk="' + esc(b.id) + '">Excluir</button>'
           : (b.status === 'confirmed' ? '<button class="btn btn--ghost btn--xs" data-act="completed" data-id="' + esc(b.id) + '">Concluir</button><button class="btn btn--ghost btn--xs" data-act="no_show" data-id="' + esc(b.id) + '">Não veio</button><button class="btn btn--danger btn--xs" data-act="cancelled" data-id="' + esc(b.id) + '">Cancelar</button>' : '') +
             '<a class="btn btn--ghost btn--xs" href="mailto:' + esc(b.email) + '">E-mail</a>') + '</div></li>';

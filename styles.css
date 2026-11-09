@@ -1041,3 +1041,51 @@ html.fab-raise .sc { --sc-bottom: calc(var(--fab-raise, 5rem) + 1.25rem); }
 @media (max-width: 600px) { .sc { --sc-right: max(1rem, env(safe-area-inset-right)); --sc-bottom: max(1rem, env(safe-area-inset-bottom)); } .sc-panel { right: 0; bottom: 0; height: 100%; height: 100dvh; } }
 .sc-teaser__opts { display: flex; flex-direction: column; align-items: flex-end; gap: .35rem; margin-top: .5rem; }
 .sc-teaser__opts .sc-chip { box-shadow: 0 6px 16px rgb(7 22 43 / .14); text-align: right; }
+
+/* ---- Attorney consultations (client "Advogados" + attorney "Minha agenda") ---- */
+.att-fee{margin:.2rem 0 1rem;padding:.6rem .85rem;border-radius:8px;background:#f6f1e4;border-left:3px solid #b8913a;color:#3a3326;font-size:.88rem;line-height:1.45}
+.att-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1rem}
+.att-card{display:flex;flex-direction:column;gap:.5rem}
+.att-card .btn{margin-top:auto;align-self:flex-start}
+.att-card__top{display:flex;gap:.75rem;align-items:center}
+.att-card__top .portal-h2{margin:0}
+.att-card__top .portal-muted{margin:.1rem 0 0;font-size:.86rem}
+.att-av{flex:none;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#0f2340;color:#e9d7a6;font-weight:700;letter-spacing:.02em}
+.att-practice{margin:0;font-size:.85rem;font-weight:600;color:#7a5d1f}
+.att-bio{margin:0;font-size:.9rem;line-height:1.5;color:#3d4757}
+.att-tz{margin:0 0 .4rem;font-size:.8rem;color:#5b6573}
+.att-step{margin:.6rem 0 .35rem;font-weight:600;font-size:.9rem}
+.att-days{display:flex;gap:.4rem;overflow-x:auto;padding-bottom:.35rem;scrollbar-width:thin}
+.att-day,.att-time{border:1px solid #cfd6e0;background:#fff;border-radius:8px;cursor:pointer;font:inherit;color:#1c2633}
+.att-day{flex:none;min-width:88px;padding:.45rem .55rem;font-size:.84rem;display:flex;flex-direction:column;align-items:center;gap:.1rem}
+.att-day small{font-size:.72rem;color:#5b6573}
+.att-times{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:.4rem;max-height:180px;overflow-y:auto}
+.att-time{padding:.5rem .3rem;font-size:.88rem}
+.att-day:hover,.att-time:hover{border-color:#0f2340}
+.att-day.is-on,.att-time.is-on{background:#0f2340;border-color:#0f2340;color:#fff}
+.att-day.is-on small{color:#e9d7a6}
+.att-day:focus-visible,.att-time:focus-visible{outline:2px solid #b8913a;outline-offset:2px}
+.att-chosen{margin:.8rem 0 .2rem;font-weight:700;color:#0f2340}
+.att-fmt{display:flex;flex-wrap:wrap;gap:.4rem 1.1rem}
+.att-fmt label{display:flex;align-items:center;gap:.35rem;font-weight:400}
+.att-cols{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1rem;align-items:start}
+.att-week{display:flex;flex-direction:column;gap:.3rem}
+.att-wk{display:grid;grid-template-columns:110px auto auto;gap:.5rem;align-items:center;font-size:.88rem}
+.att-wk__day{display:flex;align-items:center;gap:.4rem;font-weight:600;margin:0}
+.att-wk__p{display:flex;align-items:center;gap:.3rem}
+.att-wk input[type=time]{min-height:2.1rem;padding:0 .3rem;font-size:.82rem;width:6.4rem;min-width:0}
+.att-wk:not(:has(.att-wk__on:checked)) .att-wk__p{opacity:.4}
+.att-blk{display:flex;gap:.5rem;align-items:center}
+.att-blk input{width:auto}
+.att-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.45rem}
+.att-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .3rem .2rem .6rem;border-radius:999px;background:#eef1f5;font-size:.82rem}
+.att-chip button{border:0;background:none;cursor:pointer;font-size:1rem;line-height:1;padding:0 .25rem;color:#5b6573}
+.att-next li{align-items:flex-start}
+@media (max-width:900px){.att-cols{grid-template-columns:1fr}}
+@media (max-width:560px){.att-wk{grid-template-columns:1fr 1fr;}.att-wk__day{grid-column:1/-1}}
+fieldset.field.att-set{border:0;padding:0;margin:0 0 .9rem;min-width:0}
+fieldset.field.att-set legend{padding:0;margin-bottom:.4rem;font-weight:600;font-size:.9rem}
+.att-fmt input[type=radio]{width:18px;height:18px;min-height:0;padding:0;margin:0;flex:none;accent-color:#0f2340}
+.att-wk__day.check-row{margin:0;align-items:center}.att-wk__day.check-row label{margin:0;font-weight:600}
+.att-wk__p2:has(input:placeholder-shown){}
+#atc-bio{min-height:4.2rem}

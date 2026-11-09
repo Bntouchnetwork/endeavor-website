@@ -115,6 +115,20 @@
     Object.assign(PART(uuid(), 'Juliana Prado', 'juliana@pradocontabil.example.com', 'Prado Contabilidade', 'accountant', null, 'active', 'u-juliana', false, 1),
       { program_status: 'pending', signup_source: 'site', contract_status: 'none', contract_pct: null, contract_signed_at: null, approved_at: null, country: 'Brasil', phone: '+5511988887777', onboarding_at: iso(2, 14),
         notes: 'Sobre os clientes: atende empresas brasileiras abrindo LLC na Flórida.\nCadastro pelo site.' })];
+  // attorney partners that clients can book with
+  (function () {
+    var A1 = Object.assign(PART('a1000000-0000-4000-8000-0000000000a1', 'Dra. Helena Duarte', 'helena@duartelaw.example.com', 'Duarte Law PLLC', 'attorney', 10, 'active', 'u-helena', false, 90),
+      { attorney_bookable: true, attorney_practice: 'Direito empresarial · Contratos · Imobiliário', attorney_bio: 'Advogada licenciada na Flórida. Atende em português, inglês e espanhol empresários brasileiros que abrem ou compram negócios nos EUA.', attorney_meeting_info: 'Link do Zoom enviado no dia da consulta.', attorney_slot_minutes: 30, attorney_timezone: 'America/New_York' });
+    var A2 = Object.assign(PART('a2000000-0000-4000-8000-0000000000a2', 'Michael Grant', 'mgrant@grantlaw.example.com', 'Grant Immigration Law', 'attorney', 10, 'active', 'u-grant', false, 70),
+      { language: 'en', attorney_bookable: true, attorney_practice: 'Immigration · E-2 and L-1 business visas', attorney_bio: 'Immigration attorney focused on investors and business owners. Consultations in English and Spanish.', attorney_meeting_info: 'Phone or Zoom — you choose when booking.', attorney_slot_minutes: 45, attorney_timezone: 'America/New_York' });
+    DB.partners.push(A1, A2);
+    if (/[?&]attorney=1/.test(location.search)) Object.assign(DB.partners[0], { partner_type: 'attorney', attorney_bookable: true, attorney_practice: 'Direito tributário', attorney_bio: '', attorney_meeting_info: 'Zoom', attorney_slot_minutes: 30, attorney_timezone: 'America/New_York' });
+    DB.attorney_availability = [];
+    [[A1.id, [1, 2, 3, 4], '09:00', '12:00'], [A1.id, [2, 4], '14:00', '17:00'], [A2.id, [1, 3, 5], '10:00', '16:00'], [DB.partners[0].id, [1, 3], '09:00', '12:00']].forEach(function (x) { x[1].forEach(function (w) { DB.attorney_availability.push({ partner_id: x[0], weekday: w, start_time: x[2] + ':00', end_time: x[3] + ':00' }); }); });
+    DB.attorney_blackouts = [];
+    var nb = new Date(now); nb.setDate(nb.getDate() + 3); var b0 = new Date(nb); b0.setHours(10, 0, 0, 0);
+    DB.bookings.push({ id: uuid(), attorney_id: A1.id, client_id: null, starts_at: b0.toISOString(), ends_at: new Date(+b0 + 18e5).toISOString(), name: 'Marina Souza', email: 'marina@example.com', phone: '+55 11 97777-2222', topic: 'Contrato de compra de empresa', notes: '', meeting_type: 'video', status: 'confirmed', language: 'pt', created_at: iso(-1) });
+  })();
   DB.referrals = []; DB.referral_events = []; DB.referral_items = []; DB.invoices = [];
   var REF = function (pid, lead, client, name, email, company, service, status, d, steps, items) {
     var id = uuid(), l = DB.leads.find(function (x) { return x.id === lead; }) || {};
@@ -404,6 +418,8 @@
       case 'company_documents': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && ((r.visible_to_client && can(r.client_id, r.category)) || r.uploaded_by === ME.id); });
       case 'financial_reports': return rows.filter(function (r) { return coOk(r.client_id, r.company_id) && can(r.client_id, 'report'); });
       case 'partners': return rows.filter(function (r) { return PME && r.id === PME.id; });
+      case 'attorney_availability': case 'attorney_blackouts': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
+      case 'bookings': return rows.filter(function (r) { return (PME && r.attorney_id === PME.id) || (r.client_id && M(r.client_id)); });
       case 'crm_settings': return rows;
       case 'agent_messages': return rows.filter(function (r) { return PME && r.partner_id === PME.id && (r.channel === 'portal' || r.channel === 'whatsapp'); });
       case 'referrals': return rows.filter(function (r) { return PME && r.partner_id === PME.id; });
@@ -611,6 +627,45 @@
         return { source: 'proposal', title: pr.title, total_cents: pr.total_cents, currency: pr.currency, partner_pct: iv.partner_pct != null ? iv.partner_pct : pr.partner_pct, commission_cents: iv.partner_amount_cents != null ? iv.partner_amount_cents : Math.round(pr.total_cents * (pr.partner_pct || 0) / 100), closed_at: pr.accepted_at, invoice_status: iv.status || null, transfer_status: iv.transfer_status || null }; })
         .concat(DB.invoices.filter(function (i) { return i.referral_id === rr.id && !i.proposal_id && (i.status === 'open' || i.status === 'paid'); }).map(function (i) { return { source: 'invoice', title: i.description || i.number, total_cents: i.total_cents, currency: i.currency, partner_pct: i.partner_pct, commission_cents: i.partner_amount_cents || 0, closed_at: i.sent_at || i.created_at, invoice_status: i.status, transfer_status: i.transfer_status }; }))
         .sort(function (a, b) { return new Date(a.closed_at) - new Date(b.closed_at); });
+    }
+    else if (/^attorney_|^client_book_attorney$|^client_(cancel|reschedule)_attorney_booking$|^partner_set_type$/.test(name)) {
+      var MEM = function (cid) { return DB.client_users.some(function (u) { return u.user_id === ME.id && u.client_id === cid && u.status === 'active'; }); };
+      var fail = function (m) { return Promise.resolve({ data: null, error: { message: m } }); };
+      var atts = function () { return DB.partners.filter(function (p) { return p.partner_type === 'attorney' && p.status === 'active' && p.program_status === 'approved' && p.attorney_bookable && !p.closure_requested_at; }); };
+      var slotsOf = function (a, from, to) {
+        var out = [], len = (a.attorney_slot_minutes || 30) * 6e4, d = new Date(from + 'T00:00:00'), end = new Date(to + 'T23:59:59'), soon = Date.now() + 12 * 36e5;
+        var blk = DB.attorney_blackouts.filter(function (b) { return b.partner_id === a.id; }).map(function (b) { return b.day; });
+        for (; d <= end; d.setDate(d.getDate() + 1)) {
+          var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); if (blk.indexOf(key) > -1) continue;
+          DB.attorney_availability.filter(function (r) { return r.partner_id === a.id && r.weekday === d.getDay(); }).forEach(function (r) {
+            var s0 = new Date(d), e0 = new Date(d); s0.setHours(+r.start_time.slice(0, 2), +r.start_time.slice(3, 5), 0, 0); e0.setHours(+r.end_time.slice(0, 2), +r.end_time.slice(3, 5), 0, 0);
+            for (var x = +s0; x + len <= +e0; x += len) { if (x < soon) continue; var iso0 = new Date(x).toISOString(); if (DB.bookings.some(function (b) { return b.attorney_id === a.id && b.status === 'confirmed' && b.starts_at === iso0; })) continue; out.push({ slot: iso0 }); }
+          });
+        }
+        return out;
+      };
+      if (name === 'attorney_list') r = atts().map(function (p) { return { id: p.id, name: p.name, company: p.company, practice: p.attorney_practice, bio: p.attorney_bio, language: p.language, slot_minutes: p.attorney_slot_minutes, timezone: p.attorney_timezone }; });
+      else if (name === 'attorney_slots') { var aa = atts().find(function (p) { return p.id === args.p_attorney; }); r = aa ? slotsOf(aa, args.p_from, args.p_to) : []; }
+      else if (name === 'client_book_attorney') {
+        var ab = atts().find(function (p) { return p.id === args.p_attorney; }); if (!ab || !MEM(args.p_client)) return fail('forbidden');
+        if (!slotsOf(ab, args.p_start.slice(0, 10), new Date(Date.parse(args.p_start) + 864e5).toISOString().slice(0, 10)).some(function (x) { return x.slot === new Date(args.p_start).toISOString(); })) return fail('slot_unavailable');
+        if (DB.bookings.filter(function (b) { return b.client_id === args.p_client && b.attorney_id === ab.id && b.status === 'confirmed' && Date.parse(b.starts_at) > Date.now(); }).length >= 2) return fail('too_many_bookings');
+        var cl = DB.clients.find(function (c) { return c.id === args.p_client; }) || {};
+        var nbk = { id: uuid(), attorney_id: ab.id, client_id: args.p_client, starts_at: new Date(args.p_start).toISOString(), ends_at: new Date(Date.parse(args.p_start) + (ab.attorney_slot_minutes || 30) * 6e4).toISOString(), name: cl.name || ME.email, email: ME.email, phone: args.p_phone, topic: args.p_topic, notes: args.p_notes, meeting_type: args.p_meeting_type, status: 'confirmed', language: 'pt', created_at: new Date().toISOString() };
+        DB.bookings.push(nbk); r = nbk.id;
+      } else if (name === 'client_cancel_attorney_booking' || name === 'attorney_cancel_booking') {
+        var bc = DB.bookings.find(function (b) { return b.id === args.p_booking && b.status === 'confirmed' && (name === 'attorney_cancel_booking' ? PME && b.attorney_id === PME.id : b.client_id && MEM(b.client_id)); });
+        if (!bc) return fail('not_found'); Object.assign(bc, { status: 'cancelled', cancelled_at: new Date().toISOString(), cancel_reason: args.p_reason || null }); r = true;
+      } else if (name === 'client_reschedule_attorney_booking') {
+        var br = DB.bookings.find(function (b) { return b.id === args.p_booking && b.status === 'confirmed' && b.client_id && MEM(b.client_id); }); if (!br) return fail('not_found');
+        var len2 = Date.parse(br.ends_at) - Date.parse(br.starts_at); br.starts_at = new Date(args.p_new_start).toISOString(); br.ends_at = new Date(Date.parse(args.p_new_start) + len2).toISOString(); r = true;
+      } else if (name === 'attorney_save_calendar') {
+        if (!PME || PME.partner_type !== 'attorney') return fail('forbidden');
+        Object.assign(PME, { attorney_bookable: !!args.p_bookable, attorney_practice: (args.p_practice || '').trim() || null, attorney_bio: (args.p_bio || '').trim() || null, attorney_meeting_info: (args.p_meeting_info || '').trim() || null, attorney_slot_minutes: args.p_slot, attorney_timezone: args.p_timezone });
+        DB.attorney_availability = DB.attorney_availability.filter(function (x) { return x.partner_id !== PME.id; }).concat((args.p_rules || []).map(function (x) { return { partner_id: PME.id, weekday: x.weekday, start_time: x.start + ':00', end_time: x.end + ':00' }; }));
+        DB.attorney_blackouts = DB.attorney_blackouts.filter(function (x) { return x.partner_id !== PME.id; }).concat((args.p_blackouts || []).map(function (d) { return { partner_id: PME.id, day: d }; }));
+        r = true;
+      } else if (name === 'partner_set_type') { if (!PME) return fail('forbidden'); PME.partner_type = args.p_type; r = [JSON.parse(JSON.stringify(PME))]; }
     }
     else if (name === 'verify_my_password') r = !!args.p_password && args.p_password !== 'errada';
     else if (name === 'partner_sync_email') r = PME ? [JSON.parse(JSON.stringify(PME))] : [];
