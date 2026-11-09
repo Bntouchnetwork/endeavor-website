@@ -68,3 +68,13 @@ The Agenda shows **WhatsApp: Ativo** after the next call to the function (at mos
 - Reminders that were missed (for example, a reminder whose time had already passed when the call was booked) are not sent late.
 - Each message is recorded once in `booking_messages`, so there are no duplicates even if the timer runs twice.
 - The cancel/reschedule link uses a random token, does not show the e-mail or the phone, and works only until the start of the call.
+
+## Consultations with attorney partners
+
+- **Partner type**: in the Partner Portal → Minha conta, the partner picks what they are (Corretor de imóveis / Real Estate Agent, Contador, Advogado / Attorney, Bookkeeping, Administração de imóveis, Consultor, Outro).
+- **Attorney calendar** ("Minha agenda", only for attorney partners): receive bookings on/off, practice areas, short bio, how the meeting happens (Zoom link, phone, address), consultation length (15–90 min), time zone, weekly availability (up to 2 periods per day), blocked days, upcoming consultations with cancel.
+- **Client Portal → Advogados**: shows every active, approved attorney partner with availability. The client books (day, time, format, subject, optional phone and notes), reschedules or cancels. At most 2 upcoming consultations per client per attorney; slots need 12 h notice and go up to 60 days ahead.
+- **Notice everywhere**: booking through the platform is free; any fees are agreed directly with the attorney.
+- **Messages**: confirmation, reschedule and cancel e-mails go to the client, the attorney (login e-mail and second e-mail, in the attorney's language and time zone) and Endeavor. Reminders go to the client and the attorney. The admin bell shows "… com o advogado X", and the admin Agenda labels these consultations.
+- Endeavor's own agenda ignores attorney consultations, so they never block Endeavor's slots.
+- Database: migration `20261109_attorney_booking.sql` (partners `attorney_*` columns, `attorney_availability`, `attorney_blackouts`, `bookings.attorney_id / client_id`, RPCs `attorney_slots`, `attorney_list`, `client_book_attorney`, `client_cancel_attorney_booking`, `client_reschedule_attorney_booking`, `attorney_cancel_booking`, `attorney_save_calendar`, `partner_set_type`). Frontend: `attorney-booking.js`.
