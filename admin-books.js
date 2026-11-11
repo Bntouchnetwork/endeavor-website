@@ -119,7 +119,7 @@
     }
     var tab = param('tab') || 'overview';
     var tabs = ['overview', 'bank', 'coa', 'journal', 'recon', 'reports', 'rules'];
-    root.innerHTML = head + '<div class="bk-top"><div class="bk-co"><label for="bk-co">' + t('pick') + '</label><select id="bk-co">' + on.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.legal_name) + (c.is_house ? ' · ' + t('house') : c.clients ? ' · ' + esc(c.clients.name) : '') + '</option>'; }).join('') + '</select></div>' +
+    root.innerHTML = head + '<div class="bk-top"><div class="bk-co"><label for="bk-co">' + t('pick') + '</label><select id="bk-co">' + on.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.legal_name) + (!c.is_house && c.clients ? ' · ' + esc(c.clients.name) : '') + '</option>'; }).join('') + '</select></div>' +
       '<details class="bk-more"><summary>' + t('enable') + '</summary>' + enableBox() + '</details></div>' +
       '<nav class="bk-tabs" aria-label="' + t('title') + '">' + tabs.map(function (k) { return '<a href="#/bookkeeping?co=' + co.id + '&tab=' + k + '"' + (k === tab ? ' aria-current="page"' : '') + '>' + t('t_' + k) + '</a>'; }).join('') + '</nav><div id="bk-body"></div>';
     $('#bk-co').onchange = function () { go(this.value, tab); };
