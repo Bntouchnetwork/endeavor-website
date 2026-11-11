@@ -2337,6 +2337,65 @@ button.dl-d.is-on, button.dl-d:focus-visible { outline: 2px solid #0f2340; outli
 .kpi--alert { border-color: #b8913a; box-shadow: inset 4px 0 0 #b8913a; }
 #bk-body .kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))} #bk-body .kpi__value{font-size:1.5rem}
 
+/* ---------- proposal accept / reject ---------- */
+.prop-cta { flex-wrap: wrap; }
+.prop-monthly { margin-top: 1rem; border-top: 1px dashed #d8dee8; }
+.prop-modal { position: fixed; inset: 0; z-index: 90; background: rgb(11 31 58 / .45); display: grid; place-items: center; padding: 1rem; overflow-y: auto; }
+.prop-modal__card { background: #fff; border-radius: 16px; width: min(36rem, 100%); padding: 1.5rem; box-shadow: 0 24px 60px rgb(11 31 58 / .25); max-height: calc(100vh - 2rem); overflow-y: auto; }
+.prop-terms { max-height: 12rem; overflow-y: auto; border: 1px solid #e3e7ee; border-radius: 10px; padding: .75rem 1rem; font-size: .88rem; color: var(--muted); margin: .75rem 0; background: #fafbfc; }
+.prop-auth { border: 1px solid #ecd9b0; background: #fbf6ea; border-radius: 10px; padding: .75rem 1rem; font-size: .88rem; margin: .75rem 0; }
+.prop-auth p { margin: .35rem 0 0; }
+
+/* ---------- opening documents (intake) ---------- */
+.ik-steps { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .4rem; }
+.ik-steps li { display: flex; gap: .6rem; align-items: center; font-size: .93rem; }
+.ik-steps a { color: var(--ink); }
+.ik-dot { width: 1.2rem; height: 1.2rem; border-radius: 50%; border: 2px solid #c5ccd8; flex: none; }
+.ik-dot.is-ok { border-color: #1e6b3a; background: #1e6b3a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 3.5 8-8' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/80% no-repeat; }
+.ik-sec { scroll-margin-top: 1rem; }
+.ik-sec:target { box-shadow: 0 0 0 3px #e8d3a5; }
+.ik-member { display: grid; grid-template-columns: 1fr 7rem auto; gap: .6rem; align-items: end; margin-bottom: .6rem; }
+.ik-member .field { margin: 0; }
+@media (max-width: 34rem) { .ik-member { grid-template-columns: 1fr 5.5rem auto; } }
+.ik-sum { font-size: .88rem; margin: .25rem 0 1rem; }
+.ik-sum.is-bad { color: var(--error); }
+.ik-docs { border: 1px solid #e3e7ee; border-radius: 12px; padding: 1rem; margin-bottom: .9rem; }
+.ik-docs h3 { margin: 0 0 .6rem; font-size: 1rem; }
+.ik-row { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; justify-content: space-between; padding: .55rem 0; border-top: 1px solid #f0f2f5; font-size: .92rem; }
+.ik-row:first-of-type { border-top: 0; }
+.ik-row__l { display: flex; gap: .55rem; align-items: center; min-width: 0; }
+.ik-row__f { color: var(--muted); font-size: .82rem; overflow-wrap: anywhere; }
+.ik-row .portal-btn-row { margin: 0; gap: .4rem; }
+.ik-row .btn { padding: .4rem .8rem; font-size: .85rem; min-height: 2.25rem; }
+.ik-note { font-size: .85rem; color: var(--muted); }
+
+/* ---------- invoice items with saved services ---------- */
+.inv-item--svc { grid-template-columns: minmax(0,1fr) 4.75rem 7.5rem auto; padding: .65rem; border: 1px solid #edf0f4; border-radius: 10px; background: #fbfcfd; }
+.inv-item--svc .inv-item__svc { grid-column: 1 / 4; }
+.inv-item--svc .inv-item__acts { grid-column: 4; grid-row: 1; display: flex; gap: .35rem; align-items: end; justify-content: flex-end; }
+.inv-item--svc .inv-item__rec { grid-column: 4; grid-row: 2; align-self: end; margin-bottom: .55rem; }
+@media (max-width: 40rem) {
+  .inv-item--svc { grid-template-columns: 1fr 1fr; }
+  .inv-item--svc .inv-item__svc, .inv-item--svc .field:nth-child(2), .inv-item--svc .inv-item__acts { grid-column: 1 / -1; grid-row: auto; }
+  .inv-item--svc .inv-item__rec { grid-column: auto; grid-row: auto; }
+}
+.send-opts { display: grid; gap: .6rem; }
+.send-opts .check-row { align-items: flex-start; }
+.inv-acts { flex-wrap: wrap; gap: .3rem; max-width: 22rem; }
+tr.is-archived td { opacity: .6; }
+.prop-why { color: var(--error, #b42318); }
+.ev-k--invoice_overdue, .ev-k--proposal_rejected, .ev-k--proposal_expired { color: #b42318; } .ev-k--intake_complete, .ev-k--ach_authorized { color: #1e6b3a; }
+.badge--rejected { color: #8a2a20; background: #fbecea; }
+.logo-prev { min-height: 4.5rem; display: grid; place-items: center start; padding: .5rem; border: 1px dashed #d8dee8; border-radius: 10px; margin-bottom: .5rem; background: #fff; }
+.logo-prev img { max-width: 300px; max-height: 100px; object-fit: contain; }
+.ob-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; margin-top: 1rem; }
+.ob-grid h3 { display: flex; gap: .5rem; align-items: center; }
+.sub-line { margin: -.5rem 0 .75rem; font-size: .9rem; }
+.bk-sample { justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.inv-item--svc .inv-item__vend { grid-column: 1 / 3; }
+.inv-item--svc .inv-item__cost { grid-column: 3 / 5; }
+@media (max-width: 40rem) { .inv-item--svc .inv-item__vend, .inv-item--svc .inv-item__cost { grid-column: 1 / -1; } }
+
 </style>
 </head>
 <body class="portal">
@@ -5523,7 +5582,7 @@ window.ENDEAVOR_CFG = {
       noCompanies: 'No companies yet', noCompaniesText: 'Endeavor will add your companies here.', formed: 'Formed {d}', docNumber: 'Florida document no.', ein: 'EIN', agent: 'Registered agent', fye: 'Fiscal year end', address: 'Address',
       st_active: 'Active', st_in_formation: 'In formation', st_inactive: 'Inactive', st_dissolved: 'Dissolved',
       tab_timeline: 'Timeline', tab_docs: 'Documents', tab_deadlines: 'Deadlines', tab_finance: 'QuickBooks & reports', back: 'My Companies',
-      cat_formation: 'Formation', cat_tax_return: 'Tax return', cat_report: 'Financial report', cat_uploaded: 'Uploaded', cat_compliance: 'Compliance', cat_other: 'Other',
+      cat_formation: 'Formation', cat_onboarding: 'Opening documents', cat_tax_return: 'Tax return', cat_report: 'Financial report', cat_uploaded: 'Uploaded', cat_compliance: 'Compliance', cat_other: 'Other',
       allCompanies: 'All companies', allCategories: 'All categories', search: 'Search…', view: 'View', download: 'Download', print: 'Print', close: 'Close',
       noDocs: 'No documents yet', noPreview: 'Preview not available for this file type. Use Download.', viewErr: 'Could not open the file.',
       overdue: 'Overdue by {n} d', dueIn: 'In {n} d', dueToday: 'Due today', done: 'Completed', na: 'Not applicable', inProgress: 'In progress',
@@ -5574,7 +5633,7 @@ window.ENDEAVOR_CFG = {
       noCompanies: 'Nenhuma empresa ainda', noCompaniesText: 'A Endeavor vai adicionar suas empresas aqui.', formed: 'Constituída em {d}', docNumber: 'Nº do documento na Flórida', ein: 'EIN', agent: 'Registered agent', fye: 'Fim do ano fiscal', address: 'Endereço',
       st_active: 'Ativa', st_in_formation: 'Em formação', st_inactive: 'Inativa', st_dissolved: 'Dissolvida',
       tab_timeline: 'Linha do tempo', tab_docs: 'Documentos', tab_deadlines: 'Prazos', tab_finance: 'QuickBooks e relatórios', back: 'Minhas empresas',
-      cat_formation: 'Formação', cat_tax_return: 'Declaração de imposto', cat_report: 'Relatório financeiro', cat_uploaded: 'Enviado', cat_compliance: 'Compliance', cat_other: 'Outro',
+      cat_formation: 'Formação', cat_onboarding: 'Documentos de abertura', cat_tax_return: 'Declaração de imposto', cat_report: 'Relatório financeiro', cat_uploaded: 'Enviado', cat_compliance: 'Compliance', cat_other: 'Outro',
       allCompanies: 'Todas as empresas', allCategories: 'Todas as categorias', search: 'Buscar…', view: 'Ver', download: 'Baixar', print: 'Imprimir', close: 'Fechar',
       noDocs: 'Nenhum documento ainda', noPreview: 'Pré-visualização indisponível para este tipo de arquivo. Use Baixar.', viewErr: 'Não foi possível abrir o arquivo.',
       overdue: 'Vencido há {n} d', dueIn: 'Em {n} d', dueToday: 'Vence hoje', done: 'Concluído', na: 'Não se aplica', inProgress: 'Em andamento',
@@ -5625,7 +5684,7 @@ window.ENDEAVOR_CFG = {
       noCompanies: 'Aún no hay empresas', noCompaniesText: 'Endeavor agregará sus empresas aquí.', formed: 'Constituida el {d}', docNumber: 'N.º de documento en Florida', ein: 'EIN', agent: 'Registered agent', fye: 'Cierre del año fiscal', address: 'Dirección',
       st_active: 'Activa', st_in_formation: 'En constitución', st_inactive: 'Inactiva', st_dissolved: 'Disuelta',
       tab_timeline: 'Línea de tiempo', tab_docs: 'Documentos', tab_deadlines: 'Plazos', tab_finance: 'QuickBooks y reportes', back: 'Mis empresas',
-      cat_formation: 'Constitución', cat_tax_return: 'Declaración de impuestos', cat_report: 'Reporte financiero', cat_uploaded: 'Enviado', cat_compliance: 'Cumplimiento', cat_other: 'Otro',
+      cat_formation: 'Constitución', cat_onboarding: 'Documentos de constitución', cat_tax_return: 'Declaración de impuestos', cat_report: 'Reporte financiero', cat_uploaded: 'Enviado', cat_compliance: 'Cumplimiento', cat_other: 'Otro',
       allCompanies: 'Todas las empresas', allCategories: 'Todas las categorías', search: 'Buscar…', view: 'Ver', download: 'Descargar', print: 'Imprimir', close: 'Cerrar',
       noDocs: 'Aún no hay documentos', noPreview: 'Vista previa no disponible para este tipo de archivo. Use Descargar.', viewErr: 'No se pudo abrir el archivo.',
       overdue: 'Vencido hace {n} d', dueIn: 'En {n} d', dueToday: 'Vence hoy', done: 'Completado', na: 'No aplica', inProgress: 'En curso',
@@ -5785,7 +5844,7 @@ window.ENDEAVOR_CFG = {
     S.client = (await q(sb.from('clients').select('*').eq('id', id).single()));
     var me = (await q(sb.from('client_users').select('*').eq('client_id', id).eq('user_id', S.user.id).eq('status', 'active')))[0] || {};
     S.role = me.role; S.me = me;
-    var own = me.role === 'owner', cats = own ? ['formation', 'tax_return', 'report', 'compliance', 'other'] : (me.perm_doc_categories || []);
+    var own = me.role === 'owner', cats = own ? ['formation', 'onboarding', 'tax_return', 'report', 'compliance', 'other'] : (me.perm_doc_categories || []);
     S.perms = { owner: own, cats: cats, view: own || cats.length > 0, reports: own || cats.indexOf('report') > -1,
       deadlines: own || me.perm_deadlines !== false, upload: own || !!me.can_upload };
     S.companies = await q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
@@ -6061,7 +6120,7 @@ window.ENDEAVOR_CFG = {
       await EClientOA.companyTab(body, co);
     } else if (tab === 'docs' && S.perms.view) {
       var docs = await q(sb.from('company_documents').select('*').eq('company_id', co.id).order('category').order('created_at', { ascending: false }));
-      var groups = ['formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].filter(function (c) { return docs.some(function (d) { return d.category === c; }); });
+      var groups = ['onboarding', 'formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].filter(function (c) { return docs.some(function (d) { return d.category === c; }); });
       body.innerHTML = groups.length ? groups.map(function (g) { return '<section class="portal-card"><h2 class="portal-h2">' + esc(t('cat_' + g)) + '</h2>' + docItems(docs.filter(function (d) { return d.category === g; }), false) + '</section>'; }).join('') : '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
       wireDocs(body, docs);
     } else if (tab === 'finance' && S.perms.reports) {
@@ -6247,7 +6306,7 @@ window.ENDEAVOR_CFG = {
   }
   function permLabels() {
     return { access: t('access'), companies: t('permCompanies'), allCompanies: t('permAll'), docs: t('permDocs'), other: t('permOther'),
-      cat_formation: t('cat_formation'), cat_tax_return: t('cat_tax_return'), cat_report: t('cat_report'), cat_compliance: t('cat_compliance'), cat_other: t('cat_other'),
+      cat_formation: t('cat_formation'), cat_onboarding: t('cat_onboarding'), cat_tax_return: t('cat_tax_return'), cat_report: t('cat_report'), cat_compliance: t('cat_compliance'), cat_other: t('cat_other'),
       deadlines: t('permDeadlines'), upload: t('permUpload'), docsHint: t('permDocsHint'), full: t('full'), docsShort: t('docsShort'), noDocs: t('noDocs'),
       deadlinesShort: t('deadlinesShort'), uploadShort: t('uploadShort'), noCompanies: t('noCompanies') };
   }
