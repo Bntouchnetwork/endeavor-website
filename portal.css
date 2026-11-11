@@ -1289,3 +1289,6 @@ tr.is-archived td { opacity: .6; }
 .ob-grid h3 { display: flex; gap: .5rem; align-items: center; }
 .sub-line { margin: -.5rem 0 .75rem; font-size: .9rem; }
 .bk-sample { justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.inv-item--svc .inv-item__vend { grid-column: 1 / 3; }
+.inv-item--svc .inv-item__cost { grid-column: 3 / 5; }
+@media (max-width: 40rem) { .inv-item--svc .inv-item__vend, .inv-item--svc .inv-item__cost { grid-column: 1 / -1; } }

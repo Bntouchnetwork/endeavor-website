@@ -167,6 +167,7 @@ async function afterPaid(id: string) {
   const { data: r } = await admin.from("invoices").select("*, clients(name, primary_email, phone, language, monthly_cents, subscription_started_at)").eq("id", id).single();
   if (!r) return;
   try { await admin.rpc("bk_record_invoice_payment", { p_invoice: id }); } catch (e) { console.error("books", e); }
+  try { await admin.rpc("bk_record_vendor_costs", { p_invoice: id }); } catch (e) { console.error("payables", e); }
   const cl: any = r.clients || {}, lang = cl.language || "pt";
   if (!r.receipt_sent_at) {
     let receiptUrl: string | null = null;
@@ -218,6 +219,20 @@ async function insertSubscriptionInvoice(inv: any) {
   const { data } = await admin.from("invoices").insert({ client_id: clientId, kind: "subscription", stripe_invoice_id: inv.id, stripe_subscription_id: inv.subscription, items, description: "Manutenção mensal",
     customer_email: inv.customer_email, partner_amount_cents: 0, transfer_status: "none", created_by: "stripe", sent_at: new Date().toISOString(), ...invoiceFields(inv) })
     .select("id, client_id, status, number, archive_path, transfer_status, partner_amount_cents, total_cents, currency, clients(name, primary_email)").single();
+  // the monthly items keep the vendor cost set on the client's proposal (matched by amount)
+  if (data) {
+    const { data: lastP } = await admin.from("proposals").select("id, items").eq("client_id", clientId).not("accepted_at", "is", null).order("accepted_at", { ascending: false }).limit(1).maybeSingle();
+    if (lastP) {
+      const { data: pc } = await admin.from("item_costs").select("*").eq("proposal_id", lastP.id);
+      const rows: any[] = [];
+      items.forEach((it: any, j: number) => {
+        if (it.recurring !== "month") return;
+        const k = (pc || []).find((c: any) => { const pi = (lastP.items || [])[c.item_index]; return pi && pi.recurring === "month" && pi.amount_cents * (pi.quantity || 1) === it.amount_cents; });
+        if (k) { const pi = lastP.items[k.item_index]; rows.push({ invoice_id: data.id, item_index: j, vendor_id: k.vendor_id, cost_cents: k.cost_cents * (pi.quantity || 1) }); }
+      });
+      if (rows.length) await admin.from("item_costs").insert(rows);
+    }
+  }
   return data;
 }
 // hourly: scheduled sends, reminders after the due date (+1, +4, +8 days), team notice after +10 days, proposal expiry
@@ -259,12 +274,35 @@ async function voidPending(invoiceId: string) {
   await admin.from("invoices").update({ status: "void", scheduled_send_at: null }).eq("id", r.id);
 }
 
+// Vendor cost per item (e.g. the CPA's fee inside "Tax return"). Kept in item_costs, which only the admin reads,
+// so the client never sees it; becomes a payable when the client pays.
+function vendorCosts(raw: any): { item_index: number; vendor_id: string; cost_cents: number }[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out = raw.slice(0, 20).map((i: any, n: number) => ({ item_index: n, vendor_id: String(i?.vendor_id || ""), cost_cents: Math.round(Number(i?.cost_cents) || 0) }))
+    .filter((c) => /^[0-9a-f-]{36}$/i.test(c.vendor_id) && c.cost_cents > 0 && c.cost_cents <= 10_000_000);
+  return raw.some((i: any) => i && "vendor_id" in i) ? out : null;
+}
+async function saveCosts(key: { invoice_id: string }, costs: { item_index: number; vendor_id: string; cost_cents: number }[]) {
+  await admin.from("item_costs").delete().eq("invoice_id", key.invoice_id);
+  if (costs.length) await admin.from("item_costs").insert(costs.map((c) => ({ ...c, invoice_id: key.invoice_id })));
+}
+async function copyProposalCosts(p: any, invoiceId: string, which: "once" | "month") {
+  const { data: pc } = await admin.from("item_costs").select("*").eq("proposal_id", p.id);
+  if (!pc?.length) return;
+  const idx: number[] = []; (p.items || []).forEach((i: any, n: number) => { if ((i.recurring === "month") === (which === "month")) idx.push(n); });
+  const rows = idx.map((orig, j) => { const k = pc.find((c: any) => c.item_index === orig); return k ? { invoice_id: invoiceId, item_index: j, vendor_id: k.vendor_id, cost_cents: k.cost_cents } : null; }).filter((x): x is NonNullable<typeof x> => !!x);
+  await admin.from("item_costs").delete().eq("invoice_id", invoiceId);
+  if (rows.length) await admin.from("item_costs").insert(rows);
+}
 async function createInvoice(body: any) {
     const clientId = String(body.client_id || "");
     const { data: client } = await admin.from("clients").select("*").eq("id", clientId).single();
     if (!client) throw new Fail("not_found", 404);
     const items = (Array.isArray(body.items) ? body.items : []).slice(0, 20).map((i: any) => ({
-      description: String(i.description || "").trim().slice(0, 300), amount_cents: Math.round(Number(i.amount_cents)), quantity: Math.max(1, Math.min(1000, Math.round(Number(i.quantity) || 1))) }));
+      description: String(i.description || "").trim().slice(0, 300), amount_cents: Math.round(Number(i.amount_cents)), quantity: Math.max(1, Math.min(1000, Math.round(Number(i.quantity) || 1))),
+      // vendor cost (e.g. the CPA's fee inside "Tax return"): becomes a payable when the client pays; never shown to the client
+ }));
+    const costs = vendorCosts(body.items);
     if (!items.length || items.some((i: any) => !i.description || !(i.amount_cents >= 1 && i.amount_cents <= 10_000_000))) throw new Fail("invalid_items");
     const total = items.reduce((s: number, i: any) => s + i.amount_cents * i.quantity, 0);
     const days = Math.max(0, Math.min(90, Math.round(Number(body.days_until_due ?? 7))));
@@ -296,6 +334,7 @@ async function createInvoice(body: any) {
       items, description: body.description || null, customer_email: client.primary_email, created_by: body.created_by || null, kind: body.kind || "one_time", days_until_due: days, ...invoiceFields(fresh) };
     const { data: saved, error } = body.row_id ? await admin.from("invoices").update(row).eq("id", body.row_id).select("*").single() : await admin.from("invoices").insert(row).select("*").single();
     if (error) throw error;
+    if (costs) await saveCosts({ invoice_id: saved.id }, costs);
     const mode = body.send === true || body.send === "now" ? "now" : body.send === "schedule" ? "schedule" : "draft";
     if (mode === "now") await deliverInvoice(saved);
     else if (mode === "schedule") {
@@ -446,7 +485,7 @@ async function proposalPayment(p: any) {
     partner_amount_cents: p.partner_id ? Math.round(once.reduce((s: number, i: any) => s + i.amount_cents * (i.quantity || 1), 0) * Number(p.partner_pct || 0) / 100) : 0,
     transfer_status: p.partner_id && Number(p.partner_pct) > 0 ? "pending" : "none", ...invoiceFields(inv) };
   if (row) await admin.from("invoices").update(fields).eq("id", row.id);
-  else { const { data: ins } = await admin.from("invoices").insert(fields).select("id").single(); await admin.from("proposals").update({ invoice_id: ins!.id }).eq("id", p.id); }
+  else { const { data: ins } = await admin.from("invoices").insert(fields).select("id").single(); await admin.from("proposals").update({ invoice_id: ins!.id }).eq("id", p.id); await copyProposalCosts(p, ins!.id, "once"); }
   await admin.from("clients").update({ stripe_subscription_id: sub.id, subscription_status: sub.status, monthly_cents: monthlyCents, subscription_started_at: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null }).eq("id", p.client_id);
   if (inv.payment_intent?.client_secret) return { mode: "payment", client_secret: inv.payment_intent.client_secret, pk: PK, amount: inv.amount_due, hosted: inv.hosted_invoice_url, monthly: monthlyCents, first_charge: sub.trial_end };
   return { mode: "setup", client_secret: sub.pending_setup_intent?.client_secret || null, pk: PK, amount: 0, monthly: monthlyCents, first_charge: sub.trial_end };
@@ -469,6 +508,7 @@ async function sendProposal(p: any) {
       partner_amount_cents: share, transfer_status: share > 0 ? "pending" : "none" }).select("id").single();
     if (error) throw new Fail("db_error", 500, error.message);
     invId = ins!.id;
+    await copyProposalCosts(p, invId, "once");
   } else number = cur.number || "";
   await admin.from("proposals").update({ token, status: "sent", sent_at: new Date().toISOString(), valid_until: valid, invoice_id: invId, monthly_cents: monthlyCents }).eq("id", p.id);
   const lang = p.language || client.language || "pt", url = `${SITE}/proposal.html?t=${token}&lang=${lang}`;

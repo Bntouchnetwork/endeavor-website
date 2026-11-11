@@ -393,29 +393,36 @@
 
   /* ================= Pagamentos ================= */
   /* ---------- saved services (dropdown on each item + "Salvar na lista") ---------- */
+  async function loadVendors(ctx) { try { return await ctx.q(ctx.sb.from('vendors').select('*').order('name')); } catch (e) { return []; } }
   async function loadServices(ctx) { try { return await ctx.q(ctx.sb.from('billing_services').select('*').eq('active', true).order('name')); } catch (e) { return []; } }
   function itemEditor(ctx, box, services, opts) {
-    var esc = ctx.esc, monthly = !!(opts && opts.monthly), onChange = (opts && opts.onChange) || function () {}, seq = 0;
+    var esc = ctx.esc, monthly = !!(opts && opts.monthly), onChange = (opts && opts.onChange) || function () {}, seq = 0, vendors = (opts && opts.vendors) || [];
+    var vendOptions = function () { return '<option value="">Sem fornecedor</option>' + vendors.filter(function (v) { return v.active; }).map(function (v) { return '<option value="' + v.id + '">' + esc(v.name) + '</option>'; }).join(''); };
     var svcOptions = function (rec) {
       var list = services.filter(function (s) { return monthly || s.recurring !== 'month'; });
       return '<option value="">Serviço salvo…</option>' + list.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + (s.amount_cents ? ' · ' + esc(money(s.amount_cents)) : '') + (s.recurring === 'month' ? ' /mês' : '') + '</option>'; }).join('');
     };
     var refresh = function () { box.querySelectorAll('[data-svc]').forEach(function (sel) { var v = sel.value; sel.innerHTML = svcOptions(); sel.value = v; }); };
-    var add = function (d, amt, qty, rec) {
+    var add = function (d, amt, qty, rec, vend, cost) {
       var n = ++seq, div = document.createElement('div'); div.className = 'inv-item inv-item--svc' + (monthly ? ' inv-item--rec' : '');
       div.innerHTML = '<div class="field inv-item__svc"><label for="sv' + n + '">Lista de serviços</label><select id="sv' + n + '" data-svc>' + svcOptions() + '</select></div>' +
         '<div class="field"><label for="it-d' + n + '">Descrição</label><input id="it-d' + n + '" data-d maxlength="300" value="' + esc(d || '') + '"></div>' +
         '<div class="field"><label for="it-q' + n + '">Qtd</label><input id="it-q' + n + '" data-q type="number" min="1" max="1000" value="' + (qty || 1) + '"></div>' +
         '<div class="field"><label for="it-a' + n + '">Valor (US$)</label><input id="it-a' + n + '" data-a type="number" min="0" step="0.01" value="' + (amt != null && amt !== '' ? amt : '') + '"></div>' +
         (monthly ? '<div class="check-row inv-item__rec"><input type="checkbox" id="it-m' + n + '" data-m' + (rec === 'month' ? ' checked' : '') + '><label for="it-m' + n + '">Mensal</label></div>' : '') +
+        '<div class="field inv-item__vend"><label for="it-v' + n + '">Fornecedor que faz o serviço <span class="portal-muted">(interno)</span></label><select id="it-v' + n + '" data-v>' + vendOptions() + '</select></div>' +
+        '<div class="field inv-item__cost"><label for="it-c' + n + '">Custo do fornecedor (US$)</label><input id="it-c' + n + '" data-c type="number" min="0" step="0.01" value="' + (cost ? (cost / 100).toFixed(2) : '') + '"' + (vend ? '' : ' disabled') + '></div>' +
         '<div class="inv-item__acts"><button class="btn btn--ghost btn--xs" type="button" data-save title="Salvar esta descrição e valor na lista de serviços">Salvar na lista</button><button class="btn btn--ghost btn--xs" type="button" aria-label="Remover item" data-rm>×</button></div>';
       box.appendChild(div);
+      if (vend) div.querySelector('[data-v]').value = vend;
+      div.querySelector('[data-v]').onchange = function () { var c = div.querySelector('[data-c]'); c.disabled = !this.value; if (!this.value) c.value = ''; else c.focus(); onChange(); };
       div.querySelector('[data-rm]').onclick = function () { if (box.children.length > 1) { div.remove(); onChange(); } };
       div.querySelectorAll('input').forEach(function (i) { i.oninput = onChange; i.onchange = onChange; });
       div.querySelector('[data-svc]').onchange = function () {
         var s = services.find(function (x) { return x.id === this.value; }, this); if (!s) return;
         div.querySelector('[data-d]').value = s.name; if (s.amount_cents) div.querySelector('[data-a]').value = (s.amount_cents / 100).toFixed(2);
         if (monthly) div.querySelector('[data-m]').checked = s.recurring === 'month';
+        div.querySelector('[data-v]').value = s.vendor_id || ''; div.querySelector('[data-c]').disabled = !s.vendor_id; div.querySelector('[data-c]').value = s.vendor_id && s.vendor_cost_cents ? (s.vendor_cost_cents / 100).toFixed(2) : '';
         onChange();
       };
       div.querySelector('[data-save]').onclick = async function () {
@@ -423,7 +430,8 @@
         if (name.length < 2) { div.querySelector('[data-d]').focus(); return; }
         b.disabled = true;
         var u = (await ctx.sb.auth.getUser()).data.user;
-        var r = await ctx.sb.from('billing_services').upsert({ name: name, amount_cents: cents, recurring: rec, active: true, created_by: u && u.email }, { onConflict: 'name,recurring' }).select('*').single();
+        var vid = div.querySelector('[data-v]').value || null, vc = vid ? Math.round((+div.querySelector('[data-c]').value || 0) * 100) : 0;
+        var r = await ctx.sb.from('billing_services').upsert({ name: name, amount_cents: cents, recurring: rec, active: true, created_by: u && u.email, vendor_id: vid, vendor_cost_cents: vc }, { onConflict: 'name,recurring' }).select('*').single();
         b.disabled = false;
         if (r.error) { b.textContent = 'Erro'; return; }
         var i = services.findIndex(function (x) { return x.id === r.data.id; }); if (i > -1) services[i] = r.data; else services.push(r.data);
@@ -436,6 +444,8 @@
       return Array.prototype.map.call(box.children, function (r) {
         var o = { description: r.querySelector('[data-d]').value.trim(), quantity: +r.querySelector('[data-q]').value || 1, amount_cents: Math.round((+r.querySelector('[data-a]').value || 0) * 100) };
         if (monthly && r.querySelector('[data-m]').checked) o.recurring = 'month';
+        var v = r.querySelector('[data-v]').value, c = Math.round((+r.querySelector('[data-c]').value || 0) * 100);
+        o.vendor_id = v && c > 0 ? v : null; o.cost_cents = v && c > 0 ? c : 0;
         return o;
       });
     };
@@ -522,7 +532,7 @@
 
   async function payments(view, ctx) {
     var esc = ctx.esc, tab = param('tab') || 'faturas';
-    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['modelos', 'Modelos de proposta'], ['nova', 'Nova fatura'], ['servicos', 'Lista de serviços'], ['stripe', 'Conta Stripe']];
+    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['modelos', 'Modelos de proposta'], ['nova', 'Nova fatura'], ['servicos', 'Lista de serviços'], ['fornecedores', 'Fornecedores'], ['apagar', 'Contas a pagar'], ['margem', 'Margem por cliente'], ['stripe', 'Conta Stripe']];
     view.innerHTML = head(esc, 'Pagamentos', 'Propostas, faturas pelo Stripe, lembretes automáticos e repasse da comissão para o parceiro via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/pagamentos?tab=nova-proposta">Nova proposta</a><a class="btn btn--navy" href="#/pagamentos?tab=nova">Nova fatura</a></div>') +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/pagamentos?tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pg-body"></div>';
     var body = ctx.$('#pg-body');
@@ -531,6 +541,9 @@
     if (tab === 'nova-proposta') return proposalForm(body, ctx, null);
     if (tab === 'modelos') return param('tpl') ? templateForm(body, ctx, param('tpl')) : templatesTab(body, ctx);
     if (tab === 'servicos') return servicesTab(body, ctx);
+    if (tab === 'fornecedores') return vendorsTab(body, ctx);
+    if (tab === 'apagar') return payablesTab(body, ctx);
+    if (tab === 'margem') return marginTab(body, ctx);
     if (tab === 'stripe') return stripeTab(body, ctx);
     var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active, payout_method)').order('created_at', { ascending: false }));
     var st = param('status') || '', arch = param('arquivadas') === '1';
@@ -552,32 +565,133 @@
   }
 
   async function servicesTab(body, ctx) {
-    var esc = ctx.esc, rows = await ctx.q(ctx.sb.from('billing_services').select('*').order('active', { ascending: false }).order('name'));
+    var esc = ctx.esc, rows = await ctx.q(ctx.sb.from('billing_services').select('*').order('active', { ascending: false }).order('name')), vendors = await loadVendors(ctx);
+    var vsel = function (id, cur) { return '<select ' + id + ' aria-label="Fornecedor"><option value="">Sem fornecedor</option>' + vendors.map(function (v) { return '<option value="' + v.id + '"' + (v.id === cur ? ' selected' : '') + '>' + esc(v.name) + '</option>'; }).join('') + '</select>'; };
     body.innerHTML = '<p class="portal-muted">Serviços que aparecem na lista de cada item da fatura e da proposta, com o valor padrão. Você também salva um serviço novo direto do item, no botão "Salvar na lista".</p>' +
       '<form class="toolbar" id="sv-new" style="flex-wrap:wrap"><label class="sr-only" for="sv-n">Serviço</label><input id="sv-n" maxlength="300" placeholder="Nome do serviço" style="flex:1;min-width:14rem"><label class="sr-only" for="sv-a">Valor</label><input id="sv-a" type="number" min="0" step="0.01" placeholder="Valor (US$)" style="width:9rem">' +
-      '<div class="check-row"><input type="checkbox" id="sv-m"><label for="sv-m">Mensal</label></div><button class="btn btn--navy btn--xs" type="submit">Adicionar</button></form><div class="portal-alert" id="sv-msg" role="status"></div>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Serviço</th><th class="num">Valor padrão</th><th>Cobrança</th><th>Ativo</th><th></th></tr></thead><tbody>' + rows.map(function (s) {
+      '<div class="check-row"><input type="checkbox" id="sv-m"><label for="sv-m">Mensal</label></div>' + vsel('id="sv-v"') + '<label class="sr-only" for="sv-c">Custo do fornecedor</label><input id="sv-c" type="number" min="0" step="0.01" placeholder="Custo fornecedor (US$)" style="width:11rem"><button class="btn btn--navy btn--xs" type="submit">Adicionar</button></form><div class="portal-alert" id="sv-msg" role="status"></div>' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Serviço</th><th class="num">Valor padrão</th><th>Cobrança</th><th>Fornecedor</th><th class="num">Custo</th><th>Ativo</th><th></th></tr></thead><tbody>' + rows.map(function (s) {
         return '<tr><td><input data-n="' + s.id + '" value="' + esc(s.name) + '" maxlength="300" aria-label="Nome do serviço" style="width:100%"></td><td class="num"><input data-a="' + s.id + '" type="number" min="0" step="0.01" value="' + (s.amount_cents / 100).toFixed(2) + '" aria-label="Valor" style="width:8rem"></td>' +
-          '<td>' + (s.recurring === 'month' ? 'Mensal' : 'Única') + '</td><td><input type="checkbox" data-on="' + s.id + '"' + (s.active ? ' checked' : '') + ' aria-label="Ativo"></td><td><button class="btn btn--ghost btn--xs" type="button" data-sv="' + s.id + '">Salvar</button></td></tr>';
+          '<td>' + (s.recurring === 'month' ? 'Mensal' : 'Única') + '</td><td>' + vsel('data-v="' + s.id + '"', s.vendor_id) + '</td><td class="num"><input data-c="' + s.id + '" type="number" min="0" step="0.01" value="' + (s.vendor_cost_cents ? (s.vendor_cost_cents / 100).toFixed(2) : '') + '" aria-label="Custo do fornecedor" style="width:7rem"></td><td><input type="checkbox" data-on="' + s.id + '"' + (s.active ? ' checked' : '') + ' aria-label="Ativo"></td><td><button class="btn btn--ghost btn--xs" type="button" data-sv="' + s.id + '">Salvar</button></td></tr>';
       }).join('') + '</tbody></table></div>';
     var m = ctx.$('#sv-msg');
     ctx.$('#sv-new').onsubmit = async function (e) {
       e.preventDefault(); var n = ctx.$('#sv-n').value.trim(); if (n.length < 2) return ctx.$('#sv-n').focus();
-      var r = await ctx.sb.from('billing_services').upsert({ name: n, amount_cents: Math.round((+ctx.$('#sv-a').value || 0) * 100), recurring: ctx.$('#sv-m').checked ? 'month' : 'none', active: true }, { onConflict: 'name,recurring' });
+      var r = await ctx.sb.from('billing_services').upsert({ name: n, amount_cents: Math.round((+ctx.$('#sv-a').value || 0) * 100), recurring: ctx.$('#sv-m').checked ? 'month' : 'none', active: true, vendor_id: ctx.$('#sv-v').value || null, vendor_cost_cents: ctx.$('#sv-v').value ? Math.round((+ctx.$('#sv-c').value || 0) * 100) : 0 }, { onConflict: 'name,recurring' });
       if (r.error) return ctx.msg(m, ctx.errText(r.error), 'error'); ctx.route();
     };
     body.querySelectorAll('[data-sv]').forEach(function (b) { b.onclick = async function () {
-      var id = b.dataset.sv, r = await ctx.sb.from('billing_services').update({ name: body.querySelector('[data-n="' + id + '"]').value.trim(), amount_cents: Math.round((+body.querySelector('[data-a="' + id + '"]').value || 0) * 100), active: body.querySelector('[data-on="' + id + '"]').checked }).eq('id', id);
+      var id = b.dataset.sv, r = await ctx.sb.from('billing_services').update({ name: body.querySelector('[data-n="' + id + '"]').value.trim(), amount_cents: Math.round((+body.querySelector('[data-a="' + id + '"]').value || 0) * 100), active: body.querySelector('[data-on="' + id + '"]').checked, vendor_id: body.querySelector('[data-v="' + id + '"]').value || null, vendor_cost_cents: body.querySelector('[data-v="' + id + '"]').value ? Math.round((+body.querySelector('[data-c="' + id + '"]').value || 0) * 100) : 0 }).eq('id', id);
       ctx.msg(m, r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
     }; });
+  }
+
+  /* ---------- vendors, payables, margin ---------- */
+  var PAYM = { ach: 'ACH', zelle: 'Zelle', wire: 'Wire', check: 'Cheque', card: 'Cartão', other: 'Outro' };
+  async function vendorsTab(body, ctx) {
+    var esc = ctx.esc, rows = await loadVendors(ctx);
+    body.innerHTML = '<div class="toolbar" style="justify-content:space-between"><p class="portal-muted" style="margin:0">Quem faz parte do serviço que a Endeavor cobra (ex.: o CPA que entrega o imposto de renda). No item da fatura ou proposta você indica o fornecedor e o custo; quando o cliente paga, a conta a pagar é criada sozinha.</p><button class="btn btn--navy btn--xs" type="button" id="vd-new">Novo fornecedor</button></div>' +
+      (rows.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Fornecedor</th><th>Serviço</th><th>Contato</th><th>Pagamento</th><th>Prazo</th><th>Status</th><th></th></tr></thead><tbody>' + rows.map(function (v) {
+        return '<tr><td><strong>' + esc(v.name) + '</strong></td><td>' + esc(v.service || '') + '</td><td>' + esc(v.contact_name || '') + (v.email ? '<span class="sub">' + esc(v.email) + '</span>' : '') + (v.phone ? '<span class="sub">' + esc(v.phone) + '</span>' : '') + '</td><td>' + esc(PAYM[v.pay_method]) + '</td><td>' + v.terms_days + ' dias</td><td>' + (v.active ? 'Ativo' : 'Inativo') + '</td><td><button class="btn btn--ghost btn--xs" data-vd="' + v.id + '">Editar</button></td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div class="empty-state portal-card"><strong>Nenhum fornecedor</strong><p>Cadastre o primeiro, por exemplo o CPA.</p></div>');
+    var open = function (v) {
+      v = v || { active: true, pay_method: 'ach', terms_days: 15 };
+      var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (v.id ? 'Editar fornecedor' : 'Novo fornecedor') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div><form class="portal-form" id="vd-f" novalidate>' +
+        '<div class="field"><label for="vd-n">Nome / empresa</label><input id="vd-n" maxlength="200" required value="' + esc(v.name || '') + '"></div>' +
+        '<div class="field"><label for="vd-s">Serviço que faz</label><input id="vd-s" maxlength="200" placeholder="Ex.: Declaração de imposto (CPA)" value="' + esc(v.service || '') + '"></div>' +
+        '<div class="portal-grid2"><div class="field"><label for="vd-c">Contato</label><input id="vd-c" maxlength="200" value="' + esc(v.contact_name || '') + '"></div><div class="field"><label for="vd-e">E-mail</label><input id="vd-e" type="email" maxlength="254" value="' + esc(v.email || '') + '"></div></div>' +
+        '<div class="portal-grid2"><div class="field"><label for="vd-p">Telefone</label><input id="vd-p" maxlength="40" value="' + esc(v.phone || '') + '"></div><div class="field"><label for="vd-t">Prazo para pagar (dias após o cliente pagar)</label><input id="vd-t" type="number" min="0" max="120" value="' + v.terms_days + '"></div></div>' +
+        '<div class="field"><label for="vd-m">Forma de pagamento</label><select id="vd-m">' + Object.keys(PAYM).map(function (k) { return '<option value="' + k + '"' + (k === v.pay_method ? ' selected' : '') + '>' + PAYM[k] + '</option>'; }).join('') + '</select></div>' +
+        '<div class="field"><label for="vd-o">Observações</label><textarea id="vd-o" rows="3" maxlength="1000">' + esc(v.notes || '') + '</textarea><p class="portal-muted" style="font-size:.82rem;margin:.25rem 0 0">Não anote números de conta bancária aqui. Os dados para pagar ficam no seu banco.</p></div>' +
+        '<div class="check-row"><input type="checkbox" id="vd-a"' + (v.active ? ' checked' : '') + '><label for="vd-a">Ativo</label></div><div class="portal-alert" id="vd-msg" role="alert"></div>' +
+        '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button><button class="btn btn--ghost close-x" type="button">Cancelar</button></div></form>', true);
+      o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = ctx.closeOverlay; });
+      ctx.$('#vd-f', o).onsubmit = async function (e) {
+        e.preventDefault(); var n = ctx.$('#vd-n', o).value.trim(); if (n.length < 2) return ctx.msg(ctx.$('#vd-msg', o), 'Informe o nome.', 'error');
+        var row = { name: n, service: ctx.$('#vd-s', o).value.trim() || null, contact_name: ctx.$('#vd-c', o).value.trim() || null, email: ctx.$('#vd-e', o).value.trim() || null, phone: ctx.$('#vd-p', o).value.trim() || null,
+          terms_days: Math.max(0, Math.min(120, +ctx.$('#vd-t', o).value || 0)), pay_method: ctx.$('#vd-m', o).value, notes: ctx.$('#vd-o', o).value.trim() || null, active: ctx.$('#vd-a', o).checked };
+        var r = v.id ? await ctx.sb.from('vendors').update(row).eq('id', v.id) : await ctx.sb.from('vendors').insert(row);
+        if (r.error) return ctx.msg(ctx.$('#vd-msg', o), ctx.errText(r.error), 'error');
+        ctx.closeOverlay(); ctx.route();
+      };
+    };
+    ctx.$('#vd-new').onclick = function () { open(null); };
+    body.querySelectorAll('[data-vd]').forEach(function (b) { b.onclick = function () { open(rows.find(function (v) { return v.id === b.dataset.vd; })); }; });
+  }
+
+  async function houseBankAccounts(ctx) {
+    try {
+      var h = await ctx.q(ctx.sb.from('companies').select('id').eq('is_house', true).limit(1));
+      if (!h.length) return [];
+      return await ctx.q(ctx.sb.from('bk_accounts').select('id, code, name, subtype').eq('company_id', h[0].id).in('subtype', ['bank', 'credit_card']).eq('is_active', true).order('code'));
+    } catch (e) { return []; }
+  }
+  async function payablesTab(body, ctx) {
+    var esc = ctx.esc, st = param('st') || 'open';
+    var res = await Promise.all([ctx.q(ctx.sb.from('payables').select('*, vendors(name, pay_method), clients(name), invoices(number)').order('due_date')), houseBankAccounts(ctx)]);
+    var all = res[0], banks = res[1], today = new Date().toISOString().slice(0, 10);
+    var rows = all.filter(function (p) { return st === 'all' || p.status === st; });
+    var sum = function (f) { return all.filter(f).reduce(function (s, p) { return s + p.amount_cents; }, 0); };
+    var STP = { open: 'A pagar', paid: 'Pago', void: 'Anulado' };
+    body.innerHTML = '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'A pagar', money(sum(function (p) { return p.status === 'open'; }))) + kpi(esc, 'Vencido', money(sum(function (p) { return p.status === 'open' && p.due_date < today; }))) +
+        kpi(esc, 'Pago no mês', money(sum(function (p) { return p.status === 'paid' && String(p.paid_at || '').slice(0, 7) === today.slice(0, 7); }))) + '</div>' +
+      '<div class="toolbar"><label for="ap-st" class="sr-only">Status</label><select id="ap-st">' + [['open', 'A pagar'], ['paid', 'Pagas'], ['void', 'Anuladas'], ['all', 'Todas']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === st ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' +
+      '<p class="portal-muted" style="font-size:.85rem">Criadas sozinhas quando o cliente paga uma fatura com custo de fornecedor: o custo entra no Bookkeeping da Endeavor (5100 Subcontratados) e a dívida em 2000 Contas a pagar. Ao marcar como paga, escolha a conta de onde saiu o dinheiro, ou deixe para categorizar pelo extrato (o sistema sugere 2000 quando o valor bate).</p>' +
+      (rows.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Fornecedor</th><th>Serviço · cliente</th><th>Fatura</th><th class="num">Valor</th><th>Vencimento</th><th>Status</th><th></th></tr></thead><tbody>' + rows.map(function (p) {
+        var late = p.status === 'open' && p.due_date < today;
+        var acts = p.status === 'open' ? '<button class="btn btn--navy btn--xs" data-pay="' + p.id + '">Marcar como pago</button><button class="btn btn--ghost btn--xs" data-ap="void" data-i="' + p.id + '">Anular</button>' : p.status === 'paid' ? '<button class="btn btn--ghost btn--xs" data-ap="unpay" data-i="' + p.id + '">Desfazer pagamento</button>' : '';
+        return '<tr><td><strong>' + esc(p.vendors ? p.vendors.name : '') + '</strong><span class="sub">' + esc(p.vendors ? PAYM[p.vendors.pay_method] : '') + '</span></td><td>' + esc(p.description) + '</td><td>' + esc(p.invoices ? p.invoices.number || '' : '') + '</td><td class="num">' + esc(money(p.amount_cents)) + '</td>' +
+          '<td' + (late ? ' class="prop-why"' : '') + '>' + esc(fmtD(p.due_date)) + (late ? ' · vencido' : '') + '</td><td>' + STP[p.status] + (p.paid_at ? '<span class="sub">' + esc(fmtD(p.paid_at)) + (p.paid_note ? ' · ' + esc(p.paid_note) : '') + '</span>' : '') + '</td><td><div class="portal-btn-row inv-acts">' + acts + '</div></td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div class="empty-state portal-card"><strong>Nada aqui</strong><p>As contas a pagar aparecem quando um cliente paga uma fatura com custo de fornecedor.</p></div>');
+    ctx.$('#ap-st').onchange = function () { ERoute.set('#/pagamentos?tab=apagar&st=' + this.value, true); ctx.route(); };
+    body.querySelectorAll('[data-ap]').forEach(function (b) { b.onclick = async function () {
+      if (!confirm(b.dataset.ap === 'void' ? 'Anular esta conta a pagar? O custo sai do Bookkeeping.' : 'Desfazer o pagamento? O lançamento do pagamento é anulado e a conta volta a ficar em aberto.')) return;
+      b.disabled = true; var r = await ctx.sb.rpc('bk_payable_action', { p_id: b.dataset.i, p_action: b.dataset.ap }); if (r.error) { b.disabled = false; return alert(ctx.errText(r.error)); } ctx.route();
+    }; });
+    body.querySelectorAll('[data-pay]').forEach(function (b) { b.onclick = function () {
+      var p = all.find(function (x) { return x.id === b.dataset.pay; });
+      var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Pagamento a ' + esc(p.vendors.name) + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+        '<p><strong>' + esc(money(p.amount_cents)) + '</strong> · ' + esc(p.description) + '</p><form class="portal-form" id="py-f"><div class="field"><label for="py-d">Data do pagamento</label><input type="date" id="py-d" value="' + today + '" required></div>' +
+        '<div class="field"><label for="py-a">Pago de qual conta</label><select id="py-a"><option value="">Não lançar agora (vou categorizar pelo extrato em 2000)</option>' + banks.map(function (a) { return '<option value="' + a.id + '">' + esc(a.code + ' ' + a.name) + '</option>'; }).join('') + '</select>' +
+        '<p class="portal-muted" style="font-size:.82rem;margin:.25rem 0 0">Se a conta estiver conectada ao Bookkeeping, prefira categorizar pelo extrato para não lançar duas vezes.</p></div>' +
+        '<div class="field"><label for="py-n">Referência (opcional)</label><input id="py-n" maxlength="200" placeholder="Ex.: Zelle 11/15"></div><div class="portal-alert" id="py-m" role="alert"></div>' +
+        '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Confirmar pagamento</button><button class="btn btn--ghost close-x" type="button">Cancelar</button></div></form>', true);
+      o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = ctx.closeOverlay; });
+      ctx.$('#py-f', o).onsubmit = async function (e) {
+        e.preventDefault(); this.querySelector('button').disabled = true;
+        var r = await ctx.sb.rpc('bk_pay_payable', { p_id: p.id, p_date: ctx.$('#py-d', o).value, p_account: ctx.$('#py-a', o).value || null, p_note: ctx.$('#py-n', o).value.trim() || null });
+        if (r.error) { this.querySelector('button').disabled = false; return ctx.msg(ctx.$('#py-m', o), ctx.errText(r.error), 'error'); }
+        ctx.closeOverlay(); ctx.route();
+      };
+    }; });
+  }
+
+  async function marginTab(body, ctx) {
+    var esc = ctx.esc, y = +(param('ano') || new Date().getFullYear());
+    var from = y + '-01-01', to = (y + 1) + '-01-01';
+    var res = await Promise.all([ctx.q(ctx.sb.from('invoices').select('client_id, amount_paid_cents, partner_amount_cents, paid_at, clients(name)').eq('status', 'paid').gte('paid_at', from).lt('paid_at', to)),
+      ctx.q(ctx.sb.from('payables').select('client_id, amount_cents, status, invoices(paid_at)').neq('status', 'void'))]);
+    var by = {};
+    res[0].forEach(function (i) { var k = i.client_id; by[k] = by[k] || { name: i.clients ? i.clients.name : '—', rec: 0, ven: 0, par: 0 }; by[k].rec += i.amount_paid_cents || 0; by[k].par += i.partner_amount_cents || 0; });
+    res[1].forEach(function (p) { var d = p.invoices && p.invoices.paid_at; if (!d || d < from || d >= to || !by[p.client_id]) return; by[p.client_id].ven += p.amount_cents; });
+    var rows = Object.keys(by).map(function (k) { var r = by[k]; r.m = r.rec - r.ven - r.par; return r; }).sort(function (a, b) { return b.rec - a.rec; });
+    var T = rows.reduce(function (s, r) { s.rec += r.rec; s.ven += r.ven; s.par += r.par; s.m += r.m; return s; }, { rec: 0, ven: 0, par: 0, m: 0 });
+    var pct = function (r) { return r.rec ? Math.round(r.m / r.rec * 1000) / 10 + '%' : '—'; };
+    body.innerHTML = '<div class="toolbar"><label for="mg-y">Ano</label><select id="mg-y">' + [0, 1, 2, 3].map(function (d) { var v = new Date().getFullYear() - d; return '<option' + (v === y ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></div>' +
+      '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Recebido', money(T.rec)) + kpi(esc, 'Fornecedores', money(T.ven)) + kpi(esc, 'Comissões', money(T.par)) + kpi(esc, 'Margem', money(T.m) + ' · ' + pct(T)) + '</div>' +
+      (rows.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Cliente</th><th class="num">Recebido</th><th class="num">Fornecedores</th><th class="num">Comissão de parceiro</th><th class="num">Margem</th><th class="num">%</th></tr></thead><tbody>' + rows.map(function (r) {
+        return '<tr><td>' + esc(r.name) + '</td><td class="num">' + money(r.rec) + '</td><td class="num">' + money(r.ven) + '</td><td class="num">' + money(r.par) + '</td><td class="num"><strong>' + money(r.m) + '</strong></td><td class="num">' + pct(r) + '</td></tr>';
+      }).join('') + '</tbody></table></div><p class="portal-muted" style="font-size:.85rem">Faturas pagas no ano, menos o custo dos fornecedores dessas faturas e a comissão de parceiros.</p>' : '<div class="empty-state portal-card"><strong>Sem faturas pagas em ' + y + '</strong></div>');
+    ctx.$('#mg-y').onchange = function () { ERoute.set('#/pagamentos?tab=margem&ano=' + this.value, true); ctx.route(); };
   }
 
   async function newInvoice(body, ctx) {
     var esc = ctx.esc, sb = ctx.sb, editId = param('edit');
     var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id, name').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()), loadServices(ctx),
-      editId ? ctx.q(sb.from('invoices').select('*').eq('id', editId).single()) : Promise.resolve(null)]);
-    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], services = res[4], ed = res[5];
+      editId ? ctx.q(sb.from('invoices').select('*').eq('id', editId).single()) : Promise.resolve(null), loadVendors(ctx),
+      editId ? ctx.q(sb.from('item_costs').select('*').eq('invoice_id', editId)) : Promise.resolve([])]);
+    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], services = res[4], ed = res[5], vendors = res[6], edCosts = res[7];
     if (ed && (ed.status !== 'draft' || ed.kind === 'proposal')) { body.innerHTML = '<div class="portal-alert portal-alert--info" style="display:block">Só rascunhos podem ser editados. <a href="#/pagamentos">Voltar às faturas</a></div>'; return; }
     var pre = ed ? ed.client_id : param('client');
     body.innerHTML = '<div class="dash"><section class="portal-card">' + (ed ? '<p class="portal-muted"><strong>Editando o rascunho.</strong> Ao salvar, o rascunho anterior é substituído.</p>' : '') + '<form class="portal-form" id="ni" novalidate>' +
@@ -596,19 +710,20 @@
       '<aside class="portal-card"><h2 class="portal-h2">Resumo do pagamento</h2><div class="split-box"><dl class="split-sum" id="ni-sum"></dl></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">O cliente paga o valor cheio. Quando o parceiro tem o Stripe conectado, a parte dele é transferida automaticamente no pagamento. As taxas do Stripe ficam com a Endeavor.</p>' +
       '<h3 class="portal-h2" style="font-size:1rem;margin-top:1.25rem">Depois do envio</h3><ol class="steps-ol" style="font-size:.88rem"><li>Cliente recebe a fatura com o link de pagamento.</li><li>Sem pagamento: lembretes 1, 4 e 8 dias após o vencimento.</li><li>Ainda sem pagamento: aviso para você no sino e por e-mail.</li><li>Pagou: recibo ao cliente, aviso para você e lançamento no Bookkeeping.</li></ol></aside></div>';
     var calc;
-    var ed_ = itemEditor(ctx, ctx.$('#ni-items'), services, { onChange: function () { calc(); } });
+    var ed_ = itemEditor(ctx, ctx.$('#ni-items'), services, { vendors: vendors, onChange: function () { calc(); } });
     calc = function () {
       var tot = ed_.items().reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0);
       var pid = ctx.$('#ni-partner').value, pct = pid ? +ctx.$('#ni-pct').value || 0 : 0, share = Math.round(tot * pct / 100);
       var p = partners.find(function (x) { return x.id === pid; });
-      ctx.$('#ni-sum').innerHTML = '<dt>Cliente paga</dt><dd class="is-total">' + money(tot) + '</dd>' + (pid ? '<dt>Parceiro recebe (' + pct + '%)</dt><dd>' + money(share) + '</dd>' : '') + '<dt>Endeavor recebe*</dt><dd>' + money(tot - share) + '</dd>';
+      var vc = ed_.items().reduce(function (s, i) { return s + (i.cost_cents || 0) * i.quantity; }, 0);
+      ctx.$('#ni-sum').innerHTML = '<dt>Cliente paga</dt><dd class="is-total">' + money(tot) + '</dd>' + (pid ? '<dt>Parceiro recebe (' + pct + '%)</dt><dd>' + money(share) + '</dd>' : '') + (vc ? '<dt>Fornecedores (a pagar)</dt><dd>' + money(vc) + '</dd>' : '') + '<dt>Margem da Endeavor*</dt><dd>' + money(tot - share - vc) + '</dd>';
       ctx.$('#ni-pinfo').textContent = !p ? '' : p.stripe_transfers_active ? 'Stripe do parceiro pronto: o repasse será automático no pagamento.' : 'O parceiro ainda não conectou o Stripe: a comissão fica registrada como pendente e você repassa com um clique depois que ele conectar.';
     };
     var pickPartner = function (pid, pct) {
       var p = partners.find(function (x) { return x.id === pid; });
       ctx.$('#ni-partner').value = p ? p.id : ''; ctx.$('#ni-pct').disabled = !p; ctx.$('#ni-pct').value = p ? (pct != null ? +pct : +p.default_share_pct) : ''; calc();
     };
-    (ed && ed.items && ed.items.length ? ed.items : [{}]).forEach(function (i) { ed_.add(i.description, i.amount_cents != null ? (i.amount_cents / 100).toFixed(2) : '', i.quantity); });
+    (ed && ed.items && ed.items.length ? ed.items : [{}]).forEach(function (i, n) { var k = edCosts.find(function (c) { return c.item_index === n; }); ed_.add(i.description, i.amount_cents != null ? (i.amount_cents / 100).toFixed(2) : '', i.quantity, null, k && k.vendor_id, k && k.cost_cents); });
     ctx.$('#ni-add').onclick = function () { var d = ed_.add(); d.querySelector('select').focus(); };
     ctx.$('#ni-partner').onchange = function () { pickPartner(this.value); };
     ctx.$('#ni-pct').oninput = calc;
@@ -711,8 +826,9 @@
     var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language, status').in('status', ['active', 'prospect']).order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
       editId || copyId ? ctx.q(sb.from('proposals').select('*').eq('id', editId || copyId).single()) : Promise.resolve(null),
-      ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name')), loadServices(ctx)]);
-    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], ed = res[4], tpls = res[5], services = res[6];
+      ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name')), loadServices(ctx), loadVendors(ctx),
+      editId || copyId ? ctx.q(sb.from('item_costs').select('*').eq('proposal_id', editId || copyId)) : Promise.resolve([])]);
+    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], ed = res[4], tpls = res[5], services = res[6], vendors = res[7], srcCosts = res[8];
     var src = ed; if (copyId) ed = null; // copy: same content, saved as a new proposal
     if (src && src.client_id && !clients.some(function (c) { return c.id === src.client_id; })) { var extra = await ctx.q(sb.from('clients').select('id, name, primary_email, language, status').eq('id', src.client_id)); clients = clients.concat(extra); }
     var pre = src ? src.client_id : param('client');
@@ -736,17 +852,19 @@
       '<aside class="portal-card"><h2 class="portal-h2">Resumo</h2><div class="split-box"><dl class="split-sum" id="pp-sum"></dl></div><h3 class="portal-h2" style="font-size:1rem;margin-top:1.25rem">O que acontece depois</h3><ol class="steps-ol" style="font-size:.88rem">' +
       '<li>O cliente recebe a proposta e a fatura no mesmo e-mail (e WhatsApp quando ativo), com "Aceitar e pagar fatura" e "Rejeitar".</li><li>Para aceitar, confirma as condições com o nome e paga na página (cartão, inclusive do Brasil, ou conta americana). Pagar é o aceite.</li><li>Pago: recibo, acesso ao portal e o pedido dos documentos de abertura saem automaticamente; o pagamento entra no Bookkeeping.</li><li>Itens mensais: o débito começa 30 dias depois do aceite.</li><li>Rejeitou: você recebe o motivo, a fatura é cancelada e o lead volta ao CRM.</li></ol></aside></div>';
     var box = ctx.$('#pp-items'), calc;
-    var IE = itemEditor(ctx, box, services, { monthly: true, onChange: function () { calc(); } });
-    var addItem = function (d, amt, qty, rec) { return IE.add(d, amt != null && amt !== '' ? (+amt).toFixed(2) : '', qty, rec); };
+    var IE = itemEditor(ctx, box, services, { monthly: true, vendors: vendors, onChange: function () { calc(); } });
+    var addItem = function (d, amt, qty, rec, vend, cost) { return IE.add(d, amt != null && amt !== '' ? (+amt).toFixed(2) : '', qty, rec, vend, cost); };
     var items = function () { return IE.items().filter(function (i) { return i.description || i.amount_cents; }); };
     calc = function () {
       var its = items(), once = its.filter(function (i) { return i.recurring !== 'month'; }), mon = its.filter(function (i) { return i.recurring === 'month'; });
       var tot = once.reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0), mt = mon.reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0), pid = ctx.$('#pp-partner').value, pct = pid ? +ctx.$('#pp-pct').value || 0 : 0;
-      ctx.$('#pp-sum').innerHTML = '<dt>Fatura no aceite</dt><dd class="is-total">' + money(tot) + '</dd>' + (mt ? '<dt>Mensalidade (a partir de 30 dias)</dt><dd>' + money(mt) + '/mês</dd>' : '') + (pid ? '<dt>Comissão do parceiro (' + pct + '%)</dt><dd>' + money(Math.round(tot * pct / 100)) + '</dd>' : '');
+      var vc1 = once.reduce(function (s, i) { return s + (i.cost_cents || 0) * i.quantity; }, 0), vcm = mon.reduce(function (s, i) { return s + (i.cost_cents || 0) * i.quantity; }, 0), com = Math.round(tot * pct / 100);
+      ctx.$('#pp-sum').innerHTML = '<dt>Fatura no aceite</dt><dd class="is-total">' + money(tot) + '</dd>' + (mt ? '<dt>Mensalidade (a partir de 30 dias)</dt><dd>' + money(mt) + '/mês</dd>' : '') + (pid ? '<dt>Comissão do parceiro (' + pct + '%)</dt><dd>' + money(com) + '</dd>' : '') +
+        (vc1 || vcm ? '<dt>Fornecedores (a pagar)</dt><dd>' + money(vc1) + (vcm ? ' + ' + money(vcm) + '/mês' : '') + '</dd>' : '') + '<dt>Margem da Endeavor</dt><dd>' + money(tot - com - vc1) + (mt ? ' + ' + money(mt - vcm) + '/mês' : '') + '</dd>';
     };
     var pickPartner = function (pid, pct) { var p = partners.find(function (x) { return x.id === pid; }); ctx.$('#pp-partner').value = p ? p.id : ''; ctx.$('#pp-pct').disabled = !p; ctx.$('#pp-pct').value = p ? (pct != null ? +pct : +p.default_share_pct) : ''; calc(); };
     var setLang = function (cid) { var c = clients.find(function (x) { return x.id === cid; }); if (c && !ed) { ctx.$('#pp-lang').value = c.language || 'pt'; ctx.$('#pp-terms').value = DEF_TERMS[c.language] || DEF_TERMS.pt; } };
-    (src && src.items.length ? src.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity, i.recurring); });
+    (src && src.items.length ? src.items : [{}]).forEach(function (i, n) { var k = srcCosts.find(function (c) { return c.item_index === n; }); addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity, i.recurring, k && k.vendor_id, k && k.cost_cents); });
     ctx.$('#pp-terms').value = src ? src.terms || '' : DEF_TERMS.pt;
     if (src) ctx.$('#pp-lang').value = src.language;
     ctx.$('#pp-add').onclick = function () { addItem(); box.lastChild.querySelector('select').focus(); };
@@ -795,11 +913,16 @@
       if (total < 1) return ctx.msg(m, 'A proposta precisa de pelo menos um item único (a fatura do aceite). Itens mensais começam 30 dias depois.', 'error');
       var valid = new Date(Date.now() + (+ctx.$('#pp-valid').value || 30) * 864e5).toISOString().slice(0, 10);
       var row = { client_id: cid, title: title, intro: ctx.$('#pp-intro').value.trim() || null, included: ctx.$('#pp-inc').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean),
-        items: its, total_cents: total, monthly_cents: monthlyC, terms: ctx.$('#pp-terms').value.trim() || null, language: ctx.$('#pp-lang').value, days_until_due: +ctx.$('#pp-days').value || 0, valid_until: valid,
+        items: its.map(function (i) { var o = { description: i.description, quantity: i.quantity, amount_cents: i.amount_cents }; if (i.recurring) o.recurring = i.recurring; return o; }), total_cents: total, monthly_cents: monthlyC, terms: ctx.$('#pp-terms').value.trim() || null, language: ctx.$('#pp-lang').value, days_until_due: +ctx.$('#pp-days').value || 0, valid_until: valid,
         partner_id: pid || null, partner_pct: pid ? +ctx.$('#pp-pct').value : null, referral_id: r && r.partner_id === pid ? r.id : null };
       var btns = this.querySelectorAll('button'); btns.forEach(function (b) { b.disabled = true; });
       var u = (await sb.auth.getUser()).data.user;
       var saved = ed ? await sb.from('proposals').update(row).eq('id', ed.id).select('*').single() : await sb.from('proposals').insert(Object.assign({ created_by: u && u.email }, row)).select('*').single();
+      if (!saved.error) { // vendor cost per item stays in item_costs (the client never sees it)
+        await sb.from('item_costs').delete().eq('proposal_id', saved.data.id);
+        var pcs = its.map(function (i, n) { return i.vendor_id && i.cost_cents > 0 ? { proposal_id: saved.data.id, item_index: n, vendor_id: i.vendor_id, cost_cents: i.cost_cents } : null; }).filter(Boolean);
+        if (pcs.length) { var ic = await sb.from('item_costs').insert(pcs); if (ic.error) saved = { error: ic.error }; }
+      }
       if (saved.error) { btns.forEach(function (b) { b.disabled = false; }); return ctx.msg(m, ctx.errText(saved.error), 'error'); }
       if (sendFlag) {
         ctx.msg(m, 'Enviando a proposta…', 'info');
