@@ -39,7 +39,7 @@
   function inviteText(lang, name, clientName, link, role, email) {
     return window.EndeavorInvite.text(lang, { name: name, email: email, link: link, clientName: role === 'owner' ? '' : clientName, invitedBy: role === 'owner' ? '' : clientName, partner: role !== 'owner' });
   }
-  // access link (create password) is sent by Supabase Auth through the payments function; the instructions go by FormSubmit
+  // the access e-mail (welcome + create password + authenticator steps, in the client's language) is sent by the payments function
   async function sendAccess(ctx, payload) {
     try {
       var sess = (await ctx.sb.auth.getSession()).data.session;
@@ -50,7 +50,7 @@
   }
   async function sendInvite(ctx, o) {
     var link = ctx.siteUrl(o.role === 'owner' ? 'client.html' : 'partner.html') + '?lang=' + (o.lang || 'pt');
-    if (o.clientId && !(await sendAccess(ctx, { client_id: o.clientId, email: o.email }))) return false;
+    if (o.clientId) return await sendAccess(ctx, { client_id: o.clientId, email: o.email, lang: o.lang || 'pt' });
     try {
       var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Convite ao portal do cliente: ' + o.name + ' (' + o.clientName + ')', _template: 'table', _captcha: 'false',
@@ -63,7 +63,7 @@
   function fmtD(d) { if (!d) return ''; var p = d.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
   function daysUntil(d) { var t = new Date(); t.setHours(0, 0, 0, 0); return Math.round((new Date(d + 'T00:00:00') - t) / 864e5); }
   function dlPill(it) {
-    if (it.status === 'done') return '<span class="pill pill--done">Concluído</span>';
+    if (it.status === 'done') { var cd = it.completed_at ? it.completed_at.slice(0, 10) : ''; return '<span class="pill pill--done">✓ Concluído' + (cd ? ' em ' + fmtD(cd) + (cd <= it.due_date ? ' · no prazo' : '') : '') + '</span>'; }
     if (it.status === 'not_applicable') return '<span class="pill">Não se aplica</span>';
     var n = daysUntil(it.due_date);
     if (n < 0) return '<span class="pill pill--overdue">Vencido há ' + (-n) + ' d</span>';
@@ -127,7 +127,7 @@
       var tab = (ERoute.get().match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
-      var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'QuickBooks e relatórios']];
+      var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios']];
       view.innerHTML = '<p class="crumbs"><a href="#/crm?tipo=client">CRM</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
@@ -146,6 +146,9 @@
   function select(id, label, map, val) {
     return '<div class="field"><label for="' + id + '">' + label + '</label><select id="' + id + '">' + Object.keys(map).map(function (k) { return '<option value="' + k + '"' + (k === val ? ' selected' : '') + '>' + map[k] + '</option>'; }).join('') + '</select></div>';
   }
+  var US_STATES = { AL: 'AL – Alabama', AK: 'AK – Alaska', AZ: 'AZ – Arizona', AR: 'AR – Arkansas', CA: 'CA – California', CO: 'CO – Colorado', CT: 'CT – Connecticut', DE: 'DE – Delaware', DC: 'DC – District of Columbia', FL: 'FL – Florida', GA: 'GA – Georgia', HI: 'HI – Hawaii', ID: 'ID – Idaho', IL: 'IL – Illinois', IN: 'IN – Indiana', IA: 'IA – Iowa', KS: 'KS – Kansas', KY: 'KY – Kentucky', LA: 'LA – Louisiana', ME: 'ME – Maine', MD: 'MD – Maryland', MA: 'MA – Massachusetts', MI: 'MI – Michigan', MN: 'MN – Minnesota', MS: 'MS – Mississippi', MO: 'MO – Missouri', MT: 'MT – Montana', NE: 'NE – Nebraska', NV: 'NV – Nevada', NH: 'NH – New Hampshire', NJ: 'NJ – New Jersey', NM: 'NM – New Mexico', NY: 'NY – New York', NC: 'NC – North Carolina', ND: 'ND – North Dakota', OH: 'OH – Ohio', OK: 'OK – Oklahoma', OR: 'OR – Oregon', PA: 'PA – Pennsylvania', RI: 'RI – Rhode Island', SC: 'SC – South Carolina', SD: 'SD – South Dakota', TN: 'TN – Tennessee', TX: 'TX – Texas', UT: 'UT – Utah', VT: 'VT – Vermont', VA: 'VA – Virginia', WA: 'WA – Washington', WV: 'WV – West Virginia', WI: 'WI – Wisconsin', WY: 'WY – Wyoming' };
+  // EIN: digits only, shown as 12-3456789
+  function einFmt(v) { var d = String(v || '').replace(/\D/g, '').slice(0, 9); return d.length > 2 ? d.slice(0, 2) + '-' + d.slice(2) : d; }
   var $ = function (s) { return document.querySelector(s); };
 
   async function newClient(ctx, leadId) {
@@ -219,18 +222,21 @@
     co = co || { state: 'FL', entity_type: 'llc_foreign', status: 'in_formation', fiscal_year_end: '12-31', registered_agent: 'Endeavor Business Solutions' };
     ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (co.id ? 'Editar empresa' : 'Nova empresa') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<form class="portal-form" id="co-form">' + field('co-name', 'Razão social', co.legal_name, 'text', true) +
-      '<div class="portal-grid2">' + select('co-type', 'Tipo', ENTITY, co.entity_type) + field('co-state', 'Estado', co.state, 'text', false, ' maxlength="2"') +
+      '<div class="portal-grid2">' + select('co-type', 'Tipo', ENTITY, co.entity_type) + select('co-state', 'Estado', Object.assign(US_STATES[co.state || 'FL'] ? {} : (function () { var o = {}; o[co.state] = co.state; return o; })(), US_STATES), co.state || 'FL') +
       field('co-date', 'Data de constituição', co.formation_date, 'date') + select('co-status', 'Status', { in_formation: 'Em formação', active: 'Ativa', inactive: 'Inativa', dissolved: 'Dissolvida' }, co.status) +
-      field('co-doc', 'Número do documento (Sunbiz)', co.document_number) + field('co-ein', 'EIN', co.ein, 'text', false, ' placeholder="12-3456789"') +
+      field('co-doc', 'Número do documento (Sunbiz)', co.document_number) + field('co-ein', 'EIN', co.ein ? einFmt(co.ein) : '', 'text', false, ' placeholder="12-3456789" inputmode="numeric" maxlength="10" autocomplete="off" pattern="[0-9]{2}-[0-9]{7}"') +
       field('co-fye', 'Fim do ano fiscal (MM-DD)', co.fiscal_year_end) + field('co-ra', 'Registered agent', co.registered_agent) + '</div>' +
       field('co-addr', 'Endereço principal', co.address) +
       '<div class="field"><label for="co-notes">Notas</label><textarea id="co-notes" rows="3">' + ctx.esc(co.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="co-msg" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
       (co.id ? '<button class="btn btn--danger" type="button" id="co-del">Excluir empresa</button>' : '') + '</div></form>');
+    $('#co-ein').addEventListener('input', function () { var el = this, pos = el.selectionStart, before = el.value.length; el.value = einFmt(el.value); var np = Math.max(0, pos + el.value.length - before); try { el.setSelectionRange(np, np); } catch (er) { /* ignore */ } });
     $('#co-form').onsubmit = async function (e) {
       e.preventDefault();
+      var einV = $('#co-ein').value.trim();
+      if (einV && !/^\d{2}-\d{7}$/.test(einV)) { $('#co-ein').focus(); return ctx.msg($('#co-msg'), 'O EIN precisa ter 9 números (12-3456789).', 'error'); }
       var row = { legal_name: $('#co-name').value.trim(), entity_type: $('#co-type').value, state: ($('#co-state').value.trim() || 'FL').toUpperCase(), formation_date: $('#co-date').value || null,
-        status: $('#co-status').value, document_number: $('#co-doc').value.trim() || null, ein: $('#co-ein').value.trim() || null, fiscal_year_end: $('#co-fye').value.trim() || null,
+        status: $('#co-status').value, document_number: $('#co-doc').value.trim() || null, ein: einV || null, fiscal_year_end: $('#co-fye').value.trim() || null,
         registered_agent: $('#co-ra').value.trim() || null, address: $('#co-addr').value.trim() || null, notes: $('#co-notes').value };
       if (row.legal_name.length < 2) return ctx.msg($('#co-msg'), 'Informe a razão social.', 'error');
       var r = co.id ? await ctx.sb.from('companies').update(row).eq('id', co.id) : await ctx.sb.from('companies').insert(Object.assign(row, { client_id: c.id }));
@@ -327,22 +333,24 @@
     var esc = ctx.esc;
     if (!companies.length) { body.innerHTML = '<div class="portal-card empty-state"><strong>Cadastre uma empresa primeiro</strong></div>'; return; }
     var items = await ctx.q(ctx.sb.from('compliance_items').select('*').eq('client_id', c.id).order('due_date'));
-    body.innerHTML = '<div class="portal-btn-row" style="justify-content:space-between;margin-bottom:1rem"><label class="check-row" style="align-items:center"><input type="checkbox" id="dl-showdone"> <span>Mostrar concluídos</span></label>' +
+    body.innerHTML = '<div class="portal-btn-row" style="justify-content:space-between;margin-bottom:1rem"><div class="dl-sum dl-sum--mini" id="dl-sum"></div>' +
       '<button class="btn btn--navy btn--xs" type="button" id="dl-new">Adicionar prazo</button></div><section class="portal-card" id="dl-list"></section>' +
       '<p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">Prazos padrão usam datas gerais federais e da Flórida para ano-calendário, já ajustadas para o próximo dia útil. Confirme com o contador.</p>';
     function draw() {
-      var all = body.querySelector('#dl-showdone').checked;
-      var rows = items.filter(function (i) { return all || (i.status !== 'done' && i.status !== 'not_applicable'); });
+      var rows = items, cnt = { done: 0, pend: 0, over: 0 };
+      rows.forEach(function (i) { if (i.status === 'done') cnt.done++; else if (i.status !== 'not_applicable') { if (daysUntil(i.due_date) < 0) cnt.over++; else cnt.pend++; } });
+      body.querySelector('#dl-sum').innerHTML = '<span class="dl-sum__i dl-sum__i--done"><b>' + cnt.done + '</b> <span>Concluídos</span></span><span class="dl-sum__i dl-sum__i--pend"><b>' + cnt.pend + '</b> <span>Pendentes</span></span><span class="dl-sum__i dl-sum__i--over"><b>' + cnt.over + '</b> <span>Vencidos</span></span>';
       body.querySelector('#dl-list').innerHTML = rows.length ? rows.map(function (i) {
         var co = companies.find(function (x) { return x.id === i.company_id; }), p = i.due_date.split('-');
         return '<div class="deadline"><div class="deadline__date"><b>' + p[2] + '</b><span>' + MONTHS[+p[1] - 1] + ' ' + p[0] + '</span></div>' +
           '<div><strong>' + esc(i.title) + '</strong><div class="dmeta portal-muted" style="font-size:.85rem">' + esc(co ? co.legal_name : '') + ' · ' + esc(DL_CAT[i.category]) + (i.notes ? ' · ' + esc(i.notes) : '') + '</div></div>' +
-          '<div class="portal-btn-row">' + dlPill(i) + '<select data-st="' + i.id + '" aria-label="Status do prazo">' + Object.keys(DL_STATUS).map(function (k) { return '<option value="' + k + '"' + (k === i.status ? ' selected' : '') + '>' + DL_STATUS[k] + '</option>'; }).join('') + '</select>' +
+          '<div class="portal-btn-row">' + dlPill(i) + (i.status !== 'done' && i.status !== 'not_applicable' ? '<button class="btn btn--ghost btn--xs" data-ok="' + i.id + '" title="Marcar como concluído">✓ Concluído</button>' : '') + '<select data-st="' + i.id + '" aria-label="Status do prazo">' + Object.keys(DL_STATUS).map(function (k) { return '<option value="' + k + '"' + (k === i.status ? ' selected' : '') + '>' + DL_STATUS[k] + '</option>'; }).join('') + '</select>' +
           '<button class="btn btn--ghost btn--xs" data-ed="' + i.id + '">Editar</button></div></div>';
       }).join('') : '<div class="empty-state"><strong>Nenhum prazo pendente</strong>Use "Gerar prazos padrão" na aba Empresas ou adicione manualmente.</div>';
       body.querySelectorAll('[data-st]').forEach(function (s) { s.style.cssText = 'min-height:2.25rem;border:1px solid #c9ced8;border-radius:8px;padding:0 .4rem;font-size:.85rem';
         s.onchange = async function () { var it = items.find(function (x) { return x.id === s.dataset.st; }); var r = await ctx.sb.from('compliance_items').update({ status: s.value, completed_at: s.value === 'done' ? new Date().toISOString() : null }).eq('id', it.id); if (!r.error) { it.status = s.value; draw(); } }; });
       body.querySelectorAll('[data-ed]').forEach(function (b) { b.onclick = function () { editDeadline(items.find(function (x) { return x.id === b.dataset.ed; })); }; });
+      body.querySelectorAll('[data-ok]').forEach(function (b) { b.onclick = async function () { var it = items.find(function (x) { return x.id === b.dataset.ok; }), now = new Date().toISOString(); var r = await ctx.sb.from('compliance_items').update({ status: 'done', completed_at: now }).eq('id', it.id); if (!r.error) { it.status = 'done'; it.completed_at = now; draw(); } }; });
     }
     function editDeadline(it) {
       it = it || { company_id: companies[0].id, category: 'other', status: 'pending' };
@@ -361,7 +369,6 @@
       };
       if ($('#d-del')) $('#d-del').onclick = async function () { if (!confirm('Excluir este prazo?')) return; await ctx.sb.from('compliance_items').delete().eq('id', it.id); ctx.closeOverlay(); ctx.route(); };
     }
-    body.querySelector('#dl-showdone').onchange = draw;
     body.querySelector('#dl-new').onclick = function () { editDeadline(null); };
     draw();
   }
@@ -422,7 +429,7 @@
     }
   }
 
-  /* ---------- QuickBooks & reports ---------- */
+  /* ---------- books & reports: QuickBooks or Endeavor Bookkeeping (chosen by the team; the client only sees the reports) ---------- */
   async function tabFinance(body, ctx, c, companies) {
     var esc = ctx.esc;
     if (!companies.length) { body.innerHTML = '<div class="portal-card empty-state"><strong>Cadastre uma empresa primeiro</strong></div>'; return; }
@@ -430,18 +437,21 @@
     var stats = await Promise.all(companies.map(function (co) { return ctx.sb.rpc('qbo_status', { p_company: co.id }).then(function (r) { return (r.data || [])[0] || {}; }); }));
     var y = new Date().getFullYear(), qn = Math.floor(new Date().getMonth() / 3);
     var defQ = qn === 0 ? 4 : qn, defY = qn === 0 ? y - 1 : y;
+    var periodSel = function (id) { return '<select data-y="' + id + '" aria-label="Ano">' + [y, y - 1, y - 2].map(function (v) { return '<option' + (v === defY ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select>' +
+      '<select data-q="' + id + '" aria-label="Período"><option value="1">1º trimestre</option><option value="2">2º trimestre</option><option value="3">3º trimestre</option><option value="4">4º trimestre</option><option value="0">Ano completo</option></select>'; };
     body.innerHTML = companies.map(function (co, i) {
-      var s = stats[i], mine = reports.filter(function (r) { return r.company_id === co.id; });
-      return '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + esc(co.legal_name) + '</h2>' +
-        (s.connected ? '<span class="qbo-badge">QuickBooks conectado' + (s.qbo_company_name ? ': ' + esc(s.qbo_company_name) : '') + '</span>' : '<span class="pill">QuickBooks não conectado</span>') + '</div>' +
-        (s.last_error ? '<div class="portal-alert portal-alert--error">' + esc(s.last_error) + '. Peça ao cliente para reconectar.</div>' : '') +
-        '<div class="portal-btn-row">' + (s.connected ?
-          '<select data-y="' + co.id + '" aria-label="Ano">' + [y, y - 1, y - 2].map(function (v) { return '<option' + (v === defY ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select>' +
-          '<select data-q="' + co.id + '" aria-label="Período"><option value="1">1º trimestre</option><option value="2">2º trimestre</option><option value="3">3º trimestre</option><option value="4">4º trimestre</option><option value="0">Ano completo</option></select>' +
-          '<button class="btn btn--navy btn--xs" data-gen="' + co.id + '">Gerar relatórios</button><button class="btn btn--danger btn--xs" data-disc="' + co.id + '">Desconectar</button>'
-          : '<button class="btn btn--navy btn--xs" data-conn="' + co.id + '">Conectar QuickBooks</button><span class="portal-muted" style="font-size:.85rem">O titular também pode conectar pelo portal do cliente.</span>') + '</div>' +
-        '<div class="portal-alert" id="qm-' + co.id + '" role="status"></div>' +
-        (mine.length ? '<ul class="doclist" style="margin-top:.5rem">' + mine.map(function (d) { return '<li><span class="ficon" aria-hidden="true">PDF</span><div><div class="dname">' + esc(d.title) + '</div><div class="dmeta">' + esc(ctx.fmtDT(d.created_at)) + '</div></div><button class="btn btn--ghost btn--xs" data-rv="' + d.id + '">Ver</button></li>'; }).join('') + '</ul>' : '<p class="portal-muted" style="margin-top:.75rem">Nenhum relatório gerado ainda.</p>') +
+      var s = stats[i], mine = reports.filter(function (r) { return r.company_id === co.id; }), prov = co.books_provider || (s.connected ? 'quickbooks' : 'none');
+      var badge = prov === 'endeavor' ? '<span class="qbo-badge qbo-badge--bk">Endeavor Bookkeeping</span>' : prov === 'quickbooks' && s.connected ? '<span class="qbo-badge">QuickBooks conectado' + (s.qbo_company_name ? ': ' + esc(s.qbo_company_name) : '') + '</span>' : '<span class="pill">Contabilidade não conectada</span>';
+      var actions = prov === 'endeavor'
+        ? '<a class="btn btn--ghost btn--xs" href="#/bookkeeping?co=' + co.id + '">Abrir no Bookkeeping</a>' + periodSel(co.id) + '<button class="btn btn--navy btn--xs" data-pub="' + co.id + '">Publicar relatórios</button><button class="btn btn--ghost btn--xs" data-off="' + co.id + '">Desativar</button>'
+        : prov === 'quickbooks' && s.connected
+        ? periodSel(co.id) + '<button class="btn btn--navy btn--xs" data-gen="' + co.id + '">Gerar relatórios</button><button class="btn btn--danger btn--xs" data-disc="' + co.id + '">Desconectar</button>'
+        : '<button class="btn btn--navy btn--xs" data-conn="' + co.id + '">Conectar QuickBooks</button><button class="btn btn--gold btn--xs" data-bk="' + co.id + '">Conectar ao Endeavor Bookkeeping</button>' +
+          '<span class="portal-muted" style="font-size:.82rem">Para o QuickBooks, a Endeavor precisa ter acesso à conta do cliente (contador convidado).</span>';
+      return '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + esc(co.legal_name) + '</h2>' + badge + '</div>' +
+        (prov === 'quickbooks' && s.last_error ? '<div class="portal-alert portal-alert--error">' + esc(s.last_error) + '. É preciso reconectar o QuickBooks.</div>' : '') +
+        '<div class="portal-btn-row">' + actions + '</div><div class="portal-alert" id="qm-' + co.id + '" role="status"></div>' +
+        (mine.length ? '<ul class="doclist" style="margin-top:.5rem">' + mine.map(function (d) { return '<li><span class="ficon" aria-hidden="true">PDF</span><div><div class="dname">' + esc(d.title) + '</div><div class="dmeta">' + esc(ctx.fmtDT(d.created_at)) + (d.uploaded_by_email ? ' · ' + esc(d.uploaded_by_email) : '') + '</div></div><button class="btn btn--ghost btn--xs" data-rv="' + d.id + '">Ver</button></li>'; }).join('') + '</ul>' : '<p class="portal-muted" style="margin-top:.5rem">Nenhum relatório publicado ainda. O cliente vê aqui os PDFs publicados.</p>') +
         '</section>';
     }).join('');
     body.querySelectorAll('[data-q]').forEach(function (s) { s.value = String(defQ); });
@@ -454,12 +464,26 @@
     };
     var QERR = { qbo_not_configured: 'A integração com o QuickBooks ainda não foi configurada (Client ID e Secret da Intuit).', qbo_reconnect_required: 'A conexão expirou. É preciso reconectar o QuickBooks.', qbo_not_connected: 'QuickBooks não conectado.', future_period: 'Esse período ainda não começou.' };
     var err = function (id, e) { ctx.msg(body.querySelector('#qm-' + id), QERR[e.message] || ctx.errText(e), 'error'); };
+    var setProv = function (id, p) { return ctx.sb.rpc('bk_set_provider', { p_company: id, p_provider: p }); };
     body.querySelectorAll('[data-conn]').forEach(function (b) { b.onclick = async function () {
-      try { var j = await call({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); ERoute.go(j.url); } catch (e) { err(b.dataset.conn, e); }
+      try { var j = await call({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); await setProv(b.dataset.conn, 'quickbooks'); ERoute.go(j.url); } catch (e) { err(b.dataset.conn, e); }
+    }; });
+    body.querySelectorAll('[data-bk]').forEach(function (b) { b.onclick = async function () {
+      b.disabled = true; var r = await setProv(b.dataset.bk, 'endeavor'); if (r.error) { b.disabled = false; return err(b.dataset.bk, r.error); }
+      ERoute.set('#/bookkeeping?co=' + b.dataset.bk + '&tab=overview', false);
+    }; });
+    body.querySelectorAll('[data-off]').forEach(function (b) { b.onclick = async function () {
+      if (!confirm('Desativar o Endeavor Bookkeeping desta empresa? Os lançamentos ficam guardados e voltam se reativar.')) return;
+      var r = await setProv(b.dataset.off, 'none'); if (r.error) return err(b.dataset.off, r.error); ctx.route();
+    }; });
+    body.querySelectorAll('[data-pub]').forEach(function (b) { b.onclick = async function () {
+      var id = b.dataset.pub; b.disabled = true; ctx.msg(body.querySelector('#qm-' + id), 'Gerando os PDFs a partir do Bookkeeping…', 'info');
+      try { await window.AdminBooks.publish(ctx, id, +body.querySelector('[data-y="' + id + '"]').value, +body.querySelector('[data-q="' + id + '"]').value); ctx.route(); }
+      catch (e) { b.disabled = false; err(id, e); }
     }; });
     body.querySelectorAll('[data-disc]').forEach(function (b) { b.onclick = async function () {
       if (!confirm('Desconectar o QuickBooks desta empresa?')) return;
-      try { await call({ action: 'disconnect', company_id: b.dataset.disc }); ctx.route(); } catch (e) { err(b.dataset.disc, e); }
+      try { await call({ action: 'disconnect', company_id: b.dataset.disc }); await setProv(b.dataset.disc, 'none'); ctx.route(); } catch (e) { err(b.dataset.disc, e); }
     }; });
     body.querySelectorAll('[data-gen]').forEach(function (b) { b.onclick = async function () {
       var id = b.dataset.gen; b.disabled = true; ctx.msg(body.querySelector('#qm-' + id), 'Gerando relatórios no QuickBooks…', 'info');

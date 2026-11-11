@@ -483,6 +483,8 @@
       var joins = String(this.cols || '').match(/(\w+)(![\w]+)?\(([^)]*)\)/g) || [];
       joins.forEach(function (j) {
         var t = j.split('(')[0].split('!')[0], key = t === 'companies' ? 'company_id' : t === 'mkt_contacts' ? 'contact_id' : t === 'mkt_campaigns' ? 'campaign_id' : t.replace(/s$/, '') + '_id';
+        if (t === 'bk_lines') { out.forEach(function (r) { r[t] = JSON.parse(JSON.stringify(DB.bk_lines.filter(function (m) { return m.entry_id === r.id; }))); }); return; }
+        if (t === 'bk_connections') key = 'connection_id';
         if (t === 'mkt_list_members') { out.forEach(function (r) { r[t] = JSON.parse(JSON.stringify(DB.mkt_list_members.filter(function (m) { return m.contact_id === r.id; }))); }); return; }
         out.forEach(function (r) { var x = (DB[t] || []).find(function (y) { return y.id === r[key]; }); r[t] = x ? JSON.parse(JSON.stringify(x)) : null; });
       });
@@ -601,6 +603,145 @@
   } };
 
   /* ---------------- rpc ---------------- */
+
+  /* ---------- Endeavor Bookkeeping (demo engine mirroring the bk_* database functions) ---------- */
+  DB.bk_accounts = []; DB.bk_entries = []; DB.bk_lines = []; DB.bk_connections = []; DB.bk_bank_accounts = []; DB.bk_transactions = []; DB.bk_rules = []; DB.bk_reconciliations = [];
+  var BKN = 1000;
+  var BK_CHART = [['1100','Accounts Receivable','asset','accounts_receivable'],['1200','Undeposited Funds','asset','other_current_asset'],['1300','Prepaid Expenses','asset','other_current_asset'],['1500','Equipment','asset','fixed_asset'],['1510','Accumulated Depreciation','asset','fixed_asset'],
+    ['2000','Accounts Payable','liability','accounts_payable'],['2200','Sales Tax Payable','liability','other_current_liability'],['2700','Loans from Members','liability','long_term_liability'],['3000','Member Contributions','equity','equity'],['3100','Member Distributions','equity','equity'],
+    ['3900','Retained Earnings','equity','retained_earnings',1],['3999','Opening Balance Equity','equity','equity',1],['4000','Sales','income','income'],['4100','Service Revenue','income','income'],['4200','Consulting Income','income','income'],['4900','Other Income','income','other_income'],
+    ['4999','Uncategorized Income','income','income',1],['5000','Cost of Goods Sold','expense','cogs'],['5200','Merchant & Payment Processing Fees','expense','cogs'],['6000','Advertising & Marketing','expense','expense'],['6010','Bank Fees & Service Charges','expense','expense'],
+    ['6040','Dues & Subscriptions','expense','expense'],['6050','Insurance','expense','expense'],['6060','Legal & Professional Fees','expense','expense'],['6070','Meals','expense','expense'],['6080','Office Supplies & Software','expense','expense'],['6090','Rent & Lease','expense','expense'],
+    ['6110','Taxes & Licenses','expense','expense'],['6120','Travel','expense','expense'],['6140','Telephone & Internet','expense','expense'],['6999','Uncategorized Expense','expense','expense',1],['8000','Interest Expense','expense','other_expense']];
+  function bkSeed(co) { BK_CHART.forEach(function (a) { if (!DB.bk_accounts.some(function (x) { return x.company_id === co && x.code === a[0]; })) DB.bk_accounts.push({ id: uuid(), company_id: co, code: a[0], name: a[1], type: a[2], subtype: a[3], is_system: !!a[4], is_active: true, created_at: iso(-60) }); }); }
+  function bkAcc(co, code) { return DB.bk_accounts.find(function (a) { return a.company_id === co && a.code === code; }); }
+  function bkPost(co, date, memo, lines, src) {
+    var dr = 0, cr = 0; lines.forEach(function (l) { dr += +l.debit_cents || 0; cr += +l.credit_cents || 0; });
+    if (lines.length < 2) throw new Error('needs_two_lines'); if (dr !== cr) throw new Error('not_balanced');
+    var e = { id: uuid(), company_id: co, number: ++BKN, entry_date: date, memo: memo || null, source: src || 'manual', status: 'posted', created_by: ADMIN.email, created_at: new Date().toISOString() };
+    DB.bk_entries.push(e); lines.forEach(function (l) { DB.bk_lines.push({ id: uuid(), entry_id: e.id, company_id: co, account_id: l.account_id, debit_cents: +l.debit_cents || 0, credit_cents: +l.credit_cents || 0, description: l.description || null, contact: l.contact || null, cleared: false, reconciliation_id: null }); });
+    return e.id;
+  }
+  function bkAddBank(co, conn, ext, name, mask, kind, bal) {
+    var cc = kind === 'credit_card', n = cc ? 2100 : 1000; while (bkAcc(co, String(n))) n++;
+    var a = { id: uuid(), company_id: co, code: String(n), name: name + (mask ? ' ...' + mask : ''), type: cc ? 'liability' : 'asset', subtype: cc ? 'credit_card' : 'bank', is_active: true, is_system: false, created_at: new Date().toISOString() };
+    DB.bk_accounts.push(a);
+    var b = { id: uuid(), company_id: co, connection_id: conn, external_id: ext, name: name, mask: mask, kind: kind, currency: 'usd', balance_cents: bal, balance_at: bal == null ? null : new Date().toISOString(), ledger_account_id: a.id, is_active: true, created_at: new Date().toISOString() };
+    DB.bk_bank_accounts.push(b); return b.id;
+  }
+  function bkSuggest(t) {
+    if (t.status !== 'review') return;
+    var txt = ((t.merchant || '') + ' ' + t.description).toLowerCase();
+    var r = DB.bk_rules.filter(function (x) { return x.company_id === t.company_id && txt.indexOf(x.match_text.toLowerCase()) > -1 && (x.direction === 'any' || (x.direction === 'in') === (t.amount_cents > 0)); }).sort(function (a, b) { return b.match_text.length - a.match_text.length; })[0];
+    if (r) { Object.assign(t, { suggested_account_id: r.account_id, suggest_source: 'rule', ai_confidence: 1, ai_reason: 'Rule: ' + r.match_text }); return; }
+    var key = (t.merchant || t.description).replace(/[0-9#*]+/g, '').slice(0, 18).toLowerCase();
+    var h = DB.bk_transactions.filter(function (x) { return x.company_id === t.company_id && x.status === 'posted' && x.account_id && Math.sign(x.amount_cents) === Math.sign(t.amount_cents) && (x.merchant || x.description).replace(/[0-9#*]+/g, '').slice(0, 18).toLowerCase() === key; })[0];
+    if (h && key.trim().length >= 4) Object.assign(t, { suggested_account_id: h.account_id, suggest_source: 'history', ai_confidence: 0.9, ai_reason: 'Same payee as before' });
+  }
+  function bkPostTxn(id, acc) {
+    var t = DB.bk_transactions.find(function (x) { return x.id === id; }); if (!t) throw new Error('not_found'); if (t.status === 'posted') return t.entry_id;
+    var b = DB.bk_bank_accounts.find(function (x) { return x.id === t.bank_account_id; }); if (acc === b.ledger_account_id) throw new Error('same_account');
+    var amt = Math.abs(t.amount_cents);
+    var lines = t.amount_cents > 0 ? [{ account_id: b.ledger_account_id, debit_cents: amt, description: t.description }, { account_id: acc, credit_cents: amt, description: t.description, contact: t.merchant }]
+      : [{ account_id: acc, debit_cents: amt, description: t.description, contact: t.merchant }, { account_id: b.ledger_account_id, credit_cents: amt, description: t.description }];
+    var e = bkPost(t.company_id, t.txn_date, t.description, lines, 'bank'); Object.assign(t, { status: 'posted', account_id: acc, entry_id: e }); return e;
+  }
+  function bkImport(bank, rows) {
+    var b = DB.bk_bank_accounts.find(function (x) { return x.id === bank; }), n = 0;
+    rows.forEach(function (r) { if (!r.date || !r.amount_cents) return; var ext = r.external_id || (bank + r.date + r.description + r.amount_cents);
+      if (DB.bk_transactions.some(function (x) { return x.bank_account_id === bank && x.external_id === ext; })) return;
+      var t = { id: uuid(), company_id: b.company_id, bank_account_id: bank, external_id: ext, txn_date: r.date, description: r.description || '', merchant: r.merchant || null, amount_cents: +r.amount_cents, pending: !!r.pending, status: 'review', suggested_account_id: null, suggest_source: null, ai_confidence: null, ai_reason: null, account_id: null, entry_id: null, created_at: new Date().toISOString() };
+      DB.bk_transactions.push(t); bkSuggest(t); n++; });
+    return n;
+  }
+  function bkBal(co, from, to) {
+    var posted = {}; DB.bk_entries.forEach(function (e) { if (e.company_id === co && e.status === 'posted' && (!from || e.entry_date >= from) && e.entry_date <= to) posted[e.id] = 1; });
+    return DB.bk_accounts.filter(function (a) { return a.company_id === co; }).map(function (a) {
+      var d = 0, c = 0; DB.bk_lines.forEach(function (l) { if (l.account_id === a.id && posted[l.entry_id]) { d += l.debit_cents; c += l.credit_cents; } });
+      return { account_id: a.id, code: a.code, name: a.name, type: a.type, subtype: a.subtype, debit: d, credit: c, balance: a.type === 'asset' || a.type === 'expense' ? d - c : c - d };
+    });
+  }
+  function bkFy(co, day) { return day.slice(0, 4) + '-01-01'; }
+  function bkReport(co, kind, from, to) {
+    var C = DB.companies.find(function (c) { return c.id === co; }) || {};
+    var secs = function (b, defs) { return defs.map(function (d) { var rows = b.filter(function (x) { return (d[3] || [d[0]]).indexOf(x.subtype) > -1 && x.balance !== 0; }).sort(function (a, z) { return a.code < z.code ? -1 : 1; });
+      var amt = function (x) { return d[4] ? d[4](x) : x.balance; }; return { key: d[0], title: d[1], group: d[2], rows: rows.map(function (x) { return { account_id: x.account_id, code: x.code, name: x.name, amount: amt(x) }; }).filter(function (x) { return x.amount; }), total: rows.reduce(function (s, x) { return s + amt(x); }, 0) }; }); };
+    var ni = function (b) { return b.filter(function (x) { return x.type === 'income' || x.type === 'expense'; }).reduce(function (s, x) { return s + (x.type === 'income' ? x.balance : -x.balance); }, 0); };
+    if (kind === 'pl') { var b = bkBal(co, from, to), S = secs(b, [['income', 'Income'], ['cogs', 'Cost of Goods Sold'], ['expense', 'Expenses'], ['other_income', 'Other Income'], ['other_expense', 'Other Expenses']]), g = function (k) { return S.find(function (s) { return s.key === k; }).total; };
+      return { kind: 'pl', from: from, to: to, company: C.legal_name, sections: S, gross_profit: g('income') - g('cogs'), operating_income: g('income') - g('cogs') - g('expense'), net_income: g('income') + g('other_income') - g('cogs') - g('expense') - g('other_expense') }; }
+    if (kind === 'bs') { var fy = bkFy(co, to), yb = new Date(+fy.slice(0, 4), 0, 0), prev = yb.getFullYear() + '-12-31', b2 = bkBal(co, null, to);
+      var S2 = secs(b2, [['bank', 'Bank Accounts', 'assets'], ['accounts_receivable', 'Accounts Receivable', 'assets'], ['other_current_asset', 'Other Current Assets', 'assets'], ['fixed_asset', 'Fixed Assets', 'assets'], ['other_asset', 'Other Assets', 'assets'],
+        ['accounts_payable', 'Accounts Payable', 'liabilities'], ['credit_card', 'Credit Cards', 'liabilities'], ['other_current_liability', 'Other Current Liabilities', 'liabilities'], ['long_term_liability', 'Long-term Liabilities', 'liabilities'], ['equity', 'Equity', 'equity']]);
+      var tot = function (g) { return S2.filter(function (s) { return s.group === g; }).reduce(function (a, s) { return a + s.total; }, 0); };
+      var reM = b2.filter(function (x) { return x.subtype === 'retained_earnings'; }).reduce(function (a, x) { return a + x.balance; }, 0), reP = ni(bkBal(co, null, prev)), ytd = ni(bkBal(co, fy, to));
+      return { kind: 'bs', to: to, company: C.legal_name, fy_start: fy, sections: S2, retained_earnings: reP + reM, net_income: ytd, total_assets: tot('assets'), total_liabilities: tot('liabilities'), total_equity: tot('equity') + reP + reM + ytd }; }
+    if (kind === 'cf') { var b3 = bkBal(co, from, to).filter(function (x) { return x.type !== 'income' && x.type !== 'expense' && x.subtype !== 'bank'; }), np = ni(bkBal(co, from, to));
+      var day0 = new Date(from + 'T12:00:00'); day0.setDate(day0.getDate() - 1);
+      var cash = function (d) { return bkBal(co, null, d).filter(function (x) { return x.subtype === 'bank'; }).reduce(function (a, x) { return a + x.balance; }, 0); };
+      var eff = function (x) { return x.type === 'asset' ? -x.balance : x.balance; };
+      var S3 = secs(b3, [['operating', 'Adjustments to reconcile net income', '', ['accounts_receivable', 'other_current_asset', 'accounts_payable', 'credit_card', 'other_current_liability'], eff], ['investing', 'Investing Activities', '', ['fixed_asset', 'other_asset'], eff], ['financing', 'Financing Activities', '', ['long_term_liability', 'equity', 'retained_earnings'], eff]]);
+      var all = S3.reduce(function (a, s) { return a + s.total; }, 0);
+      return { kind: 'cf', from: from, to: to, company: C.legal_name, net_income: np, sections: S3, operating_total: np + S3[0].total, net_change: np + all, cash_start: cash(day0.toISOString().slice(0, 10)), cash_end: cash(to) }; }
+    var b4 = bkBal(co, null, to).filter(function (x) { return x.debit !== x.credit; }).sort(function (a, z) { return a.code < z.code ? -1 : 1; });
+    return { kind: 'tb', to: to, company: C.legal_name, rows: b4.map(function (x) { return { account_id: x.account_id, code: x.code, name: x.name, type: x.type, debit: Math.max(x.debit - x.credit, 0), credit: Math.max(x.credit - x.debit, 0) }; }),
+      total_debit: b4.reduce(function (a, x) { return a + Math.max(x.debit - x.credit, 0); }, 0), total_credit: b4.reduce(function (a, x) { return a + Math.max(x.credit - x.debit, 0); }, 0) };
+  }
+  function BK(name, a) {
+    if (name === 'bk_set_provider') { var co0 = DB.companies.find(function (c) { return c.id === a.p_company; }); co0.books_provider = a.p_provider; if (a.p_provider === 'endeavor') bkSeed(co0.id); return a.p_provider; }
+    if (name === 'bk_add_bank_account') return bkAddBank(a.p_company, a.p_connection, a.p_external, a.p_name, a.p_mask, a.p_kind, a.p_balance);
+    if (name === 'bk_post_entry') return bkPost(a.p_company, a.p_date, a.p_memo, a.p_lines, a.p_source);
+    if (name === 'bk_void_entry') { var e = DB.bk_entries.find(function (x) { return x.id === a.p_entry; }); e.status = 'void'; DB.bk_transactions.forEach(function (t) { if (t.entry_id === e.id) Object.assign(t, { status: 'review', entry_id: null, account_id: null }); }); return true; }
+    if (name === 'bk_accept_txn') { var t0 = DB.bk_transactions.find(function (x) { return x.id === a.p_txn; }); var r0 = bkPostTxn(a.p_txn, a.p_account);
+      if (a.p_rule) { DB.bk_rules.push({ id: uuid(), company_id: t0.company_id, match_text: a.p_rule, direction: t0.amount_cents > 0 ? 'in' : 'out', account_id: a.p_account, created_at: new Date().toISOString() }); DB.bk_transactions.forEach(function (x) { if (x.company_id === t0.company_id && x.suggest_source !== 'rule') bkSuggest(x); }); }
+      return r0; }
+    if (name === 'bk_accept_many') return (a.p_ids || []).filter(function (id) { var t = DB.bk_transactions.find(function (x) { return x.id === id; }); if (t && t.status === 'review' && t.suggested_account_id) { bkPostTxn(id, t.suggested_account_id); return true; } return false; }).length;
+    if (name === 'bk_set_txn_status') { var t1 = DB.bk_transactions.find(function (x) { return x.id === a.p_txn; });
+      if (t1.status === 'posted') BK('bk_void_entry', { p_entry: t1.entry_id }); t1.status = a.p_status; bkSuggest(t1); return true; }
+    if (name === 'bk_import_csv') return bkImport(a.p_bank, a.p_rows || []);
+    if (name === 'bk_report') return bkReport(a.p_company, a.p_kind, a.p_from, a.p_to);
+    if (name === 'bk_ledger') { var ac = DB.bk_accounts.find(function (x) { return x.id === a.p_account; }), sg = ac.type === 'asset' || ac.type === 'expense' ? 1 : -1, run = 0, ents = {};
+      DB.bk_entries.forEach(function (x) { if (x.status === 'posted') ents[x.id] = x; });
+      var ls = DB.bk_lines.filter(function (l) { return l.account_id === ac.id && ents[l.entry_id]; }).sort(function (x, y) { var ex = ents[x.entry_id], ey = ents[y.entry_id]; return ex.entry_date < ey.entry_date ? -1 : ex.entry_date > ey.entry_date ? 1 : ex.number - ey.number; });
+      var out = []; ls.forEach(function (l) { var e = ents[l.entry_id]; run += sg * (l.debit_cents - l.credit_cents); if (e.entry_date >= a.p_from && e.entry_date <= a.p_to) out.push({ line_id: l.id, entry_id: e.id, number: e.number, entry_date: e.entry_date, memo: e.memo, description: l.description, source: e.source, debit: l.debit_cents, credit: l.credit_cents, balance: run, cleared: l.cleared, reconciled: !!l.reconciliation_id }); });
+      return out; }
+    if (name === 'bk_recon_lines' || name === 'bk_reconcile') {
+      var b = DB.bk_bank_accounts.find(function (x) { return x.id === a.p_bank; }), la = DB.bk_accounts.find(function (x) { return x.id === b.ledger_account_id; }), s1 = la.type === 'asset' ? 1 : -1, en = {};
+      DB.bk_entries.forEach(function (x) { if (x.status === 'posted') en[x.id] = x; });
+      var mine = DB.bk_lines.filter(function (l) { return l.account_id === la.id && en[l.entry_id]; });
+      if (name === 'bk_recon_lines') return mine.filter(function (l) { return !l.reconciliation_id && en[l.entry_id].entry_date <= a.p_to; }).map(function (l) { return { line_id: l.id, entry_date: en[l.entry_id].entry_date, description: l.description || en[l.entry_id].memo, amount: s1 * (l.debit_cents - l.credit_cents), cleared: l.cleared }; });
+      mine.forEach(function (l) { if (!l.reconciliation_id) l.cleared = (a.p_cleared || []).indexOf(l.id) > -1; });
+      var prev = mine.filter(function (l) { return l.reconciliation_id; }).reduce(function (s, l) { return s + s1 * (l.debit_cents - l.credit_cents); }, 0);
+      var cl = mine.filter(function (l) { return !l.reconciliation_id && l.cleared && en[l.entry_id].entry_date <= a.p_date; }).reduce(function (s, l) { return s + s1 * (l.debit_cents - l.credit_cents); }, 0), diff = a.p_balance - (prev + cl), rid = null;
+      if (a.p_finish) { if (diff) throw new Error('not_balanced'); rid = uuid(); DB.bk_reconciliations.push({ id: rid, company_id: b.company_id, bank_account_id: b.id, statement_date: a.p_date, statement_balance_cents: a.p_balance, status: 'completed', completed_at: new Date().toISOString(), created_by: ADMIN.email });
+        mine.forEach(function (l) { if (!l.reconciliation_id && l.cleared && en[l.entry_id].entry_date <= a.p_date) l.reconciliation_id = rid; }); }
+      return { opening: prev, cleared: cl, difference: diff, reconciliation_id: rid };
+    }
+    throw new Error('unknown');
+  }
+  // sample books for one company
+  (function () {
+    var co = DB.companies.find(function (c) { return c.id === CO2; }) || DB.companies[1] || DB.companies[0]; if (!co) return;
+    co.books_provider = 'endeavor'; bkSeed(co.id);
+    var Y0 = new Date().getFullYear();
+    var cn = { id: uuid(), company_id: co.id, provider: 'stripe', institution: 'Stripe Financial Connections', external_id: 'cus_demo', status: 'active', last_sync_at: iso(-0.2), last_error: null, created_at: iso(-40) };
+    DB.bk_connections.push(cn);
+    var bank = bkAddBank(co.id, cn.id, 'fca_demo1', 'Chase Business Checking', '4821', 'checking', 1834250), card = bkAddBank(co.id, cn.id, 'fca_demo2', 'Amex Business Gold', '1009', 'credit_card', -128940);
+    var A = function (c) { return bkAcc(co.id, c).id; };
+    bkPost(co.id, Y0 + '-01-02', 'Member capital contribution', [{ account_id: DB.bk_bank_accounts.find(function (b) { return b.id === bank; }).ledger_account_id, debit_cents: 2500000 }, { account_id: A('3000'), credit_cents: 2500000 }], 'opening');
+    var m = function (mo, d) { return Y0 + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0'); };
+    var nowM = new Date().getMonth() + 1, tx = [];
+    for (var mo = 1; mo <= Math.min(nowM, 10); mo++) {
+      tx.push([bank, m(mo, 3), 'STRIPE TRANSFER ST-' + (4400 + mo), 'Stripe', 420000 + mo * 15500, '4100'], [bank, m(mo, 5), 'GUSTO PAYROLL', 'Gusto', -310000, '6060'], [bank, m(mo, 8), 'WEWORK MEMBERSHIP', 'WeWork', -85000, '6090'],
+        [card, m(mo, 11), 'GOOGLE *WORKSPACE', 'Google', -3600, '6040'], [card, m(mo, 14), 'ADOBE *CREATIVE CLD', 'Adobe', -5999, '6080'], [card, m(mo, 19), 'DELTA AIR LINES', 'Delta', -48650, '6120'], [bank, m(mo, 25), 'CHASE MONTHLY FEE', null, -1500, '6010']);
+    }
+    tx.forEach(function (x, i) { var n0 = DB.bk_transactions.length; bkImport(x[0], [{ external_id: 'demo-' + i, date: x[1], description: x[2], merchant: x[3], amount_cents: x[4] }]); var t = DB.bk_transactions[n0]; if (t && x[1] < m(Math.max(1, nowM - 1), 1)) bkPostTxn(t.id, A(x[5])); });
+    var rev = DB.bk_transactions.filter(function (t) { return t.status === 'review' && !t.suggested_account_id; });
+    var AI = [['GOOGLE', '6040', 0.93, 'Google Workspace subscription'], ['DELTA', '6120', 0.88, 'Airline ticket'], ['CHASE MONTHLY', '6010', 0.95, 'Bank service fee']];
+    rev.forEach(function (t) { var hit = AI.find(function (a) { return t.description.indexOf(a[0]) > -1; }); if (hit) Object.assign(t, { suggested_account_id: A(hit[1]), suggest_source: 'ai', ai_confidence: hit[2], ai_reason: hit[3] }); });
+    DB.bk_rules.push({ id: uuid(), company_id: co.id, match_text: 'WEWORK', direction: 'out', account_id: A('6090'), created_at: iso(-20) });
+    DB.bk_transactions.forEach(bkSuggest);
+    bkImport(bank, [{ external_id: 'demo-x1', date: m(nowM, 2), description: 'ZELLE FROM MARIA SOUZA', amount_cents: 150000 }, { external_id: 'demo-x2', date: m(nowM, 4), description: 'AMAZON MKTPL*2K4', merchant: 'Amazon', amount_cents: -12999 }]);
+  })();
   function rpc(name, args) {
     args = args || {};
     var ox = oaRpc(name, args); if (ox) return Promise.resolve({ data: ox.v, error: null });
@@ -667,6 +808,9 @@
         r = true;
       } else if (name === 'partner_set_type') { if (!PME) return fail('forbidden'); PME.partner_type = args.p_type; r = [JSON.parse(JSON.stringify(PME))]; }
     }
+    else if (/^bk_/.test(name)) { try { r = BK(name, args); } catch (e) { return Promise.resolve({ data: null, error: { message: e.message } }); } }
+    else if (name === 'my_doc_views') r = DB.doc_access_log.filter(function (x) { return x.user_id === ME.id; }).map(function (x) { return x.document_id; }).filter(function (v, i, arr) { return arr.indexOf(v) === i; });
+    else if (name === 'portal_mfa_policy') r = { optional: false };
     else if (name === 'verify_my_password') r = !!args.p_password && args.p_password !== 'errada';
     else if (name === 'partner_sync_email') r = PME ? [JSON.parse(JSON.stringify(PME))] : [];
     else if (name === 'partner_update_profile' || name === 'partner_request_closure' || name === 'partner_cancel_closure') {
@@ -1133,6 +1277,18 @@
         QBO[co.id].last_sync_at = new Date().toISOString();
         return new Promise(function (r) { setTimeout(function () { r(json({ ok: true, period: label })); }, 900); });
       }
+    }
+    if (/\/functions\/v1\/books/.test(u)) {
+      var bb = {}; try { bb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      var wait = function (b, ms) { return new Promise(function (res) { setTimeout(function () { res(json(b)); }, ms || 700); }); };
+      if (bb.action === 'config') return json({ stripe: true, pk: 'pk_test_demo', plaid: false, plaid_env: 'sandbox', ai: true });
+      if (bb.action === 'ai') { var nA = 0; DB.bk_transactions.forEach(function (t) { if (t.company_id === bb.company_id && t.status === 'review' && !t.suggested_account_id) { var ac = bkAcc(t.company_id, t.amount_cents > 0 ? '4999' : (/AMAZON/.test(t.description) ? '6080' : '6999')); Object.assign(t, { suggested_account_id: ac.id, suggest_source: 'ai', ai_confidence: /AMAZON/.test(t.description) ? 0.72 : 0.4, ai_reason: /AMAZON/.test(t.description) ? 'Office supplies from Amazon' : 'Unclear: please review' }); nA++; } }); return wait({ suggested: nA, ai: true }, 1300); }
+      if (bb.action === 'sync') { DB.bk_connections.forEach(function (c) { if (c.company_id === bb.company_id) c.last_sync_at = new Date().toISOString(); }); return wait({ ok: true, imported: 0, errors: [] }, 900); }
+      if (bb.action === 'publish') { var cP = DB.companies.find(function (c) { return c.id === bb.company_id; }), qP = +bb.quarter, lab = qP ? 'Q' + qP + ' ' + bb.year : bb.year + ' (full year)';
+        Object.keys(REPORTS).forEach(function (k) { new Q('company_documents').upsert({ company_id: cP.id, category: 'report', title: REPORTS[k] + ' - ' + lab, year: +bb.year, path: cP.client_id + '/' + cP.id + '/reports/' + bb.year + 'q' + qP + '_' + k + '.pdf', mime: 'application/pdf', size_bytes: 41000, visible_to_client: true, uploaded_by: null, uploaded_by_email: 'Endeavor Bookkeeping' }, { onConflict: 'path' }).then(function () {}); });
+        return wait({ ok: true, period: lab }, 1200); }
+      if (bb.action === 'stripe_session' || bb.action === 'plaid_link') return wait({ error: 'demo_only' }, 400);
+      return json({ error: 'unknown_action' }, 400);
     }
     if (/\/functions\/v1\/(oa|esign)$/.test(u)) {
       var ob = {}; try { ob = JSON.parse(opts.body); } catch (e) { /* ignore */ }

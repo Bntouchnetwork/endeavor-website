@@ -7,6 +7,7 @@
 //   PAYMENTS_RETURN_ORIGINS      (optional) comma-separated site origins allowed as return URLs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { accessEmail, accessMailOn, sendAccessMail, type AccessKind } from "./access-mail.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -194,16 +195,48 @@ function publicProposal(p: any) {
     valid_until: p.valid_until, status: p.status, client_name: p.clients?.name, accepted_at: p.accepted_at, accepted_name: p.accepted_name, sent_at: p.sent_at };
 }
 const likeEsc = (v: string) => v.replace(/[\\%_]/g, (m) => "\\" + m);
-// Portal access e-mail sent by Supabase Auth: invitation (new user, link to create the password) or password reset (existing user).
-async function sendAccess(email: string, page: string, lang: string) {
-  const redirectTo = `${SITE}/${page}?lang=${["pt", "en", "es"].includes(lang) ? lang : "pt"}`;
-  const inv = await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
-  if (!inv.error) return "invite";
-  if (!/already|registered|exists/i.test(inv.error.message)) throw new Fail("access_email_failed", 502, inv.error.message);
-  const anon = createClient(SUPABASE_URL, ANON, { auth: { persistSession: false } });
-  const r = await anon.auth.resetPasswordForEmail(email, { redirectTo });
-  if (r.error) throw new Fail("access_email_failed", 502, r.error.message);
-  return "reset";
+// Portal access e-mail: one-time link from the Admin API, sent by Endeavor in the client's language
+// (welcome with what the portal does and the authenticator steps, or password reset). Falls back to Supabase's own mail if no SMTP is set.
+async function sendAccess(email: string, page: string, lang: string, o: { kind?: AccessKind; name?: string; clientName?: string; reset?: boolean } = {}) {
+  const l = ["pt", "en", "es"].includes(lang) ? lang : "pt";
+  const redirectTo = `${SITE}/${page}?lang=${l}`;
+  if (!accessMailOn()) {
+    const inv = o.reset ? { error: { message: "already" } } : await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
+    if (!inv.error) return "invite";
+    if (!/already|registered|exists/i.test(inv.error.message)) throw new Fail("access_email_failed", 502, inv.error.message);
+    const anon = createClient(SUPABASE_URL, ANON, { auth: { persistSession: false } });
+    const r = await anon.auth.resetPasswordForEmail(email, { redirectTo });
+    if (r.error) throw new Fail("access_email_failed", 502, r.error.message);
+    return "reset";
+  }
+  let kindOut = "invite";
+  let gen = o.reset ? null : await admin.auth.admin.generateLink({ type: "invite", email, options: { redirectTo } });
+  if (!gen || gen.error) {
+    if (gen?.error && !/already|registered|exists/i.test(gen.error.message)) throw new Fail("access_email_failed", 502, gen.error.message);
+    gen = await admin.auth.admin.generateLink({ type: "recovery", email, options: { redirectTo } });
+    if (gen.error) throw new Fail("access_email_failed", 502, gen.error.message);
+    kindOut = "reset";
+  }
+  const link = (gen.data as any)?.properties?.action_link;
+  if (!link) throw new Fail("access_email_failed", 502, "no_link");
+  const kind: AccessKind = o.kind || (page === "client.html" ? "client" : "collab");
+  await sendAccessMail(email, accessEmail({ lang: l, kind, reset: !!o.reset, name: o.name, clientName: o.clientName, link, page }));
+  return kindOut;
+}
+// "Forgot password" on the portals: same branded e-mail; never says whether the address exists; at most 3 per hour per address
+async function accessReset(body: any) {
+  const email = String(body.email || "").trim().toLowerCase();
+  const page = body.page === "partner.html" ? "partner.html" : "client.html";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Fail("invalid_email");
+  const since = new Date(Date.now() - 36e5).toISOString();
+  const { count } = await admin.from("access_mail_log").select("id", { count: "exact", head: true }).eq("email", email).gte("sent_at", since);
+  if ((count ?? 0) >= 3) return { ok: true };
+  await admin.from("access_mail_log").insert({ email, kind: "reset" });
+  try {
+    const { data: cu } = await admin.from("client_users").select("name").ilike("email", likeEsc(email)).limit(1).maybeSingle();
+    await sendAccess(email, page, String(body.lang || "pt"), { reset: true, name: cu?.name || "" });
+  } catch (e) { console.error("access reset", (e as Error).message); }
+  return { ok: true };
 }
 
 async function publicAction(req: Request, body: any) {
@@ -229,7 +262,7 @@ async function publicAction(req: Request, body: any) {
   let firstAccess = !owner || owner.status !== "active";
   if (!owner) await admin.from("client_users").insert({ client_id: p.client_id, email, name: p.clients?.name || name, role: "owner", status: "invited", can_view: true, can_upload: true, invited_by: "proposal" });
   let accessEmail: string | null = null;
-  if (firstAccess && email) { try { accessEmail = await sendAccess(email, "client.html", lang); } catch (e) { console.error("access email", e); } }
+  if (firstAccess && email) { try { accessEmail = await sendAccess(email, "client.html", lang, { kind: "client", name: p.clients?.name || name }); } catch (e) { console.error("access email", e); } }
   // invoice ready to pay in the portal
   let invoice: any = null;
   if (SK && !p.invoice_id) {
@@ -267,19 +300,20 @@ async function handle(req: Request, body: any) {
 
   // (re)send the portal access e-mail: admin for anyone; a client owner for the people of their own client
   if (a === "send_access") {
-    let email = "", page = "client.html", lang = "pt";
+    let email = "", page = "client.html", lang = "pt", opts: { kind?: AccessKind; name?: string; clientName?: string } = {};
     if (body.partner_id) {
       needAdmin(c);
-      const { data: p } = await admin.from("partners").select("email, language").eq("id", String(body.partner_id)).single();
+      const { data: p } = await admin.from("partners").select("email, language, name").eq("id", String(body.partner_id)).single();
       if (!p) throw new Fail("not_found", 404);
-      email = p.email; page = "partner.html"; lang = p.language;
+      email = p.email; page = "partner.html"; lang = p.language; opts = { kind: "partner", name: p.name };
     } else {
-      const { data: cu } = await admin.from("client_users").select("email, role, status, client_id, clients(language)").eq("client_id", String(body.client_id || "")).ilike("email", likeEsc(String(body.email || ""))).neq("status", "revoked").maybeSingle();
+      const { data: cu } = await admin.from("client_users").select("email, name, role, status, client_id, clients(name, language)").eq("client_id", String(body.client_id || "")).ilike("email", likeEsc(String(body.email || ""))).neq("status", "revoked").maybeSingle();
       if (!cu) throw new Fail("not_found", 404);
       if (!c.isAdmin) { const { data: role } = await c.user.rpc("my_client_role", { p_client: cu.client_id }); if (role !== "owner") throw new Fail("forbidden", 403); }
-      email = cu.email; page = cu.role === "owner" ? "client.html" : "partner.html"; lang = (cu as any).clients?.language || "pt";
+      email = cu.email; page = cu.role === "owner" ? "client.html" : "partner.html"; lang = String(body.lang || (cu as any).clients?.language || "pt");
+      opts = { kind: cu.role === "owner" ? "client" : "collab", name: (cu as any).name || "", clientName: cu.role === "owner" ? "" : (cu as any).clients?.name || "" };
     }
-    return { ok: true, sent: await sendAccess(email.toLowerCase(), page, lang) };
+    return { ok: true, sent: await sendAccess(email.toLowerCase(), page, lang, opts) };
   }
 
   if (a === "invoice_archive") {
@@ -405,6 +439,10 @@ Deno.serve(async (req) => {
   if (sig) return webhook(await req.text(), sig);
   let body: any = {};
   try { body = await req.json(); } catch { return json({ error: "bad_request" }, 400); }
+  if (body.action === "access_reset") {
+    try { return json(await accessReset(body)); }
+    catch (e) { if (e instanceof Fail) return json({ error: e.code }, e.status); console.error(e); return json({ error: "server_error" }, 500); }
+  }
   if (body.action === "proposal_get" || body.action === "proposal_accept") {
     try { return json(await publicAction(req, body)); }
     catch (e) { if (e instanceof Fail) return json({ error: e.code }, e.status); console.error(e); return json({ error: "server_error" }, 500); }

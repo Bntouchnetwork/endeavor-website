@@ -2235,6 +2235,107 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
 .att-tag{display:inline-block;margin:.15rem 0;padding:.1rem .5rem;border-radius:999px;background:#f6f1e4;color:#7a5d1f;font-size:.78rem;font-weight:600}
 /* Minha conta: Save sits beside the second e-mail so the page fits one screen */
 @media (min-width: 721px) { .acc-form--2 .acc-foot { grid-column: auto; align-self: start; padding-top: 1.55rem; } }
+/* partner account: optional 2-step verification row */
+.acc-mfa{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-top:.9rem;padding-top:.75rem;border-top:1px solid var(--line,#e3e7ee);font-size:.86rem}
+.acc-mfa .pill{margin-left:.25rem;font-size:.72rem}
+.acc-mfa .acc-hint{margin:.2rem 0 0}
+.mf-steps{margin:.2rem 0 .8rem 1.1rem;padding:0;line-height:1.55;font-size:.92rem}
+.mf-qr{display:flex;flex-direction:column;align-items:center;gap:.3rem;margin-bottom:.6rem}
+.mf-qr img{border:1px solid #e3e7ee;border-radius:8px;background:#fff}
+.mf-qr code{word-break:break-all}
+
+/* ---- Nov 10 review: new-documents counter, deadline statuses and calendar ---- */
+.nav-badge--info { background: #1d5fbf; box-shadow: 0 0 0 2px rgb(29 95 191 / .25); }
+.pill--new { background: #e7f0fd; color: #1d4f9c; font-weight: 700; margin-left: .35rem; vertical-align: middle; }
+.dl-st { white-space: nowrap; }
+.dl-bar { align-items: center; flex-wrap: wrap; }
+.seg { display: inline-flex; border: 1px solid #c9ced8; border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: #fff; padding: .45rem .8rem; font: 600 .85rem Inter, system-ui, sans-serif; color: #2b3a4f; cursor: pointer; display: inline-flex; gap: .35rem; align-items: center; }
+.seg button + button { border-left: 1px solid #c9ced8; }
+.seg button[aria-pressed="true"] { background: #0f2340; color: #fff; }
+.seg button:focus-visible { outline: 2px solid #b8913a; outline-offset: -2px; }
+.seg .nav-badge { margin-left: .1rem; }
+.dl-sum { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; margin: 0 0 1rem; }
+.dl-sum__i { background: #fff; border: 1px solid #e3e7ee; border-radius: 10px; padding: .7rem .9rem; display: flex; align-items: baseline; gap: .5rem; border-left: 4px solid #c9ced8; }
+.dl-sum__i b { font-size: 1.35rem; }
+.dl-sum__i--done { border-left-color: #1a7f4b; } .dl-sum__i--pend { border-left-color: #b8913a; } .dl-sum__i--over { border-left-color: #c0362c; }
+.dl-sum--mini { display: flex; gap: .5rem; margin: 0; }
+.dl-sum--mini .dl-sum__i { padding: .3rem .6rem; font-size: .85rem; }
+.dl-sum--mini .dl-sum__i b { font-size: 1rem; }
+.dl-cal { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .8rem; }
+.dl-month { padding: .8rem .9rem; margin: 0; }
+.dl-month h3 { margin: 0 0 .5rem; font: 700 .95rem Georgia, serif; color: #0f2340; }
+.dl-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-size: .78rem; }
+.dl-wd { color: #6b7280; font-weight: 600; text-transform: uppercase; font-size: .68rem; padding-bottom: .15rem; }
+.dl-d { display: grid; place-items: center; aspect-ratio: 1; border-radius: 6px; color: #4b5563; border: 0; background: none; font: inherit; padding: 0; }
+button.dl-d { cursor: pointer; font-weight: 700; color: #fff; }
+.dl-d--done { background: #1a7f4b; } .dl-d--pend { background: #b8913a; } .dl-d--over { background: #c0362c; }
+button.dl-d.is-on, button.dl-d:focus-visible { outline: 2px solid #0f2340; outline-offset: 1px; }
+.dl-detail { margin-top: .8rem; }
+@media (max-width: 640px) { .dl-sum { gap: .4rem; } .dl-sum__i { flex-direction: column; gap: 0; padding: .5rem .6rem; } }
+
+/* ---- Endeavor Bookkeeping (admin) ---- */
+.qbo-badge--bk { background: #f6f1e4; color: #7a5d1f; border-color: #e6d6ad; }
+.bk-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; margin-bottom: .8rem; }
+.bk-co { display: flex; flex-direction: column; gap: .25rem; min-width: 280px; }
+.bk-co label, .bk-enable label { font-weight: 600; font-size: .85rem; }
+.bk-co select, .bk-enable select, .bk-row select, .bk-row input[type=search], .bk-row input[type=date], .bk-rbar select { min-height: 2.4rem; border: 1px solid #c9ced8; border-radius: 8px; padding: 0 .55rem; font: inherit; background: #fff; }
+.bk-more summary { cursor: pointer; font-weight: 600; color: #0f2340; font-size: .88rem; }
+.bk-enable { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin-top: .5rem; }
+.bk-tabs { display: flex; gap: .2rem; border-bottom: 2px solid #e3e7ee; margin-bottom: 1rem; overflow-x: auto; }
+.bk-tabs a { padding: .6rem .9rem; font-weight: 600; font-size: .9rem; color: #4b5563; text-decoration: none; border-bottom: 3px solid transparent; margin-bottom: -2px; white-space: nowrap; }
+.bk-tabs a[aria-current="page"] { color: #0f2340; border-bottom-color: #b8913a; }
+.bk-tabs a:hover { color: #0f2340; }
+.bk-row { display: flex; justify-content: space-between; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.bk-row .portal-h2 { margin: 0; }
+.bk-row label { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; }
+.bk-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.bk-table th { text-align: left; font-size: .74rem; text-transform: uppercase; letter-spacing: .03em; color: #6b7280; padding: .45rem .5rem; border-bottom: 1px solid #e3e7ee; }
+.bk-table td { padding: .5rem; border-bottom: 1px solid #eef1f5; vertical-align: middle; }
+.bk-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bk-table .chk { width: 2rem; }
+.bk-table select { max-width: 260px; min-height: 2.1rem; border: 1px solid #c9ced8; border-radius: 6px; font: inherit; font-size: .85rem; }
+.bk-scroll { overflow-x: auto; }
+.bk-in { color: #1a7f4b; } .bk-out { color: #b42318; }
+.bk-meta { font-size: .78rem; color: #6b7280; }
+.bk-desc { font-weight: 600; }
+.bk-err { color: #b42318; font-size: .85rem; margin: .3rem 0; }
+.bk-ok { color: #1a7f4b; font-weight: 600; margin: .6rem 0 0; }
+.nowrap { white-space: nowrap; }
+.bk-sug { display: inline-block; margin-left: .35rem; padding: .05rem .4rem; border-radius: 999px; font-size: .7rem; font-weight: 700; vertical-align: middle; }
+.bk-sug--ai { background: #ece7fb; color: #4b2a9b; } .bk-sug--rule { background: #e3f4ea; color: #146c3c; } .bk-sug--history { background: #e7f0fd; color: #1d4f9c; }
+.bk-banks { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: .8rem; }
+.bk-bank { border: 1px solid #e3e7ee; border-radius: 10px; padding: .8rem .9rem; display: flex; flex-direction: column; gap: .4rem; }
+.bk-bank > div:first-child { display: flex; justify-content: space-between; gap: .5rem; align-items: flex-start; }
+.bk-bank dl { display: grid; grid-template-columns: auto auto; gap: .1rem .6rem; margin: 0; font-size: .85rem; }
+.bk-bank dt { color: #6b7280; } .bk-bank dd { margin: 0; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bk-opts { display: grid; gap: .6rem; margin-bottom: .8rem; }
+.bk-opt { text-align: left; border: 1px solid #c9ced8; border-radius: 10px; background: #fff; padding: .8rem 1rem; cursor: pointer; display: flex; flex-direction: column; gap: .2rem; font: inherit; }
+.bk-opt:hover:not(:disabled) { border-color: #0f2340; }
+.bk-opt span { font-size: .85rem; color: #4b5563; } .bk-opt em { font-size: .8rem; color: #b42318; font-style: normal; }
+.bk-opt:disabled { opacity: .6; cursor: not-allowed; }
+.bk-grp { font: 700 .95rem Georgia, serif; color: #0f2340; margin: 1.2rem 0 .3rem; }
+.bk-off td { color: #9aa3b0; }
+.bk-off.bk-jh td, tbody.bk-off td { text-decoration: line-through; }
+.bk-jh td { background: #f7f8fb; }
+.bk-ind { padding-left: 1.4rem !important; }
+.bk-jl input { width: 100%; min-height: 2.1rem; border: 1px solid #c9ced8; border-radius: 6px; padding: 0 .4rem; font: inherit; }
+.bk-jl select { width: 100%; max-width: none; }
+.bk-rform { display: flex; gap: .75rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 1rem; }
+.bk-rform .field { margin: 0; min-width: 170px; }
+.bk-rsum { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: .5rem 0; font-size: .92rem; }
+.bk-rep { max-width: 760px; }
+.bk-rhead { display: flex; flex-direction: column; align-items: center; gap: .1rem; margin: .5rem 0 1rem; }
+.bk-rhead strong { font: 700 1.15rem Georgia, serif; color: #0f2340; } .bk-rhead span { color: #4b5563; font-size: .88rem; }
+.bk-rt td { border-bottom: 0; padding: .32rem .5rem; }
+.bk-rt .bk-sh td { font-weight: 700; color: #0f2340; padding-top: .8rem; }
+.bk-rt .bk-tot td { font-weight: 700; border-top: 1px solid #c9ced8; }
+.bk-rt .bk-grand td { font-weight: 700; border-top: 1px solid #0f2340; background: #f7f8fb; }
+.bk-rt .bk-final td { border-top: 2px solid #0f2340; border-bottom: 3px double #0f2340; }
+.bk-code { color: #6b7280; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.bk-cta { display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #b8913a; }
+.kpi--alert { border-color: #b8913a; box-shadow: inset 4px 0 0 #b8913a; }
+#bk-body .kpis{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))} #bk-body .kpi__value{font-size:1.5rem}
 
 </style>
 </head>
@@ -2762,6 +2863,8 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
       var joins = String(this.cols || '').match(/(\w+)(![\w]+)?\(([^)]*)\)/g) || [];
       joins.forEach(function (j) {
         var t = j.split('(')[0].split('!')[0], key = t === 'companies' ? 'company_id' : t === 'mkt_contacts' ? 'contact_id' : t === 'mkt_campaigns' ? 'campaign_id' : t.replace(/s$/, '') + '_id';
+        if (t === 'bk_lines') { out.forEach(function (r) { r[t] = JSON.parse(JSON.stringify(DB.bk_lines.filter(function (m) { return m.entry_id === r.id; }))); }); return; }
+        if (t === 'bk_connections') key = 'connection_id';
         if (t === 'mkt_list_members') { out.forEach(function (r) { r[t] = JSON.parse(JSON.stringify(DB.mkt_list_members.filter(function (m) { return m.contact_id === r.id; }))); }); return; }
         out.forEach(function (r) { var x = (DB[t] || []).find(function (y) { return y.id === r[key]; }); r[t] = x ? JSON.parse(JSON.stringify(x)) : null; });
       });
@@ -2880,6 +2983,145 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
   } };
 
   /* ---------------- rpc ---------------- */
+
+  /* ---------- Endeavor Bookkeeping (demo engine mirroring the bk_* database functions) ---------- */
+  DB.bk_accounts = []; DB.bk_entries = []; DB.bk_lines = []; DB.bk_connections = []; DB.bk_bank_accounts = []; DB.bk_transactions = []; DB.bk_rules = []; DB.bk_reconciliations = [];
+  var BKN = 1000;
+  var BK_CHART = [['1100','Accounts Receivable','asset','accounts_receivable'],['1200','Undeposited Funds','asset','other_current_asset'],['1300','Prepaid Expenses','asset','other_current_asset'],['1500','Equipment','asset','fixed_asset'],['1510','Accumulated Depreciation','asset','fixed_asset'],
+    ['2000','Accounts Payable','liability','accounts_payable'],['2200','Sales Tax Payable','liability','other_current_liability'],['2700','Loans from Members','liability','long_term_liability'],['3000','Member Contributions','equity','equity'],['3100','Member Distributions','equity','equity'],
+    ['3900','Retained Earnings','equity','retained_earnings',1],['3999','Opening Balance Equity','equity','equity',1],['4000','Sales','income','income'],['4100','Service Revenue','income','income'],['4200','Consulting Income','income','income'],['4900','Other Income','income','other_income'],
+    ['4999','Uncategorized Income','income','income',1],['5000','Cost of Goods Sold','expense','cogs'],['5200','Merchant & Payment Processing Fees','expense','cogs'],['6000','Advertising & Marketing','expense','expense'],['6010','Bank Fees & Service Charges','expense','expense'],
+    ['6040','Dues & Subscriptions','expense','expense'],['6050','Insurance','expense','expense'],['6060','Legal & Professional Fees','expense','expense'],['6070','Meals','expense','expense'],['6080','Office Supplies & Software','expense','expense'],['6090','Rent & Lease','expense','expense'],
+    ['6110','Taxes & Licenses','expense','expense'],['6120','Travel','expense','expense'],['6140','Telephone & Internet','expense','expense'],['6999','Uncategorized Expense','expense','expense',1],['8000','Interest Expense','expense','other_expense']];
+  function bkSeed(co) { BK_CHART.forEach(function (a) { if (!DB.bk_accounts.some(function (x) { return x.company_id === co && x.code === a[0]; })) DB.bk_accounts.push({ id: uuid(), company_id: co, code: a[0], name: a[1], type: a[2], subtype: a[3], is_system: !!a[4], is_active: true, created_at: iso(-60) }); }); }
+  function bkAcc(co, code) { return DB.bk_accounts.find(function (a) { return a.company_id === co && a.code === code; }); }
+  function bkPost(co, date, memo, lines, src) {
+    var dr = 0, cr = 0; lines.forEach(function (l) { dr += +l.debit_cents || 0; cr += +l.credit_cents || 0; });
+    if (lines.length < 2) throw new Error('needs_two_lines'); if (dr !== cr) throw new Error('not_balanced');
+    var e = { id: uuid(), company_id: co, number: ++BKN, entry_date: date, memo: memo || null, source: src || 'manual', status: 'posted', created_by: ADMIN.email, created_at: new Date().toISOString() };
+    DB.bk_entries.push(e); lines.forEach(function (l) { DB.bk_lines.push({ id: uuid(), entry_id: e.id, company_id: co, account_id: l.account_id, debit_cents: +l.debit_cents || 0, credit_cents: +l.credit_cents || 0, description: l.description || null, contact: l.contact || null, cleared: false, reconciliation_id: null }); });
+    return e.id;
+  }
+  function bkAddBank(co, conn, ext, name, mask, kind, bal) {
+    var cc = kind === 'credit_card', n = cc ? 2100 : 1000; while (bkAcc(co, String(n))) n++;
+    var a = { id: uuid(), company_id: co, code: String(n), name: name + (mask ? ' ...' + mask : ''), type: cc ? 'liability' : 'asset', subtype: cc ? 'credit_card' : 'bank', is_active: true, is_system: false, created_at: new Date().toISOString() };
+    DB.bk_accounts.push(a);
+    var b = { id: uuid(), company_id: co, connection_id: conn, external_id: ext, name: name, mask: mask, kind: kind, currency: 'usd', balance_cents: bal, balance_at: bal == null ? null : new Date().toISOString(), ledger_account_id: a.id, is_active: true, created_at: new Date().toISOString() };
+    DB.bk_bank_accounts.push(b); return b.id;
+  }
+  function bkSuggest(t) {
+    if (t.status !== 'review') return;
+    var txt = ((t.merchant || '') + ' ' + t.description).toLowerCase();
+    var r = DB.bk_rules.filter(function (x) { return x.company_id === t.company_id && txt.indexOf(x.match_text.toLowerCase()) > -1 && (x.direction === 'any' || (x.direction === 'in') === (t.amount_cents > 0)); }).sort(function (a, b) { return b.match_text.length - a.match_text.length; })[0];
+    if (r) { Object.assign(t, { suggested_account_id: r.account_id, suggest_source: 'rule', ai_confidence: 1, ai_reason: 'Rule: ' + r.match_text }); return; }
+    var key = (t.merchant || t.description).replace(/[0-9#*]+/g, '').slice(0, 18).toLowerCase();
+    var h = DB.bk_transactions.filter(function (x) { return x.company_id === t.company_id && x.status === 'posted' && x.account_id && Math.sign(x.amount_cents) === Math.sign(t.amount_cents) && (x.merchant || x.description).replace(/[0-9#*]+/g, '').slice(0, 18).toLowerCase() === key; })[0];
+    if (h && key.trim().length >= 4) Object.assign(t, { suggested_account_id: h.account_id, suggest_source: 'history', ai_confidence: 0.9, ai_reason: 'Same payee as before' });
+  }
+  function bkPostTxn(id, acc) {
+    var t = DB.bk_transactions.find(function (x) { return x.id === id; }); if (!t) throw new Error('not_found'); if (t.status === 'posted') return t.entry_id;
+    var b = DB.bk_bank_accounts.find(function (x) { return x.id === t.bank_account_id; }); if (acc === b.ledger_account_id) throw new Error('same_account');
+    var amt = Math.abs(t.amount_cents);
+    var lines = t.amount_cents > 0 ? [{ account_id: b.ledger_account_id, debit_cents: amt, description: t.description }, { account_id: acc, credit_cents: amt, description: t.description, contact: t.merchant }]
+      : [{ account_id: acc, debit_cents: amt, description: t.description, contact: t.merchant }, { account_id: b.ledger_account_id, credit_cents: amt, description: t.description }];
+    var e = bkPost(t.company_id, t.txn_date, t.description, lines, 'bank'); Object.assign(t, { status: 'posted', account_id: acc, entry_id: e }); return e;
+  }
+  function bkImport(bank, rows) {
+    var b = DB.bk_bank_accounts.find(function (x) { return x.id === bank; }), n = 0;
+    rows.forEach(function (r) { if (!r.date || !r.amount_cents) return; var ext = r.external_id || (bank + r.date + r.description + r.amount_cents);
+      if (DB.bk_transactions.some(function (x) { return x.bank_account_id === bank && x.external_id === ext; })) return;
+      var t = { id: uuid(), company_id: b.company_id, bank_account_id: bank, external_id: ext, txn_date: r.date, description: r.description || '', merchant: r.merchant || null, amount_cents: +r.amount_cents, pending: !!r.pending, status: 'review', suggested_account_id: null, suggest_source: null, ai_confidence: null, ai_reason: null, account_id: null, entry_id: null, created_at: new Date().toISOString() };
+      DB.bk_transactions.push(t); bkSuggest(t); n++; });
+    return n;
+  }
+  function bkBal(co, from, to) {
+    var posted = {}; DB.bk_entries.forEach(function (e) { if (e.company_id === co && e.status === 'posted' && (!from || e.entry_date >= from) && e.entry_date <= to) posted[e.id] = 1; });
+    return DB.bk_accounts.filter(function (a) { return a.company_id === co; }).map(function (a) {
+      var d = 0, c = 0; DB.bk_lines.forEach(function (l) { if (l.account_id === a.id && posted[l.entry_id]) { d += l.debit_cents; c += l.credit_cents; } });
+      return { account_id: a.id, code: a.code, name: a.name, type: a.type, subtype: a.subtype, debit: d, credit: c, balance: a.type === 'asset' || a.type === 'expense' ? d - c : c - d };
+    });
+  }
+  function bkFy(co, day) { return day.slice(0, 4) + '-01-01'; }
+  function bkReport(co, kind, from, to) {
+    var C = DB.companies.find(function (c) { return c.id === co; }) || {};
+    var secs = function (b, defs) { return defs.map(function (d) { var rows = b.filter(function (x) { return (d[3] || [d[0]]).indexOf(x.subtype) > -1 && x.balance !== 0; }).sort(function (a, z) { return a.code < z.code ? -1 : 1; });
+      var amt = function (x) { return d[4] ? d[4](x) : x.balance; }; return { key: d[0], title: d[1], group: d[2], rows: rows.map(function (x) { return { account_id: x.account_id, code: x.code, name: x.name, amount: amt(x) }; }).filter(function (x) { return x.amount; }), total: rows.reduce(function (s, x) { return s + amt(x); }, 0) }; }); };
+    var ni = function (b) { return b.filter(function (x) { return x.type === 'income' || x.type === 'expense'; }).reduce(function (s, x) { return s + (x.type === 'income' ? x.balance : -x.balance); }, 0); };
+    if (kind === 'pl') { var b = bkBal(co, from, to), S = secs(b, [['income', 'Income'], ['cogs', 'Cost of Goods Sold'], ['expense', 'Expenses'], ['other_income', 'Other Income'], ['other_expense', 'Other Expenses']]), g = function (k) { return S.find(function (s) { return s.key === k; }).total; };
+      return { kind: 'pl', from: from, to: to, company: C.legal_name, sections: S, gross_profit: g('income') - g('cogs'), operating_income: g('income') - g('cogs') - g('expense'), net_income: g('income') + g('other_income') - g('cogs') - g('expense') - g('other_expense') }; }
+    if (kind === 'bs') { var fy = bkFy(co, to), yb = new Date(+fy.slice(0, 4), 0, 0), prev = yb.getFullYear() + '-12-31', b2 = bkBal(co, null, to);
+      var S2 = secs(b2, [['bank', 'Bank Accounts', 'assets'], ['accounts_receivable', 'Accounts Receivable', 'assets'], ['other_current_asset', 'Other Current Assets', 'assets'], ['fixed_asset', 'Fixed Assets', 'assets'], ['other_asset', 'Other Assets', 'assets'],
+        ['accounts_payable', 'Accounts Payable', 'liabilities'], ['credit_card', 'Credit Cards', 'liabilities'], ['other_current_liability', 'Other Current Liabilities', 'liabilities'], ['long_term_liability', 'Long-term Liabilities', 'liabilities'], ['equity', 'Equity', 'equity']]);
+      var tot = function (g) { return S2.filter(function (s) { return s.group === g; }).reduce(function (a, s) { return a + s.total; }, 0); };
+      var reM = b2.filter(function (x) { return x.subtype === 'retained_earnings'; }).reduce(function (a, x) { return a + x.balance; }, 0), reP = ni(bkBal(co, null, prev)), ytd = ni(bkBal(co, fy, to));
+      return { kind: 'bs', to: to, company: C.legal_name, fy_start: fy, sections: S2, retained_earnings: reP + reM, net_income: ytd, total_assets: tot('assets'), total_liabilities: tot('liabilities'), total_equity: tot('equity') + reP + reM + ytd }; }
+    if (kind === 'cf') { var b3 = bkBal(co, from, to).filter(function (x) { return x.type !== 'income' && x.type !== 'expense' && x.subtype !== 'bank'; }), np = ni(bkBal(co, from, to));
+      var day0 = new Date(from + 'T12:00:00'); day0.setDate(day0.getDate() - 1);
+      var cash = function (d) { return bkBal(co, null, d).filter(function (x) { return x.subtype === 'bank'; }).reduce(function (a, x) { return a + x.balance; }, 0); };
+      var eff = function (x) { return x.type === 'asset' ? -x.balance : x.balance; };
+      var S3 = secs(b3, [['operating', 'Adjustments to reconcile net income', '', ['accounts_receivable', 'other_current_asset', 'accounts_payable', 'credit_card', 'other_current_liability'], eff], ['investing', 'Investing Activities', '', ['fixed_asset', 'other_asset'], eff], ['financing', 'Financing Activities', '', ['long_term_liability', 'equity', 'retained_earnings'], eff]]);
+      var all = S3.reduce(function (a, s) { return a + s.total; }, 0);
+      return { kind: 'cf', from: from, to: to, company: C.legal_name, net_income: np, sections: S3, operating_total: np + S3[0].total, net_change: np + all, cash_start: cash(day0.toISOString().slice(0, 10)), cash_end: cash(to) }; }
+    var b4 = bkBal(co, null, to).filter(function (x) { return x.debit !== x.credit; }).sort(function (a, z) { return a.code < z.code ? -1 : 1; });
+    return { kind: 'tb', to: to, company: C.legal_name, rows: b4.map(function (x) { return { account_id: x.account_id, code: x.code, name: x.name, type: x.type, debit: Math.max(x.debit - x.credit, 0), credit: Math.max(x.credit - x.debit, 0) }; }),
+      total_debit: b4.reduce(function (a, x) { return a + Math.max(x.debit - x.credit, 0); }, 0), total_credit: b4.reduce(function (a, x) { return a + Math.max(x.credit - x.debit, 0); }, 0) };
+  }
+  function BK(name, a) {
+    if (name === 'bk_set_provider') { var co0 = DB.companies.find(function (c) { return c.id === a.p_company; }); co0.books_provider = a.p_provider; if (a.p_provider === 'endeavor') bkSeed(co0.id); return a.p_provider; }
+    if (name === 'bk_add_bank_account') return bkAddBank(a.p_company, a.p_connection, a.p_external, a.p_name, a.p_mask, a.p_kind, a.p_balance);
+    if (name === 'bk_post_entry') return bkPost(a.p_company, a.p_date, a.p_memo, a.p_lines, a.p_source);
+    if (name === 'bk_void_entry') { var e = DB.bk_entries.find(function (x) { return x.id === a.p_entry; }); e.status = 'void'; DB.bk_transactions.forEach(function (t) { if (t.entry_id === e.id) Object.assign(t, { status: 'review', entry_id: null, account_id: null }); }); return true; }
+    if (name === 'bk_accept_txn') { var t0 = DB.bk_transactions.find(function (x) { return x.id === a.p_txn; }); var r0 = bkPostTxn(a.p_txn, a.p_account);
+      if (a.p_rule) { DB.bk_rules.push({ id: uuid(), company_id: t0.company_id, match_text: a.p_rule, direction: t0.amount_cents > 0 ? 'in' : 'out', account_id: a.p_account, created_at: new Date().toISOString() }); DB.bk_transactions.forEach(function (x) { if (x.company_id === t0.company_id && x.suggest_source !== 'rule') bkSuggest(x); }); }
+      return r0; }
+    if (name === 'bk_accept_many') return (a.p_ids || []).filter(function (id) { var t = DB.bk_transactions.find(function (x) { return x.id === id; }); if (t && t.status === 'review' && t.suggested_account_id) { bkPostTxn(id, t.suggested_account_id); return true; } return false; }).length;
+    if (name === 'bk_set_txn_status') { var t1 = DB.bk_transactions.find(function (x) { return x.id === a.p_txn; });
+      if (t1.status === 'posted') BK('bk_void_entry', { p_entry: t1.entry_id }); t1.status = a.p_status; bkSuggest(t1); return true; }
+    if (name === 'bk_import_csv') return bkImport(a.p_bank, a.p_rows || []);
+    if (name === 'bk_report') return bkReport(a.p_company, a.p_kind, a.p_from, a.p_to);
+    if (name === 'bk_ledger') { var ac = DB.bk_accounts.find(function (x) { return x.id === a.p_account; }), sg = ac.type === 'asset' || ac.type === 'expense' ? 1 : -1, run = 0, ents = {};
+      DB.bk_entries.forEach(function (x) { if (x.status === 'posted') ents[x.id] = x; });
+      var ls = DB.bk_lines.filter(function (l) { return l.account_id === ac.id && ents[l.entry_id]; }).sort(function (x, y) { var ex = ents[x.entry_id], ey = ents[y.entry_id]; return ex.entry_date < ey.entry_date ? -1 : ex.entry_date > ey.entry_date ? 1 : ex.number - ey.number; });
+      var out = []; ls.forEach(function (l) { var e = ents[l.entry_id]; run += sg * (l.debit_cents - l.credit_cents); if (e.entry_date >= a.p_from && e.entry_date <= a.p_to) out.push({ line_id: l.id, entry_id: e.id, number: e.number, entry_date: e.entry_date, memo: e.memo, description: l.description, source: e.source, debit: l.debit_cents, credit: l.credit_cents, balance: run, cleared: l.cleared, reconciled: !!l.reconciliation_id }); });
+      return out; }
+    if (name === 'bk_recon_lines' || name === 'bk_reconcile') {
+      var b = DB.bk_bank_accounts.find(function (x) { return x.id === a.p_bank; }), la = DB.bk_accounts.find(function (x) { return x.id === b.ledger_account_id; }), s1 = la.type === 'asset' ? 1 : -1, en = {};
+      DB.bk_entries.forEach(function (x) { if (x.status === 'posted') en[x.id] = x; });
+      var mine = DB.bk_lines.filter(function (l) { return l.account_id === la.id && en[l.entry_id]; });
+      if (name === 'bk_recon_lines') return mine.filter(function (l) { return !l.reconciliation_id && en[l.entry_id].entry_date <= a.p_to; }).map(function (l) { return { line_id: l.id, entry_date: en[l.entry_id].entry_date, description: l.description || en[l.entry_id].memo, amount: s1 * (l.debit_cents - l.credit_cents), cleared: l.cleared }; });
+      mine.forEach(function (l) { if (!l.reconciliation_id) l.cleared = (a.p_cleared || []).indexOf(l.id) > -1; });
+      var prev = mine.filter(function (l) { return l.reconciliation_id; }).reduce(function (s, l) { return s + s1 * (l.debit_cents - l.credit_cents); }, 0);
+      var cl = mine.filter(function (l) { return !l.reconciliation_id && l.cleared && en[l.entry_id].entry_date <= a.p_date; }).reduce(function (s, l) { return s + s1 * (l.debit_cents - l.credit_cents); }, 0), diff = a.p_balance - (prev + cl), rid = null;
+      if (a.p_finish) { if (diff) throw new Error('not_balanced'); rid = uuid(); DB.bk_reconciliations.push({ id: rid, company_id: b.company_id, bank_account_id: b.id, statement_date: a.p_date, statement_balance_cents: a.p_balance, status: 'completed', completed_at: new Date().toISOString(), created_by: ADMIN.email });
+        mine.forEach(function (l) { if (!l.reconciliation_id && l.cleared && en[l.entry_id].entry_date <= a.p_date) l.reconciliation_id = rid; }); }
+      return { opening: prev, cleared: cl, difference: diff, reconciliation_id: rid };
+    }
+    throw new Error('unknown');
+  }
+  // sample books for one company
+  (function () {
+    var co = DB.companies.find(function (c) { return c.id === CO2; }) || DB.companies[1] || DB.companies[0]; if (!co) return;
+    co.books_provider = 'endeavor'; bkSeed(co.id);
+    var Y0 = new Date().getFullYear();
+    var cn = { id: uuid(), company_id: co.id, provider: 'stripe', institution: 'Stripe Financial Connections', external_id: 'cus_demo', status: 'active', last_sync_at: iso(-0.2), last_error: null, created_at: iso(-40) };
+    DB.bk_connections.push(cn);
+    var bank = bkAddBank(co.id, cn.id, 'fca_demo1', 'Chase Business Checking', '4821', 'checking', 1834250), card = bkAddBank(co.id, cn.id, 'fca_demo2', 'Amex Business Gold', '1009', 'credit_card', -128940);
+    var A = function (c) { return bkAcc(co.id, c).id; };
+    bkPost(co.id, Y0 + '-01-02', 'Member capital contribution', [{ account_id: DB.bk_bank_accounts.find(function (b) { return b.id === bank; }).ledger_account_id, debit_cents: 2500000 }, { account_id: A('3000'), credit_cents: 2500000 }], 'opening');
+    var m = function (mo, d) { return Y0 + '-' + String(mo).padStart(2, '0') + '-' + String(d).padStart(2, '0'); };
+    var nowM = new Date().getMonth() + 1, tx = [];
+    for (var mo = 1; mo <= Math.min(nowM, 10); mo++) {
+      tx.push([bank, m(mo, 3), 'STRIPE TRANSFER ST-' + (4400 + mo), 'Stripe', 420000 + mo * 15500, '4100'], [bank, m(mo, 5), 'GUSTO PAYROLL', 'Gusto', -310000, '6060'], [bank, m(mo, 8), 'WEWORK MEMBERSHIP', 'WeWork', -85000, '6090'],
+        [card, m(mo, 11), 'GOOGLE *WORKSPACE', 'Google', -3600, '6040'], [card, m(mo, 14), 'ADOBE *CREATIVE CLD', 'Adobe', -5999, '6080'], [card, m(mo, 19), 'DELTA AIR LINES', 'Delta', -48650, '6120'], [bank, m(mo, 25), 'CHASE MONTHLY FEE', null, -1500, '6010']);
+    }
+    tx.forEach(function (x, i) { var n0 = DB.bk_transactions.length; bkImport(x[0], [{ external_id: 'demo-' + i, date: x[1], description: x[2], merchant: x[3], amount_cents: x[4] }]); var t = DB.bk_transactions[n0]; if (t && x[1] < m(Math.max(1, nowM - 1), 1)) bkPostTxn(t.id, A(x[5])); });
+    var rev = DB.bk_transactions.filter(function (t) { return t.status === 'review' && !t.suggested_account_id; });
+    var AI = [['GOOGLE', '6040', 0.93, 'Google Workspace subscription'], ['DELTA', '6120', 0.88, 'Airline ticket'], ['CHASE MONTHLY', '6010', 0.95, 'Bank service fee']];
+    rev.forEach(function (t) { var hit = AI.find(function (a) { return t.description.indexOf(a[0]) > -1; }); if (hit) Object.assign(t, { suggested_account_id: A(hit[1]), suggest_source: 'ai', ai_confidence: hit[2], ai_reason: hit[3] }); });
+    DB.bk_rules.push({ id: uuid(), company_id: co.id, match_text: 'WEWORK', direction: 'out', account_id: A('6090'), created_at: iso(-20) });
+    DB.bk_transactions.forEach(bkSuggest);
+    bkImport(bank, [{ external_id: 'demo-x1', date: m(nowM, 2), description: 'ZELLE FROM MARIA SOUZA', amount_cents: 150000 }, { external_id: 'demo-x2', date: m(nowM, 4), description: 'AMAZON MKTPL*2K4', merchant: 'Amazon', amount_cents: -12999 }]);
+  })();
   function rpc(name, args) {
     args = args || {};
     var ox = oaRpc(name, args); if (ox) return Promise.resolve({ data: ox.v, error: null });
@@ -2946,6 +3188,9 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
         r = true;
       } else if (name === 'partner_set_type') { if (!PME) return fail('forbidden'); PME.partner_type = args.p_type; r = [JSON.parse(JSON.stringify(PME))]; }
     }
+    else if (/^bk_/.test(name)) { try { r = BK(name, args); } catch (e) { return Promise.resolve({ data: null, error: { message: e.message } }); } }
+    else if (name === 'my_doc_views') r = DB.doc_access_log.filter(function (x) { return x.user_id === ME.id; }).map(function (x) { return x.document_id; }).filter(function (v, i, arr) { return arr.indexOf(v) === i; });
+    else if (name === 'portal_mfa_policy') r = { optional: false };
     else if (name === 'verify_my_password') r = !!args.p_password && args.p_password !== 'errada';
     else if (name === 'partner_sync_email') r = PME ? [JSON.parse(JSON.stringify(PME))] : [];
     else if (name === 'partner_update_profile' || name === 'partner_request_closure' || name === 'partner_cancel_closure') {
@@ -3412,6 +3657,18 @@ body.app-shell .console__content:not(.is-editor) > .fit-body > .rf-wrap, .rf-wra
         QBO[co.id].last_sync_at = new Date().toISOString();
         return new Promise(function (r) { setTimeout(function () { r(json({ ok: true, period: label })); }, 900); });
       }
+    }
+    if (/\/functions\/v1\/books/.test(u)) {
+      var bb = {}; try { bb = JSON.parse(opts.body); } catch (e) { /* ignore */ }
+      var wait = function (b, ms) { return new Promise(function (res) { setTimeout(function () { res(json(b)); }, ms || 700); }); };
+      if (bb.action === 'config') return json({ stripe: true, pk: 'pk_test_demo', plaid: false, plaid_env: 'sandbox', ai: true });
+      if (bb.action === 'ai') { var nA = 0; DB.bk_transactions.forEach(function (t) { if (t.company_id === bb.company_id && t.status === 'review' && !t.suggested_account_id) { var ac = bkAcc(t.company_id, t.amount_cents > 0 ? '4999' : (/AMAZON/.test(t.description) ? '6080' : '6999')); Object.assign(t, { suggested_account_id: ac.id, suggest_source: 'ai', ai_confidence: /AMAZON/.test(t.description) ? 0.72 : 0.4, ai_reason: /AMAZON/.test(t.description) ? 'Office supplies from Amazon' : 'Unclear: please review' }); nA++; } }); return wait({ suggested: nA, ai: true }, 1300); }
+      if (bb.action === 'sync') { DB.bk_connections.forEach(function (c) { if (c.company_id === bb.company_id) c.last_sync_at = new Date().toISOString(); }); return wait({ ok: true, imported: 0, errors: [] }, 900); }
+      if (bb.action === 'publish') { var cP = DB.companies.find(function (c) { return c.id === bb.company_id; }), qP = +bb.quarter, lab = qP ? 'Q' + qP + ' ' + bb.year : bb.year + ' (full year)';
+        Object.keys(REPORTS).forEach(function (k) { new Q('company_documents').upsert({ company_id: cP.id, category: 'report', title: REPORTS[k] + ' - ' + lab, year: +bb.year, path: cP.client_id + '/' + cP.id + '/reports/' + bb.year + 'q' + qP + '_' + k + '.pdf', mime: 'application/pdf', size_bytes: 41000, visible_to_client: true, uploaded_by: null, uploaded_by_email: 'Endeavor Bookkeeping' }, { onConflict: 'path' }).then(function () {}); });
+        return wait({ ok: true, period: lab }, 1200); }
+      if (bb.action === 'stripe_session' || bb.action === 'plaid_link') return wait({ error: 'demo_only' }, 400);
+      return json({ error: 'unknown_action' }, 400);
     }
     if (/\/functions\/v1\/(oa|esign)$/.test(u)) {
       var ob = {}; try { ob = JSON.parse(opts.body); } catch (e) { /* ignore */ }
@@ -4303,7 +4560,7 @@ window.ENDEAVOR_CFG = {
   var D = {
     en: {
       dl_title: "Closed package", dl_service: "Service contracted", dl_value: "Package value", dl_comm: "Your commission", dl_closed: "Closed on", dl_cs_wait: "Released when the client pays", dl_cs_due: "Client paid · commission to be sent", dl_cs_paid: "Commission paid", ev_closed: "Package closed: {t} · {v} · your commission {c}", 
-      ac_type: "Professional", ac_types: ["Real Estate Agent","Accountant","Attorney","Bookkeeping","Property management","Consultant / advisor","Other"], ac_nav: "My account", ac_lead: "Your details, login and password.", ac_contact: "Contact details", ac_name: "Full name", ac_phone: "WhatsApp", ac_company: "Company", ac_email2: "Second email (optional)", ac_email2h: "Notifications go to both emails.", ac_save: "Save", ac_saved: "Saved.", ac_login: "Login email", ac_cur: "Current:", ac_newEmail: "New email", ac_curPass: "Current password", ac_changeEmail: "Change email", ac_emailSent: "We sent a confirmation link to the new email. Your login changes only after you click it.", ac_same: "This is already your login email.", ac_pass: "Password", ac_newPass: "New password (min. 12 characters)", ac_confPass: "Repeat the new password", ac_changePass: "Change password", ac_passOk: "Password changed.", ac_passShort: "Use at least 12 characters.", ac_passDiff: "The passwords do not match.", ac_wrong: "The current password is wrong.", ac_many: "Too many attempts. Wait 15 minutes and try again.", ac_close: "Close account", ac_closeTxt: "You stop sending referrals. The account stays open only until you receive the last commission, then it closes automatically. Your contract and payment history are kept for tax purposes (1099).", ac_closeBtn: "Close my account", ac_closeQ: "Close your account?", ac_closeWord: "CLOSE", ac_closeType: "Type {w} to confirm", ac_closeConfirm: "Confirm closing", ac_closing: "Closing requested on {d}. No new referrals. The account closes automatically after your last commission is paid.", ac_cancel: "Keep my account", ac_closingNoRef: "Your account is being closed, so new referrals are turned off.", ac_cancelled: "Your account stays active.", e_phone: "Check the WhatsApp number.", e_email: "Check the email.", e_name2: "Enter your full name.", 
+      mf_title: "Two-step verification", mf_on: "On", mf_off: "Off", mf_onTxt: "Each sign-in asks for the code from your phone app.", mf_offTxt: "Optional: adds a code from your phone app to each sign-in.", mf_enable: "Turn on", mf_disable: "Turn off", mf_s1: "Install Google Authenticator or Microsoft Authenticator on your phone.", mf_s2: "In the app, add an account and scan this QR code.", mf_s3: "Type the 6-digit code the app shows.", mf_key: "Can't scan? Type this key:", mf_code: "6-digit code", mf_confirm: "Turn on", mf_done: "Two-step verification is on.", mf_offQ: "Turn off two-step verification? Your account will be protected only by the password.", ac_type: "Professional", ac_types: ["Real Estate Agent","Accountant","Attorney","Bookkeeping","Property management","Consultant / advisor","Other"], ac_nav: "My account", ac_lead: "Your details, login and password.", ac_contact: "Contact details", ac_name: "Full name", ac_phone: "WhatsApp", ac_company: "Company", ac_email2: "Second email (optional)", ac_email2h: "Notifications go to both emails.", ac_save: "Save", ac_saved: "Saved.", ac_login: "Login email", ac_cur: "Current:", ac_newEmail: "New email", ac_curPass: "Current password", ac_changeEmail: "Change email", ac_emailSent: "We sent a confirmation link to the new email. Your login changes only after you click it.", ac_same: "This is already your login email.", ac_pass: "Password", ac_newPass: "New password (min. 12 characters)", ac_confPass: "Repeat the new password", ac_changePass: "Change password", ac_passOk: "Password changed.", ac_passShort: "Use at least 12 characters.", ac_passDiff: "The passwords do not match.", ac_wrong: "The current password is wrong.", ac_many: "Too many attempts. Wait 15 minutes and try again.", ac_close: "Close account", ac_closeTxt: "You stop sending referrals. The account stays open only until you receive the last commission, then it closes automatically. Your contract and payment history are kept for tax purposes (1099).", ac_closeBtn: "Close my account", ac_closeQ: "Close your account?", ac_closeWord: "CLOSE", ac_closeType: "Type {w} to confirm", ac_closeConfirm: "Confirm closing", ac_closing: "Closing requested on {d}. No new referrals. The account closes automatically after your last commission is paid.", ac_cancel: "Keep my account", ac_closingNoRef: "Your account is being closed, so new referrals are turned off.", ac_cancelled: "Your account stays active.", e_phone: "Check the WhatsApp number.", e_email: "Check the email.", e_name2: "Enter your full name.", 
       o2_booked: 'Welcome call scheduled:', o2_resched: 'Reschedule', o2_next: 'Next step:', o2_s1: 'Access and email confirmed', o2_s1d: 'You created your password, which confirmed your email. Two-step verification is on.', o2_vid: 'Watch the video', o2_vidd: 'How the portal works: referrals, follow-up, commissions and services.', o2_ct: 'Sign the partner agreement', o2_ctd: 'Commission of {pct} on the invoices paid by the clients you refer. The agreement is in English (official version) and is signed online in 1 minute.', o2_ctBtn: 'Read and sign the agreement', o2_ctWait: 'Generating your agreement…', o2_pay: 'Set up how you get paid', o2_act: 'Account activated', o2_actd: 'Done automatically when the steps above are complete. Then you can refer clients.', o2_actOk: 'Your account is active. You can refer clients now.', o2_call: 'Book your welcome call', o2_calld: 'A 30-minute call with our team to plan your first referrals.', o2_lock: 'Finish the previous step first.', o2_stripeWait: 'Finish your registration on Stripe. As soon as Stripe receives your details, this step is done.', ref_pending: 'You can refer clients as soon as you finish the onboarding in "Start here".', ch_title: 'Onboarding assistant', ch_lead: 'Questions about any step? Ask here, any time.', ch_ph: 'Type your question…', ch_send: 'Send', ch_hi: 'Hi {n}! I am the Endeavor assistant. I can help you with every onboarding step. What would you like to know?', ch_err: 'The assistant is not available right now. Write to support@endeavorbiz.com.', ch_handoff: 'Our team was notified and will contact you.', ch_open: 'Assistant', ch_close: 'Close', ch_team: 'Endeavor team', ch_rate: 'Message limit reached for today. Write to support@endeavorbiz.com.',
       o_pixKey: 'Key', o_nav: 'Start here', o_title: 'Welcome to the Partner Program', o_lead: 'Watch the video and follow the steps to activate your account.', o_noVideo: 'The welcome video will be here soon.', o_seen: 'I watched it', o_steps: 'Steps to activate your account', o_s1: 'Portal access', o_s1d: 'Password and two-step verification are on.', o_s2: 'Watch the welcome video', o_s2d: 'How to refer, follow each client and get paid.', o_s3: 'How you get paid', o_s3d: 'Choose the country of the bank account that will receive your commissions.', o_country: 'Country of your bank account', o_us: 'You get paid through Stripe: your share goes automatically to your Stripe account when the client pays.', o_gp: 'For bank accounts in Brazil and Latin America, Endeavor sends your commission through Stripe Global Payouts after the client pays. You will receive a Stripe link by email to add your bank. Endeavor never sees these details.', o_pix: 'Pix key (optional)', o_pixNote: 'For Pix payouts, coming soon. Use an email, mobile number or random key (not your CPF).', o_pixType: 'Key type', pt_email: 'Email', pt_phone: 'Mobile', pt_random: 'Random key', o_save: 'Save', o_saved: 'Saved.', o_gpRequested: 'Request received: you will get the Stripe link by email to add your bank.', o_gpLink: 'Link sent: check your email to add your bank.', o_gpReady: 'All set to receive.', o_s4: 'Partner agreement', o_s4none: 'We send it after the onboarding call.', o_s5: 'Account activated', o_s5d: 'After approval you can start referring clients.', o_s5wait: 'Waiting for Endeavor approval.', o_done: 'All set! Your account is active.', o_tour: 'Get to know the portal', o_t1: 'Send a client\'s contact in under a minute.', o_t2: 'Follow each client step by step. You also get an email at every step.', o_t3: 'See what you have earned and what is coming.', o_t4: 'Your Stripe account and payout status.', o_banner: 'Almost there: finish your onboarding to start referring.', o_continue: 'Continue', e_pix: 'Invalid Pix key for the selected type.', o_change: 'Change',
       w_title: 'Welcome! Your registration is under review', w_lead: 'Follow the steps below. After the onboarding call we approve your account and send the partner agreement.', w_s1: 'Portal access created', w_s1d: 'Password and two-step verification are on.', w_s2: 'Create your Stripe account', w_s2d: 'This is where you receive your commissions.', w_s2ok: 'Your Stripe account is enabled to receive payouts.', w_s2rev: 'Stripe is reviewing your details.', w_s2btn: 'Create my Stripe account', w_need: 'Have at hand:', need1: 'A photo ID', need2: 'Your bank account details', need3: 'Your tax number: SSN, ITIN or EIN (if you are in the U.S.)', w_needNote: 'You enter everything directly with Stripe. Endeavor does not receive these details. Stripe also collects your tax form (W-9 or W-8) and issues Form 1099 when required.', w_s3: 'Onboarding call', w_s3none: 'We will agree on a time with you.', w_s4: 'Approval and agreement', w_s4d: 'We set your commission and you sign the partner agreement online.', pct_tbd: 'To be defined', k_contract: 'Partner agreement', ct_sent: 'Waiting for your signature', ct_sign: 'Sign the agreement', ct_partner_signed: 'You signed. Waiting for Endeavor\'s signature.', ct_signed: 'Signed by both parties', ct_download: 'Download signed agreement', p_readyMsg: 'All set! Your Stripe account is enabled and your commissions go straight to it.', p_need: 'What you will need', p_needNote: 'You enter these details directly with Stripe; Endeavor never sees them. Stripe also collects your W-9 or W-8 tax form.',
@@ -4334,7 +4591,7 @@ window.ENDEAVOR_CFG = {
     },
     pt: {
       dl_title: "Pacote fechado", dl_service: "Serviço contratado", dl_value: "Valor do pacote", dl_comm: "Sua comissão", dl_closed: "Fechado em", dl_cs_wait: "Liberada quando o cliente pagar", dl_cs_due: "Cliente pagou · comissão a enviar", dl_cs_paid: "Comissão paga", ev_closed: "Pacote fechado: {t} · {v} · sua comissão {c}", 
-      ac_type: "Profissional", ac_types: ["Corretor de imóveis","Contador","Advogado","Bookkeeping","Administração de imóveis","Consultor","Outro"], ac_nav: "Minha conta", ac_lead: "Seus dados, login e senha.", ac_contact: "Dados de contato", ac_name: "Nome completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo e-mail (opcional)", ac_email2h: "Os avisos vão para os dois e-mails.", ac_save: "Salvar", ac_saved: "Salvo.", ac_login: "E-mail de login", ac_cur: "Atual:", ac_newEmail: "Novo e-mail", ac_curPass: "Senha atual", ac_changeEmail: "Trocar e-mail", ac_emailSent: "Enviamos um link de confirmação para o novo e-mail. O login só muda depois que você clicar nele.", ac_same: "Este já é o seu e-mail de login.", ac_pass: "Senha", ac_newPass: "Nova senha (mín. 12 caracteres)", ac_confPass: "Repita a nova senha", ac_changePass: "Trocar senha", ac_passOk: "Senha alterada.", ac_passShort: "Use pelo menos 12 caracteres.", ac_passDiff: "As senhas não são iguais.", ac_wrong: "A senha atual está errada.", ac_many: "Muitas tentativas. Espere 15 minutos e tente de novo.", ac_close: "Encerrar conta", ac_closeTxt: "Você deixa de enviar indicações. A conta fica aberta só até você receber a última comissão e depois fecha sozinha. O contrato e o histórico de pagamentos ficam guardados para fins fiscais (1099).", ac_closeBtn: "Encerrar minha conta", ac_closeQ: "Encerrar a sua conta?", ac_closeWord: "ENCERRAR", ac_closeType: "Digite {w} para confirmar", ac_closeConfirm: "Confirmar encerramento", ac_closing: "Encerramento pedido em {d}. Sem novas indicações. A conta fecha sozinha depois que a última comissão for paga.", ac_cancel: "Manter minha conta", ac_closingNoRef: "A sua conta está sendo encerrada, por isso novas indicações estão desligadas.", ac_cancelled: "A sua conta continua ativa.", e_phone: "Confira o número de WhatsApp.", e_email: "Confira o e-mail.", e_name2: "Informe o seu nome completo.", 
+      mf_title: "Verificação em duas etapas", mf_on: "Ativada", mf_off: "Desativada", mf_onTxt: "Cada login pede o código do aplicativo do celular.", mf_offTxt: "Opcional: acrescenta um código do celular a cada login.", mf_enable: "Ativar", mf_disable: "Desativar", mf_s1: "Instale no celular o Google Authenticator ou o Microsoft Authenticator.", mf_s2: "No aplicativo, adicione uma conta e escaneie este QR code.", mf_s3: "Digite o código de 6 dígitos que aparece no aplicativo.", mf_key: "Não consegue escanear? Digite esta chave:", mf_code: "Código de 6 dígitos", mf_confirm: "Ativar", mf_done: "Verificação em duas etapas ativada.", mf_offQ: "Desativar a verificação em duas etapas? Sua conta fica protegida só pela senha.", ac_type: "Profissional", ac_types: ["Corretor de imóveis","Contador","Advogado","Bookkeeping","Administração de imóveis","Consultor","Outro"], ac_nav: "Minha conta", ac_lead: "Seus dados, login e senha.", ac_contact: "Dados de contato", ac_name: "Nome completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo e-mail (opcional)", ac_email2h: "Os avisos vão para os dois e-mails.", ac_save: "Salvar", ac_saved: "Salvo.", ac_login: "E-mail de login", ac_cur: "Atual:", ac_newEmail: "Novo e-mail", ac_curPass: "Senha atual", ac_changeEmail: "Trocar e-mail", ac_emailSent: "Enviamos um link de confirmação para o novo e-mail. O login só muda depois que você clicar nele.", ac_same: "Este já é o seu e-mail de login.", ac_pass: "Senha", ac_newPass: "Nova senha (mín. 12 caracteres)", ac_confPass: "Repita a nova senha", ac_changePass: "Trocar senha", ac_passOk: "Senha alterada.", ac_passShort: "Use pelo menos 12 caracteres.", ac_passDiff: "As senhas não são iguais.", ac_wrong: "A senha atual está errada.", ac_many: "Muitas tentativas. Espere 15 minutos e tente de novo.", ac_close: "Encerrar conta", ac_closeTxt: "Você deixa de enviar indicações. A conta fica aberta só até você receber a última comissão e depois fecha sozinha. O contrato e o histórico de pagamentos ficam guardados para fins fiscais (1099).", ac_closeBtn: "Encerrar minha conta", ac_closeQ: "Encerrar a sua conta?", ac_closeWord: "ENCERRAR", ac_closeType: "Digite {w} para confirmar", ac_closeConfirm: "Confirmar encerramento", ac_closing: "Encerramento pedido em {d}. Sem novas indicações. A conta fecha sozinha depois que a última comissão for paga.", ac_cancel: "Manter minha conta", ac_closingNoRef: "A sua conta está sendo encerrada, por isso novas indicações estão desligadas.", ac_cancelled: "A sua conta continua ativa.", e_phone: "Confira o número de WhatsApp.", e_email: "Confira o e-mail.", e_name2: "Informe o seu nome completo.", 
       o2_booked: 'Conversa de boas-vindas agendada:', o2_resched: 'Reagendar', o2_next: 'Próximo passo:', o2_s1: 'Acesso e e-mail validado', o2_s1d: 'Você criou a sua senha, o que confirmou o seu e-mail. A verificação em duas etapas está ativa.', o2_vid: 'Assista ao vídeo', o2_vidd: 'Como o portal funciona: indicações, acompanhamento, comissões e serviços.', o2_ct: 'Assine o contrato de parceria', o2_ctd: 'Comissão de {pct} sobre as faturas pagas pelos clientes que você indicar. O contrato está em inglês (versão oficial) e é assinado online em 1 minuto.', o2_ctBtn: 'Ler e assinar o contrato', o2_ctWait: 'Gerando o seu contrato…', o2_pay: 'Configure como você recebe', o2_act: 'Conta ativada', o2_actd: 'Acontece automaticamente quando os passos acima estiverem concluídos. Aí você já pode indicar clientes.', o2_actOk: 'Sua conta está ativa. Você já pode indicar clientes.', o2_call: 'Agende a conversa de boas-vindas', o2_calld: 'Uma conversa de 30 minutos com a nossa equipe para planejar as suas primeiras indicações.', o2_lock: 'Conclua o passo anterior primeiro.', o2_stripeWait: 'Termine o cadastro no Stripe. Assim que o Stripe receber os seus dados, este passo fica concluído.', ref_pending: 'Você poderá indicar clientes assim que concluir o onboarding em "Comece aqui".', ch_title: 'Assistente de onboarding', ch_lead: 'Dúvida em algum passo? Pergunte aqui, a qualquer hora.', ch_ph: 'Escreva a sua dúvida…', ch_send: 'Enviar', ch_hi: 'Olá, {n}! Sou o assistente da Endeavor. Posso ajudar você em cada passo do onboarding. O que você quer saber?', ch_err: 'O assistente não está disponível agora. Escreva para support@endeavorbiz.com.', ch_handoff: 'A nossa equipe foi avisada e vai falar com você.', ch_open: 'Assistente', ch_close: 'Fechar', ch_team: 'Equipe Endeavor', ch_rate: 'Limite de mensagens de hoje atingido. Escreva para support@endeavorbiz.com.',
       o_pixKey: 'Chave', o_nav: 'Comece aqui', o_title: 'Boas-vindas ao Programa de Parceiros', o_lead: 'Assista ao vídeo e siga os passos para ativar a sua conta.', o_noVideo: 'O vídeo de apresentação vai aparecer aqui em breve.', o_seen: 'Já assisti', o_steps: 'Passos para ativar a sua conta', o_s1: 'Acesso ao portal', o_s1d: 'Senha e verificação em duas etapas ativas.', o_s2: 'Assista ao vídeo de apresentação', o_s2d: 'Como indicar, acompanhar cada cliente e receber.', o_s3: 'Como você recebe', o_s3d: 'Escolha o país da conta bancária que vai receber as comissões.', o_country: 'País da sua conta bancária', o_us: 'Você recebe pelo Stripe: a sua parte cai automaticamente na sua conta Stripe quando o cliente paga.', o_gp: 'Para contas no Brasil e na América Latina, a Endeavor envia a sua comissão pelo Stripe Global Payouts depois que o cliente paga. Você recebe por e-mail um link do Stripe para cadastrar o seu banco. A Endeavor não vê esses dados.', o_pix: 'Chave Pix (opcional)', o_pixNote: 'Para o recebimento por Pix, que estará disponível em breve. Use e-mail, celular ou chave aleatória (não use o CPF).', o_pixType: 'Tipo de chave', pt_email: 'E-mail', pt_phone: 'Celular', pt_random: 'Chave aleatória', o_save: 'Salvar', o_saved: 'Salvo.', o_gpRequested: 'Pedido recebido: você vai receber por e-mail o link do Stripe para cadastrar o seu banco.', o_gpLink: 'Link enviado: confira o seu e-mail para cadastrar o banco.', o_gpReady: 'Tudo certo para receber.', o_s4: 'Contrato de parceria', o_s4none: 'Enviamos depois da conversa de onboarding.', o_s5: 'Conta ativada', o_s5d: 'Depois da aprovação, você já pode indicar clientes.', o_s5wait: 'Aguardando a aprovação da Endeavor.', o_done: 'Tudo pronto! Sua conta está ativa.', o_tour: 'Conheça o portal', o_t1: 'Envie o contato de um cliente em menos de um minuto.', o_t2: 'Acompanhe cada cliente etapa por etapa. Você também recebe um e-mail a cada etapa.', o_t3: 'Veja o que já recebeu e o que vai receber.', o_t4: 'Sua conta Stripe e a situação dos repasses.', o_banner: 'Falta pouco: termine o onboarding para começar a indicar.', o_continue: 'Continuar', e_pix: 'Chave Pix inválida para o tipo escolhido.', o_change: 'Alterar',
       w_title: 'Boas-vindas! Seu cadastro está em análise', w_lead: 'Siga os passos abaixo. Depois da conversa de onboarding, aprovamos a sua conta e enviamos o contrato de parceria.', w_s1: 'Acesso ao portal criado', w_s1d: 'Senha e verificação em duas etapas ativas.', w_s2: 'Crie sua conta Stripe', w_s2d: 'É por ela que você recebe as comissões.', w_s2ok: 'Sua conta Stripe está habilitada para receber.', w_s2rev: 'O Stripe está analisando os seus dados.', w_s2btn: 'Criar minha conta no Stripe', w_need: 'Tenha em mãos:', need1: 'Documento com foto', need2: 'Dados da conta bancária', need3: 'Número fiscal: SSN, ITIN ou EIN (se estiver nos EUA)', w_needNote: 'Você informa tudo direto no Stripe. A Endeavor não recebe esses dados. O Stripe também coleta o seu formulário fiscal (W-9 ou W-8) e emite o 1099 quando for o caso.', w_s3: 'Conversa de onboarding', w_s3none: 'Vamos combinar o horário com você.', w_s4: 'Aprovação e contrato', w_s4d: 'Definimos a sua comissão e você assina o contrato de parceria online.', pct_tbd: 'A definir', k_contract: 'Contrato de parceria', ct_sent: 'Aguardando a sua assinatura', ct_sign: 'Assinar contrato', ct_partner_signed: 'Você assinou. Aguardando a assinatura da Endeavor.', ct_signed: 'Assinado pelas duas partes', ct_download: 'Baixar contrato assinado', p_readyMsg: 'Tudo certo! Sua conta Stripe está habilitada e as comissões caem direto nela.', p_need: 'O que você vai precisar', p_needNote: 'Você informa esses dados direto no Stripe; a Endeavor nunca vê. O Stripe também coleta o seu formulário fiscal W-9 ou W-8.',
@@ -4365,7 +4622,7 @@ window.ENDEAVOR_CFG = {
     },
     es: {
       dl_title: "Paquete cerrado", dl_service: "Servicio contratado", dl_value: "Valor del paquete", dl_comm: "Su comisión", dl_closed: "Cerrado el", dl_cs_wait: "Se libera cuando el cliente pague", dl_cs_due: "El cliente pagó · comisión por enviar", dl_cs_paid: "Comisión pagada", ev_closed: "Paquete cerrado: {t} · {v} · su comisión {c}", 
-      ac_type: "Profesional", ac_types: ["Agente inmobiliario","Contador","Abogado","Contabilidad (bookkeeping)","Administración de propiedades","Consultor","Otro"], ac_nav: "Mi cuenta", ac_lead: "Sus datos, acceso y contraseña.", ac_contact: "Datos de contacto", ac_name: "Nombre completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo correo (opcional)", ac_email2h: "Los avisos van a los dos correos.", ac_save: "Guardar", ac_saved: "Guardado.", ac_login: "Correo de acceso", ac_cur: "Actual:", ac_newEmail: "Nuevo correo", ac_curPass: "Contraseña actual", ac_changeEmail: "Cambiar correo", ac_emailSent: "Enviamos un enlace de confirmación al nuevo correo. El acceso cambia solo después de que haga clic.", ac_same: "Este ya es su correo de acceso.", ac_pass: "Contraseña", ac_newPass: "Nueva contraseña (mín. 12 caracteres)", ac_confPass: "Repita la nueva contraseña", ac_changePass: "Cambiar contraseña", ac_passOk: "Contraseña cambiada.", ac_passShort: "Use al menos 12 caracteres.", ac_passDiff: "Las contraseñas no coinciden.", ac_wrong: "La contraseña actual es incorrecta.", ac_many: "Demasiados intentos. Espere 15 minutos e intente de nuevo.", ac_close: "Cerrar cuenta", ac_closeTxt: "Deja de enviar recomendaciones. La cuenta queda abierta solo hasta que reciba la última comisión y luego se cierra sola. El contrato y el historial de pagos se guardan para fines fiscales (1099).", ac_closeBtn: "Cerrar mi cuenta", ac_closeQ: "¿Cerrar su cuenta?", ac_closeWord: "CERRAR", ac_closeType: "Escriba {w} para confirmar", ac_closeConfirm: "Confirmar cierre", ac_closing: "Cierre solicitado el {d}. Sin nuevas recomendaciones. La cuenta se cierra sola después de pagar su última comisión.", ac_cancel: "Mantener mi cuenta", ac_closingNoRef: "Su cuenta se está cerrando, por eso las nuevas recomendaciones están desactivadas.", ac_cancelled: "Su cuenta sigue activa.", e_phone: "Revise el número de WhatsApp.", e_email: "Revise el correo.", e_name2: "Escriba su nombre completo.", 
+      mf_title: "Verificación en dos pasos", mf_on: "Activada", mf_off: "Desactivada", mf_onTxt: "Cada inicio de sesión pide el código de la aplicación del celular.", mf_offTxt: "Opcional: agrega un código del celular a cada inicio de sesión.", mf_enable: "Activar", mf_disable: "Desactivar", mf_s1: "Instale en el celular Google Authenticator o Microsoft Authenticator.", mf_s2: "En la aplicación, agregue una cuenta y escanee este código QR.", mf_s3: "Escriba el código de 6 dígitos que muestra la aplicación.", mf_key: "¿No puede escanear? Escriba esta clave:", mf_code: "Código de 6 dígitos", mf_confirm: "Activar", mf_done: "Verificación en dos pasos activada.", mf_offQ: "¿Desactivar la verificación en dos pasos? Su cuenta queda protegida solo por la contraseña.", ac_type: "Profesional", ac_types: ["Agente inmobiliario","Contador","Abogado","Contabilidad (bookkeeping)","Administración de propiedades","Consultor","Otro"], ac_nav: "Mi cuenta", ac_lead: "Sus datos, acceso y contraseña.", ac_contact: "Datos de contacto", ac_name: "Nombre completo", ac_phone: "WhatsApp", ac_company: "Empresa", ac_email2: "Segundo correo (opcional)", ac_email2h: "Los avisos van a los dos correos.", ac_save: "Guardar", ac_saved: "Guardado.", ac_login: "Correo de acceso", ac_cur: "Actual:", ac_newEmail: "Nuevo correo", ac_curPass: "Contraseña actual", ac_changeEmail: "Cambiar correo", ac_emailSent: "Enviamos un enlace de confirmación al nuevo correo. El acceso cambia solo después de que haga clic.", ac_same: "Este ya es su correo de acceso.", ac_pass: "Contraseña", ac_newPass: "Nueva contraseña (mín. 12 caracteres)", ac_confPass: "Repita la nueva contraseña", ac_changePass: "Cambiar contraseña", ac_passOk: "Contraseña cambiada.", ac_passShort: "Use al menos 12 caracteres.", ac_passDiff: "Las contraseñas no coinciden.", ac_wrong: "La contraseña actual es incorrecta.", ac_many: "Demasiados intentos. Espere 15 minutos e intente de nuevo.", ac_close: "Cerrar cuenta", ac_closeTxt: "Deja de enviar recomendaciones. La cuenta queda abierta solo hasta que reciba la última comisión y luego se cierra sola. El contrato y el historial de pagos se guardan para fines fiscales (1099).", ac_closeBtn: "Cerrar mi cuenta", ac_closeQ: "¿Cerrar su cuenta?", ac_closeWord: "CERRAR", ac_closeType: "Escriba {w} para confirmar", ac_closeConfirm: "Confirmar cierre", ac_closing: "Cierre solicitado el {d}. Sin nuevas recomendaciones. La cuenta se cierra sola después de pagar su última comisión.", ac_cancel: "Mantener mi cuenta", ac_closingNoRef: "Su cuenta se está cerrando, por eso las nuevas recomendaciones están desactivadas.", ac_cancelled: "Su cuenta sigue activa.", e_phone: "Revise el número de WhatsApp.", e_email: "Revise el correo.", e_name2: "Escriba su nombre completo.", 
       o2_booked: 'Llamada de bienvenida agendada:', o2_resched: 'Reagendar', o2_next: 'Próximo paso:', o2_s1: 'Acceso y correo validado', o2_s1d: 'Usted creó su contraseña, lo que confirmó su correo. La verificación en dos pasos está activa.', o2_vid: 'Mire el video', o2_vidd: 'Cómo funciona el portal: recomendaciones, seguimiento, comisiones y servicios.', o2_ct: 'Firme el contrato de socio', o2_ctd: 'Comisión de {pct} sobre las facturas pagadas por los clientes que usted recomiende. El contrato está en inglés (versión oficial) y se firma en línea en 1 minuto.', o2_ctBtn: 'Leer y firmar el contrato', o2_ctWait: 'Generando su contrato…', o2_pay: 'Configure cómo recibe', o2_act: 'Cuenta activada', o2_actd: 'Ocurre automáticamente cuando los pasos de arriba estén completos. Entonces ya puede recomendar clientes.', o2_actOk: 'Su cuenta está activa. Ya puede recomendar clientes.', o2_call: 'Agende la llamada de bienvenida', o2_calld: 'Una conversación de 30 minutos con nuestro equipo para planear sus primeras recomendaciones.', o2_lock: 'Complete primero el paso anterior.', o2_stripeWait: 'Termine el registro en Stripe. En cuanto Stripe reciba sus datos, este paso queda completo.', ref_pending: 'Podrá recomendar clientes en cuanto complete el onboarding en "Empiece aquí".', ch_title: 'Asistente de onboarding', ch_lead: '¿Dudas en algún paso? Pregunte aquí, a cualquier hora.', ch_ph: 'Escriba su pregunta…', ch_send: 'Enviar', ch_hi: '¡Hola, {n}! Soy el asistente de Endeavor. Puedo ayudarle en cada paso del onboarding. ¿Qué le gustaría saber?', ch_err: 'El asistente no está disponible ahora. Escriba a support@endeavorbiz.com.', ch_handoff: 'Nuestro equipo fue avisado y se comunicará con usted.', ch_open: 'Asistente', ch_close: 'Cerrar', ch_team: 'Equipo Endeavor', ch_rate: 'Límite de mensajes de hoy alcanzado. Escriba a support@endeavorbiz.com.',
       o_pixKey: 'Clave', o_nav: 'Empiece aquí', o_title: 'Bienvenido(a) al Programa de Socios', o_lead: 'Mire el video y siga los pasos para activar su cuenta.', o_noVideo: 'El video de bienvenida estará aquí pronto.', o_seen: 'Ya lo vi', o_steps: 'Pasos para activar su cuenta', o_s1: 'Acceso al portal', o_s1d: 'Contraseña y verificación en dos pasos activas.', o_s2: 'Mire el video de bienvenida', o_s2d: 'Cómo recomendar, seguir a cada cliente y recibir.', o_s3: 'Cómo recibe', o_s3d: 'Elija el país de la cuenta bancaria que recibirá sus comisiones.', o_country: 'País de su cuenta bancaria', o_us: 'Usted recibe por Stripe: su parte va automáticamente a su cuenta Stripe cuando el cliente paga.', o_gp: 'Para cuentas en Brasil y América Latina, Endeavor envía su comisión por Stripe Global Payouts después de que el cliente paga. Recibirá por correo un enlace de Stripe para registrar su banco. Endeavor no ve estos datos.', o_pix: 'Clave Pix (opcional)', o_pixNote: 'Para pagos por Pix, disponibles pronto. Use correo, celular o clave aleatoria (no use el CPF).', o_pixType: 'Tipo de clave', pt_email: 'Correo', pt_phone: 'Celular', pt_random: 'Clave aleatoria', o_save: 'Guardar', o_saved: 'Guardado.', o_gpRequested: 'Solicitud recibida: recibirá por correo el enlace de Stripe para registrar su banco.', o_gpLink: 'Enlace enviado: revise su correo para registrar su banco.', o_gpReady: 'Todo listo para recibir.', o_s4: 'Contrato de socio', o_s4none: 'Lo enviamos después de la llamada de onboarding.', o_s5: 'Cuenta activada', o_s5d: 'Después de la aprobación ya puede recomendar clientes.', o_s5wait: 'Esperando la aprobación de Endeavor.', o_done: '¡Todo listo! Su cuenta está activa.', o_tour: 'Conozca el portal', o_t1: 'Envíe el contacto de un cliente en menos de un minuto.', o_t2: 'Siga a cada cliente paso a paso. También recibe un correo en cada etapa.', o_t3: 'Vea lo que ya recibió y lo que va a recibir.', o_t4: 'Su cuenta Stripe y el estado de los pagos.', o_banner: 'Falta poco: termine el onboarding para empezar a recomendar.', o_continue: 'Continuar', e_pix: 'Clave Pix inválida para el tipo elegido.', o_change: 'Cambiar',
       w_title: '¡Bienvenido(a)! Su registro está en revisión', w_lead: 'Siga los pasos de abajo. Después de la llamada de onboarding, aprobamos su cuenta y enviamos el contrato de socio.', w_s1: 'Acceso al portal creado', w_s1d: 'Contraseña y verificación en dos pasos activas.', w_s2: 'Cree su cuenta Stripe', w_s2d: 'Ahí recibe sus comisiones.', w_s2ok: 'Su cuenta Stripe está habilitada para recibir.', w_s2rev: 'Stripe está revisando sus datos.', w_s2btn: 'Crear mi cuenta en Stripe', w_need: 'Tenga a mano:', need1: 'Un documento con foto', need2: 'Los datos de su cuenta bancaria', need3: 'Su número fiscal: SSN, ITIN o EIN (si está en EE. UU.)', w_needNote: 'Usted ingresa todo directamente en Stripe. Endeavor no recibe estos datos. Stripe también recoge su formulario fiscal (W-9 o W-8) y emite el 1099 cuando corresponde.', w_s3: 'Llamada de onboarding', w_s3none: 'Acordaremos un horario con usted.', w_s4: 'Aprobación y contrato', w_s4d: 'Definimos su comisión y usted firma el contrato de socio en línea.', pct_tbd: 'Por definir', k_contract: 'Contrato de socio', ct_sent: 'Esperando su firma', ct_sign: 'Firmar el contrato', ct_partner_signed: 'Usted firmó. Esperando la firma de Endeavor.', ct_signed: 'Firmado por ambas partes', ct_download: 'Descargar contrato firmado', p_readyMsg: '¡Todo listo! Su cuenta Stripe está habilitada y sus comisiones llegan directo a ella.', p_need: 'Lo que va a necesitar', p_needNote: 'Usted ingresa estos datos directamente en Stripe; Endeavor nunca los ve. Stripe también recoge su formulario fiscal W-9 o W-8.',
@@ -4742,6 +4999,37 @@ window.ENDEAVOR_CFG = {
       function accErr(e) { var m = (e && e.message) || String(e); return /too_many_attempts/.test(m) ? t('ac_many') : /wrong_password/.test(m) ? t('ac_wrong') : /invalid_phone/.test(m) ? t('e_phone') : /invalid_email/.test(m) ? t('e_email') : /invalid_name/.test(m) ? t('e_name2') : C.errText(e); }
       async function checkPass(pw) { var r = await sb.rpc('verify_my_password', { p_password: pw }); if (r.error) throw r.error; if (r.data !== true) throw new Error('wrong_password'); }
       var TYPES = ['realtor', 'accountant', 'attorney', 'bookkeeping', 'property_management', 'referral', 'other'];
+      // optional 2-step verification for referral partners (client collaborators always have it)
+      async function mfaRow() {
+        var box = $('#ac-mfa'); if (!box) return;
+        var f = ((await sb.auth.mfa.listFactors()).data || {}).totp || [], on = f.filter(function (x) { return x.status === 'verified'; })[0];
+        box.innerHTML = '<div><strong>' + t('mf_title') + '</strong> <span class="pill' + (on ? ' pill--done' : '') + '">' + t(on ? 'mf_on' : 'mf_off') + '</span><p class="acc-hint">' + t(on ? 'mf_onTxt' : 'mf_offTxt') + '</p></div>' +
+          '<button class="btn btn--ghost btn--xs" type="button" id="ac-mfa-b">' + t(on ? 'mf_disable' : 'mf_enable') + '</button>';
+        $('#ac-mfa-b').onclick = function () { return on ? mfaOff(on) : mfaOn(); };
+      }
+      async function mfaOn() {
+        var all = ((await sb.auth.mfa.listFactors()).data || {}).all || [];
+        for (var i = 0; i < all.length; i++) if (all[i].status !== 'verified') await sb.auth.mfa.unenroll({ factorId: all[i].id });
+        var en = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Endeavor Business Solutions', friendlyName: 'Endeavor Partner ' + new Date().toISOString().slice(0, 10) });
+        if (en.error) return C.msg($('#ac-m2'), C.errText(en.error), 'error');
+        var o = C.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + t('mf_title') + '</h2><button class="close-x" type="button" aria-label="×">×</button></div>' +
+          '<ol class="mf-steps"><li>' + t('mf_s1') + '</li><li>' + t('mf_s2') + '</li><li>' + t('mf_s3') + '</li></ol>' +
+          '<div class="mf-qr"><img src="' + en.data.totp.qr_code + '" alt="QR code" width="180" height="180"><p class="acc-hint">' + t('mf_key') + ' <code>' + esc(en.data.totp.secret) + '</code></p></div>' +
+          '<form class="portal-form" id="mf-f" novalidate><div class="field"><label for="mf-code">' + t('mf_code') + '</label><input id="mf-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required></div>' +
+          '<div class="portal-alert" id="mf-m" role="alert"></div><button class="btn btn--navy" type="submit">' + t('mf_confirm') + '</button></form>', true);
+        $('#mf-code', o).focus();
+        $('#mf-f', o).onsubmit = async function (e) {
+          e.preventDefault(); var r = await sb.auth.mfa.challengeAndVerify({ factorId: en.data.id, code: $('#mf-code', o).value.trim() });
+          if (r.error) return C.msg($('#mf-m', o), C.errText(r.error), 'error');
+          C.closeOverlay(); mfaRow(); C.msg($('#ac-m2'), t('mf_done'), 'ok');
+        };
+      }
+      async function mfaOff(f) {
+        if (!confirm(t('mf_offQ'))) return;
+        var r = await sb.auth.mfa.unenroll({ factorId: f.id });
+        if (r.error) return C.msg($('#ac-m2'), C.errText(r.error), 'error');
+        await sb.auth.refreshSession(); mfaRow();
+      }
       async function vAccount(view) {
         var u = (await sb.auth.getUser()).data.user || {};
         var fld = function (id, label, type, val, extra) { return '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + type + '"' + (val != null ? ' value="' + esc(val) + '"' : '') + (extra || '') + '></div>'; };
@@ -4759,7 +5047,7 @@ window.ENDEAVOR_CFG = {
           '<section class="portal-card acc-card"><h2 class="portal-h2">' + t('ac_login') + '</h2><p class="acc-cur">' + t('ac_cur') + ' <strong>' + esc(u.email || P.email) + '</strong></p><form class="portal-form acc-form" id="ac-f2" novalidate>' +
             fld('ac-new', t('ac_newEmail'), 'email', null, ' autocomplete="email" maxlength="200" required') +
             fld('ac-p2', t('ac_curPass'), 'password', null, ' autocomplete="current-password" required') +
-            '<div class="portal-alert" id="ac-m2" role="status"></div><button class="btn btn--navy btn--sm" type="submit">' + t('ac_changeEmail') + '</button></form></section>' +
+            '<div class="portal-alert" id="ac-m2" role="status"></div><button class="btn btn--navy btn--sm" type="submit">' + t('ac_changeEmail') + '</button></form><div class="acc-mfa" id="ac-mfa"></div></section>' +
           '<section class="portal-card acc-card"><h2 class="portal-h2">' + t('ac_pass') + '</h2><form class="portal-form acc-form" id="ac-f3" novalidate>' +
             fld('ac-p3', t('ac_curPass'), 'password', null, ' autocomplete="current-password" required') +
             fld('ac-n3', t('ac_newPass'), 'password', null, ' autocomplete="new-password" minlength="12" required') +
@@ -4814,6 +5102,7 @@ window.ENDEAVOR_CFG = {
           } catch (er) { C.msg(m, accErr(er), 'error'); }
           busy(f, false);
         };
+        mfaRow();
         if ($('#ac-keep')) $('#ac-keep').onclick = async function () {
           this.disabled = true; var r = await sb.rpc('partner_cancel_closure');
           if (r.error) { this.disabled = false; return C.msg($('#ac-m4'), accErr(r.error), 'error'); }
@@ -5933,9 +6222,9 @@ window.ENDEAVOR_CFG = {
       allCompanies: 'All companies', allCategories: 'All categories', search: 'Search…', view: 'View', download: 'Download', print: 'Print', close: 'Close',
       noDocs: 'No documents yet', noPreview: 'Preview not available for this file type. Use Download.', viewErr: 'Could not open the file.',
       overdue: 'Overdue by {n} d', dueIn: 'In {n} d', dueToday: 'Due today', done: 'Completed', na: 'Not applicable', inProgress: 'In progress',
-      complianceLead: 'Federal and state filing dates for your companies. Endeavor updates this calendar; confirm details with your CPA.', showDone: 'Show completed', addCal: 'Add to my calendar (.ics)', noDeadlines: 'No pending deadlines',
+      complianceLead: 'Federal and state filing dates for your companies. Endeavor updates this calendar; confirm details with your CPA.', overBy: '{n} d ago', st_pending: 'Pending', st_overdue: 'Overdue', st_done: 'Done', doneOn: 'Done on {d}', onTime: 'on time', late: 'after the due date', v_list: 'List', v_cal: 'Calendar', sum_done: 'Done', sum_pend: 'Pending', sum_over: 'Overdue', dl_year: 'Year', noDeadlinesYear: 'No deadlines in this year.', dl_pickDay: 'Click a highlighted day to see its deadlines.', dl_none_day: 'No deadlines on this day.', newDocs: '{n} new documents', isNew: 'New', showDone: 'Show completed', addCal: 'Add to my calendar (.ics)', noDeadlines: 'No pending deadlines',
       dl_annual_report: 'Annual report', dl_federal_tax: 'Federal tax', dl_state_tax: 'State tax', dl_payroll: 'Payroll', dl_sales_tax: 'Sales tax', dl_boi: 'BOI', dl_license: 'License', dl_other: 'Other',
-      reportsLead: 'Profit and Loss, Balance Sheet and Cash Flow generated from your QuickBooks Online, ready to view, print or save as PDF.',
+      reportsLead: 'Profit and Loss, Balance Sheet and Cash Flow prepared by Endeavor from your company\'s books, ready to view, print or save as PDF.', repPreparing: 'Endeavor is preparing your reports. They will appear here as soon as they are published.', repNone: 'Reports appear here when Endeavor keeps your books or connects your accounting.', repBy: 'Prepared by Endeavor',
       qboOn: 'QuickBooks connected', qboOff: 'QuickBooks not connected', connect: 'Connect QuickBooks', disconnect: 'Disconnect', generate: 'Generate reports', year: 'Year', period: 'Period',
       q1: 'Q1', q2: 'Q2', q3: 'Q3', q4: 'Q4', fy: 'Full year', generating: 'Generating reports from QuickBooks…', noReports: 'No reports yet.', ownerConnects: 'Only the account owner can connect QuickBooks.',
       qbo_not_configured: 'The QuickBooks integration is being set up by Endeavor. Please try again later.', qbo_reconnect_required: 'The QuickBooks connection expired. Please connect again.',
@@ -5984,9 +6273,9 @@ window.ENDEAVOR_CFG = {
       allCompanies: 'Todas as empresas', allCategories: 'Todas as categorias', search: 'Buscar…', view: 'Ver', download: 'Baixar', print: 'Imprimir', close: 'Fechar',
       noDocs: 'Nenhum documento ainda', noPreview: 'Pré-visualização indisponível para este tipo de arquivo. Use Baixar.', viewErr: 'Não foi possível abrir o arquivo.',
       overdue: 'Vencido há {n} d', dueIn: 'Em {n} d', dueToday: 'Vence hoje', done: 'Concluído', na: 'Não se aplica', inProgress: 'Em andamento',
-      complianceLead: 'Datas de entrega federais e estaduais das suas empresas. A Endeavor atualiza este calendário; confirme os detalhes com o seu contador.', showDone: 'Mostrar concluídos', addCal: 'Adicionar ao meu calendário (.ics)', noDeadlines: 'Nenhum prazo pendente',
+      complianceLead: 'Datas de entrega federais e estaduais das suas empresas. A Endeavor atualiza este calendário; confirme os detalhes com o seu contador.', overBy: 'há {n} d', st_pending: 'Pendente', st_overdue: 'Vencido', st_done: 'Concluído', doneOn: 'Concluído em {d}', onTime: 'no prazo', late: 'após o vencimento', v_list: 'Lista', v_cal: 'Calendário', sum_done: 'Concluídos', sum_pend: 'Pendentes', sum_over: 'Vencidos', dl_year: 'Ano', noDeadlinesYear: 'Nenhum prazo neste ano.', dl_pickDay: 'Clique num dia marcado para ver os prazos.', dl_none_day: 'Nenhum prazo neste dia.', newDocs: '{n} documentos novos', isNew: 'Novo', showDone: 'Mostrar concluídos', addCal: 'Adicionar ao meu calendário (.ics)', noDeadlines: 'Nenhum prazo pendente',
       dl_annual_report: 'Annual report', dl_federal_tax: 'Imposto federal', dl_state_tax: 'Imposto estadual', dl_payroll: 'Folha', dl_sales_tax: 'Sales tax', dl_boi: 'BOI', dl_license: 'Licença', dl_other: 'Outro',
-      reportsLead: 'Demonstração de resultados (P&L), balanço patrimonial e fluxo de caixa gerados do seu QuickBooks Online, prontos para ver, imprimir ou salvar em PDF.',
+      reportsLead: 'Demonstração de resultados (P&L), balanço patrimonial e fluxo de caixa preparados pela Endeavor a partir da contabilidade da sua empresa, prontos para ver, imprimir ou salvar em PDF.', repPreparing: 'A Endeavor está preparando seus relatórios. Eles aparecem aqui assim que forem publicados.', repNone: 'Os relatórios aparecem aqui quando a Endeavor cuida da contabilidade da sua empresa.', repBy: 'Preparado pela Endeavor',
       qboOn: 'QuickBooks conectado', qboOff: 'QuickBooks não conectado', connect: 'Conectar QuickBooks', disconnect: 'Desconectar', generate: 'Gerar relatórios', year: 'Ano', period: 'Período',
       q1: '1º trimestre', q2: '2º trimestre', q3: '3º trimestre', q4: '4º trimestre', fy: 'Ano completo', generating: 'Gerando relatórios no QuickBooks…', noReports: 'Nenhum relatório ainda.', ownerConnects: 'Somente o titular da conta pode conectar o QuickBooks.',
       qbo_not_configured: 'A integração com o QuickBooks está sendo configurada pela Endeavor. Tente mais tarde.', qbo_reconnect_required: 'A conexão com o QuickBooks expirou. Conecte novamente.',
@@ -6035,9 +6324,9 @@ window.ENDEAVOR_CFG = {
       allCompanies: 'Todas las empresas', allCategories: 'Todas las categorías', search: 'Buscar…', view: 'Ver', download: 'Descargar', print: 'Imprimir', close: 'Cerrar',
       noDocs: 'Aún no hay documentos', noPreview: 'Vista previa no disponible para este tipo de archivo. Use Descargar.', viewErr: 'No se pudo abrir el archivo.',
       overdue: 'Vencido hace {n} d', dueIn: 'En {n} d', dueToday: 'Vence hoy', done: 'Completado', na: 'No aplica', inProgress: 'En curso',
-      complianceLead: 'Fechas de presentación federales y estatales de sus empresas. Endeavor actualiza este calendario; confirme los detalles con su contador.', showDone: 'Mostrar completados', addCal: 'Agregar a mi calendario (.ics)', noDeadlines: 'No hay plazos pendientes',
+      complianceLead: 'Fechas de presentación federales y estatales de sus empresas. Endeavor actualiza este calendario; confirme los detalles con su contador.', overBy: 'hace {n} d', st_pending: 'Pendiente', st_overdue: 'Vencido', st_done: 'Completado', doneOn: 'Completado el {d}', onTime: 'a tiempo', late: 'después del vencimiento', v_list: 'Lista', v_cal: 'Calendario', sum_done: 'Completados', sum_pend: 'Pendientes', sum_over: 'Vencidos', dl_year: 'Año', noDeadlinesYear: 'No hay plazos en este año.', dl_pickDay: 'Haga clic en un día marcado para ver sus plazos.', dl_none_day: 'No hay plazos este día.', newDocs: '{n} documentos nuevos', isNew: 'Nuevo', showDone: 'Mostrar completados', addCal: 'Agregar a mi calendario (.ics)', noDeadlines: 'No hay plazos pendientes',
       dl_annual_report: 'Annual report', dl_federal_tax: 'Impuesto federal', dl_state_tax: 'Impuesto estatal', dl_payroll: 'Nómina', dl_sales_tax: 'Sales tax', dl_boi: 'BOI', dl_license: 'Licencia', dl_other: 'Otro',
-      reportsLead: 'Estado de resultados (P&L), balance general y flujo de caja generados desde su QuickBooks Online, listos para ver, imprimir o guardar en PDF.',
+      reportsLead: 'Estado de resultados (P&L), balance general y flujo de caja preparados por Endeavor a partir de la contabilidad de su empresa, listos para ver, imprimir o guardar en PDF.', repPreparing: 'Endeavor está preparando sus reportes. Aparecen aquí en cuanto se publiquen.', repNone: 'Los reportes aparecen aquí cuando Endeavor lleva la contabilidad de su empresa.', repBy: 'Preparado por Endeavor',
       qboOn: 'QuickBooks conectado', qboOff: 'QuickBooks no conectado', connect: 'Conectar QuickBooks', disconnect: 'Desconectar', generate: 'Generar reportes', year: 'Año', period: 'Período',
       q1: '1.er trimestre', q2: '2.º trimestre', q3: '3.er trimestre', q4: '4.º trimestre', fy: 'Año completo', generating: 'Generando reportes en QuickBooks…', noReports: 'Aún no hay reportes.', ownerConnects: 'Solo el titular de la cuenta puede conectar QuickBooks.',
       qbo_not_configured: 'Endeavor está configurando la integración con QuickBooks. Intente más tarde.', qbo_reconnect_required: 'La conexión con QuickBooks venció. Conéctela de nuevo.',
@@ -6089,13 +6378,18 @@ window.ENDEAVOR_CFG = {
   async function sha256Hex(buf) { var d = await crypto.subtle.digest('SHA-256', buf); return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, '0'); }).join(''); }
   function fileIcon(p) { return ((p.match(/\.([a-z0-9]+)$/i) || ['', 'doc'])[1]).toUpperCase().slice(0, 4); }
   function pill(it) {
-    if (it.status === 'done') return '<span class="pill pill--done">' + t('done') + '</span>';
+    if (it.status === 'done') {
+      var dd = it.completed_at ? it.completed_at.slice(0, 10) : '', ok = !dd || dd <= it.due_date;
+      return '<span class="pill pill--done dl-st"><svg class="icon" aria-hidden="true" viewBox="0 0 16 16" style="width:.85em;height:.85em"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> ' +
+        (dd ? t('doneOn', { d: fmtDate(dd + 'T12:00:00') }) + (ok ? ' · ' + t('onTime') : '') : t('st_done')) + '</span>';
+    }
     if (it.status === 'not_applicable') return '<span class="pill">' + t('na') + '</span>';
     var n = daysUntil(it.due_date);
-    if (n < 0) return '<span class="pill pill--overdue">' + t('overdue', { n: -n }) + '</span>';
-    if (n === 0) return '<span class="pill pill--overdue">' + t('dueToday') + '</span>';
-    return '<span class="pill' + (n <= 30 ? ' pill--soon' : '') + '">' + t('dueIn', { n: n }) + '</span>';
+    if (n < 0) return '<span class="pill pill--overdue dl-st">' + t('st_overdue') + ' · ' + t('overBy', { n: -n }) + '</span>';
+    if (n === 0) return '<span class="pill pill--overdue dl-st">' + t('st_pending') + ' · ' + t('dueToday') + '</span>';
+    return '<span class="pill dl-st' + (n <= 30 ? ' pill--soon' : '') + '">' + t('st_pending') + ' · ' + t('dueIn', { n: n }) + '</span>';
   }
+  function dlState(it) { return it.status === 'done' ? 'done' : it.status === 'not_applicable' ? 'na' : daysUntil(it.due_date) < 0 ? 'over' : 'pend'; }
   function deadlineRow(it, co) {
     var p = it.due_date.split('-'), mon = new Intl.DateTimeFormat(EP.locale, { month: 'short' }).format(new Date(+p[0], +p[1] - 1, 15)).replace('.', '');
     return '<div class="deadline"><div class="deadline__date"><b>' + p[2] + '</b><span>' + esc(mon) + ' ' + p[0] + '</span></div>' +
@@ -6125,9 +6419,17 @@ window.ENDEAVOR_CFG = {
     S.user = s.user;
     $('#topbar-user').hidden = false; $('#topbar-email').textContent = s.user.email;
     var aal = (await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data;
-    if (!aal || aal.currentLevel !== 'aal2') return renderMfa();
+    S.aal1 = false;
+    if (!aal || aal.currentLevel !== 'aal2') {
+      // referral partners may sign in with password only (2-step verification is optional for them); client collaborators always need it
+      var skip = false;
+      if (PARTNER && window.EPartnerRef && aal && aal.nextLevel !== 'aal2') { var pol = await sb.rpc('portal_mfa_policy'); skip = !pol.error && !!(pol.data && pol.data.optional); }
+      if (!skip) return renderMfa();
+      S.aal1 = true;
+    }
     var mem = await sb.rpc('claim_invitations');
     var allMem = mem.data || [];
+    if (S.aal1 && allMem.some(function (x) { return x.role === 'collaborator'; })) return renderMfa();
     S.memberships = allMem.filter(function (x) { return PARTNER ? x.role === 'collaborator' : x.role === 'owner'; });
     if (PARTNER && window.EPartnerRef) { var pr = await sb.rpc('claim_partner'); S.partner = (pr.data || [])[0] || null; if (S.partner) { var se = await sb.rpc('partner_sync_email'); if (!se.error && se.data && se.data[0]) S.partner = se.data[0]; } }
     if (S.partner) { S.ref = EPartnerRef.init(refCtx()); if (!S.memberships.length) { S.client = null; S.perms = {}; S.companies = []; S.me = {}; startShell(); return; } }
@@ -6139,7 +6441,7 @@ window.ENDEAVOR_CFG = {
     var saved = null; try { saved = localStorage.getItem('endeavor-client-id'); } catch (e) { /* ignore */ }
     var m = S.memberships.find(function (x) { return x.client_id === saved; }) || S.memberships[0];
     await selectClient(m.client_id);
-    await checkOpenInvoices();
+    await checkOpenInvoices(); await checkNewDocs();
     if (S.openInv.n && !S.landed) { var hh = ERoute.get(); if (!hh || hh === '#' || hh === '#/' || /^#\/overview/.test(hh)) ERoute.set('#/invoices', true); }
     S.landed = true;
     startShell();
@@ -6154,6 +6456,19 @@ window.ENDEAVOR_CFG = {
     var n = (S.openInv && S.openInv.n) || 0, b = document.getElementById('inv-badge'), tg = document.getElementById('nav-toggle');
     if (b) { b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n); b.setAttribute('aria-label', t('inv_badge', { n: n })); b.title = t('inv_badge', { n: n }); }
     if (tg) tg.classList.toggle('has-alert', !!n);
+  }
+  // documents the user has not opened yet (blue counter next to "Documents")
+  async function checkNewDocs() {
+    S.docSeen = {}; S.docNew = 0;
+    if (!S.client || !S.perms.view) return;
+    var r = await Promise.all([sb.rpc('my_doc_views', { p_client: S.client.id }), sb.from('company_documents').select('id, uploaded_by').eq('client_id', S.client.id)]);
+    (r[0].data || []).forEach(function (x) { S.docSeen[x.document_id || x] = 1; });
+    (r[1].data || []).forEach(function (d) { if (!S.docSeen[d.id] && d.uploaded_by !== S.user.id) S.docNew++; });
+  }
+  function isNewDoc(d) { return S.docSeen && !S.docSeen[d.id] && d.uploaded_by !== (S.user && S.user.id); }
+  function updateDocBadge() {
+    var n = S.docNew || 0, b = document.getElementById('doc-badge');
+    if (b) { b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n); b.setAttribute('aria-label', t('newDocs', { n: n })); b.title = t('newDocs', { n: n }); }
   }
   async function checkOpenInvoices() {
     S.openInv = { n: 0, cents: 0 };
@@ -6206,7 +6521,12 @@ window.ENDEAVOR_CFG = {
       var em = $('#fg-email').value.trim().toLowerCase(), m = $('#fg-msg');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return msg(m, t('fillNameEmail'), 'error');
       var btn = this.querySelector('button'); if (btn.disabled) return; btn.disabled = true;
-      var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl(PAGE) + '?lang=' + L });
+      // branded e-mail in the portal's language, sent by Endeavor; Supabase's own e-mail only if that call fails
+      var r = { error: null };
+      try {
+        var fr = await fetch(CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey }, body: JSON.stringify({ action: 'access_reset', email: em, page: PAGE, lang: L }) });
+        if (!fr.ok) throw new Error('http');
+      } catch (er) { r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl(PAGE) + '?lang=' + L }); }
       var limited = r.error && /rate|limit|seconds/i.test(r.error.message);
       // same message whether or not the e-mail exists (no account enumeration); the address is echoed so typos are visible
       msg(m, limited ? errText(r.error) : t('resetSent').replace('{e}', em), limited ? 'error' : 'ok');
@@ -6297,7 +6617,7 @@ window.ENDEAVOR_CFG = {
     var clientBox = !S.client ? '' : multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem;background:#fff;color:#0b1f3a;font:inherit;font-weight:600">' +
         S.memberships.map(function (m) { return '<option value="' + m.client_id + '"' + (m.client_id === S.client.id ? ' selected' : '') + '>' + esc(m.client_name) + '</option>'; }).join('') + '</select></div>'
         : '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.client.name) + '</div>';
-    var navLi = function (n) { return n[0] === '-' ? '<li class="nav-sep" role="presentation">' + esc(n[1]) + '</li>' + (S.ref ? '<li role="presentation">' + clientBox + '</li>' : '') : '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + esc(n[1]) + (n[0] === 'invoices' ? '<span class="nav-badge" id="inv-badge" hidden></span>' : '') + '</a></li>'; };
+    var navLi = function (n) { return n[0] === '-' ? '<li class="nav-sep" role="presentation">' + esc(n[1]) + '</li>' + (S.ref ? '<li role="presentation">' + clientBox + '</li>' : '') : '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + esc(n[1]) + (n[0] === 'invoices' ? '<span class="nav-badge" id="inv-badge" hidden></span>' : '') + (n[0] === 'documents' ? '<span class="nav-badge nav-badge--info" id="doc-badge" hidden></span>' : '') + '</a></li>'; };
     app.innerHTML = '<div class="console" id="console"><nav class="console__nav" id="console-nav" aria-label="' + t('portal') + '">' +
       '<div class="console__nav-title">' + t('portal') + '</div>' +
       (S.ref ? '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.partner.company || S.partner.name) + '<div style="font-weight:400;font-size:.8rem;color:var(--on-dark-muted)">' + esc(t('p_partnerLead')) + '</div></div>' : clientBox) +
@@ -6310,9 +6630,9 @@ window.ENDEAVOR_CFG = {
     tgl.onclick = function () { setNav(!con.classList.contains('nav-open')); };
     $('#nav-backdrop').onclick = function () { setNav(false); };
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && con.classList.contains('nav-open')) { setNav(false); tgl.focus(); } });
-    if ($('#cl-switch')) $('#cl-switch').onchange = async function () { await selectClient(this.value); await checkOpenInvoices(); startShell(); };
+    if ($('#cl-switch')) $('#cl-switch').onchange = async function () { await selectClient(this.value); await checkOpenInvoices(); await checkNewDocs(); startShell(); };
     window.onhashchange = function () { setNav(false); route(); };
-    updateInvBadge();
+    updateInvBadge(); updateDocBadge();
     route();
   }
   function route() {
@@ -6346,7 +6666,10 @@ window.ENDEAVOR_CFG = {
     return o;
   }
   function closeOverlay() { var o = $('#overlay'); o.hidden = true; o.innerHTML = ''; document.onkeydown = null; }
-  function logAccess(doc, action) { sb.from('doc_access_log').insert({ document_id: doc.id, action: action }).then(function () {}); }
+  function logAccess(doc, action) {
+    sb.from('doc_access_log').insert({ document_id: doc.id, action: action }).then(function () {});
+    if (isNewDoc(doc)) { S.docSeen[doc.id] = 1; S.docNew = Math.max(0, (S.docNew || 0) - 1); updateDocBadge(); $$('[data-new="' + doc.id + '"]').forEach(function (x) { x.remove(); }); }
+  }
   async function viewDoc(d) {
     var isImg = /\.(png|jpe?g|webp|gif)$/i.test(d.path), isPdf = /\.pdf$/i.test(d.path);
     var o = openOverlay('<div class="viewer"><div class="viewer__bar"><strong>' + esc(d.title) + '</strong><div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="vw-print"' + (isPdf ? '' : ' hidden') + '>' + t('print') + '</button><button class="btn btn--ghost btn--xs" type="button" id="vw-dl">' + t('download') + '</button><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div></div>' +
@@ -6372,7 +6695,7 @@ window.ENDEAVOR_CFG = {
     if (!docs.length) return '<div class="empty-state"><strong>' + t('noDocs') + '</strong></div>';
     return '<ul class="doclist">' + docs.map(function (d) {
       var co = coById(d.company_id);
-      return '<li><span class="ficon" aria-hidden="true">' + fileIcon(d.path) + '</span><div><div class="dname">' + esc(d.title) + (d.year ? ' (' + d.year + ')' : '') + '</div>' +
+      return '<li><span class="ficon" aria-hidden="true">' + fileIcon(d.path) + '</span><div><div class="dname">' + esc(d.title) + (d.year ? ' (' + d.year + ')' : '') + (isNewDoc(d) ? ' <span class="pill pill--new" data-new="' + d.id + '">' + t('isNew') + '</span>' : '') + '</div>' +
         '<div class="dmeta"><span class="pill pill--' + d.category + '">' + esc(t('cat_' + d.category)) + '</span> ' + (showCompany && co ? esc(co.legal_name) + ' · ' : '') + esc(fmtDate(d.created_at)) +
         (d.category === 'uploaded' && d.uploaded_by_email ? ' · ' + esc(t('uploadedBy', { e: d.uploaded_by_email })) : '') + '</div></div>' +
         '<button class="btn btn--ghost btn--xs" type="button" data-doc="' + d.id + '">' + t('view') + '</button></li>';
@@ -6463,21 +6786,55 @@ window.ENDEAVOR_CFG = {
 
   async function vCompliance(view) {
     var items = await q(sb.from('compliance_items').select('*').eq('client_id', S.client.id).order('due_date'));
+    var years = items.map(function (i) { return +i.due_date.slice(0, 4); }).filter(function (y, k, a) { return a.indexOf(y) === k; }).sort();
+    var cy = new Date().getFullYear(); if (years.indexOf(cy) < 0) years.push(cy); years.sort();
+    var mode = 'list'; try { mode = localStorage.getItem('endeavor-dl-view') || 'list'; } catch (e) { /* ignore */ }
     view.innerHTML = head(t('nav_compliance'), t('complianceLead'), '<button class="btn btn--ghost btn--xs" type="button" id="ics">' + t('addCal') + '</button>') +
-      '<div class="toolbar" style="align-items:center"><select id="c-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
-      '<label class="check-row" style="align-items:center"><input type="checkbox" id="c-done"> <span>' + t('showDone') + '</span></label></div><div id="c-list"></div>';
+      '<div class="toolbar dl-bar"><select id="c-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
+      '<select id="c-yr" aria-label="' + t('dl_year') + '">' + years.map(function (y) { return '<option' + (y === cy ? ' selected' : '') + '>' + y + '</option>'; }).join('') + '</select>' +
+      '<div class="seg" role="group" aria-label="' + t('nav_compliance') + '"><button type="button" data-m="list">' + t('v_list') + '</button><button type="button" data-m="cal">' + t('v_cal') + '</button></div></div>' +
+      '<div class="dl-sum" id="c-sum"></div><div id="c-list"></div>';
+    function rowsNow() { var co = $('#c-co').value, yr = $('#c-yr').value; return items.filter(function (i) { return (!co || i.company_id === co) && i.due_date.slice(0, 4) === yr; }); }
     function draw() {
-      var co = $('#c-co').value, all = $('#c-done').checked;
-      var rows = items.filter(function (i) { return (!co || i.company_id === co) && (all || (i.status !== 'done' && i.status !== 'not_applicable')); });
-      if (!rows.length) { $('#c-list').innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDeadlines') + '</strong></div>'; return; }
+      var rows = rowsNow(), cnt = { done: 0, pend: 0, over: 0 };
+      rows.forEach(function (i) { var s0 = dlState(i); if (cnt[s0] != null) cnt[s0]++; });
+      $('#c-sum').innerHTML = [['done', 'sum_done'], ['pend', 'sum_pend'], ['over', 'sum_over']].map(function (x) { return '<div class="dl-sum__i dl-sum__i--' + x[0] + '"><b>' + cnt[x[0]] + '</b><span>' + t(x[1]) + '</span></div>'; }).join('');
+      $$('.seg button', view).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.m === mode)); });
+      if (!rows.length) { $('#c-list').innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDeadlinesYear') + '</strong></div>'; return; }
+      if (mode === 'cal') return drawCal(rows);
       var byMonth = {};
       rows.forEach(function (i) { var k = i.due_date.slice(0, 7); (byMonth[k] = byMonth[k] || []).push(i); });
-      $('#c-list').innerHTML = Object.keys(byMonth).map(function (k) {
+      $('#c-list').innerHTML = Object.keys(byMonth).sort().map(function (k) {
         var p = k.split('-'), title = new Intl.DateTimeFormat(EP.locale, { month: 'long', year: 'numeric' }).format(new Date(+p[0], +p[1] - 1, 15));
         return '<section class="portal-card"><h2 class="portal-h2">' + esc(title.charAt(0).toUpperCase() + title.slice(1)) + '</h2>' + byMonth[k].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') + '</section>';
       }).join('');
     }
-    $('#c-co').onchange = draw; $('#c-done').onchange = draw; draw();
+    function drawCal(rows) {
+      var yr = +$('#c-yr').value, byDay = {};
+      rows.forEach(function (i) { (byDay[i.due_date] = byDay[i.due_date] || []).push(i); });
+      var wd = []; for (var w = 0; w < 7; w++) wd.push(new Intl.DateTimeFormat(EP.locale, { weekday: 'narrow' }).format(new Date(2026, 1, 1 + w)));
+      var html = '<div class="dl-cal">';
+      for (var m = 0; m < 12; m++) {
+        var first = new Date(yr, m, 1), days = new Date(yr, m + 1, 0).getDate(), name = new Intl.DateTimeFormat(EP.locale, { month: 'long' }).format(first);
+        html += '<section class="portal-card dl-month"><h3>' + esc(name.charAt(0).toUpperCase() + name.slice(1)) + '</h3><div class="dl-grid">' + wd.map(function (x) { return '<span class="dl-wd">' + esc(x) + '</span>'; }).join('');
+        for (var b = 0; b < first.getDay(); b++) html += '<span></span>';
+        for (var d = 1; d <= days; d++) {
+          var key = yr + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'), its = byDay[key];
+          if (!its) { html += '<span class="dl-d">' + d + '</span>'; continue; }
+          var st = its.some(function (i) { return dlState(i) === 'over'; }) ? 'over' : its.every(function (i) { return dlState(i) === 'done' || dlState(i) === 'na'; }) ? 'done' : 'pend';
+          html += '<button type="button" class="dl-d dl-d--' + st + '" data-day="' + key + '" aria-label="' + esc(fmtDate(key + 'T12:00:00') + ': ' + its.map(function (i) { return i.title; }).join(', ')) + '">' + d + '</button>';
+        }
+        html += '</div></section>';
+      }
+      $('#c-list').innerHTML = html + '</div><section class="portal-card dl-detail" id="c-day" aria-live="polite"><p class="portal-muted" style="margin:0">' + t('dl_pickDay') + '</p></section>';
+      $$('[data-day]', view).forEach(function (bt) { bt.onclick = function () {
+        $$('[data-day]', view).forEach(function (x) { x.classList.toggle('is-on', x === bt); });
+        var its = byDay[bt.dataset.day] || [];
+        $('#c-day').innerHTML = '<h2 class="portal-h2">' + esc(fmtDate(bt.dataset.day + 'T12:00:00')) + '</h2>' + (its.length ? its.map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<p>' + t('dl_none_day') + '</p>');
+      }; });
+    }
+    $$('.seg button', view).forEach(function (b) { b.onclick = function () { mode = b.dataset.m; try { localStorage.setItem('endeavor-dl-view', mode); } catch (e) { /* ignore */ } draw(); }; });
+    $('#c-co').onchange = draw; $('#c-yr').onchange = draw; draw();
     $('#ics').onclick = function () {
       var d = function (s) { return s.replace(/-/g, ''); };
       var ev = items.filter(function (i) { return i.status !== 'done' && i.status !== 'not_applicable'; }).map(function (i) {
@@ -6498,31 +6855,16 @@ window.ENDEAVOR_CFG = {
     if (!r.ok || j.error) throw new Error(j.error || 'generic');
     return j;
   }
+  // the client only sees the published reports; the books (QuickBooks or Endeavor Bookkeeping) are connected by the Endeavor team
   async function reportsFor(body, companies) {
     var docs = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).eq('category', 'report').order('created_at', { ascending: false }));
-    var stats = await Promise.all(companies.map(function (co) { return sb.rpc('qbo_status', { p_company: co.id }).then(function (r) { return (r.data || [])[0] || {}; }); }));
-    var y = new Date().getFullYear(), qn = Math.floor(new Date().getMonth() / 3), defQ = qn === 0 ? 4 : qn, defY = qn === 0 ? y - 1 : y;
-    var flag = param('qbo');
-    body.innerHTML = (flag ? '<div class="portal-alert portal-alert--' + (flag === 'connected' ? 'ok' : 'error') + '">' + t(flag === 'connected' ? 'qboConnected' : flag === 'cancelled' ? 'qboCancelled' : 'qboError') + '</div>' : '') +
-      companies.map(function (co, i) {
-        var s = stats[i], mine = docs.filter(function (d) { return d.company_id === co.id; });
-        return '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + esc(co.legal_name) + '</h2>' +
-          (s.connected ? '<span class="qbo-badge">' + t('qboOn') + (s.qbo_company_name ? ': ' + esc(s.qbo_company_name) : '') + '</span>' : '<span class="pill">' + t('qboOff') + '</span>') + '</div>' +
-          '<div class="portal-btn-row">' + (s.connected ?
-            '<label class="sr-only" for="y-' + co.id + '">' + t('year') + '</label><select id="y-' + co.id + '">' + [y, y - 1, y - 2].map(function (v) { return '<option' + (v === defY ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select>' +
-            '<label class="sr-only" for="q-' + co.id + '">' + t('period') + '</label><select id="q-' + co.id + '">' + [1, 2, 3, 4].map(function (n) { return '<option value="' + n + '"' + (n === defQ ? ' selected' : '') + '>' + t('q' + n) + '</option>'; }).join('') + '<option value="0">' + t('fy') + '</option></select>' +
-            '<button class="btn btn--navy btn--xs" data-gen="' + co.id + '">' + t('generate') + '</button>' + (S.perms.owner ? '<button class="btn btn--danger btn--xs" data-disc="' + co.id + '">' + t('disconnect') + '</button>' : '')
-            : (S.perms.owner ? '<button class="btn btn--navy btn--xs" data-conn="' + co.id + '">' + t('connect') + '</button>' : '<span class="portal-muted">' + t('ownerConnects') + '</span>')) + '</div>' +
-          '<div class="portal-alert" id="qm-' + co.id + '" role="status"></div>' + (mine.length ? docItems(mine, false) : '<p class="portal-muted">' + t('noReports') + '</p>') + '</section>';
-      }).join('');
+    body.innerHTML = companies.map(function (co) {
+      var mine = docs.filter(function (d) { return d.company_id === co.id; }), on = co.books_provider === 'endeavor' || co.books_provider === 'quickbooks';
+      return '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + esc(co.legal_name) + '</h2>' +
+        (on ? '<span class="qbo-badge qbo-badge--bk">' + t('repBy') + '</span>' : '') + '</div>' +
+        (mine.length ? docItems(mine, false) : '<p class="portal-muted">' + t(on ? 'repPreparing' : 'repNone') + '</p>') + '</section>';
+    }).join('');
     wireDocs(body, docs);
-    var fail = function (id, e) { msg($('#qm-' + id), D.en[e.message] ? t(e.message) : t('generic'), 'error'); };
-    $$('[data-conn]', body).forEach(function (b) { b.onclick = async function () { try { var j = await qboCall({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); ERoute.go(j.url); } catch (e) { fail(b.dataset.conn, e); } }; });
-    $$('[data-disc]', body).forEach(function (b) { b.onclick = async function () { if (!confirm(t('confirmDisconnect'))) return; try { await qboCall({ action: 'disconnect', company_id: b.dataset.disc }); route(); } catch (e) { fail(b.dataset.disc, e); } }; });
-    $$('[data-gen]', body).forEach(function (b) { b.onclick = async function () {
-      var id = b.dataset.gen; b.disabled = true; msg($('#qm-' + id), t('generating'), 'info');
-      try { await qboCall({ action: 'generate', company_id: id, year: +$('#y-' + id).value, quarter: +$('#q-' + id).value }); route(); } catch (e) { b.disabled = false; fail(id, e); }
-    }; });
   }
   async function vReports(view) {
     view.innerHTML = head(t('nav_reports'), t('reportsLead')) + '<div id="r-body"></div>';

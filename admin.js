@@ -209,7 +209,7 @@
   /* ---------- console shell ---------- */
   var NAV = [
     ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'],
-    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['instagram', 'Instagram', 'i-ig'], ['agentes', 'Agentes IA', 'i-bot'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
+    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['instagram', 'Instagram', 'i-ig'], ['agentes', 'Agentes IA', 'i-bot'], ['bookkeeping', 'Bookkeeping', 'i-book'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
     $('#topbar-user').hidden = false;
@@ -238,7 +238,7 @@
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === navV) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); if (!view) return;
     view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
-    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, marketing: viewMarketing, instagram: viewInstagram, agentes: viewAgents, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig })[v](view).catch(function (e) {
+    ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, marketing: viewMarketing, instagram: viewInstagram, bookkeeping: viewBooks, agentes: viewAgents, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
   }
@@ -765,6 +765,10 @@
   function viewMarketing(view) {
     if (!window.AdminMkt) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de marketing não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
     return AdminMkt.view(view, clientsCtx());
+  }
+  function viewBooks(view) {
+    if (!window.AdminBooks) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo de Bookkeeping não carregou. Recarregue a página.</div>'; return Promise.resolve(); }
+    return AdminBooks.view(view, clientsCtx());
   }
   function viewInstagram(view) {
     if (!window.AdminIG) { view.innerHTML = '<div class="portal-alert portal-alert--error">Módulo do Instagram não carregou. Recarregue a página.</div>'; return Promise.resolve(); }

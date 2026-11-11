@@ -1,5 +1,10 @@
 /* English texts for the admin console (PT is the source language). Key = Portuguese text as it appears on screen. */
 window.ADMIN_EN = {
+  'Contabilidade e relatórios': 'Books and reports',
+  'O EIN precisa ter 9 números (12-3456789).': 'The EIN must have 9 digits (12-3456789).', 'Concluídos': 'Done', 'Pendentes': 'Pending', 'Vencidos': 'Overdue', '✓ Concluído': '✓ Done', 'Marcar como concluído': 'Mark as done',
+  'Contabilidade não conectada': 'Books not connected', 'Conectar ao Endeavor Bookkeeping': 'Connect to Endeavor Bookkeeping', 'Abrir no Bookkeeping': 'Open in Bookkeeping', 'Publicar relatórios': 'Publish reports', 'Desativar': 'Turn off',
+  'Para o QuickBooks, a Endeavor precisa ter acesso à conta do cliente (contador convidado).': "For QuickBooks, Endeavor needs access to the client's account (invited accountant).", 'Nenhum relatório publicado ainda. O cliente vê aqui os PDFs publicados.': 'No reports published yet. The client sees the published PDFs here.',
+  'Gerando os PDFs a partir do Bookkeeping…': 'Creating the PDFs from Bookkeeping…', 'Módulo de Bookkeeping não carregou. Recarregue a página.': 'The Bookkeeping module did not load. Reload the page.',
   // shell and login
   'Console Admin | Endeavor Business Solutions': 'Admin Console | Endeavor Business Solutions', 'Carregando…': 'Loading…', 'Sair': 'Sign out', 'Abrir menu': 'Open menu', 'Fechar menu': 'Close menu',
   'Endeavor Console': 'Endeavor Console', 'Console': 'Console', 'Acesso restrito': 'Restricted access', 'Acesso restrito à equipe da Endeavor.': 'Restricted to the Endeavor team.',

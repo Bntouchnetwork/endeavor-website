@@ -43,9 +43,9 @@
       allCompanies: 'All companies', allCategories: 'All categories', search: 'Search…', view: 'View', download: 'Download', print: 'Print', close: 'Close',
       noDocs: 'No documents yet', noPreview: 'Preview not available for this file type. Use Download.', viewErr: 'Could not open the file.',
       overdue: 'Overdue by {n} d', dueIn: 'In {n} d', dueToday: 'Due today', done: 'Completed', na: 'Not applicable', inProgress: 'In progress',
-      complianceLead: 'Federal and state filing dates for your companies. Endeavor updates this calendar; confirm details with your CPA.', showDone: 'Show completed', addCal: 'Add to my calendar (.ics)', noDeadlines: 'No pending deadlines',
+      complianceLead: 'Federal and state filing dates for your companies. Endeavor updates this calendar; confirm details with your CPA.', overBy: '{n} d ago', st_pending: 'Pending', st_overdue: 'Overdue', st_done: 'Done', doneOn: 'Done on {d}', onTime: 'on time', late: 'after the due date', v_list: 'List', v_cal: 'Calendar', sum_done: 'Done', sum_pend: 'Pending', sum_over: 'Overdue', dl_year: 'Year', noDeadlinesYear: 'No deadlines in this year.', dl_pickDay: 'Click a highlighted day to see its deadlines.', dl_none_day: 'No deadlines on this day.', newDocs: '{n} new documents', isNew: 'New', showDone: 'Show completed', addCal: 'Add to my calendar (.ics)', noDeadlines: 'No pending deadlines',
       dl_annual_report: 'Annual report', dl_federal_tax: 'Federal tax', dl_state_tax: 'State tax', dl_payroll: 'Payroll', dl_sales_tax: 'Sales tax', dl_boi: 'BOI', dl_license: 'License', dl_other: 'Other',
-      reportsLead: 'Profit and Loss, Balance Sheet and Cash Flow generated from your QuickBooks Online, ready to view, print or save as PDF.',
+      reportsLead: 'Profit and Loss, Balance Sheet and Cash Flow prepared by Endeavor from your company\'s books, ready to view, print or save as PDF.', repPreparing: 'Endeavor is preparing your reports. They will appear here as soon as they are published.', repNone: 'Reports appear here when Endeavor keeps your books or connects your accounting.', repBy: 'Prepared by Endeavor',
       qboOn: 'QuickBooks connected', qboOff: 'QuickBooks not connected', connect: 'Connect QuickBooks', disconnect: 'Disconnect', generate: 'Generate reports', year: 'Year', period: 'Period',
       q1: 'Q1', q2: 'Q2', q3: 'Q3', q4: 'Q4', fy: 'Full year', generating: 'Generating reports from QuickBooks…', noReports: 'No reports yet.', ownerConnects: 'Only the account owner can connect QuickBooks.',
       qbo_not_configured: 'The QuickBooks integration is being set up by Endeavor. Please try again later.', qbo_reconnect_required: 'The QuickBooks connection expired. Please connect again.',
@@ -94,9 +94,9 @@
       allCompanies: 'Todas as empresas', allCategories: 'Todas as categorias', search: 'Buscar…', view: 'Ver', download: 'Baixar', print: 'Imprimir', close: 'Fechar',
       noDocs: 'Nenhum documento ainda', noPreview: 'Pré-visualização indisponível para este tipo de arquivo. Use Baixar.', viewErr: 'Não foi possível abrir o arquivo.',
       overdue: 'Vencido há {n} d', dueIn: 'Em {n} d', dueToday: 'Vence hoje', done: 'Concluído', na: 'Não se aplica', inProgress: 'Em andamento',
-      complianceLead: 'Datas de entrega federais e estaduais das suas empresas. A Endeavor atualiza este calendário; confirme os detalhes com o seu contador.', showDone: 'Mostrar concluídos', addCal: 'Adicionar ao meu calendário (.ics)', noDeadlines: 'Nenhum prazo pendente',
+      complianceLead: 'Datas de entrega federais e estaduais das suas empresas. A Endeavor atualiza este calendário; confirme os detalhes com o seu contador.', overBy: 'há {n} d', st_pending: 'Pendente', st_overdue: 'Vencido', st_done: 'Concluído', doneOn: 'Concluído em {d}', onTime: 'no prazo', late: 'após o vencimento', v_list: 'Lista', v_cal: 'Calendário', sum_done: 'Concluídos', sum_pend: 'Pendentes', sum_over: 'Vencidos', dl_year: 'Ano', noDeadlinesYear: 'Nenhum prazo neste ano.', dl_pickDay: 'Clique num dia marcado para ver os prazos.', dl_none_day: 'Nenhum prazo neste dia.', newDocs: '{n} documentos novos', isNew: 'Novo', showDone: 'Mostrar concluídos', addCal: 'Adicionar ao meu calendário (.ics)', noDeadlines: 'Nenhum prazo pendente',
       dl_annual_report: 'Annual report', dl_federal_tax: 'Imposto federal', dl_state_tax: 'Imposto estadual', dl_payroll: 'Folha', dl_sales_tax: 'Sales tax', dl_boi: 'BOI', dl_license: 'Licença', dl_other: 'Outro',
-      reportsLead: 'Demonstração de resultados (P&L), balanço patrimonial e fluxo de caixa gerados do seu QuickBooks Online, prontos para ver, imprimir ou salvar em PDF.',
+      reportsLead: 'Demonstração de resultados (P&L), balanço patrimonial e fluxo de caixa preparados pela Endeavor a partir da contabilidade da sua empresa, prontos para ver, imprimir ou salvar em PDF.', repPreparing: 'A Endeavor está preparando seus relatórios. Eles aparecem aqui assim que forem publicados.', repNone: 'Os relatórios aparecem aqui quando a Endeavor cuida da contabilidade da sua empresa.', repBy: 'Preparado pela Endeavor',
       qboOn: 'QuickBooks conectado', qboOff: 'QuickBooks não conectado', connect: 'Conectar QuickBooks', disconnect: 'Desconectar', generate: 'Gerar relatórios', year: 'Ano', period: 'Período',
       q1: '1º trimestre', q2: '2º trimestre', q3: '3º trimestre', q4: '4º trimestre', fy: 'Ano completo', generating: 'Gerando relatórios no QuickBooks…', noReports: 'Nenhum relatório ainda.', ownerConnects: 'Somente o titular da conta pode conectar o QuickBooks.',
       qbo_not_configured: 'A integração com o QuickBooks está sendo configurada pela Endeavor. Tente mais tarde.', qbo_reconnect_required: 'A conexão com o QuickBooks expirou. Conecte novamente.',
@@ -145,9 +145,9 @@
       allCompanies: 'Todas las empresas', allCategories: 'Todas las categorías', search: 'Buscar…', view: 'Ver', download: 'Descargar', print: 'Imprimir', close: 'Cerrar',
       noDocs: 'Aún no hay documentos', noPreview: 'Vista previa no disponible para este tipo de archivo. Use Descargar.', viewErr: 'No se pudo abrir el archivo.',
       overdue: 'Vencido hace {n} d', dueIn: 'En {n} d', dueToday: 'Vence hoy', done: 'Completado', na: 'No aplica', inProgress: 'En curso',
-      complianceLead: 'Fechas de presentación federales y estatales de sus empresas. Endeavor actualiza este calendario; confirme los detalles con su contador.', showDone: 'Mostrar completados', addCal: 'Agregar a mi calendario (.ics)', noDeadlines: 'No hay plazos pendientes',
+      complianceLead: 'Fechas de presentación federales y estatales de sus empresas. Endeavor actualiza este calendario; confirme los detalles con su contador.', overBy: 'hace {n} d', st_pending: 'Pendiente', st_overdue: 'Vencido', st_done: 'Completado', doneOn: 'Completado el {d}', onTime: 'a tiempo', late: 'después del vencimiento', v_list: 'Lista', v_cal: 'Calendario', sum_done: 'Completados', sum_pend: 'Pendientes', sum_over: 'Vencidos', dl_year: 'Año', noDeadlinesYear: 'No hay plazos en este año.', dl_pickDay: 'Haga clic en un día marcado para ver sus plazos.', dl_none_day: 'No hay plazos este día.', newDocs: '{n} documentos nuevos', isNew: 'Nuevo', showDone: 'Mostrar completados', addCal: 'Agregar a mi calendario (.ics)', noDeadlines: 'No hay plazos pendientes',
       dl_annual_report: 'Annual report', dl_federal_tax: 'Impuesto federal', dl_state_tax: 'Impuesto estatal', dl_payroll: 'Nómina', dl_sales_tax: 'Sales tax', dl_boi: 'BOI', dl_license: 'Licencia', dl_other: 'Otro',
-      reportsLead: 'Estado de resultados (P&L), balance general y flujo de caja generados desde su QuickBooks Online, listos para ver, imprimir o guardar en PDF.',
+      reportsLead: 'Estado de resultados (P&L), balance general y flujo de caja preparados por Endeavor a partir de la contabilidad de su empresa, listos para ver, imprimir o guardar en PDF.', repPreparing: 'Endeavor está preparando sus reportes. Aparecen aquí en cuanto se publiquen.', repNone: 'Los reportes aparecen aquí cuando Endeavor lleva la contabilidad de su empresa.', repBy: 'Preparado por Endeavor',
       qboOn: 'QuickBooks conectado', qboOff: 'QuickBooks no conectado', connect: 'Conectar QuickBooks', disconnect: 'Desconectar', generate: 'Generar reportes', year: 'Año', period: 'Período',
       q1: '1.er trimestre', q2: '2.º trimestre', q3: '3.er trimestre', q4: '4.º trimestre', fy: 'Año completo', generating: 'Generando reportes en QuickBooks…', noReports: 'Aún no hay reportes.', ownerConnects: 'Solo el titular de la cuenta puede conectar QuickBooks.',
       qbo_not_configured: 'Endeavor está configurando la integración con QuickBooks. Intente más tarde.', qbo_reconnect_required: 'La conexión con QuickBooks venció. Conéctela de nuevo.',
@@ -199,13 +199,18 @@
   async function sha256Hex(buf) { var d = await crypto.subtle.digest('SHA-256', buf); return Array.prototype.map.call(new Uint8Array(d), function (b) { return b.toString(16).padStart(2, '0'); }).join(''); }
   function fileIcon(p) { return ((p.match(/\.([a-z0-9]+)$/i) || ['', 'doc'])[1]).toUpperCase().slice(0, 4); }
   function pill(it) {
-    if (it.status === 'done') return '<span class="pill pill--done">' + t('done') + '</span>';
+    if (it.status === 'done') {
+      var dd = it.completed_at ? it.completed_at.slice(0, 10) : '', ok = !dd || dd <= it.due_date;
+      return '<span class="pill pill--done dl-st"><svg class="icon" aria-hidden="true" viewBox="0 0 16 16" style="width:.85em;height:.85em"><path d="M3 8.5l3 3 7-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg> ' +
+        (dd ? t('doneOn', { d: fmtDate(dd + 'T12:00:00') }) + (ok ? ' · ' + t('onTime') : '') : t('st_done')) + '</span>';
+    }
     if (it.status === 'not_applicable') return '<span class="pill">' + t('na') + '</span>';
     var n = daysUntil(it.due_date);
-    if (n < 0) return '<span class="pill pill--overdue">' + t('overdue', { n: -n }) + '</span>';
-    if (n === 0) return '<span class="pill pill--overdue">' + t('dueToday') + '</span>';
-    return '<span class="pill' + (n <= 30 ? ' pill--soon' : '') + '">' + t('dueIn', { n: n }) + '</span>';
+    if (n < 0) return '<span class="pill pill--overdue dl-st">' + t('st_overdue') + ' · ' + t('overBy', { n: -n }) + '</span>';
+    if (n === 0) return '<span class="pill pill--overdue dl-st">' + t('st_pending') + ' · ' + t('dueToday') + '</span>';
+    return '<span class="pill dl-st' + (n <= 30 ? ' pill--soon' : '') + '">' + t('st_pending') + ' · ' + t('dueIn', { n: n }) + '</span>';
   }
+  function dlState(it) { return it.status === 'done' ? 'done' : it.status === 'not_applicable' ? 'na' : daysUntil(it.due_date) < 0 ? 'over' : 'pend'; }
   function deadlineRow(it, co) {
     var p = it.due_date.split('-'), mon = new Intl.DateTimeFormat(EP.locale, { month: 'short' }).format(new Date(+p[0], +p[1] - 1, 15)).replace('.', '');
     return '<div class="deadline"><div class="deadline__date"><b>' + p[2] + '</b><span>' + esc(mon) + ' ' + p[0] + '</span></div>' +
@@ -235,9 +240,17 @@
     S.user = s.user;
     $('#topbar-user').hidden = false; $('#topbar-email').textContent = s.user.email;
     var aal = (await sb.auth.mfa.getAuthenticatorAssuranceLevel()).data;
-    if (!aal || aal.currentLevel !== 'aal2') return renderMfa();
+    S.aal1 = false;
+    if (!aal || aal.currentLevel !== 'aal2') {
+      // referral partners may sign in with password only (2-step verification is optional for them); client collaborators always need it
+      var skip = false;
+      if (PARTNER && window.EPartnerRef && aal && aal.nextLevel !== 'aal2') { var pol = await sb.rpc('portal_mfa_policy'); skip = !pol.error && !!(pol.data && pol.data.optional); }
+      if (!skip) return renderMfa();
+      S.aal1 = true;
+    }
     var mem = await sb.rpc('claim_invitations');
     var allMem = mem.data || [];
+    if (S.aal1 && allMem.some(function (x) { return x.role === 'collaborator'; })) return renderMfa();
     S.memberships = allMem.filter(function (x) { return PARTNER ? x.role === 'collaborator' : x.role === 'owner'; });
     if (PARTNER && window.EPartnerRef) { var pr = await sb.rpc('claim_partner'); S.partner = (pr.data || [])[0] || null; if (S.partner) { var se = await sb.rpc('partner_sync_email'); if (!se.error && se.data && se.data[0]) S.partner = se.data[0]; } }
     if (S.partner) { S.ref = EPartnerRef.init(refCtx()); if (!S.memberships.length) { S.client = null; S.perms = {}; S.companies = []; S.me = {}; startShell(); return; } }
@@ -249,7 +262,7 @@
     var saved = null; try { saved = localStorage.getItem('endeavor-client-id'); } catch (e) { /* ignore */ }
     var m = S.memberships.find(function (x) { return x.client_id === saved; }) || S.memberships[0];
     await selectClient(m.client_id);
-    await checkOpenInvoices();
+    await checkOpenInvoices(); await checkNewDocs();
     if (S.openInv.n && !S.landed) { var hh = ERoute.get(); if (!hh || hh === '#' || hh === '#/' || /^#\/overview/.test(hh)) ERoute.set('#/invoices', true); }
     S.landed = true;
     startShell();
@@ -264,6 +277,19 @@
     var n = (S.openInv && S.openInv.n) || 0, b = document.getElementById('inv-badge'), tg = document.getElementById('nav-toggle');
     if (b) { b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n); b.setAttribute('aria-label', t('inv_badge', { n: n })); b.title = t('inv_badge', { n: n }); }
     if (tg) tg.classList.toggle('has-alert', !!n);
+  }
+  // documents the user has not opened yet (blue counter next to "Documents")
+  async function checkNewDocs() {
+    S.docSeen = {}; S.docNew = 0;
+    if (!S.client || !S.perms.view) return;
+    var r = await Promise.all([sb.rpc('my_doc_views', { p_client: S.client.id }), sb.from('company_documents').select('id, uploaded_by').eq('client_id', S.client.id)]);
+    (r[0].data || []).forEach(function (x) { S.docSeen[x.document_id || x] = 1; });
+    (r[1].data || []).forEach(function (d) { if (!S.docSeen[d.id] && d.uploaded_by !== S.user.id) S.docNew++; });
+  }
+  function isNewDoc(d) { return S.docSeen && !S.docSeen[d.id] && d.uploaded_by !== (S.user && S.user.id); }
+  function updateDocBadge() {
+    var n = S.docNew || 0, b = document.getElementById('doc-badge');
+    if (b) { b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n); b.setAttribute('aria-label', t('newDocs', { n: n })); b.title = t('newDocs', { n: n }); }
   }
   async function checkOpenInvoices() {
     S.openInv = { n: 0, cents: 0 };
@@ -316,7 +342,12 @@
       var em = $('#fg-email').value.trim().toLowerCase(), m = $('#fg-msg');
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em)) return msg(m, t('fillNameEmail'), 'error');
       var btn = this.querySelector('button'); if (btn.disabled) return; btn.disabled = true;
-      var r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl(PAGE) + '?lang=' + L });
+      // branded e-mail in the portal's language, sent by Endeavor; Supabase's own e-mail only if that call fails
+      var r = { error: null };
+      try {
+        var fr = await fetch(CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey }, body: JSON.stringify({ action: 'access_reset', email: em, page: PAGE, lang: L }) });
+        if (!fr.ok) throw new Error('http');
+      } catch (er) { r = await sb.auth.resetPasswordForEmail(em, { redirectTo: siteUrl(PAGE) + '?lang=' + L }); }
       var limited = r.error && /rate|limit|seconds/i.test(r.error.message);
       // same message whether or not the e-mail exists (no account enumeration); the address is echoed so typos are visible
       msg(m, limited ? errText(r.error) : t('resetSent').replace('{e}', em), limited ? 'error' : 'ok');
@@ -407,7 +438,7 @@
     var clientBox = !S.client ? '' : multi ? '<div style="padding:0 .5rem .75rem"><label for="cl-switch" class="sr-only">' + t('switchClient') + '</label><select id="cl-switch" style="width:100%;min-height:2.4rem;border-radius:8px;border:0;padding:0 .5rem;background:#fff;color:#0b1f3a;font:inherit;font-weight:600">' +
         S.memberships.map(function (m) { return '<option value="' + m.client_id + '"' + (m.client_id === S.client.id ? ' selected' : '') + '>' + esc(m.client_name) + '</option>'; }).join('') + '</select></div>'
         : '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.client.name) + '</div>';
-    var navLi = function (n) { return n[0] === '-' ? '<li class="nav-sep" role="presentation">' + esc(n[1]) + '</li>' + (S.ref ? '<li role="presentation">' + clientBox + '</li>' : '') : '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + esc(n[1]) + (n[0] === 'invoices' ? '<span class="nav-badge" id="inv-badge" hidden></span>' : '') + '</a></li>'; };
+    var navLi = function (n) { return n[0] === '-' ? '<li class="nav-sep" role="presentation">' + esc(n[1]) + '</li>' + (S.ref ? '<li role="presentation">' + clientBox + '</li>' : '') : '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + esc(n[1]) + (n[0] === 'invoices' ? '<span class="nav-badge" id="inv-badge" hidden></span>' : '') + (n[0] === 'documents' ? '<span class="nav-badge nav-badge--info" id="doc-badge" hidden></span>' : '') + '</a></li>'; };
     app.innerHTML = '<div class="console" id="console"><nav class="console__nav" id="console-nav" aria-label="' + t('portal') + '">' +
       '<div class="console__nav-title">' + t('portal') + '</div>' +
       (S.ref ? '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.partner.company || S.partner.name) + '<div style="font-weight:400;font-size:.8rem;color:var(--on-dark-muted)">' + esc(t('p_partnerLead')) + '</div></div>' : clientBox) +
@@ -420,9 +451,9 @@
     tgl.onclick = function () { setNav(!con.classList.contains('nav-open')); };
     $('#nav-backdrop').onclick = function () { setNav(false); };
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && con.classList.contains('nav-open')) { setNav(false); tgl.focus(); } });
-    if ($('#cl-switch')) $('#cl-switch').onchange = async function () { await selectClient(this.value); await checkOpenInvoices(); startShell(); };
+    if ($('#cl-switch')) $('#cl-switch').onchange = async function () { await selectClient(this.value); await checkOpenInvoices(); await checkNewDocs(); startShell(); };
     window.onhashchange = function () { setNav(false); route(); };
-    updateInvBadge();
+    updateInvBadge(); updateDocBadge();
     route();
   }
   function route() {
@@ -456,7 +487,10 @@
     return o;
   }
   function closeOverlay() { var o = $('#overlay'); o.hidden = true; o.innerHTML = ''; document.onkeydown = null; }
-  function logAccess(doc, action) { sb.from('doc_access_log').insert({ document_id: doc.id, action: action }).then(function () {}); }
+  function logAccess(doc, action) {
+    sb.from('doc_access_log').insert({ document_id: doc.id, action: action }).then(function () {});
+    if (isNewDoc(doc)) { S.docSeen[doc.id] = 1; S.docNew = Math.max(0, (S.docNew || 0) - 1); updateDocBadge(); $$('[data-new="' + doc.id + '"]').forEach(function (x) { x.remove(); }); }
+  }
   async function viewDoc(d) {
     var isImg = /\.(png|jpe?g|webp|gif)$/i.test(d.path), isPdf = /\.pdf$/i.test(d.path);
     var o = openOverlay('<div class="viewer"><div class="viewer__bar"><strong>' + esc(d.title) + '</strong><div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" id="vw-print"' + (isPdf ? '' : ' hidden') + '>' + t('print') + '</button><button class="btn btn--ghost btn--xs" type="button" id="vw-dl">' + t('download') + '</button><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div></div>' +
@@ -482,7 +516,7 @@
     if (!docs.length) return '<div class="empty-state"><strong>' + t('noDocs') + '</strong></div>';
     return '<ul class="doclist">' + docs.map(function (d) {
       var co = coById(d.company_id);
-      return '<li><span class="ficon" aria-hidden="true">' + fileIcon(d.path) + '</span><div><div class="dname">' + esc(d.title) + (d.year ? ' (' + d.year + ')' : '') + '</div>' +
+      return '<li><span class="ficon" aria-hidden="true">' + fileIcon(d.path) + '</span><div><div class="dname">' + esc(d.title) + (d.year ? ' (' + d.year + ')' : '') + (isNewDoc(d) ? ' <span class="pill pill--new" data-new="' + d.id + '">' + t('isNew') + '</span>' : '') + '</div>' +
         '<div class="dmeta"><span class="pill pill--' + d.category + '">' + esc(t('cat_' + d.category)) + '</span> ' + (showCompany && co ? esc(co.legal_name) + ' · ' : '') + esc(fmtDate(d.created_at)) +
         (d.category === 'uploaded' && d.uploaded_by_email ? ' · ' + esc(t('uploadedBy', { e: d.uploaded_by_email })) : '') + '</div></div>' +
         '<button class="btn btn--ghost btn--xs" type="button" data-doc="' + d.id + '">' + t('view') + '</button></li>';
@@ -573,21 +607,55 @@
 
   async function vCompliance(view) {
     var items = await q(sb.from('compliance_items').select('*').eq('client_id', S.client.id).order('due_date'));
+    var years = items.map(function (i) { return +i.due_date.slice(0, 4); }).filter(function (y, k, a) { return a.indexOf(y) === k; }).sort();
+    var cy = new Date().getFullYear(); if (years.indexOf(cy) < 0) years.push(cy); years.sort();
+    var mode = 'list'; try { mode = localStorage.getItem('endeavor-dl-view') || 'list'; } catch (e) { /* ignore */ }
     view.innerHTML = head(t('nav_compliance'), t('complianceLead'), '<button class="btn btn--ghost btn--xs" type="button" id="ics">' + t('addCal') + '</button>') +
-      '<div class="toolbar" style="align-items:center"><select id="c-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
-      '<label class="check-row" style="align-items:center"><input type="checkbox" id="c-done"> <span>' + t('showDone') + '</span></label></div><div id="c-list"></div>';
+      '<div class="toolbar dl-bar"><select id="c-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
+      '<select id="c-yr" aria-label="' + t('dl_year') + '">' + years.map(function (y) { return '<option' + (y === cy ? ' selected' : '') + '>' + y + '</option>'; }).join('') + '</select>' +
+      '<div class="seg" role="group" aria-label="' + t('nav_compliance') + '"><button type="button" data-m="list">' + t('v_list') + '</button><button type="button" data-m="cal">' + t('v_cal') + '</button></div></div>' +
+      '<div class="dl-sum" id="c-sum"></div><div id="c-list"></div>';
+    function rowsNow() { var co = $('#c-co').value, yr = $('#c-yr').value; return items.filter(function (i) { return (!co || i.company_id === co) && i.due_date.slice(0, 4) === yr; }); }
     function draw() {
-      var co = $('#c-co').value, all = $('#c-done').checked;
-      var rows = items.filter(function (i) { return (!co || i.company_id === co) && (all || (i.status !== 'done' && i.status !== 'not_applicable')); });
-      if (!rows.length) { $('#c-list').innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDeadlines') + '</strong></div>'; return; }
+      var rows = rowsNow(), cnt = { done: 0, pend: 0, over: 0 };
+      rows.forEach(function (i) { var s0 = dlState(i); if (cnt[s0] != null) cnt[s0]++; });
+      $('#c-sum').innerHTML = [['done', 'sum_done'], ['pend', 'sum_pend'], ['over', 'sum_over']].map(function (x) { return '<div class="dl-sum__i dl-sum__i--' + x[0] + '"><b>' + cnt[x[0]] + '</b><span>' + t(x[1]) + '</span></div>'; }).join('');
+      $$('.seg button', view).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.m === mode)); });
+      if (!rows.length) { $('#c-list').innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDeadlinesYear') + '</strong></div>'; return; }
+      if (mode === 'cal') return drawCal(rows);
       var byMonth = {};
       rows.forEach(function (i) { var k = i.due_date.slice(0, 7); (byMonth[k] = byMonth[k] || []).push(i); });
-      $('#c-list').innerHTML = Object.keys(byMonth).map(function (k) {
+      $('#c-list').innerHTML = Object.keys(byMonth).sort().map(function (k) {
         var p = k.split('-'), title = new Intl.DateTimeFormat(EP.locale, { month: 'long', year: 'numeric' }).format(new Date(+p[0], +p[1] - 1, 15));
         return '<section class="portal-card"><h2 class="portal-h2">' + esc(title.charAt(0).toUpperCase() + title.slice(1)) + '</h2>' + byMonth[k].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') + '</section>';
       }).join('');
     }
-    $('#c-co').onchange = draw; $('#c-done').onchange = draw; draw();
+    function drawCal(rows) {
+      var yr = +$('#c-yr').value, byDay = {};
+      rows.forEach(function (i) { (byDay[i.due_date] = byDay[i.due_date] || []).push(i); });
+      var wd = []; for (var w = 0; w < 7; w++) wd.push(new Intl.DateTimeFormat(EP.locale, { weekday: 'narrow' }).format(new Date(2026, 1, 1 + w)));
+      var html = '<div class="dl-cal">';
+      for (var m = 0; m < 12; m++) {
+        var first = new Date(yr, m, 1), days = new Date(yr, m + 1, 0).getDate(), name = new Intl.DateTimeFormat(EP.locale, { month: 'long' }).format(first);
+        html += '<section class="portal-card dl-month"><h3>' + esc(name.charAt(0).toUpperCase() + name.slice(1)) + '</h3><div class="dl-grid">' + wd.map(function (x) { return '<span class="dl-wd">' + esc(x) + '</span>'; }).join('');
+        for (var b = 0; b < first.getDay(); b++) html += '<span></span>';
+        for (var d = 1; d <= days; d++) {
+          var key = yr + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'), its = byDay[key];
+          if (!its) { html += '<span class="dl-d">' + d + '</span>'; continue; }
+          var st = its.some(function (i) { return dlState(i) === 'over'; }) ? 'over' : its.every(function (i) { return dlState(i) === 'done' || dlState(i) === 'na'; }) ? 'done' : 'pend';
+          html += '<button type="button" class="dl-d dl-d--' + st + '" data-day="' + key + '" aria-label="' + esc(fmtDate(key + 'T12:00:00') + ': ' + its.map(function (i) { return i.title; }).join(', ')) + '">' + d + '</button>';
+        }
+        html += '</div></section>';
+      }
+      $('#c-list').innerHTML = html + '</div><section class="portal-card dl-detail" id="c-day" aria-live="polite"><p class="portal-muted" style="margin:0">' + t('dl_pickDay') + '</p></section>';
+      $$('[data-day]', view).forEach(function (bt) { bt.onclick = function () {
+        $$('[data-day]', view).forEach(function (x) { x.classList.toggle('is-on', x === bt); });
+        var its = byDay[bt.dataset.day] || [];
+        $('#c-day').innerHTML = '<h2 class="portal-h2">' + esc(fmtDate(bt.dataset.day + 'T12:00:00')) + '</h2>' + (its.length ? its.map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<p>' + t('dl_none_day') + '</p>');
+      }; });
+    }
+    $$('.seg button', view).forEach(function (b) { b.onclick = function () { mode = b.dataset.m; try { localStorage.setItem('endeavor-dl-view', mode); } catch (e) { /* ignore */ } draw(); }; });
+    $('#c-co').onchange = draw; $('#c-yr').onchange = draw; draw();
     $('#ics').onclick = function () {
       var d = function (s) { return s.replace(/-/g, ''); };
       var ev = items.filter(function (i) { return i.status !== 'done' && i.status !== 'not_applicable'; }).map(function (i) {
@@ -608,31 +676,16 @@
     if (!r.ok || j.error) throw new Error(j.error || 'generic');
     return j;
   }
+  // the client only sees the published reports; the books (QuickBooks or Endeavor Bookkeeping) are connected by the Endeavor team
   async function reportsFor(body, companies) {
     var docs = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).eq('category', 'report').order('created_at', { ascending: false }));
-    var stats = await Promise.all(companies.map(function (co) { return sb.rpc('qbo_status', { p_company: co.id }).then(function (r) { return (r.data || [])[0] || {}; }); }));
-    var y = new Date().getFullYear(), qn = Math.floor(new Date().getMonth() / 3), defQ = qn === 0 ? 4 : qn, defY = qn === 0 ? y - 1 : y;
-    var flag = param('qbo');
-    body.innerHTML = (flag ? '<div class="portal-alert portal-alert--' + (flag === 'connected' ? 'ok' : 'error') + '">' + t(flag === 'connected' ? 'qboConnected' : flag === 'cancelled' ? 'qboCancelled' : 'qboError') + '</div>' : '') +
-      companies.map(function (co, i) {
-        var s = stats[i], mine = docs.filter(function (d) { return d.company_id === co.id; });
-        return '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + esc(co.legal_name) + '</h2>' +
-          (s.connected ? '<span class="qbo-badge">' + t('qboOn') + (s.qbo_company_name ? ': ' + esc(s.qbo_company_name) : '') + '</span>' : '<span class="pill">' + t('qboOff') + '</span>') + '</div>' +
-          '<div class="portal-btn-row">' + (s.connected ?
-            '<label class="sr-only" for="y-' + co.id + '">' + t('year') + '</label><select id="y-' + co.id + '">' + [y, y - 1, y - 2].map(function (v) { return '<option' + (v === defY ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select>' +
-            '<label class="sr-only" for="q-' + co.id + '">' + t('period') + '</label><select id="q-' + co.id + '">' + [1, 2, 3, 4].map(function (n) { return '<option value="' + n + '"' + (n === defQ ? ' selected' : '') + '>' + t('q' + n) + '</option>'; }).join('') + '<option value="0">' + t('fy') + '</option></select>' +
-            '<button class="btn btn--navy btn--xs" data-gen="' + co.id + '">' + t('generate') + '</button>' + (S.perms.owner ? '<button class="btn btn--danger btn--xs" data-disc="' + co.id + '">' + t('disconnect') + '</button>' : '')
-            : (S.perms.owner ? '<button class="btn btn--navy btn--xs" data-conn="' + co.id + '">' + t('connect') + '</button>' : '<span class="portal-muted">' + t('ownerConnects') + '</span>')) + '</div>' +
-          '<div class="portal-alert" id="qm-' + co.id + '" role="status"></div>' + (mine.length ? docItems(mine, false) : '<p class="portal-muted">' + t('noReports') + '</p>') + '</section>';
-      }).join('');
+    body.innerHTML = companies.map(function (co) {
+      var mine = docs.filter(function (d) { return d.company_id === co.id; }), on = co.books_provider === 'endeavor' || co.books_provider === 'quickbooks';
+      return '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + esc(co.legal_name) + '</h2>' +
+        (on ? '<span class="qbo-badge qbo-badge--bk">' + t('repBy') + '</span>' : '') + '</div>' +
+        (mine.length ? docItems(mine, false) : '<p class="portal-muted">' + t(on ? 'repPreparing' : 'repNone') + '</p>') + '</section>';
+    }).join('');
     wireDocs(body, docs);
-    var fail = function (id, e) { msg($('#qm-' + id), D.en[e.message] ? t(e.message) : t('generic'), 'error'); };
-    $$('[data-conn]', body).forEach(function (b) { b.onclick = async function () { try { var j = await qboCall({ action: 'connect', company_id: b.dataset.conn, return_to: location.href.split('#')[0] }); ERoute.go(j.url); } catch (e) { fail(b.dataset.conn, e); } }; });
-    $$('[data-disc]', body).forEach(function (b) { b.onclick = async function () { if (!confirm(t('confirmDisconnect'))) return; try { await qboCall({ action: 'disconnect', company_id: b.dataset.disc }); route(); } catch (e) { fail(b.dataset.disc, e); } }; });
-    $$('[data-gen]', body).forEach(function (b) { b.onclick = async function () {
-      var id = b.dataset.gen; b.disabled = true; msg($('#qm-' + id), t('generating'), 'info');
-      try { await qboCall({ action: 'generate', company_id: id, year: +$('#y-' + id).value, quarter: +$('#q-' + id).value }); route(); } catch (e) { b.disabled = false; fail(id, e); }
-    }; });
   }
   async function vReports(view) {
     view.innerHTML = head(t('nav_reports'), t('reportsLead')) + '<div id="r-body"></div>';
