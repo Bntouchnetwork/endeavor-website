@@ -12,7 +12,7 @@
       t_overview: 'Visão geral', t_bank: 'Bancos e transações', t_coa: 'Plano de contas', t_journal: 'Lançamentos', t_recon: 'Conciliação', t_reports: 'Relatórios', t_rules: 'Regras',
       k_cash: 'Saldo nos bancos (livros)', k_review: 'Para revisar', k_income: 'Receita no ano', k_exp: 'Despesas no ano', k_net: 'Lucro no ano',
       accounts: 'Contas bancárias e cartões', noAccounts: 'Nenhuma conta conectada. Conecte um banco ou crie uma conta para importar extrato (CSV).',
-      connect: 'Conectar banco', bankBal: 'Saldo no banco', bookBal: 'Saldo nos livros', lastSync: 'Última sincronização', never: 'nunca', sync: 'Sincronizar', syncAll: 'Sincronizar tudo', disconnect: 'Desconectar', importCsv: 'Importar CSV',
+      connect: 'Conectar conta bancária', connectCard: 'Conectar cartão de crédito', c_titleCard: 'Conectar cartão de crédito', house: 'empresa da Endeavor', sampleTxt: 'Esta empresa tem dados de exemplo (contas, transações e lançamentos marcados como exemplo).', sampleClear: 'Apagar dados de exemplo', sampleQ: 'Apagar todos os dados de exemplo desta empresa (transações, lançamentos e contas de exemplo)? Os dados reais ficam.', sampleDone: 'Dados de exemplo apagados.', multiNote: 'Você pode conectar várias contas e vários cartões. O pagamento do cartão feito pela conta do banco é reconhecido como transferência entre as suas contas, sem contar duas vezes.', bankBal: 'Saldo no banco', bookBal: 'Saldo nos livros', lastSync: 'Última sincronização', never: 'nunca', sync: 'Sincronizar', syncAll: 'Sincronizar tudo', disconnect: 'Desconectar', importCsv: 'Importar CSV',
       c_title: 'Conectar conta bancária', c_stripe: 'Stripe Financial Connections', c_stripeTxt: 'Usa a conta Stripe da Endeavor. Cobre os principais bancos dos EUA.', c_plaid: 'Plaid', c_plaidTxt: 'Padrão do mercado de contabilidade. Cobre mais bancos e fintechs.',
       c_manual: 'Conta manual (extrato CSV)', c_manualTxt: 'Para bancos sem conexão: você importa o extrato em CSV.', c_off: 'Falta configurar as chaves no Supabase', c_name: 'Nome da conta', c_kind: 'Tipo', c_mask: 'Final do número (opcional)', c_create: 'Criar conta',
       k_checking: 'Conta corrente', k_savings: 'Poupança', k_credit_card: 'Cartão de crédito', k_other: 'Outra',
@@ -42,6 +42,7 @@
       k_cash: 'Cash in banks (books)', k_review: 'For review', k_income: 'Income this year', k_exp: 'Expenses this year', k_net: 'Net income this year',
       accounts: 'Bank and card accounts', noAccounts: 'No accounts yet. Connect a bank or create an account to import statements (CSV).',
       connect: 'Connect bank', bankBal: 'Bank balance', bookBal: 'Books balance', lastSync: 'Last sync', never: 'never', sync: 'Sync', syncAll: 'Sync all', disconnect: 'Disconnect', importCsv: 'Import CSV',
+      connect: 'Connect bank account', connectCard: 'Connect credit card', c_titleCard: 'Connect a credit card', house: "Endeavor's company", sampleTxt: 'This company has sample data (accounts, transactions and entries marked as sample).', sampleClear: 'Delete sample data', sampleQ: 'Delete all sample data of this company (sample transactions, entries and accounts)? Real data stays.', sampleDone: 'Sample data deleted.', multiNote: 'You can connect several accounts and cards. A card payment made from the bank account is recognized as a transfer between your own accounts, so it is not counted twice.',
       c_title: 'Connect a bank account', c_stripe: 'Stripe Financial Connections', c_stripeTxt: "Uses Endeavor's Stripe account. Covers the main US banks.", c_plaid: 'Plaid', c_plaidTxt: 'The accounting industry standard. Covers more banks and fintechs.',
       c_manual: 'Manual account (CSV statement)', c_manualTxt: 'For banks without a connection: you import the statement as CSV.', c_off: 'Keys not set in Supabase yet', c_name: 'Account name', c_kind: 'Type', c_mask: 'Last digits (optional)', c_create: 'Create account',
       k_checking: 'Checking', k_savings: 'Savings', k_credit_card: 'Credit card', k_other: 'Other',
@@ -103,9 +104,10 @@
   async function view(root, ctx) {
     var esc = ctx.esc, sb = ctx.sb;
     root.innerHTML = '<p class="portal-muted">' + t('loading') + '</p>';
-    var cos = await ctx.q(sb.from('companies').select('id, legal_name, client_id, books_provider, fiscal_year_end, clients(name)').neq('status', 'dissolved').order('legal_name'));
+    var cos = await ctx.q(sb.from('companies').select('id, legal_name, client_id, books_provider, fiscal_year_end, is_house, clients(name)').neq('status', 'dissolved').order('legal_name'));
+    cos.sort(function (a, b) { return (b.is_house ? 1 : 0) - (a.is_house ? 1 : 0); }); // Endeavor's own company first
     var on = cos.filter(function (c) { return c.books_provider === 'endeavor'; });
-    var co = on.find(function (c) { return c.id === param('co'); }) || on[0];
+    var co = on.find(function (c) { return c.id === param('co'); }) || on.find(function (c) { return c.is_house; }) || on[0];
     var head = '<div class="console__head"><div><h1 class="portal-h1">' + t('title') + '</h1><p class="portal-muted">' + t('lead') + '</p></div></div>';
     var enableBox = function () {
       var off = cos.filter(function (c) { return c.books_provider !== 'endeavor'; });
@@ -117,7 +119,7 @@
     }
     var tab = param('tab') || 'overview';
     var tabs = ['overview', 'bank', 'coa', 'journal', 'recon', 'reports', 'rules'];
-    root.innerHTML = head + '<div class="bk-top"><div class="bk-co"><label for="bk-co">' + t('pick') + '</label><select id="bk-co">' + on.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.legal_name) + (c.clients ? ' · ' + esc(c.clients.name) : '') + '</option>'; }).join('') + '</select></div>' +
+    root.innerHTML = head + '<div class="bk-top"><div class="bk-co"><label for="bk-co">' + t('pick') + '</label><select id="bk-co">' + on.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.legal_name) + (c.is_house ? ' · ' + t('house') : c.clients ? ' · ' + esc(c.clients.name) : '') + '</option>'; }).join('') + '</select></div>' +
       '<details class="bk-more"><summary>' + t('enable') + '</summary>' + enableBox() + '</details></div>' +
       '<nav class="bk-tabs" aria-label="' + t('title') + '">' + tabs.map(function (k) { return '<a href="#/bookkeeping?co=' + co.id + '&tab=' + k + '"' + (k === tab ? ' aria-current="page"' : '') + '>' + t('t_' + k) + '</a>'; }).join('') + '</nav><div id="bk-body"></div>';
     $('#bk-co').onchange = function () { go(this.value, tab); };
@@ -164,7 +166,9 @@
     var bookBal = function (b) { var r = tb.find(function (x) { return x.account_id === b.ledger_account_id; }); return r ? (b.kind === 'credit_card' ? (r.credit - r.debit) : (r.debit - r.credit)) : 0; };
     var byId = {}; X.accts.forEach(function (a) { byId[a.id] = a; });
     var bankName = {}; banks.forEach(function (b) { bankName[b.id] = b.name + (b.mask ? ' ···' + b.mask : ''); });
-    X.body.innerHTML = '<section class="portal-card"><div class="bk-row"><h2 class="portal-h2">' + t('accounts') + '</h2><div class="portal-btn-row"><button class="btn btn--ghost btn--sm" type="button" id="bk-syncall">' + t('syncAll') + '</button><button class="btn btn--navy btn--sm" type="button" id="bk-connect">' + t('connect') + '</button></div></div>' +
+    var sample = banks.some(function (b) { return /^sample/.test(b.external_id || '') || (b.bk_connections && b.bk_connections.provider === 'csv' && /exemplo|sample/i.test(b.bk_connections.institution || '')); });
+    X.body.innerHTML = '<section class="portal-card"><div class="bk-row"><h2 class="portal-h2">' + t('accounts') + '</h2><div class="portal-btn-row"><button class="btn btn--ghost btn--sm" type="button" id="bk-syncall">' + t('syncAll') + '</button><button class="btn btn--navy btn--sm" type="button" id="bk-connect">' + t('connect') + '</button><button class="btn btn--navy btn--sm" type="button" id="bk-connect-card">' + t('connectCard') + '</button></div></div><p class="portal-muted" style="font-size:.85rem;margin:.25rem 0 .75rem">' + t('multiNote') + '</p>' +
+      (sample ? '<div class="portal-alert portal-alert--info bk-sample" style="display:flex"><span>' + t('sampleTxt') + '</span><button class="btn btn--ghost btn--xs" type="button" id="bk-sample">' + t('sampleClear') + '</button></div>' : '') +
       '<div class="portal-alert" id="bk-m" role="status"></div>' +
       (banks.length ? '<div class="bk-banks">' + banks.map(function (b) {
         var c = b.bk_connections;
@@ -227,13 +231,15 @@
     $$('[data-sync]').forEach(function (b) { b.onclick = function () { syncRun({ connection_id: b.dataset.sync }, b); }; });
     $$('[data-disc]').forEach(function (b) { b.onclick = async function () { if (!confirm(t('disconnect') + '?')) return; try { await call(ctx, { action: 'disconnect', company_id: X.co.id, connection_id: b.dataset.disc }); X.reload(); } catch (e) { ctx.msg($('#bk-m'), E(ctx, e), 'error'); } }; });
     $$('[data-csv]').forEach(function (b) { b.onclick = function () { csvImport(X, b.dataset.csv); }; });
-    $('#bk-connect').onclick = function () { connectBank(X); };
+    $('#bk-connect').onclick = function () { connectBank(X, 'bank'); };
+    $('#bk-connect-card').onclick = function () { connectBank(X, 'card'); };
+    if ($('#bk-sample')) $('#bk-sample').onclick = async function () { if (!confirm(t('sampleQ'))) return; this.disabled = true; var r = await sb.rpc('bk_clear_sample', { p_company: X.co.id }); if (r.error) { this.disabled = false; return ctx.msg($('#bk-m'), E(ctx, r.error), 'error'); } X.reload(); setTimeout(function () { var m = document.getElementById('bk-m'); if (m) ctx.msg(m, t('sampleDone'), 'ok'); }, 700); };
   }
 
-  async function connectBank(X) {
-    var ctx = X.ctx, cfg = {};
+  async function connectBank(X, want) {
+    var ctx = X.ctx, cfg = {}, card = want === 'card';
     try { cfg = await call(ctx, { action: 'config' }); } catch (e) { /* show options anyway */ }
-    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + t('c_title') + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div>' +
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + t(card ? 'c_titleCard' : 'c_title') + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div>' +
       '<div class="bk-opts">' + [['stripe', cfg.stripe], ['plaid', cfg.plaid], ['manual', true]].map(function (p) {
         return '<button type="button" class="bk-opt" data-p="' + p[0] + '"' + (p[1] ? '' : ' disabled') + '><strong>' + t('c_' + p[0]) + '</strong><span>' + t('c_' + p[0] + 'Txt') + '</span>' + (p[1] ? '' : '<em>' + t('c_off') + '</em>') + '</button>';
       }).join('') + '</div><div id="bk-cform"></div><div class="portal-alert" id="bk-cm" role="alert"></div>', true);
@@ -241,8 +247,8 @@
     $$('.bk-opt', o).forEach(function (b) { b.onclick = async function () {
       var p = b.dataset.p;
       if (p === 'manual') {
-        $('#bk-cform', o).innerHTML = '<form class="portal-form" id="bk-mf"><div class="field"><label for="bk-mn">' + t('c_name') + '</label><input id="bk-mn" required maxlength="80" placeholder="Bank of America Business"></div>' +
-          '<div class="portal-grid2"><div class="field"><label for="bk-mk">' + t('c_kind') + '</label><select id="bk-mk">' + ['checking', 'savings', 'credit_card', 'other'].map(function (k) { return '<option value="' + k + '">' + t('k_' + k) + '</option>'; }).join('') + '</select></div>' +
+        $('#bk-cform', o).innerHTML = '<form class="portal-form" id="bk-mf"><div class="field"><label for="bk-mn">' + t('c_name') + '</label><input id="bk-mn" required maxlength="80" placeholder="' + (card ? 'Amex Business Platinum' : 'Bank of America Business') + '"></div>' +
+          '<div class="portal-grid2"><div class="field"><label for="bk-mk">' + t('c_kind') + '</label><select id="bk-mk">' + (card ? ['credit_card'] : ['checking', 'savings', 'other']).map(function (k) { return '<option value="' + k + '">' + t('k_' + k) + '</option>'; }).join('') + '</select></div>' +
           '<div class="field"><label for="bk-mm">' + t('c_mask') + '</label><input id="bk-mm" maxlength="4" inputmode="numeric"></div></div><button class="btn btn--navy" type="submit">' + t('c_create') + '</button></form>';
         $('#bk-mf', o).onsubmit = async function (e) { e.preventDefault(); var n = $('#bk-mn', o).value.trim(); if (n.length < 2) return;
           var r = await ctx.sb.rpc('bk_add_bank_account', { p_company: X.co.id, p_connection: null, p_external: null, p_name: n, p_mask: $('#bk-mm', o).value.replace(/\D/g, '') || null, p_kind: $('#bk-mk', o).value, p_currency: 'usd', p_balance: null });
@@ -252,14 +258,14 @@
       b.disabled = true; ctx.msg(m, t('loading'), 'info');
       try {
         if (p === 'stripe') {
-          var s = await call(ctx, { action: 'stripe_session', company_id: X.co.id });
+          var s = await call(ctx, { action: 'stripe_session', company_id: X.co.id, kind: card ? 'card' : 'bank' });
           await loadScript('https://js.stripe.com/v3/');
           var res = await window.Stripe(s.pk).collectFinancialConnectionsAccounts({ clientSecret: s.client_secret });
           if (res.error) throw new Error(res.error.message);
           var j = await call(ctx, { action: 'stripe_complete', company_id: X.co.id, connection_id: s.connection_id, session_id: res.financialConnectionsSession.id });
           ctx.closeOverlay(); X.reload(); setTimeout(function () { alert(t('imported', { n: j.imported || 0 })); }, 300);
         } else {
-          var lk = await call(ctx, { action: 'plaid_link', company_id: X.co.id, lang: L });
+          var lk = await call(ctx, { action: 'plaid_link', company_id: X.co.id, lang: L, kind: card ? 'card' : 'bank' });
           await loadScript('https://cdn.plaid.com/link/v2/stable/link-initialize.js');
           window.Plaid.create({ token: lk.link_token, onSuccess: async function (pt, meta) {
             try { var j2 = await call(ctx, { action: 'plaid_exchange', company_id: X.co.id, public_token: pt, institution: meta && meta.institution ? meta.institution.name : 'Bank' }); ctx.closeOverlay(); X.reload(); setTimeout(function () { alert(t('imported', { n: j2.imported || 0 })); }, 300); }

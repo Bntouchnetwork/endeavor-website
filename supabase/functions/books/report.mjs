@@ -40,7 +40,7 @@ export function money(v) {
   return n < 0 ? `(${s})` : s;
 }
 
-export async function reportPdf(PDFLib, { report, type, companyName, periodLabel, start, end, generatedAt, source }) {
+export async function reportPdf(PDFLib, { report, type, companyName, periodLabel, start, end, generatedAt, source, logo, companyLines }) {
   const SRC = source || "QuickBooks Online";
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const pdf = await PDFDocument.create();
@@ -53,6 +53,11 @@ export async function reportPdf(PDFLib, { report, type, companyName, periodLabel
   const ncol = Math.max(cols.length, 2);
   const W = 612, H = 792, M = 48, labelW = ncol > 2 ? 230 : 330;
   const numW = (W - 2 * M - labelW) / (ncol - 1);
+  // optional company logo (PNG or JPEG bytes), fitted into the standard header box (max 170 x 56 pt)
+  let img = null;
+  if (logo && logo.length > 8) {
+    try { img = logo[0] === 0x89 ? await pdf.embedPng(logo) : await pdf.embedJpg(logo); } catch { img = null; }
+  }
   const rows = flatten(report);
   let page, y;
 
@@ -61,7 +66,14 @@ export async function reportPdf(PDFLib, { report, type, companyName, periodLabel
     y = H - M;
     page.drawRectangle({ x: 0, y: H - 6, width: W, height: 6, color: navy });
     if (first) {
-      page.drawText(safe(companyName), { x: M, y: y - 6, size: 16, font: bold, color: navy }); y -= 26;
+      if (img) {
+        const k = Math.min(170 / img.width, 56 / img.height, 1), iw = img.width * k, ih = img.height * k;
+        page.drawImage(img, { x: W - M - iw, y: y - ih + 4, width: iw, height: ih });
+      }
+      page.drawText(safe(companyName), { x: M, y: y - 6, size: 16, font: bold, color: navy }); y -= 20;
+      for (const l of (companyLines || []).filter(Boolean)) { page.drawText(safe(l), { x: M, y, size: 8.5, font, color: grey }); y -= 11; }
+      if (img) y = Math.min(y, H - M - 64);
+      y -= 6;
       page.drawText(safe(REPORTS[type]), { x: M, y, size: 12.5, font: bold, color: ink }); y -= 16;
       page.drawText(safe(`${periodLabel}  |  ${start} to ${end}`), { x: M, y, size: 9.5, font, color: grey }); y -= 12;
       page.drawText(safe(`Basis: ${report?.Header?.ReportBasis || "Accrual"}  |  Currency: ${report?.Header?.Currency || "USD"}  |  Source: ${SRC}`), { x: M, y, size: 8.5, font, color: grey }); y -= 10;

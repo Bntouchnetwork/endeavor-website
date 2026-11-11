@@ -392,127 +392,251 @@
   }
 
   /* ================= Pagamentos ================= */
+  /* ---------- saved services (dropdown on each item + "Salvar na lista") ---------- */
+  async function loadServices(ctx) { try { return await ctx.q(ctx.sb.from('billing_services').select('*').eq('active', true).order('name')); } catch (e) { return []; } }
+  function itemEditor(ctx, box, services, opts) {
+    var esc = ctx.esc, monthly = !!(opts && opts.monthly), onChange = (opts && opts.onChange) || function () {}, seq = 0;
+    var svcOptions = function (rec) {
+      var list = services.filter(function (s) { return monthly || s.recurring !== 'month'; });
+      return '<option value="">Serviço salvo…</option>' + list.map(function (s) { return '<option value="' + s.id + '">' + esc(s.name) + (s.amount_cents ? ' · ' + esc(money(s.amount_cents)) : '') + (s.recurring === 'month' ? ' /mês' : '') + '</option>'; }).join('');
+    };
+    var refresh = function () { box.querySelectorAll('[data-svc]').forEach(function (sel) { var v = sel.value; sel.innerHTML = svcOptions(); sel.value = v; }); };
+    var add = function (d, amt, qty, rec) {
+      var n = ++seq, div = document.createElement('div'); div.className = 'inv-item inv-item--svc' + (monthly ? ' inv-item--rec' : '');
+      div.innerHTML = '<div class="field inv-item__svc"><label for="sv' + n + '">Lista de serviços</label><select id="sv' + n + '" data-svc>' + svcOptions() + '</select></div>' +
+        '<div class="field"><label for="it-d' + n + '">Descrição</label><input id="it-d' + n + '" data-d maxlength="300" value="' + esc(d || '') + '"></div>' +
+        '<div class="field"><label for="it-q' + n + '">Qtd</label><input id="it-q' + n + '" data-q type="number" min="1" max="1000" value="' + (qty || 1) + '"></div>' +
+        '<div class="field"><label for="it-a' + n + '">Valor (US$)</label><input id="it-a' + n + '" data-a type="number" min="0" step="0.01" value="' + (amt != null && amt !== '' ? amt : '') + '"></div>' +
+        (monthly ? '<div class="check-row inv-item__rec"><input type="checkbox" id="it-m' + n + '" data-m' + (rec === 'month' ? ' checked' : '') + '><label for="it-m' + n + '">Mensal</label></div>' : '') +
+        '<div class="inv-item__acts"><button class="btn btn--ghost btn--xs" type="button" data-save title="Salvar esta descrição e valor na lista de serviços">Salvar na lista</button><button class="btn btn--ghost btn--xs" type="button" aria-label="Remover item" data-rm>×</button></div>';
+      box.appendChild(div);
+      div.querySelector('[data-rm]').onclick = function () { if (box.children.length > 1) { div.remove(); onChange(); } };
+      div.querySelectorAll('input').forEach(function (i) { i.oninput = onChange; i.onchange = onChange; });
+      div.querySelector('[data-svc]').onchange = function () {
+        var s = services.find(function (x) { return x.id === this.value; }, this); if (!s) return;
+        div.querySelector('[data-d]').value = s.name; if (s.amount_cents) div.querySelector('[data-a]').value = (s.amount_cents / 100).toFixed(2);
+        if (monthly) div.querySelector('[data-m]').checked = s.recurring === 'month';
+        onChange();
+      };
+      div.querySelector('[data-save]').onclick = async function () {
+        var b = this, name = div.querySelector('[data-d]').value.trim(), cents = Math.round((+div.querySelector('[data-a]').value || 0) * 100), rec = monthly && div.querySelector('[data-m]').checked ? 'month' : 'none';
+        if (name.length < 2) { div.querySelector('[data-d]').focus(); return; }
+        b.disabled = true;
+        var u = (await ctx.sb.auth.getUser()).data.user;
+        var r = await ctx.sb.from('billing_services').upsert({ name: name, amount_cents: cents, recurring: rec, active: true, created_by: u && u.email }, { onConflict: 'name,recurring' }).select('*').single();
+        b.disabled = false;
+        if (r.error) { b.textContent = 'Erro'; return; }
+        var i = services.findIndex(function (x) { return x.id === r.data.id; }); if (i > -1) services[i] = r.data; else services.push(r.data);
+        services.sort(function (a, c) { return a.name.localeCompare(c.name); }); refresh(); div.querySelector('[data-svc]').value = r.data.id;
+        b.textContent = 'Salvo ✓'; setTimeout(function () { b.textContent = 'Salvar na lista'; }, 1800);
+      };
+      return div;
+    };
+    var items = function () {
+      return Array.prototype.map.call(box.children, function (r) {
+        var o = { description: r.querySelector('[data-d]').value.trim(), quantity: +r.querySelector('[data-q]').value || 1, amount_cents: Math.round((+r.querySelector('[data-a]').value || 0) * 100) };
+        if (monthly && r.querySelector('[data-m]').checked) o.recurring = 'month';
+        return o;
+      });
+    };
+    return { add: add, items: items };
+  }
+  function previewBox(ctx, payload) {
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Prévia do e-mail ao cliente</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<p class="portal-muted" id="pv-subj">Carregando…</p><iframe id="pv-f" title="Prévia do e-mail" sandbox="" style="width:100%;height:72vh;border:1px solid #e3e7ee;border-radius:10px;background:#fff"></iframe>');
+    o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = ctx.closeOverlay; });
+    call(ctx, Object.assign({ action: 'invoice_preview' }, payload)).then(function (j) {
+      ctx.$('#pv-subj', o).innerHTML = '<strong>Assunto:</strong> ' + ctx.esc(j.subject) + ' · <span class="portal-muted">o cliente também recebe pelo WhatsApp quando o número estiver aprovado</span>';
+      ctx.$('#pv-f', o).srcdoc = j.html;
+    }).catch(function (e) { ctx.$('#pv-subj', o).textContent = errMsg(ctx, e); });
+  }
+  function scheduleBox(ctx, title, run) {
+    var d = new Date(Date.now() + 864e5); d.setHours(9, 0, 0, 0);
+    var local = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + ctx.esc(title) + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<form class="portal-form" id="sc-f"><div class="field"><label for="sc-at">Enviar em</label><input type="datetime-local" id="sc-at" value="' + local + '" required></div><div class="portal-alert" id="sc-m" role="alert"></div>' +
+      '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">Agendar</button><button class="btn btn--ghost close-x" type="button">Cancelar</button></div></form>', true);
+    o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = ctx.closeOverlay; });
+    ctx.$('#sc-f', o).onsubmit = async function (e) {
+      e.preventDefault(); var v = ctx.$('#sc-at', o).value, at = new Date(v);
+      if (!v || isNaN(at.getTime()) || at < new Date()) return ctx.msg(ctx.$('#sc-m', o), 'Escolha uma data e hora no futuro.', 'error');
+      this.querySelector('button').disabled = true;
+      try { await run(at.toISOString()); ctx.closeOverlay(); ctx.route(); } catch (x) { this.querySelector('button').disabled = false; ctx.msg(ctx.$('#sc-m', o), errMsg(ctx, x), 'error'); }
+    };
+  }
+
+  var KIND = { proposal: 'Proposta', subscription: 'Mensalidade' };
   function invoiceTable(ctx, rows, hidePartner) {
     var esc = ctx.esc;
+    var b = function (act, id, label, cls) { return '<button type="button" class="btn ' + (cls || 'btn--ghost') + ' btn--xs" data-act="' + act + '" data-i="' + id + '">' + label + '</button>'; };
     return '<div class="table-wrap"><table class="data inv-table"><thead><tr><th>Fatura</th><th>Cliente</th>' + (hidePartner ? '' : '<th>Parceiro</th>') + '<th class="num">Total</th><th class="num">Parceiro</th><th>Status</th><th>Repasse</th><th>Ações</th></tr></thead><tbody>' +
       rows.map(function (i) {
-        var acts = [];
-        if (i.status === 'draft') acts.push('<button class="btn btn--navy btn--xs" data-act="invoice_send" data-i="' + i.id + '">Enviar</button>');
-        if (i.hosted_invoice_url) acts.push('<a class="btn btn--ghost btn--xs" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">Ver</a>');
+        var acts = [], editable = i.status === 'draft' && i.kind !== 'proposal';
+        if (i.status === 'draft' || i.status === 'open') acts.push(b('preview', i.id, 'Prévia'));
+        if (editable) acts.push(b('invoice_send', i.id, 'Enviar agora', 'btn--navy'), b('schedule', i.id, i.scheduled_send_at ? 'Reagendar' : 'Agendar'), '<a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&edit=' + i.id + '">Editar</a>', b('invoice_delete', i.id, 'Excluir rascunho', 'btn--danger'));
+        if (i.status === 'open') acts.push(b('invoice_send', i.id, 'Reenviar'));
+        if (i.hosted_invoice_url) acts.push('<a class="btn btn--ghost btn--xs" href="' + esc(i.hosted_invoice_url) + '" target="_blank" rel="noopener">Ver no Stripe</a>');
         var ready = i.partners && i.partners.stripe_transfers_active;
         var gp = i.partners && i.partners.payout_method === 'global_payouts';
-        if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed') && gp) acts.push('<button class="btn btn--navy btn--xs" data-act="manual_paid" data-i="' + i.id + '">Marcar repasse feito</button>');
-        else if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed')) acts.push(ready ? '<button class="btn btn--navy btn--xs" data-act="transfer" data-i="' + i.id + '">Repassar</button>' : '<span class="portal-muted" style="font-size:.82rem">Aguardando Stripe do parceiro</span>');
-        if (i.status === 'open' || i.status === 'uncollectible') acts.push('<button class="btn btn--ghost btn--xs" data-act="invoice_sync" data-i="' + i.id + '">Sincronizar</button>');
-        if (i.status !== 'paid' && i.status !== 'void') acts.push('<button class="btn btn--danger btn--xs" data-act="invoice_void" data-i="' + i.id + '">Anular</button>');
-        return '<tr><td><strong>' + esc(i.number || 'Rascunho') + '</strong><span class="sub">' + esc(fmtD(i.created_at)) + (i.due_date ? ' · vence ' + esc(fmtD(i.due_date)) : '') + '</span></td><td>' + esc(i.clients ? i.clients.name : '') + '</td>' +
+        if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed') && gp) acts.push(b('manual_paid', i.id, 'Marcar repasse feito', 'btn--navy'));
+        else if (i.status === 'paid' && (i.transfer_status === 'pending' || i.transfer_status === 'failed')) acts.push(ready ? b('transfer', i.id, 'Repassar', 'btn--navy') : '<span class="portal-muted" style="font-size:.82rem">Aguardando Stripe do parceiro</span>');
+        if (i.status === 'open' || i.status === 'uncollectible') acts.push(b('invoice_sync', i.id, 'Sincronizar'));
+        if (i.status === 'open' || (i.status === 'draft' && i.kind === 'proposal')) acts.push(b('invoice_void', i.id, 'Anular', 'btn--danger'));
+        if (i.status === 'paid' || i.status === 'void') acts.push(b('invoice_hide', i.id, i.archived_at ? 'Desarquivar' : 'Arquivar'));
+        var notes = [];
+        if (i.kind && KIND[i.kind]) notes.push(KIND[i.kind]);
+        if (i.status === 'draft' && i.scheduled_send_at) notes.push('envio agendado ' + ctx.fmtDT(i.scheduled_send_at));
+        if (i.status === 'open' && i.reminders_sent) notes.push(i.reminders_sent + (i.reminders_sent === 1 ? ' lembrete enviado' : ' lembretes enviados'));
+        if (i.overdue_notified_at && i.status === 'open') notes.push('sem pagamento após os lembretes');
+        return '<tr' + (i.archived_at ? ' class="is-archived"' : '') + '><td><strong>' + esc(i.number || 'Rascunho') + '</strong><span class="sub">' + esc(fmtD(i.created_at)) + (i.due_date ? ' · vence ' + esc(fmtD(i.due_date)) : '') + '</span>' + (notes.length ? '<span class="sub">' + esc(notes.join(' · ')) + '</span>' : '') + '</td><td>' + esc(i.clients ? i.clients.name : '') + '</td>' +
           (hidePartner ? '' : '<td>' + esc(i.partners ? i.partners.name : '—') + '</td>') + '<td class="num">' + esc(money(i.total_cents, i.currency)) + '</td>' +
           '<td class="num">' + (i.partner_id ? esc(money(i.partner_amount_cents, i.currency)) + (i.partner_pct != null ? ' <span class="portal-muted">(' + esc(String(+i.partner_pct)) + '%)</span>' : '') : '—') + '</td>' +
-          '<td>' + pill('inv-st', i.status, IS[i.status]) + '</td><td>' + esc(TS[i.transfer_status]) + '</td><td><div class="portal-btn-row" style="flex-wrap:nowrap">' + acts.join('') + '</div><div class="portal-alert" id="ia-' + i.id + '" role="status"></div></td></tr>';
+          '<td>' + pill('inv-st', i.status, IS[i.status]) + '</td><td>' + esc(TS[i.transfer_status]) + '</td><td><div class="portal-btn-row inv-acts">' + acts.join('') + '</div><div class="portal-alert" id="ia-' + i.id + '" role="status"></div></td></tr>';
       }).join('') + '</tbody></table></div>';
   }
   function wireInvoiceActions(root, ctx) {
     root.querySelectorAll('[data-act]').forEach(function (b) {
       b.onclick = async function (e) {
         e.stopPropagation();
-        if (b.dataset.act === 'invoice_void' && !confirm('Anular esta fatura no Stripe? O cliente não poderá mais pagá-la.')) return;
-        if (b.dataset.act === 'transfer' && !confirm('Repassar agora a comissão do parceiro para a conta Stripe dele?')) return;
-        if (b.dataset.act === 'manual_paid') {
+        var act = b.dataset.act, id = b.dataset.i;
+        if (act === 'preview') return previewBox(ctx, { invoice_id: id });
+        if (act === 'schedule') return scheduleBox(ctx, 'Agendar o envio da fatura', function (at) { return call(ctx, { action: 'invoice_schedule', invoice_id: id, send_at: at }); });
+        if (act === 'invoice_void' && !confirm('Anular esta fatura? O cliente não poderá mais pagá-la e os lembretes param.')) return;
+        if (act === 'invoice_delete' && !confirm('Excluir este rascunho de fatura? Isso não pode ser desfeito.')) return;
+        if (act === 'invoice_send' && !confirm('Enviar agora a fatura ao cliente por e-mail (e WhatsApp, quando ativo)?')) return;
+        if (act === 'transfer' && !confirm('Repassar agora a comissão do parceiro para a conta Stripe dele?')) return;
+        if (act === 'manual_paid') {
           var note = prompt('Repasse feito fora do Stripe Connect (Global Payouts ou Pix). Anote uma referência (ex.: ID do pagamento no Stripe):', '');
           if (note === null) return;
           b.disabled = true;
-          var ru = await ctx.sb.from('invoices').update({ transfer_status: 'paid', payout_channel: 'global_payouts', payout_note: note.trim().slice(0, 500) || null, payout_paid_at: new Date().toISOString() }).eq('id', b.dataset.i);
-          if (ru.error) { b.disabled = false; return ctx.msg(ctx.$('#ia-' + b.dataset.i), ctx.errText(ru.error), 'error'); }
+          var ru = await ctx.sb.from('invoices').update({ transfer_status: 'paid', payout_channel: 'global_payouts', payout_note: note.trim().slice(0, 500) || null, payout_paid_at: new Date().toISOString() }).eq('id', id);
+          if (ru.error) { b.disabled = false; return ctx.msg(ctx.$('#ia-' + id), ctx.errText(ru.error), 'error'); }
           return ctx.route();
         }
         b.disabled = true;
-        try { await call(ctx, { action: b.dataset.act, invoice_id: b.dataset.i }); ctx.route(); }
-        catch (x) { b.disabled = false; ctx.msg(ctx.$('#ia-' + b.dataset.i), errMsg(ctx, x), 'error'); }
+        try { await call(ctx, { action: act, invoice_id: id }); ctx.route(); }
+        catch (x) { b.disabled = false; ctx.msg(ctx.$('#ia-' + id), errMsg(ctx, x), 'error'); }
       };
     });
   }
 
   async function payments(view, ctx) {
     var esc = ctx.esc, tab = param('tab') || 'faturas';
-    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['modelos', 'Modelos de proposta'], ['nova', 'Nova fatura'], ['stripe', 'Conta Stripe']];
-    view.innerHTML = head(esc, 'Pagamentos', 'Propostas, faturas pelo Stripe e repasse automático da comissão para o parceiro via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/pagamentos?tab=nova-proposta">Nova proposta</a><a class="btn btn--navy" href="#/pagamentos?tab=nova">Nova fatura</a></div>') +
+    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['modelos', 'Modelos de proposta'], ['nova', 'Nova fatura'], ['servicos', 'Lista de serviços'], ['stripe', 'Conta Stripe']];
+    view.innerHTML = head(esc, 'Pagamentos', 'Propostas, faturas pelo Stripe, lembretes automáticos e repasse da comissão para o parceiro via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/pagamentos?tab=nova-proposta">Nova proposta</a><a class="btn btn--navy" href="#/pagamentos?tab=nova">Nova fatura</a></div>') +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/pagamentos?tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pg-body"></div>';
     var body = ctx.$('#pg-body');
     if (tab === 'nova') return newInvoice(body, ctx);
     if (tab === 'propostas') return proposalsTab(body, ctx);
     if (tab === 'nova-proposta') return proposalForm(body, ctx, null);
     if (tab === 'modelos') return param('tpl') ? templateForm(body, ctx, param('tpl')) : templatesTab(body, ctx);
+    if (tab === 'servicos') return servicesTab(body, ctx);
     if (tab === 'stripe') return stripeTab(body, ctx);
     var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active, payout_method)').order('created_at', { ascending: false }));
-    var st = param('status') || '';
-    var shown = rows.filter(function (i) { return !st || i.status === st; });
+    var st = param('status') || '', arch = param('arquivadas') === '1';
+    var shown = rows.filter(function (i) { return (!st || i.status === st) && (arch || !i.archived_at); });
+    var nArch = rows.filter(function (i) { return i.archived_at; }).length;
     var now = new Date(), ym = now.toISOString().slice(0, 7);
     var open = rows.filter(function (i) { return i.status === 'open'; }).reduce(function (s, i) { return s + i.total_cents - i.amount_paid_cents; }, 0);
     var month = rows.filter(function (i) { return i.status === 'paid' && String(i.paid_at || '').slice(0, 7) === ym; }).reduce(function (s, i) { return s + i.amount_paid_cents; }, 0);
     var toPartners = rows.filter(function (i) { return i.status !== 'void' && ['scheduled', 'pending', 'failed'].indexOf(i.transfer_status) > -1; }).reduce(function (s, i) { return s + i.partner_amount_cents; }, 0);
-    body.innerHTML = '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Em aberto', money(open)) + kpi(esc, 'Recebido no mês', money(month)) + kpi(esc, 'Comissões a repassar', money(toPartners)) + kpi(esc, 'Faturas', rows.length) + '</div>' +
-      '<div class="toolbar"><label for="pg-st" class="sr-only">Status</label><select id="pg-st"><option value="">Todos os status</option>' + Object.keys(IS).map(function (k) { return '<option value="' + k + '"' + (st === k ? ' selected' : '') + '>' + IS[k] + '</option>'; }).join('') + '</select></div>' +
+    var late = rows.filter(function (i) { return i.status === 'open' && i.due_date && i.due_date < now.toISOString().slice(0, 10); }).length;
+    body.innerHTML = '<div class="kpis" style="margin-bottom:1.25rem">' + kpi(esc, 'Em aberto', money(open)) + kpi(esc, 'Recebido no mês', money(month)) + kpi(esc, 'Vencidas', late) + kpi(esc, 'Comissões a repassar', money(toPartners)) + '</div>' +
+      '<div class="toolbar"><label for="pg-st" class="sr-only">Status</label><select id="pg-st"><option value="">Todos os status</option>' + Object.keys(IS).map(function (k) { return '<option value="' + k + '"' + (st === k ? ' selected' : '') + '>' + IS[k] + '</option>'; }).join('') + '</select>' +
+      '<div class="check-row"><input type="checkbox" id="pg-arch"' + (arch ? ' checked' : '') + '><label for="pg-arch">Mostrar arquivadas (' + nArch + ')</label></div></div>' +
+      '<p class="portal-muted" style="font-size:.85rem">Fatura enviada: o cliente recebe o e-mail com o link de pagamento e, se não pagar, lembretes 1, 4 e 8 dias após o vencimento. Sem pagamento depois dos lembretes, você recebe o aviso no sino e por e-mail. Paga: recibo ao cliente, aviso para você e lançamento automático no Bookkeeping da Endeavor.</p>' +
       (shown.length ? invoiceTable(ctx, shown) : '<div class="empty-state portal-card"><strong>Nenhuma fatura</strong><p>Crie a primeira em "Nova fatura".</p></div>');
-    ctx.$('#pg-st').onchange = function () { ERoute.set('#/pagamentos' + (this.value ? '?status=' + this.value : ''), true); ctx.route(); };
+    var go = function () { var q = []; if (ctx.$('#pg-st').value) q.push('status=' + ctx.$('#pg-st').value); if (ctx.$('#pg-arch').checked) q.push('arquivadas=1'); ERoute.set('#/pagamentos' + (q.length ? '?' + q.join('&') : ''), true); ctx.route(); };
+    ctx.$('#pg-st').onchange = go; ctx.$('#pg-arch').onchange = go;
     wireInvoiceActions(body, ctx);
   }
 
+  async function servicesTab(body, ctx) {
+    var esc = ctx.esc, rows = await ctx.q(ctx.sb.from('billing_services').select('*').order('active', { ascending: false }).order('name'));
+    body.innerHTML = '<p class="portal-muted">Serviços que aparecem na lista de cada item da fatura e da proposta, com o valor padrão. Você também salva um serviço novo direto do item, no botão "Salvar na lista".</p>' +
+      '<form class="toolbar" id="sv-new" style="flex-wrap:wrap"><label class="sr-only" for="sv-n">Serviço</label><input id="sv-n" maxlength="300" placeholder="Nome do serviço" style="flex:1;min-width:14rem"><label class="sr-only" for="sv-a">Valor</label><input id="sv-a" type="number" min="0" step="0.01" placeholder="Valor (US$)" style="width:9rem">' +
+      '<div class="check-row"><input type="checkbox" id="sv-m"><label for="sv-m">Mensal</label></div><button class="btn btn--navy btn--xs" type="submit">Adicionar</button></form><div class="portal-alert" id="sv-msg" role="status"></div>' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Serviço</th><th class="num">Valor padrão</th><th>Cobrança</th><th>Ativo</th><th></th></tr></thead><tbody>' + rows.map(function (s) {
+        return '<tr><td><input data-n="' + s.id + '" value="' + esc(s.name) + '" maxlength="300" aria-label="Nome do serviço" style="width:100%"></td><td class="num"><input data-a="' + s.id + '" type="number" min="0" step="0.01" value="' + (s.amount_cents / 100).toFixed(2) + '" aria-label="Valor" style="width:8rem"></td>' +
+          '<td>' + (s.recurring === 'month' ? 'Mensal' : 'Única') + '</td><td><input type="checkbox" data-on="' + s.id + '"' + (s.active ? ' checked' : '') + ' aria-label="Ativo"></td><td><button class="btn btn--ghost btn--xs" type="button" data-sv="' + s.id + '">Salvar</button></td></tr>';
+      }).join('') + '</tbody></table></div>';
+    var m = ctx.$('#sv-msg');
+    ctx.$('#sv-new').onsubmit = async function (e) {
+      e.preventDefault(); var n = ctx.$('#sv-n').value.trim(); if (n.length < 2) return ctx.$('#sv-n').focus();
+      var r = await ctx.sb.from('billing_services').upsert({ name: n, amount_cents: Math.round((+ctx.$('#sv-a').value || 0) * 100), recurring: ctx.$('#sv-m').checked ? 'month' : 'none', active: true }, { onConflict: 'name,recurring' });
+      if (r.error) return ctx.msg(m, ctx.errText(r.error), 'error'); ctx.route();
+    };
+    body.querySelectorAll('[data-sv]').forEach(function (b) { b.onclick = async function () {
+      var id = b.dataset.sv, r = await ctx.sb.from('billing_services').update({ name: body.querySelector('[data-n="' + id + '"]').value.trim(), amount_cents: Math.round((+body.querySelector('[data-a="' + id + '"]').value || 0) * 100), active: body.querySelector('[data-on="' + id + '"]').checked }).eq('id', id);
+      ctx.msg(m, r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
+    }; });
+  }
+
   async function newInvoice(body, ctx) {
-    var esc = ctx.esc, sb = ctx.sb;
+    var esc = ctx.esc, sb = ctx.sb, editId = param('edit');
     var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email').eq('status', 'active').order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
-      ctx.q(sb.from('referrals').select('id, partner_id, client_id, name').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single())]);
-    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3];
-    var pre = param('client');
-    body.innerHTML = '<div class="dash"><section class="portal-card"><form class="portal-form" id="ni" novalidate>' +
+      ctx.q(sb.from('referrals').select('id, partner_id, client_id, name').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()), loadServices(ctx),
+      editId ? ctx.q(sb.from('invoices').select('*').eq('id', editId).single()) : Promise.resolve(null)]);
+    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], services = res[4], ed = res[5];
+    if (ed && (ed.status !== 'draft' || ed.kind === 'proposal')) { body.innerHTML = '<div class="portal-alert portal-alert--info" style="display:block">Só rascunhos podem ser editados. <a href="#/pagamentos">Voltar às faturas</a></div>'; return; }
+    var pre = ed ? ed.client_id : param('client');
+    body.innerHTML = '<div class="dash"><section class="portal-card">' + (ed ? '<p class="portal-muted"><strong>Editando o rascunho.</strong> Ao salvar, o rascunho anterior é substituído.</p>' : '') + '<form class="portal-form" id="ni" novalidate>' +
       '<div class="portal-grid2"><div class="field"><label for="ni-client">Cliente</label><select id="ni-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label for="ni-days">Vencimento (dias)</label><input id="ni-days" type="number" min="0" max="90" value="' + esc(String(cfg.default_days_until_due)) + '"></div></div>' +
-      '<div class="field"><label for="ni-desc">Descrição (aparece na fatura)</label><input id="ni-desc" maxlength="500" placeholder="Ex.: Abertura de LLC na Flórida"></div>' +
-      '<fieldset class="perm-box"><legend>Itens</legend><div class="inv-items" id="ni-items"></div><button class="btn btn--ghost btn--xs" type="button" id="ni-add" style="justify-self:start;margin-top:.5rem">+ Item</button></fieldset>' +
+      '<div class="field"><label for="ni-days">Vencimento (dias após o envio)</label><input id="ni-days" type="number" min="0" max="90" value="' + esc(String(ed && ed.days_until_due != null ? ed.days_until_due : cfg.default_days_until_due)) + '"></div></div>' +
+      '<div class="field"><label for="ni-desc">Descrição (aparece na fatura)</label><input id="ni-desc" maxlength="500" placeholder="Ex.: Abertura de LLC na Flórida" value="' + esc(ed ? ed.description || '' : '') + '"></div>' +
+      '<fieldset class="perm-box"><legend>Itens</legend><div class="inv-items" id="ni-items"></div><div class="portal-btn-row" style="margin-top:.5rem"><button class="btn btn--ghost btn--xs" type="button" id="ni-add">+ Item</button><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=servicos">Gerenciar lista de serviços</a></div></fieldset>' +
       '<fieldset class="perm-box"><legend>Parceiro (comissão)</legend><div class="portal-grid2"><div class="field"><label for="ni-partner">Parceiro</label><select id="ni-partner"><option value="">Sem parceiro</option>' + partners.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + (p.company ? ' · ' + esc(p.company) : '') + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="ni-pct">Comissão (%)</label><input id="ni-pct" type="number" min="0" max="100" step="0.5" disabled></div></div><p class="portal-muted" id="ni-pinfo" style="font-size:.88rem;margin:0"></p></fieldset>' +
-      '<div class="portal-alert" id="ni-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit" data-send="1">Criar e enviar ao cliente</button><button class="btn btn--ghost" type="submit" data-send="0">Salvar como rascunho</button></div></form></section>' +
-      '<aside class="portal-card"><h2 class="portal-h2">Resumo do pagamento</h2><div class="split-box"><dl class="split-sum" id="ni-sum"></dl></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">O cliente paga o valor cheio. Quando o parceiro tem o Stripe conectado, a parte dele é transferida automaticamente para a conta Stripe dele no momento do pagamento. As taxas do Stripe ficam com a Endeavor.</p></aside></div>';
-    var box = ctx.$('#ni-items');
-    var addItem = function (d, amt) {
-      var n = box.children.length, div = document.createElement('div'); div.className = 'inv-item';
-      div.innerHTML = '<div class="field"><label for="it-d' + n + '">Descrição</label><input id="it-d' + n + '" data-d maxlength="300" value="' + esc(d || '') + '"></div><div class="field"><label for="it-q' + n + '">Qtd</label><input id="it-q' + n + '" data-q type="number" min="1" max="1000" value="1"></div>' +
-        '<div class="field"><label for="it-a' + n + '">Valor (US$)</label><input id="it-a' + n + '" data-a type="number" min="0" step="0.01" value="' + (amt || '') + '"></div><button class="btn btn--ghost btn--xs" type="button" aria-label="Remover item" data-rm>×</button>';
-      box.appendChild(div); div.querySelector('[data-rm]').onclick = function () { if (box.children.length > 1) { div.remove(); calc(); } };
-      div.querySelectorAll('input').forEach(function (i) { i.oninput = calc; });
-    };
-    var items = function () { return Array.prototype.map.call(box.children, function (r) { return { description: r.querySelector('[data-d]').value.trim(), quantity: +r.querySelector('[data-q]').value || 1, amount_cents: Math.round((+r.querySelector('[data-a]').value || 0) * 100) }; }); };
-    var calc = function () {
-      var tot = items().reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0);
+      '<fieldset class="perm-box"><legend>Envio</legend><div class="send-opts" role="radiogroup" aria-label="Quando enviar">' +
+        '<label class="check-row"><input type="radio" name="ni-mode" value="now" checked> <span><strong>Enviar agora</strong> · e-mail com as instruções de pagamento (e WhatsApp quando ativo)</span></label>' +
+        '<label class="check-row"><input type="radio" name="ni-mode" value="schedule"> <span><strong>Agendar o envio</strong></span></label>' +
+        '<div class="field" id="ni-atw" hidden style="margin-left:2rem;max-width:16rem"><label for="ni-at">Data e hora do envio</label><input type="datetime-local" id="ni-at"></div>' +
+        '<label class="check-row"><input type="radio" name="ni-mode" value="draft"> <span><strong>Salvar como rascunho</strong> · envia depois pela lista de faturas</span></label></div></fieldset>' +
+      '<div class="portal-alert" id="ni-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit" id="ni-go">Criar e enviar</button><button class="btn btn--ghost" type="button" id="ni-prev">Prévia do e-mail</button>' + (ed ? '<a class="btn btn--ghost" href="#/pagamentos">Cancelar</a>' : '') + '</div></form></section>' +
+      '<aside class="portal-card"><h2 class="portal-h2">Resumo do pagamento</h2><div class="split-box"><dl class="split-sum" id="ni-sum"></dl></div><p class="portal-muted" style="font-size:.85rem;margin-top:.75rem">O cliente paga o valor cheio. Quando o parceiro tem o Stripe conectado, a parte dele é transferida automaticamente no pagamento. As taxas do Stripe ficam com a Endeavor.</p>' +
+      '<h3 class="portal-h2" style="font-size:1rem;margin-top:1.25rem">Depois do envio</h3><ol class="steps-ol" style="font-size:.88rem"><li>Cliente recebe a fatura com o link de pagamento.</li><li>Sem pagamento: lembretes 1, 4 e 8 dias após o vencimento.</li><li>Ainda sem pagamento: aviso para você no sino e por e-mail.</li><li>Pagou: recibo ao cliente, aviso para você e lançamento no Bookkeeping.</li></ol></aside></div>';
+    var calc;
+    var ed_ = itemEditor(ctx, ctx.$('#ni-items'), services, { onChange: function () { calc(); } });
+    calc = function () {
+      var tot = ed_.items().reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0);
       var pid = ctx.$('#ni-partner').value, pct = pid ? +ctx.$('#ni-pct').value || 0 : 0, share = Math.round(tot * pct / 100);
       var p = partners.find(function (x) { return x.id === pid; });
       ctx.$('#ni-sum').innerHTML = '<dt>Cliente paga</dt><dd class="is-total">' + money(tot) + '</dd>' + (pid ? '<dt>Parceiro recebe (' + pct + '%)</dt><dd>' + money(share) + '</dd>' : '') + '<dt>Endeavor recebe*</dt><dd>' + money(tot - share) + '</dd>';
       ctx.$('#ni-pinfo').textContent = !p ? '' : p.stripe_transfers_active ? 'Stripe do parceiro pronto: o repasse será automático no pagamento.' : 'O parceiro ainda não conectou o Stripe: a comissão fica registrada como pendente e você repassa com um clique depois que ele conectar.';
     };
-    var pickPartner = function (pid) {
+    var pickPartner = function (pid, pct) {
       var p = partners.find(function (x) { return x.id === pid; });
-      ctx.$('#ni-partner').value = p ? p.id : ''; ctx.$('#ni-pct').disabled = !p; ctx.$('#ni-pct').value = p ? +p.default_share_pct : ''; calc();
+      ctx.$('#ni-partner').value = p ? p.id : ''; ctx.$('#ni-pct').disabled = !p; ctx.$('#ni-pct').value = p ? (pct != null ? +pct : +p.default_share_pct) : ''; calc();
     };
-    addItem();
-    ctx.$('#ni-add').onclick = function () { addItem(); box.lastChild.querySelector('input').focus(); };
+    (ed && ed.items && ed.items.length ? ed.items : [{}]).forEach(function (i) { ed_.add(i.description, i.amount_cents != null ? (i.amount_cents / 100).toFixed(2) : '', i.quantity); });
+    ctx.$('#ni-add').onclick = function () { var d = ed_.add(); d.querySelector('select').focus(); };
     ctx.$('#ni-partner').onchange = function () { pickPartner(this.value); };
     ctx.$('#ni-pct').oninput = calc;
     var refFor = function (cid) { return refs.find(function (r) { return r.client_id === cid; }); };
     ctx.$('#ni-client').onchange = function () { var r = refFor(this.value); pickPartner(r ? r.partner_id : ''); };
-    if (pre) { var r0 = refFor(pre); if (r0) pickPartner(r0.partner_id); }
+    if (ed) pickPartner(ed.partner_id, ed.partner_pct); else if (pre) { var r0 = refFor(pre); if (r0) pickPartner(r0.partner_id); }
     calc();
-    var sendFlag = true;
-    ctx.$('#ni').querySelectorAll('button[type=submit]').forEach(function (b) { b.onclick = function () { sendFlag = b.dataset.send === '1'; }; });
+    var mode = function () { return (ctx.$('#ni').querySelector('input[name=ni-mode]:checked') || {}).value || 'now'; };
+    var LBL = { now: 'Criar e enviar', schedule: 'Criar e agendar', draft: 'Salvar rascunho' };
+    ctx.$('#ni').querySelectorAll('input[name=ni-mode]').forEach(function (r) { r.onchange = function () { ctx.$('#ni-atw').hidden = mode() !== 'schedule'; ctx.$('#ni-go').textContent = LBL[mode()]; if (mode() === 'schedule' && !ctx.$('#ni-at').value) { var d = new Date(Date.now() + 864e5); d.setHours(9, 0, 0, 0); ctx.$('#ni-at').value = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16); } }; });
+    var valid = function () {
+      var cid = ctx.$('#ni-client').value, its = ed_.items().filter(function (i) { return i.description || i.amount_cents; });
+      if (!cid) { ctx.msg(ctx.$('#ni-m'), 'Selecione o cliente.', 'error'); return null; }
+      if (!its.length || its.some(function (i) { return !i.description || i.amount_cents < 1; })) { ctx.msg(ctx.$('#ni-m'), ERR.invalid_items, 'error'); return null; }
+      return { cid: cid, its: its };
+    };
+    ctx.$('#ni-prev').onclick = function () { var v = valid(); if (v) previewBox(ctx, { client_id: v.cid, items: v.its, days_until_due: +ctx.$('#ni-days').value, description: ctx.$('#ni-desc').value.trim() || undefined }); };
     ctx.$('#ni').onsubmit = async function (e) {
       e.preventDefault();
-      var cid = ctx.$('#ni-client').value, its = items().filter(function (i) { return i.description || i.amount_cents; });
-      if (!cid) return ctx.msg(ctx.$('#ni-m'), 'Selecione o cliente.', 'error');
-      if (!its.length || its.some(function (i) { return !i.description || i.amount_cents < 1; })) return ctx.msg(ctx.$('#ni-m'), ERR.invalid_items, 'error');
-      var pid = ctx.$('#ni-partner').value, r = refFor(cid);
+      var v = valid(); if (!v) return;
+      var md = mode(), at = null;
+      if (md === 'schedule') { at = new Date(ctx.$('#ni-at').value); if (isNaN(at.getTime()) || at < new Date()) return ctx.msg(ctx.$('#ni-m'), 'Escolha uma data e hora de envio no futuro.', 'error'); }
+      var pid = ctx.$('#ni-partner').value, r = refFor(v.cid);
       var btns = this.querySelectorAll('button'); btns.forEach(function (b) { b.disabled = true; });
-      ctx.msg(ctx.$('#ni-m'), 'Criando a fatura no Stripe…', 'info');
+      ctx.msg(ctx.$('#ni-m'), md === 'now' ? 'Criando a fatura e enviando…' : 'Criando a fatura no Stripe…', 'info');
       try {
-        await call(ctx, { action: 'invoice_create', client_id: cid, items: its, days_until_due: +ctx.$('#ni-days').value, description: ctx.$('#ni-desc').value.trim() || undefined,
-          partner_id: pid || undefined, partner_pct: pid ? +ctx.$('#ni-pct').value : undefined, referral_id: r && r.partner_id === pid ? r.id : undefined, send: sendFlag });
+        await call(ctx, { action: ed ? 'invoice_edit' : 'invoice_create', invoice_id: ed ? ed.id : undefined, client_id: v.cid, items: v.its, days_until_due: +ctx.$('#ni-days').value, description: ctx.$('#ni-desc').value.trim() || undefined,
+          partner_id: pid || undefined, partner_pct: pid ? +ctx.$('#ni-pct').value : undefined, referral_id: r && r.partner_id === pid ? r.id : undefined, send: md, send_at: at ? at.toISOString() : undefined });
         ERoute.go('#/pagamentos?tab=faturas');
       } catch (x) { btns.forEach(function (b) { b.disabled = false; }); ctx.msg(ctx.$('#ni-m'), errMsg(ctx, x), 'error'); }
     };
@@ -536,43 +660,33 @@
     };
     return (M[lang] || M.pt).filter(function (x, i, a) { return !(x === '' && a[i - 1] === ''); }).join('\n');
   }
-  async function sendProposal(ctx, p, client) {
-    var j = await call(ctx, { action: 'proposal_send', proposal_id: p.id });
-    var lang = p.language || client.language || 'pt';
-    var fresh = await ctx.q(ctx.sb.from('proposals').select('*').eq('id', p.id).single());
-    var items = (p.items || []).map(function (i) { return '  ' + i.description + ((i.quantity || 1) > 1 ? ' (x' + i.quantity + ')' : '') + ': ' + money(i.amount_cents * (i.quantity || 1), p.currency); }).join('\n');
-    var text = proposalEmail(lang, { first: (client.name || '').split(' ')[0], title: p.title, included: p.included || [], total: money(p.total_cents, p.currency), items: items, link: j.url, valid: fmtD(fresh.valid_until) });
-    var subj = { pt: 'Proposta Endeavor: ', en: 'Endeavor proposal: ', es: 'Propuesta Endeavor: ' }[lang] + p.title;
-    try {
-      var r = await fetch(ctx.CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ _subject: 'Proposta enviada: ' + p.title + ' (' + client.name + ')', _template: 'table', _captcha: 'false', name: client.name, email: client.primary_email, proposta: p.title,
-          total: money(p.total_cents, p.currency), link: j.url, _autoresponse: subj + '\n\n' + text }) });
-      var k = await r.json().catch(function () { return {}; });
-      return { url: j.url, mailed: r.ok && String(k.success) !== 'false' };
-    } catch (e) { return { url: j.url, mailed: false }; }
+  async function sendProposal(ctx, p) {
+    // the server creates the pending invoice and sends the e-mail (and WhatsApp when active) with "Aceitar e pagar fatura" and "Rejeitar"
+    return await call(ctx, { action: 'proposal_send', proposal_id: p.id });
   }
-
   async function proposalsTab(body, ctx) {
     var esc = ctx.esc;
     var rows = await ctx.q(ctx.sb.from('proposals').select('*, clients(name, primary_email, language), invoices!proposals_invoice_id_fkey(number, status)').order('created_at', { ascending: false }));
-    body.innerHTML = '<p class="portal-muted">Fluxo: <strong>enviar a proposta</strong> → o cliente <strong>aceita pelo link</strong> → o sistema <strong>cria a fatura</strong>, libera o acesso ao portal e <strong>envia o e-mail</strong> com o link para criar o login e pagar → você recebe a confirmação do pagamento aqui e por e-mail.</p>' +
+    body.innerHTML = '<p class="portal-muted">Fluxo: <strong>enviar a proposta</strong> (a fatura vai junto no mesmo e-mail) → o cliente <strong>aceita e paga</strong> na página da proposta, ou <strong>rejeita com o motivo</strong> → pago: recibo, acesso ao portal e o pedido dos documentos de abertura saem automaticamente; a mensalidade, se houver, começa 30 dias depois. Rejeitada: a fatura é cancelada, o lead volta ao CRM e você pode mandar uma nova proposta (cópia). Expirada: a fatura é anulada e você é avisado.</p>' +
       (rows.length ? '<div class="table-wrap"><table class="data inv-table prop-table"><thead><tr><th>Proposta</th><th>Cliente</th><th class="num">Total</th><th>Status</th><th>Andamento</th><th>Ações</th></tr></thead><tbody>' +
         rows.map(function (p) {
-          var prog = [p.sent_at ? 'Enviada ' + fmtD(p.sent_at) : '', p.viewed_at ? 'Vista ' + fmtD(p.viewed_at) : '', p.accepted_at ? 'Aceita ' + fmtD(p.accepted_at) + ' por ' + (p.accepted_name || '') : '', p.invoices ? 'Fatura ' + (p.invoices.number || '') + ' · ' + (IS[p.invoices.status] || '') : ''].filter(Boolean).join('<br>');
+          var prog = [p.sent_at ? 'Enviada ' + esc(fmtD(p.sent_at)) : '', p.viewed_at ? 'Vista ' + esc(fmtD(p.viewed_at)) : '', p.accepted_at ? 'Aceita ' + esc(fmtD(p.accepted_at)) + ' por ' + esc(p.accepted_name || '') : '', p.invoices ? 'Fatura ' + esc(p.invoices.number || '') + ' · ' + (IS[p.invoices.status] || '') : '',
+            p.declined_at ? '<span class="prop-why">Rejeitada ' + esc(fmtD(p.declined_at)) + (p.declined_reason ? ': “' + esc(p.declined_reason) + '”' : '') + '</span>' : ''].filter(Boolean).join('<br>');
           var acts = [];
           if (p.status === 'draft' || p.status === 'sent' || p.status === 'expired') acts.push('<button class="btn btn--navy btn--xs" data-psend="' + p.id + '">' + (p.status === 'draft' ? 'Enviar' : 'Reenviar') + '</button>');
           if (p.token && p.status !== 'void') acts.push('<button class="btn btn--ghost btn--xs" data-plink="' + p.id + '">Link do cliente</button>');
           if (p.status === 'draft') acts.push('<a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova-proposta&id=' + p.id + '">Editar</a>');
           if (p.status === 'accepted' && !p.invoice_id) acts.push('<button class="btn btn--navy btn--xs" data-pinv="' + p.id + '">Gerar fatura</button>');
-          if (p.status !== 'accepted' && p.status !== 'void') acts.push('<button class="btn btn--danger btn--xs" data-pvoid="' + p.id + '">Anular</button>');
+          if (p.status === 'declined' || p.status === 'expired') acts.push('<a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&copy=' + p.id + '">Nova proposta (cópia)</a>');
+          if (p.status === 'draft' || p.status === 'sent') acts.push('<button class="btn btn--danger btn--xs" data-pvoid="' + p.id + '">Anular</button>');
           return '<tr><td><strong>' + esc(p.title) + '</strong><span class="sub">' + esc(fmtD(p.created_at)) + '</span></td><td>' + esc(p.clients ? p.clients.name : '') + '<span class="sub">' + esc(p.clients ? p.clients.primary_email : '') + '</span></td>' +
-            '<td class="num">' + esc(money(p.total_cents, p.currency)) + '</td><td><span class="badge badge--' + PS_B[p.status] + '">' + PS[p.status] + '</span></td><td style="font-size:.85rem">' + prog + '</td>' +
+            '<td class="num">' + esc(money(p.total_cents, p.currency)) + (p.monthly_cents ? '<span class="sub">+ ' + esc(money(p.monthly_cents, p.currency)) + '/mês</span>' : '') + '</td><td><span class="badge badge--' + PS_B[p.status] + '">' + PS[p.status] + '</span></td><td style="font-size:.85rem">' + prog + '</td>' +
             '<td><div class="portal-btn-row" style="flex-wrap:nowrap">' + acts.join('') + '</div><div class="portal-alert" id="pa-' + p.id + '" role="status"></div></td></tr>';
         }).join('') + '</tbody></table></div>' : '<div class="empty-state portal-card"><strong>Nenhuma proposta ainda</strong><p>Crie a proposta do pacote para o cliente em "Nova proposta".</p></div>');
     var find = function (id) { return rows.find(function (p) { return p.id === id; }); };
     body.querySelectorAll('[data-psend]').forEach(function (b) { b.onclick = async function () {
       var p = find(b.dataset.psend); b.disabled = true;
-      try { var r = await sendProposal(ctx, p, p.clients); ctx.route(); if (!r.mailed) alert('A proposta foi marcada como enviada, mas o e-mail não saiu. Use "Link do cliente" para enviar manualmente.'); }
+      try { var r = await sendProposal(ctx, p); ctx.route(); if (!r.mailed) alert('A proposta foi marcada como enviada, mas o e-mail não saiu. Use "Link do cliente" para enviar manualmente.'); }
       catch (e) { b.disabled = false; ctx.msg(ctx.$('#pa-' + p.id), errMsg(ctx, e), 'error'); }
     }; });
     body.querySelectorAll('[data-plink]').forEach(function (b) { b.onclick = function () {
@@ -585,20 +699,24 @@
       try { await call(ctx, { action: 'proposal_invoice', proposal_id: b.dataset.pinv }); ctx.route(); } catch (e) { b.disabled = false; ctx.msg(ctx.$('#pa-' + b.dataset.pinv), errMsg(ctx, e), 'error'); }
     }; });
     body.querySelectorAll('[data-pvoid]').forEach(function (b) { b.onclick = async function () {
-      if (!confirm('Anular esta proposta? O link deixa de funcionar.')) return;
+      if (!confirm('Anular esta proposta? O link deixa de funcionar e a fatura que foi junto é anulada.')) return;
+      var p = find(b.dataset.pvoid);
+      if (p.invoice_id && p.invoices && p.invoices.status !== 'paid') { try { await call(ctx, { action: 'invoice_void', invoice_id: p.invoice_id }); } catch (e) { /* the proposal is voided anyway */ } }
       await ctx.sb.from('proposals').update({ status: 'void' }).eq('id', b.dataset.pvoid); ctx.route();
     }; });
   }
 
   async function proposalForm(body, ctx) {
-    var esc = ctx.esc, sb = ctx.sb, editId = param('id');
+    var esc = ctx.esc, sb = ctx.sb, editId = param('id'), copyId = param('copy');
     var res = await Promise.all([ctx.q(sb.from('clients').select('id, name, primary_email, language, status').in('status', ['active', 'prospect']).order('name')), ctx.q(sb.from('partners').select('*').neq('status', 'suspended').eq('program_status', 'approved').order('name')),
       ctx.q(sb.from('referrals').select('id, partner_id, client_id').not('client_id', 'is', null)), ctx.q(sb.from('stripe_settings').select('*').eq('id', 1).single()),
-      editId ? ctx.q(sb.from('proposals').select('*').eq('id', editId).single()) : Promise.resolve(null),
-      ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name'))]);
-    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], ed = res[4], tpls = res[5];
-    var pre = ed ? ed.client_id : param('client');
-    body.innerHTML = '<div class="dash"><section class="portal-card"><div class="tpl-pick"><div class="field"><label for="pp-tpl">Começar de um modelo</label><select id="pp-tpl"><option value="">Selecione o modelo da proposta</option>' +
+      editId || copyId ? ctx.q(sb.from('proposals').select('*').eq('id', editId || copyId).single()) : Promise.resolve(null),
+      ctx.q(sb.from('proposal_templates').select('*').eq('archived', false).order('name')), loadServices(ctx)]);
+    var clients = res[0], partners = res[1], refs = res[2], cfg = res[3], ed = res[4], tpls = res[5], services = res[6];
+    var src = ed; if (copyId) ed = null; // copy: same content, saved as a new proposal
+    if (src && src.client_id && !clients.some(function (c) { return c.id === src.client_id; })) { var extra = await ctx.q(sb.from('clients').select('id, name, primary_email, language, status').eq('id', src.client_id)); clients = clients.concat(extra); }
+    var pre = src ? src.client_id : param('client');
+    body.innerHTML = '<div class="dash"><section class="portal-card">' + (copyId && src ? '<div class="portal-alert portal-alert--info" style="display:block">Nova proposta a partir de "' + esc(src.title) + '"' + (src.declined_reason ? '. Motivo da rejeição: “' + esc(src.declined_reason) + '”' : '') + '. Ajuste o que precisar e envie.</div>' : '') + '<div class="tpl-pick"><div class="field"><label for="pp-tpl">Começar de um modelo</label><select id="pp-tpl"><option value="">Selecione o modelo da proposta</option>' +
         Object.keys(STRUCT).map(function (k) { var g = tpls.filter(function (t) { return t.structure === k; }); return g.length ? '<optgroup label="' + esc(STRUCT[k]) + '">' + g.map(function (t) { return '<option value="' + t.id + '">' + esc(t.name) + '</option>'; }).join('') + '</optgroup>' : ''; }).join('') +
         '</select></div><button class="btn btn--navy" type="button" id="pp-apply">Usar modelo</button><a class="btn btn--ghost" href="#/pagamentos?tab=modelos">Gerenciar modelos</a></div>' +
       '<p class="portal-muted" id="pp-tplmsg" style="font-size:.85rem;margin:-.25rem 0 1rem">O modelo preenche título, apresentação, o que está incluso, itens, valores e condições. Cliente e parceiro continuam como estão, e você pode ajustar tudo antes de enviar.</p>' +
@@ -606,40 +724,36 @@
       '<div class="portal-grid2"><div class="field"><label for="pp-client">Cliente ou prospect</label><select id="pp-client" required><option value="">Selecione</option>' + clients.map(function (c) { return '<option value="' + c.id + '"' + (pre === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + esc(c.primary_email) + ')' + (c.status === 'prospect' ? ' · prospect' : '') + '</option>'; }).join('') + '</select>' +
         '<p class="portal-muted" style="font-size:.82rem;margin:.3rem 0 0">Prospect vira cliente, com acesso ao portal, só quando aceitar a proposta.</p></div>' +
       '<div class="field"><label for="pp-lang">Idioma da proposta</label><select id="pp-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div></div>' +
-      '<div class="field"><label for="pp-title">Título do pacote</label><input id="pp-title" maxlength="200" placeholder="Ex.: Pacote Abertura de LLC na Flórida" value="' + esc(ed ? ed.title : '') + '"></div>' +
-      '<div class="field"><label for="pp-intro">Apresentação (opcional)</label><textarea id="pp-intro" rows="3" maxlength="4000">' + esc(ed ? ed.intro || '' : '') + '</textarea></div>' +
-      '<div class="field"><label for="pp-inc">O que está incluso (um item por linha)</label><textarea id="pp-inc" rows="5" maxlength="4000" placeholder="Registro da LLC na Sunbiz&#10;EIN no IRS&#10;Registered Agent por 12 meses&#10;Operating Agreement">' + esc(ed ? (ed.included || []).join('\n') : '') + '</textarea></div>' +
-      '<fieldset class="perm-box"><legend>Valores</legend><div class="inv-items" id="pp-items"></div><button class="btn btn--ghost btn--xs" type="button" id="pp-add" style="justify-self:start;margin-top:.5rem">+ Item</button></fieldset>' +
-      '<div class="portal-grid2"><div class="field"><label for="pp-valid">Validade da proposta (dias)</label><input id="pp-valid" type="number" min="1" max="120" value="30"></div><div class="field"><label for="pp-days">Vencimento da fatura após o aceite (dias)</label><input id="pp-days" type="number" min="0" max="90" value="' + esc(String(ed ? ed.days_until_due : cfg.default_days_until_due)) + '"></div></div>' +
+      '<div class="field"><label for="pp-title">Título do pacote</label><input id="pp-title" maxlength="200" placeholder="Ex.: Pacote Abertura de LLC na Flórida" value="' + esc(src ? src.title : '') + '"></div>' +
+      '<div class="field"><label for="pp-intro">Apresentação (opcional)</label><textarea id="pp-intro" rows="3" maxlength="4000">' + esc(src ? src.intro || '' : '') + '</textarea></div>' +
+      '<div class="field"><label for="pp-inc">O que está incluso (um item por linha)</label><textarea id="pp-inc" rows="5" maxlength="4000" placeholder="Registro da LLC na Sunbiz&#10;EIN no IRS&#10;Registered Agent por 12 meses&#10;Operating Agreement">' + esc(src ? (src.included || []).join('\n') : '') + '</textarea></div>' +
+      '<fieldset class="perm-box"><legend>Valores</legend><p class="portal-muted" style="font-size:.85rem;margin:0 0 .5rem">Marque <strong>Mensal</strong> nos itens de manutenção: o cliente paga os itens únicos no aceite e a mensalidade começa a ser debitada 30 dias depois, no mesmo cartão ou conta.</p><div class="inv-items" id="pp-items"></div><div class="portal-btn-row" style="margin-top:.5rem"><button class="btn btn--ghost btn--xs" type="button" id="pp-add">+ Item</button><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=servicos">Gerenciar lista de serviços</a></div></fieldset>' +
+      '<div class="portal-grid2"><div class="field"><label for="pp-valid">Validade da proposta (dias)</label><input id="pp-valid" type="number" min="1" max="120" value="30"></div><div class="field"><label for="pp-days">Vencimento da fatura após o aceite (dias)</label><input id="pp-days" type="number" min="0" max="90" value="' + esc(String(src ? src.days_until_due : cfg.default_days_until_due)) + '"></div></div>' +
       '<div class="field"><label for="pp-terms">Condições</label><textarea id="pp-terms" rows="3" maxlength="2000"></textarea></div>' +
       '<fieldset class="perm-box"><legend>Parceiro (comissão na fatura)</legend><div class="portal-grid2"><div class="field"><label for="pp-partner">Parceiro</label><select id="pp-partner"><option value="">Sem parceiro</option>' + partners.map(function (p) { return '<option value="' + p.id + '">' + esc(p.name) + (p.company ? ' · ' + esc(p.company) : '') + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="pp-pct">Comissão (%)</label><input id="pp-pct" type="number" min="0" max="100" step="0.5" disabled></div></div></fieldset>' +
       '<div class="portal-alert" id="pp-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit" data-send="1">Salvar e enviar ao cliente</button><button class="btn btn--ghost" type="submit" data-send="0">Salvar rascunho</button><button class="btn btn--ghost" type="button" id="pp-savetpl">Salvar como modelo</button></div></form></section>' +
       '<aside class="portal-card"><h2 class="portal-h2">Resumo</h2><div class="split-box"><dl class="split-sum" id="pp-sum"></dl></div><h3 class="portal-h2" style="font-size:1rem;margin-top:1.25rem">O que acontece depois</h3><ol class="steps-ol" style="font-size:.88rem">' +
-      '<li>O cliente recebe o e-mail com a proposta e o link para aceitar.</li><li>Ao aceitar, o sistema cria a fatura no Stripe e libera o acesso ao portal.</li><li>O cliente recebe na hora o e-mail de confirmação com o link para criar login e senha.</li><li>Ele entra direto na página de faturas e paga (cartão, Pix ou transferência).</li><li>Você recebe o aviso do pagamento aqui no console e por e-mail; a cópia da fatura fica no histórico do cliente.</li></ol></aside></div>';
-    var box = ctx.$('#pp-items');
-    var addItem = function (d, amt, qty) {
-      var n = box.children.length, div = document.createElement('div'); div.className = 'inv-item';
-      div.innerHTML = '<div class="field"><label for="pi-d' + n + '">Descrição</label><input id="pi-d' + n + '" data-d maxlength="300" value="' + esc(d || '') + '"></div><div class="field"><label for="pi-q' + n + '">Qtd</label><input id="pi-q' + n + '" data-q type="number" min="1" max="1000" value="' + (qty || 1) + '"></div>' +
-        '<div class="field"><label for="pi-a' + n + '">Valor (US$)</label><input id="pi-a' + n + '" data-a type="number" min="0" step="0.01" value="' + (amt != null ? amt : '') + '"></div><button class="btn btn--ghost btn--xs" type="button" aria-label="Remover item" data-rm>×</button>';
-      box.appendChild(div); div.querySelector('[data-rm]').onclick = function () { if (box.children.length > 1) { div.remove(); calc(); } };
-      div.querySelectorAll('input').forEach(function (i) { i.oninput = calc; });
-    };
-    var items = function () { return Array.prototype.map.call(box.children, function (r) { return { description: r.querySelector('[data-d]').value.trim(), quantity: +r.querySelector('[data-q]').value || 1, amount_cents: Math.round((+r.querySelector('[data-a]').value || 0) * 100) }; }).filter(function (i) { return i.description || i.amount_cents; }); };
-    var calc = function () {
-      var tot = items().reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0), pid = ctx.$('#pp-partner').value, pct = pid ? +ctx.$('#pp-pct').value || 0 : 0;
-      ctx.$('#pp-sum').innerHTML = '<dt>Total da proposta</dt><dd class="is-total">' + money(tot) + '</dd>' + (pid ? '<dt>Comissão do parceiro (' + pct + '%)</dt><dd>' + money(Math.round(tot * pct / 100)) + '</dd>' : '');
+      '<li>O cliente recebe a proposta e a fatura no mesmo e-mail (e WhatsApp quando ativo), com "Aceitar e pagar fatura" e "Rejeitar".</li><li>Para aceitar, confirma as condições com o nome e paga na página (cartão, inclusive do Brasil, ou conta americana). Pagar é o aceite.</li><li>Pago: recibo, acesso ao portal e o pedido dos documentos de abertura saem automaticamente; o pagamento entra no Bookkeeping.</li><li>Itens mensais: o débito começa 30 dias depois do aceite.</li><li>Rejeitou: você recebe o motivo, a fatura é cancelada e o lead volta ao CRM.</li></ol></aside></div>';
+    var box = ctx.$('#pp-items'), calc;
+    var IE = itemEditor(ctx, box, services, { monthly: true, onChange: function () { calc(); } });
+    var addItem = function (d, amt, qty, rec) { return IE.add(d, amt != null && amt !== '' ? (+amt).toFixed(2) : '', qty, rec); };
+    var items = function () { return IE.items().filter(function (i) { return i.description || i.amount_cents; }); };
+    calc = function () {
+      var its = items(), once = its.filter(function (i) { return i.recurring !== 'month'; }), mon = its.filter(function (i) { return i.recurring === 'month'; });
+      var tot = once.reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0), mt = mon.reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0), pid = ctx.$('#pp-partner').value, pct = pid ? +ctx.$('#pp-pct').value || 0 : 0;
+      ctx.$('#pp-sum').innerHTML = '<dt>Fatura no aceite</dt><dd class="is-total">' + money(tot) + '</dd>' + (mt ? '<dt>Mensalidade (a partir de 30 dias)</dt><dd>' + money(mt) + '/mês</dd>' : '') + (pid ? '<dt>Comissão do parceiro (' + pct + '%)</dt><dd>' + money(Math.round(tot * pct / 100)) + '</dd>' : '');
     };
     var pickPartner = function (pid, pct) { var p = partners.find(function (x) { return x.id === pid; }); ctx.$('#pp-partner').value = p ? p.id : ''; ctx.$('#pp-pct').disabled = !p; ctx.$('#pp-pct').value = p ? (pct != null ? +pct : +p.default_share_pct) : ''; calc(); };
     var setLang = function (cid) { var c = clients.find(function (x) { return x.id === cid; }); if (c && !ed) { ctx.$('#pp-lang').value = c.language || 'pt'; ctx.$('#pp-terms').value = DEF_TERMS[c.language] || DEF_TERMS.pt; } };
-    (ed && ed.items.length ? ed.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity); });
-    ctx.$('#pp-terms').value = ed ? ed.terms || '' : DEF_TERMS.pt;
-    if (ed) ctx.$('#pp-lang').value = ed.language;
-    ctx.$('#pp-add').onclick = function () { addItem(); box.lastChild.querySelector('input').focus(); };
+    (src && src.items.length ? src.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity, i.recurring); });
+    ctx.$('#pp-terms').value = src ? src.terms || '' : DEF_TERMS.pt;
+    if (src) ctx.$('#pp-lang').value = src.language;
+    ctx.$('#pp-add').onclick = function () { addItem(); box.lastChild.querySelector('select').focus(); };
     var applyTpl = function (t) {
       ctx.$('#pp-title').value = t.title || ''; ctx.$('#pp-intro').value = t.intro || ''; ctx.$('#pp-inc').value = (t.included || []).join('\n'); ctx.$('#pp-terms').value = t.terms || '';
       ctx.$('#pp-lang').value = t.language || 'pt'; ctx.$('#pp-days').value = t.days_until_due; ctx.$('#pp-valid').value = t.valid_days;
-      box.innerHTML = ''; (t.items && t.items.length ? t.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity); });
+      box.innerHTML = ''; (t.items && t.items.length ? t.items : [{}]).forEach(function (i) { addItem(i.description, i.amount_cents != null ? i.amount_cents / 100 : null, i.quantity, i.recurring); });
       calc();
       var empty = (t.items || []).some(function (i) { return i.amount_cents == null; });
       ctx.msg(ctx.$('#pp-tplmsg'), 'Modelo "' + t.name + '" aplicado.' + (empty ? ' Preencha os valores que estão em branco.' : ' Confira os valores e ajuste o que precisar.'), 'ok');
@@ -656,7 +770,7 @@
       var name = prompt('Nome do modelo (ex.: LLC Flórida - sócio estrangeiro):', ctx.$('#pp-title').value.trim()); if (!name || name.trim().length < 2) return;
       var u = (await sb.auth.getUser()).data.user;
       var r = await sb.from('proposal_templates').insert({ name: name.trim(), structure: 'other', language: ctx.$('#pp-lang').value, title: ctx.$('#pp-title').value.trim() || name.trim(), intro: ctx.$('#pp-intro').value.trim() || null,
-        included: ctx.$('#pp-inc').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean), items: items().map(function (i) { return { description: i.description, quantity: i.quantity, amount_cents: i.amount_cents || null }; }),
+        included: ctx.$('#pp-inc').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean), items: items().map(function (i) { return { description: i.description, quantity: i.quantity, amount_cents: i.amount_cents || null, recurring: i.recurring }; }),
         terms: ctx.$('#pp-terms').value.trim() || null, days_until_due: +ctx.$('#pp-days').value || 0, valid_days: +ctx.$('#pp-valid').value || 30, created_by: u && u.email }).select('*').single();
       if (r.error) return ctx.msg(ctx.$('#pp-m'), ctx.errText(r.error), 'error');
       tpls.push(r.data); ctx.msg(ctx.$('#pp-m'), 'Modelo "' + r.data.name + '" salvo. Ajuste o tipo de estrutura em Modelos de proposta.', 'ok');
@@ -665,7 +779,7 @@
     ctx.$('#pp-pct').oninput = calc;
     var refFor = function (cid) { return refs.find(function (r) { return r.client_id === cid; }); };
     ctx.$('#pp-client').onchange = function () { setLang(this.value); var r = refFor(this.value); pickPartner(r ? r.partner_id : ''); };
-    if (ed) pickPartner(ed.partner_id, ed.partner_pct); else if (pre) { setLang(pre); var r0 = refFor(pre); if (r0) pickPartner(r0.partner_id); }
+    if (src) pickPartner(src.partner_id, src.partner_pct); else if (pre) { setLang(pre); var r0 = refFor(pre); if (r0) pickPartner(r0.partner_id); }
     calc();
     var preTpl = param('template'); if (preTpl && !ed) { var t0 = tpls.find(function (x) { return x.id === preTpl; }); if (t0) { ctx.$('#pp-tpl').value = t0.id; applyTpl(t0); } }
     var sendFlag = true;
@@ -676,10 +790,12 @@
       if (!cid) return ctx.msg(m, 'Selecione o cliente.', 'error');
       if (title.length < 2) return ctx.msg(m, 'Dê um título ao pacote.', 'error');
       if (!its.length || its.some(function (i) { return !i.description || i.amount_cents < 1; })) return ctx.msg(m, ERR.invalid_items, 'error');
-      var pid = ctx.$('#pp-partner').value, r = refFor(cid), total = its.reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0);
+      var pid = ctx.$('#pp-partner').value, r = refFor(cid), total = its.filter(function (i) { return i.recurring !== 'month'; }).reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0);
+      var monthlyC = its.filter(function (i) { return i.recurring === 'month'; }).reduce(function (s, i) { return s + i.amount_cents * i.quantity; }, 0);
+      if (total < 1) return ctx.msg(m, 'A proposta precisa de pelo menos um item único (a fatura do aceite). Itens mensais começam 30 dias depois.', 'error');
       var valid = new Date(Date.now() + (+ctx.$('#pp-valid').value || 30) * 864e5).toISOString().slice(0, 10);
       var row = { client_id: cid, title: title, intro: ctx.$('#pp-intro').value.trim() || null, included: ctx.$('#pp-inc').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean),
-        items: its, total_cents: total, terms: ctx.$('#pp-terms').value.trim() || null, language: ctx.$('#pp-lang').value, days_until_due: +ctx.$('#pp-days').value || 0, valid_until: valid,
+        items: its, total_cents: total, monthly_cents: monthlyC, terms: ctx.$('#pp-terms').value.trim() || null, language: ctx.$('#pp-lang').value, days_until_due: +ctx.$('#pp-days').value || 0, valid_until: valid,
         partner_id: pid || null, partner_pct: pid ? +ctx.$('#pp-pct').value : null, referral_id: r && r.partner_id === pid ? r.id : null };
       var btns = this.querySelectorAll('button'); btns.forEach(function (b) { b.disabled = true; });
       var u = (await sb.auth.getUser()).data.user;
@@ -687,7 +803,7 @@
       if (saved.error) { btns.forEach(function (b) { b.disabled = false; }); return ctx.msg(m, ctx.errText(saved.error), 'error'); }
       if (sendFlag) {
         ctx.msg(m, 'Enviando a proposta…', 'info');
-        try { var sr = await sendProposal(ctx, saved.data, clients.find(function (c) { return c.id === cid; })); if (!sr.mailed) alert('Proposta salva, mas o e-mail não saiu. Use "Link do cliente" na lista para enviar manualmente.'); }
+        try { var sr = await sendProposal(ctx, saved.data); if (!sr.mailed) alert('Proposta salva, mas o e-mail não saiu. Use "Link do cliente" na lista para enviar manualmente.'); }
         catch (x) { btns.forEach(function (b) { b.disabled = false; }); return ctx.msg(m, errMsg(ctx, x), 'error'); }
       }
       ERoute.go('#/pagamentos?tab=propostas');
@@ -756,7 +872,7 @@
   }
 
   /* ================= notifications (bell in the top bar) ================= */
-  var EVK = { lead_chat: 'Chat do site', proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda', partner_new: 'Parceiros', partner_contract: 'Contrato' };
+  var EVK = { invoice_overdue: 'Fatura vencida', proposal_rejected: 'Proposta rejeitada', proposal_expired: 'Proposta expirada', intake_complete: 'Documentos de abertura', ach_authorized: 'Débito ACH', lead_chat: 'Chat do site', proposal_accepted: 'Proposta aceita', payment_received: 'Pagamento recebido', payment_failed: 'Pagamento recusado', referral_new: 'Nova indicação', oa_review: 'Operating Agreement', oa_client: 'Operating Agreement', oa_signature: 'Assinatura', oa_archived: 'Arquivado', booking_new: 'Agenda', booking_cancelled: 'Agenda', booking_rescheduled: 'Agenda', partner_new: 'Parceiros', partner_contract: 'Contrato' };
   function bell(ctx) {
     var host = document.getElementById('topbar-user'); if (!host || document.getElementById('notif-btn')) return;
     var btn = document.createElement('button'); btn.type = 'button'; btn.id = 'notif-btn'; btn.className = 'notif-btn'; btn.setAttribute('aria-haspopup', 'true'); btn.setAttribute('aria-expanded', 'false');

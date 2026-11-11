@@ -7,7 +7,8 @@
 //   PAYMENTS_RETURN_ORIGINS      (optional) comma-separated site origins allowed as return URLs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { accessEmail, accessMailOn, sendAccessMail, type AccessKind } from "./access-mail.ts";
+import { accessEmail, accessMailOn, sendAccessMail, sendMail, sendWa, type AccessKind } from "./access-mail.ts";
+import { achEmail, failedEmail, intakeEmail, invoiceEmail, money as fmtMoney, proposalEmail, receiptEmail, teamEmail } from "./billing-mail.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -95,7 +96,8 @@ function invoiceFields(inv: any) {
     paid_at: inv.status_transitions?.paid_at ? new Date(inv.status_transitions.paid_at * 1000).toISOString() : null };
 }
 async function syncInvoice(stripeInvoice: any) {
-  const { data: row } = await admin.from("invoices").select("id, client_id, status, number, archive_path, transfer_status, partner_amount_cents, total_cents, currency, clients(name, primary_email)").eq("stripe_invoice_id", stripeInvoice.id).maybeSingle();
+  let { data: row } = await admin.from("invoices").select("id, client_id, status, number, archive_path, transfer_status, partner_amount_cents, total_cents, currency, clients(name, primary_email)").eq("stripe_invoice_id", stripeInvoice.id).maybeSingle();
+  if (!row && stripeInvoice.subscription) row = await insertSubscriptionInvoice(stripeInvoice);
   if (!row) return null;
   const upd: Record<string, unknown> = invoiceFields(stripeInvoice);
   // destination charge: Stripe moves the partner share automatically when the invoice is paid
@@ -106,6 +108,7 @@ async function syncInvoice(stripeInvoice: any) {
     const amt = ((stripeInvoice.amount_paid ?? row.total_cents) / 100).toLocaleString("en-US", { style: "currency", currency: (stripeInvoice.currency || "usd").toUpperCase() });
     await admin.from("admin_events").insert({ kind: "payment_received", title: `Pagamento recebido: ${amt} · ${cl.name || ""}`, body: `Fatura ${stripeInvoice.number || ""} paga pelo portal/Stripe (${cl.primary_email || ""}).`, link: "#/pagamentos?tab=faturas" });
     if (!row.archive_path) await archiveInvoice({ ...row, number: stripeInvoice.number || row.number }, stripeInvoice).catch((e) => console.error("archive", e));
+    await afterPaid(row.id).catch((e) => console.error("after paid", e));
   }
   return { id: row.id, ...upd };
 }
@@ -127,12 +130,133 @@ async function ensureCustomer(client: any) {
   await admin.from("clients").update({ stripe_customer_id: c.id }).eq("id", client.id);
   return c.id;
 }
-async function finalizeAndSend(row: any) {
-  let inv = await stripe("GET", `/invoices/${row.stripe_invoice_id}`);
-  if (inv.status === "draft") inv = await stripe("POST", `/invoices/${row.stripe_invoice_id}/finalize`, { auto_advance: true });
-  try { inv = await stripe("POST", `/invoices/${row.stripe_invoice_id}/send`); } catch (e) { console.error("send", e); }
-  await admin.from("invoices").update({ ...invoiceFields(inv), sent_at: new Date().toISOString() }).eq("id", row.id);
-  return inv;
+async function finalizeAndSend(row: any) { await deliverInvoice(row); }
+
+/* ---------------- billing flow: send, remind, receipt, books ---------------- */
+const SUPPORT_TO = "support@endeavorbiz.com";
+const firstName = (n: unknown) => String(n || "").trim().split(/\s+/)[0] || "";
+const newToken = () => Array.from(crypto.getRandomValues(new Uint8Array(32))).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 48);
+async function bell(kind: string, title: string, body: string | null, link: string) { await admin.from("admin_events").insert({ kind, title: title.slice(0, 300), body: body ? body.slice(0, 2000) : null, link }); }
+async function team(title: string, lines: [string, string][], link?: string) {
+  try { const m = teamEmail(title, lines, link ? { url: SITE + "/admin.html" + link, label: "Abrir no admin" } : undefined); await sendMail(SUPPORT_TO, m.subject, m.html, m.text); } catch (e) { console.error("team mail", e); }
+}
+async function payUrlFor(row: any, lang: string) {
+  const { data: own } = await admin.from("client_users").select("id").eq("client_id", row.client_id).eq("role", "owner").eq("status", "active").limit(1).maybeSingle();
+  return own ? `${SITE}/client.html?lang=${lang}#/invoices?pay=${row.id}` : (row.hosted_invoice_url || `${SITE}/client.html?lang=${lang}#/invoices`);
+}
+// first e-mail (with payment instructions) or reminder n; e-mail + WhatsApp
+async function deliverInvoice(row: any, reminder = 0) {
+  if (row.status === "draft" && row.stripe_invoice_id) {
+    const fin = await stripe("POST", `/invoices/${row.stripe_invoice_id}/finalize`, { auto_advance: false });
+    await admin.from("invoices").update(invoiceFields(fin)).eq("id", row.id);
+    row = { ...row, ...invoiceFields(fin) };
+  }
+  if (row.status !== "open") return;
+  const { data: cl } = await admin.from("clients").select("name, primary_email, phone, language").eq("id", row.client_id).single();
+  const lang = cl?.language || "pt", url = await payUrlFor(row, lang);
+  const due = row.total_cents - (row.amount_paid_cents || 0);
+  const daysLate = row.due_date ? Math.max(1, Math.floor((Date.now() - new Date(row.due_date + "T12:00:00Z").getTime()) / 864e5)) : 0;
+  const m = invoiceEmail({ lang, name: cl?.name || "", number: row.number || "", total: due, cur: row.currency, due: row.due_date, items: row.items || [], description: row.description, payUrl: url, pdfUrl: row.invoice_pdf, reminder, daysLate });
+  await sendMail(cl?.primary_email || row.customer_email, m.subject, m.html, m.text);
+  await sendWa(cl?.phone, reminder ? "endeavor_invoice_reminder" : "endeavor_invoice", lang, [firstName(cl?.name), row.number || "", fmtMoney(due, row.currency, lang), url]);
+  const now = new Date().toISOString();
+  await admin.from("invoices").update(reminder ? { reminders_sent: reminder, last_reminder_at: now } : { sent_at: now, scheduled_send_at: null }).eq("id", row.id);
+}
+// paid: books (Endeavor's own company), receipt to the client, notice to the team, then the proposal follow-up (portal + opening documents)
+async function afterPaid(id: string) {
+  const { data: r } = await admin.from("invoices").select("*, clients(name, primary_email, phone, language, monthly_cents, subscription_started_at)").eq("id", id).single();
+  if (!r) return;
+  try { await admin.rpc("bk_record_invoice_payment", { p_invoice: id }); } catch (e) { console.error("books", e); }
+  const cl: any = r.clients || {}, lang = cl.language || "pt";
+  if (!r.receipt_sent_at) {
+    let receiptUrl: string | null = null;
+    try { if (r.stripe_invoice_id) { const inv = await stripe("GET", `/invoices/${r.stripe_invoice_id}`, { expand: ["charge"] }); receiptUrl = inv.charge?.receipt_url || null; } } catch { /* optional */ }
+    const portal = `${SITE}/client.html?lang=${lang}#/invoices`;
+    const m = receiptEmail({ lang, name: cl.name, number: r.number || "", amount: r.amount_paid_cents, cur: r.currency, paidAt: r.paid_at, items: r.items || [], receiptUrl, pdfUrl: r.invoice_pdf, portalUrl: portal,
+      monthly: r.kind === "proposal" && cl.monthly_cents ? { cents: cl.monthly_cents, first: cl.subscription_started_at } : null });
+    await sendMail(cl.primary_email || r.customer_email, m.subject, m.html, m.text);
+    await sendWa(cl.phone, "endeavor_payment_receipt", lang, [firstName(cl.name), r.number || "", fmtMoney(r.amount_paid_cents, r.currency, lang), receiptUrl || portal]);
+    await admin.from("invoices").update({ receipt_sent_at: new Date().toISOString() }).eq("id", id);
+    await team(`Pagamento recebido: ${fmtMoney(r.amount_paid_cents, r.currency)} · ${cl.name || ""}`, [["Fatura", r.number || ""], ["Cliente", `${cl.name || ""} (${cl.primary_email || ""})`], ["Lançado no Bookkeeping", "Endeavor Business Solutions LLC"]], "#/pagamentos?tab=faturas");
+  }
+  if (r.kind === "proposal" && r.proposal_id) await afterProposalPaid(r).catch((e) => console.error("proposal follow-up", e));
+}
+async function afterProposalPaid(r: any) {
+  const cl: any = r.clients || {}, lang = cl.language || "pt";
+  const { data: owner } = await admin.from("client_users").select("id, status, email").eq("client_id", r.client_id).eq("role", "owner").maybeSingle();
+  if (owner && owner.status !== "active") { try { await sendAccess(String(owner.email).toLowerCase(), "client.html", lang, { kind: "client", name: cl.name }); } catch (e) { console.error("access", e); } }
+  await ensureIntake(r.client_id, r.proposal_id, lang, false);
+}
+// opening documents request (secure link, no login)
+async function ensureIntake(clientId: string, proposalId: string | null, lang: string, resend: boolean) {
+  let { data: q } = await admin.from("intake_requests").select("*").eq("client_id", clientId).neq("status", "closed").order("created_at", { ascending: false }).limit(1).maybeSingle();
+  const { data: cl } = await admin.from("clients").select("name, primary_email, phone, language").eq("id", clientId).single();
+  if (!cl) throw new Fail("not_found", 404);
+  if (!q) {
+    let { data: co } = await admin.from("companies").select("id").eq("client_id", clientId).eq("status", "in_formation").order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (!co) { const ins = await admin.from("companies").insert({ client_id: clientId, legal_name: "Nova empresa (em formação)", status: "in_formation", entity_type: "llc_foreign", state: "FL" }).select("id").single(); co = ins.data; }
+    const ins = await admin.from("intake_requests").insert({ client_id: clientId, company_id: co?.id || null, proposal_id: proposalId, token: newToken(), language: lang || cl.language || "pt" }).select("*").single();
+    if (ins.error) throw new Fail("db_error", 500, ins.error.message);
+    q = ins.data;
+  } else if (!resend && q.sent_at) return q;
+  if (q.status === "complete" && !resend) return q;
+  const url = `${SITE}/intake.html?t=${q.token}&lang=${q.language}`;
+  const m = intakeEmail({ lang: q.language, name: cl.name, url, reminder: !!q.sent_at });
+  await sendMail(cl.primary_email, m.subject, m.html, m.text);
+  await sendWa(cl.phone, "endeavor_documents_request", q.language, [firstName(cl.name), url]);
+  await admin.from("intake_requests").update({ sent_at: new Date().toISOString() }).eq("id", q.id);
+  return { ...q, url };
+}
+// monthly invoices created by Stripe for the maintenance subscription
+async function insertSubscriptionInvoice(inv: any) {
+  let clientId: string | null = null;
+  const { data: c1 } = await admin.from("clients").select("id").eq("stripe_customer_id", inv.customer).maybeSingle();
+  clientId = c1?.id || null;
+  if (!clientId) { try { const cus = await stripe("GET", `/customers/${inv.customer}`); clientId = cus?.metadata?.client_id || null; } catch { /* ignore */ } }
+  if (!clientId) return null;
+  const items = (inv.lines?.data || []).map((l: any) => ({ description: String(l.description || "Monthly maintenance").slice(0, 300), amount_cents: l.amount, quantity: 1, recurring: l.price?.recurring ? "month" : undefined }));
+  const { data } = await admin.from("invoices").insert({ client_id: clientId, kind: "subscription", stripe_invoice_id: inv.id, stripe_subscription_id: inv.subscription, items, description: "Manutenção mensal",
+    customer_email: inv.customer_email, partner_amount_cents: 0, transfer_status: "none", created_by: "stripe", sent_at: new Date().toISOString(), ...invoiceFields(inv) })
+    .select("id, client_id, status, number, archive_path, transfer_status, partner_amount_cents, total_cents, currency, clients(name, primary_email)").single();
+  return data;
+}
+// hourly: scheduled sends, reminders after the due date (+1, +4, +8 days), team notice after +10 days, proposal expiry
+async function billingTick() {
+  const now = new Date(), today = now.toISOString().slice(0, 10), res = { sent: 0, reminders: 0, overdue: 0, expired: 0 };
+  const { data: sched } = await admin.from("invoices").select("*").eq("status", "draft").not("scheduled_send_at", "is", null).lte("scheduled_send_at", now.toISOString()).is("archived_at", null).limit(50);
+  for (const r of sched ?? []) { try { await deliverInvoice(r); res.sent++; } catch (e) { console.error("scheduled", r.id, e); } }
+  const { data: open } = await admin.from("invoices").select("*, clients(name, primary_email)").eq("status", "open").lt("due_date", today).is("archived_at", null).limit(200);
+  for (const r of open ?? []) {
+    const late = Math.floor((now.getTime() - new Date(r.due_date + "T12:00:00Z").getTime()) / 864e5);
+    const want = late >= 8 ? 3 : late >= 4 ? 2 : late >= 1 ? 1 : 0;
+    try {
+      if (want > (r.reminders_sent || 0) && (!r.last_reminder_at || now.getTime() - new Date(r.last_reminder_at).getTime() > 20 * 36e5)) { await deliverInvoice(r, (r.reminders_sent || 0) + 1); res.reminders++; }
+      else if (late >= 10 && (r.reminders_sent || 0) >= 3 && !r.overdue_notified_at) {
+        const amt = fmtMoney(r.total_cents - r.amount_paid_cents, r.currency), cl: any = r.clients || {};
+        await bell("invoice_overdue", `Fatura em atraso: ${r.number || ""} · ${cl.name || ""} · ${amt}`, `Vencida há ${late} dias, depois de 3 lembretes por e-mail e WhatsApp. Ligue para o cliente ou combine outra forma de pagamento.`, "#/pagamentos?tab=faturas&status=open");
+        await team(`Fatura em atraso: ${r.number || ""}`, [["Cliente", `${cl.name || ""} (${cl.primary_email || ""})`], ["Valor", amt], ["Vencimento", r.due_date], ["Situação", `${late} dias de atraso, 3 lembretes enviados. Ação do admin: entrar em contato.`]], "#/pagamentos?tab=faturas&status=open");
+        await admin.from("invoices").update({ overdue_notified_at: now.toISOString() }).eq("id", r.id); res.overdue++;
+      }
+    } catch (e) { console.error("reminder", r.id, e); }
+  }
+  const { data: exp } = await admin.from("proposals").select("id, title, invoice_id, clients(name)").eq("status", "sent").lt("valid_until", today).limit(50);
+  for (const p of exp ?? []) {
+    await admin.from("proposals").update({ status: "expired" }).eq("id", p.id);
+    if (p.invoice_id) await voidPending(p.invoice_id);
+    await bell("proposal_expired", `Proposta vencida sem aceite: ${p.title} · ${(p as any).clients?.name || ""}`, "A fatura da proposta foi anulada. Use \"Nova proposta (cópia)\" para enviar uma nova.", "#/pagamentos?tab=propostas");
+    res.expired++;
+  }
+  return res;
+}
+async function voidPending(invoiceId: string) {
+  const { data: r } = await admin.from("invoices").select("*").eq("id", invoiceId).maybeSingle();
+  if (!r || r.status === "paid" || r.status === "void") return;
+  try {
+    if (r.stripe_subscription_id) await stripe("DELETE", `/subscriptions/${r.stripe_subscription_id}`);
+    if (r.stripe_invoice_id && r.status === "draft") await stripe("DELETE", `/invoices/${r.stripe_invoice_id}`);
+    else if (r.stripe_invoice_id && r.status === "open") await stripe("POST", `/invoices/${r.stripe_invoice_id}/void`);
+  } catch (e) { console.error("void", e); }
+  await admin.from("invoices").update({ status: "void", scheduled_send_at: null }).eq("id", r.id);
 }
 
 async function createInvoice(body: any) {
@@ -169,11 +293,15 @@ async function createInvoice(body: any) {
     const fresh = await stripe("GET", `/invoices/${inv.id}`);
     const row = { client_id: client.id, referral_id: body.referral_id || null, partner_id: partner?.id || null, partner_pct: partner ? pct : null, proposal_id: body.proposal_id || null,
       partner_amount_cents: share, transfer_status: partner && share > 0 ? (auto ? "scheduled" : "pending") : "none", stripe_invoice_id: inv.id,
-      items, description: body.description || null, customer_email: client.primary_email, created_by: body.created_by || null, ...invoiceFields(fresh) };
-    const { data: saved, error } = await admin.from("invoices").insert(row).select("*").single();
+      items, description: body.description || null, customer_email: client.primary_email, created_by: body.created_by || null, kind: body.kind || "one_time", days_until_due: days, ...invoiceFields(fresh) };
+    const { data: saved, error } = body.row_id ? await admin.from("invoices").update(row).eq("id", body.row_id).select("*").single() : await admin.from("invoices").insert(row).select("*").single();
     if (error) throw error;
-    if (body.send) await finalizeAndSend(saved);
-    else if (body.finalize) { // ready to pay in the portal; the portal e-mail replaces Stripe's own e-mail
+    const mode = body.send === true || body.send === "now" ? "now" : body.send === "schedule" ? "schedule" : "draft";
+    if (mode === "now") await deliverInvoice(saved);
+    else if (mode === "schedule") {
+      const at = new Date(String(body.send_at || "")); if (isNaN(at.getTime())) throw new Fail("invalid_date");
+      await admin.from("invoices").update({ scheduled_send_at: at.toISOString() }).eq("id", saved.id);
+    } else if (body.finalize) { // ready to pay in the portal; the portal e-mail replaces Stripe's own e-mail
       const fin = await stripe("POST", `/invoices/${inv.id}/finalize`, { auto_advance: false });
       await admin.from("invoices").update(invoiceFields(fin)).eq("id", saved.id);
     }
@@ -185,14 +313,15 @@ const SITE = (Deno.env.get("SITE_URL") || "https://endeavorbiz.com").replace(/\/
 const tokenOk = (t: string) => /^[A-Za-z0-9_-]{32,64}$/.test(t);
 async function proposalByToken(token: string) {
   if (!tokenOk(token)) throw new Fail("not_found", 404);
-  const { data: p } = await admin.from("proposals").select("*, clients(name, primary_email, language)").eq("token", token).maybeSingle();
+  const { data: p } = await admin.from("proposals").select("*, clients(name, primary_email, language), invoices!proposals_invoice_id_fkey(number, status)").eq("token", token).maybeSingle();
   if (!p || p.status === "draft" || p.status === "void") throw new Fail("not_found", 404);
   if (p.status === "sent" && p.valid_until && p.valid_until < new Date().toISOString().slice(0, 10)) { await admin.from("proposals").update({ status: "expired" }).eq("id", p.id); p.status = "expired"; }
   return p;
 }
 function publicProposal(p: any) {
   return { title: p.title, intro: p.intro, included: p.included, items: p.items, total_cents: p.total_cents, currency: p.currency, terms: p.terms, language: p.language,
-    valid_until: p.valid_until, status: p.status, client_name: p.clients?.name, accepted_at: p.accepted_at, accepted_name: p.accepted_name, sent_at: p.sent_at };
+    valid_until: p.valid_until, status: p.status, client_name: p.clients?.name, accepted_at: p.accepted_at, accepted_name: p.accepted_name, sent_at: p.sent_at,
+    monthly_cents: p.monthly_cents || 0, declined_at: p.declined_at, invoice_number: p.invoices?.number || null, invoice_status: p.invoices?.status || null };
 }
 const likeEsc = (v: string) => v.replace(/[\\%_]/g, (m) => "\\" + m);
 // Portal access e-mail: one-time link from the Admin API, sent by Endeavor in the client's language
@@ -245,39 +374,138 @@ async function publicAction(req: Request, body: any) {
     if (!p.viewed_at) await admin.from("proposals").update({ viewed_at: new Date().toISOString() }).eq("id", p.id);
     return publicProposal(p);
   }
-  // proposal_accept
+  if (body.action === "proposal_reject") {
+    const reason = String(body.reason || "").trim().slice(0, 2000);
+    if (reason.length < 3) throw new Fail("invalid_reason");
+    if (!["sent", "expired"].includes(p.status)) throw new Fail("proposal_closed");
+    await admin.from("proposals").update({ status: "declined", declined_at: new Date().toISOString(), declined_reason: reason }).eq("id", p.id);
+    if (p.invoice_id) await voidPending(p.invoice_id);
+    const { data: cl } = await admin.from("clients").select("lead_id, name").eq("id", p.client_id).single();
+    if (cl?.lead_id) {
+      const { data: ld } = await admin.from("leads").select("notes").eq("id", cl.lead_id).maybeSingle();
+      await admin.from("leads").update({ status: "rejected", notes: ((ld?.notes ? ld.notes + "\n\n" : "") + `[${new Date().toISOString().slice(0, 10)}] Proposta rejeitada (${p.title}): ${reason}`).slice(0, 20000) }).eq("id", cl.lead_id);
+    }
+    await bell("proposal_rejected", `Proposta rejeitada: ${p.title} · ${p.clients?.name || ""}`, `Motivo: ${reason}`, "#/pagamentos?tab=propostas");
+    await team(`Proposta rejeitada: ${p.title}`, [["Cliente", `${p.clients?.name || ""} (${p.clients?.primary_email || ""})`], ["Valor", fmtMoney(p.total_cents, p.currency)], ["Motivo", reason], ["Próximo passo", "Use \"Nova proposta (cópia)\" em Pagamentos → Propostas para ajustar e enviar uma segunda oferta."]], "#/pagamentos?tab=propostas");
+    return { ok: true, status: "declined" };
+  }
+  // proposal_accept: registers the acceptance (name, IP, browser) and returns the payment (paying is how the client confirms)
+  const lang = p.language || p.clients?.language || "pt";
+  if (p.status === "accepted") return { ...publicProposal(p), ...(await proposalPayment(p)) };
   const name = String(body.name || "").trim().slice(0, 200);
   if (name.length < 3 || body.agree !== true) throw new Fail("invalid_acceptance");
-  const lang = p.language || p.clients?.language || "pt";
-  const portal = `${SITE}/client.html?lang=${lang}#/invoices`;
-  if (p.status === "accepted") return { ...publicProposal(p), portal_url: portal, already: true };
   if (p.status !== "sent") throw new Fail("proposal_closed");
   const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim().slice(0, 64) || null;
   const { data: upd } = await admin.from("proposals").update({ status: "accepted", accepted_at: new Date().toISOString(), accepted_name: name, accepted_ip: ip,
     accepted_user_agent: (req.headers.get("user-agent") || "").slice(0, 300) }).eq("id", p.id).eq("status", "sent").select("id").maybeSingle();
   if (!upd) throw new Fail("proposal_closed");
-  // portal access for the client (owner), if not yet invited
   const email = String(p.clients?.primary_email || "").toLowerCase();
-  const { data: owner } = await admin.from("client_users").select("id, status").eq("client_id", p.client_id).eq("role", "owner").ilike("email", likeEsc(email)).maybeSingle();
-  let firstAccess = !owner || owner.status !== "active";
-  if (!owner) await admin.from("client_users").insert({ client_id: p.client_id, email, name: p.clients?.name || name, role: "owner", status: "invited", can_view: true, can_upload: true, invited_by: "proposal" });
-  let accessEmail: string | null = null;
-  if (firstAccess && email) { try { accessEmail = await sendAccess(email, "client.html", lang, { kind: "client", name: p.clients?.name || name }); } catch (e) { console.error("access email", e); } }
-  // invoice ready to pay in the portal
-  let invoice: any = null;
-  if (SK && !p.invoice_id) {
-    try {
-      const id = await createInvoice({ client_id: p.client_id, items: p.items, days_until_due: p.days_until_due, description: p.title, partner_id: p.partner_id, partner_pct: p.partner_pct,
-        referral_id: p.referral_id, proposal_id: p.id, finalize: true, created_by: "proposal" });
-      await admin.from("proposals").update({ invoice_id: id }).eq("id", p.id);
-      const { data: inv } = await admin.from("invoices").select("number, total_cents, currency, due_date").eq("id", id).single();
-      invoice = inv;
-    } catch (e) { console.error("proposal invoice", e); }
+  const { data: owner } = await admin.from("client_users").select("id").eq("client_id", p.client_id).eq("role", "owner").ilike("email", likeEsc(email)).maybeSingle();
+  if (!owner && email) await admin.from("client_users").insert({ client_id: p.client_id, email, name: p.clients?.name || name, role: "owner", status: "invited", can_view: true, can_upload: true, invited_by: "proposal" });
+  await admin.from("admin_events").insert({ kind: "proposal_accepted", title: `Proposta aceita: ${p.title} · ${p.clients?.name || ""}`, body: `${name} aceitou os termos e foi para o pagamento (${fmtMoney(p.total_cents, p.currency)}).`, link: "#/pagamentos?tab=propostas" });
+  const pay = await proposalPayment({ ...p, status: "accepted" });
+  return { ...publicProposal({ ...p, status: "accepted", accepted_name: name, accepted_at: new Date().toISOString() }), ...pay, email, lang };
+}
+
+// the payment of an accepted proposal: one invoice (one-time items), or a subscription with a 30-day trial when there is a monthly item
+async function proposalPayment(p: any) {
+  const { data: row } = p.invoice_id ? await admin.from("invoices").select("*").eq("id", p.invoice_id).maybeSingle() : { data: null };
+  if (row?.status === "paid") return { paid: true };
+  if (!SK || !PK) return { pay_ready: false };
+  if (row?.stripe_invoice_id) {
+    const inv = await stripe("GET", `/invoices/${row.stripe_invoice_id}`, { expand: ["payment_intent"] });
+    if (inv.status === "paid") { await syncInvoice(inv); return { paid: true }; }
+    if (inv.payment_intent?.client_secret) return { mode: "payment", client_secret: inv.payment_intent.client_secret, pk: PK, amount: inv.amount_due, hosted: inv.hosted_invoice_url, monthly: p.monthly_cents || 0 };
+    if (row.stripe_subscription_id) {
+      const sub = await stripe("GET", `/subscriptions/${row.stripe_subscription_id}`, { expand: ["pending_setup_intent"] });
+      if (sub.pending_setup_intent?.client_secret) return { mode: "setup", client_secret: sub.pending_setup_intent.client_secret, pk: PK, amount: 0, monthly: p.monthly_cents || 0 };
+    }
   }
-  const total = (p.total_cents / 100).toLocaleString("en-US", { style: "currency", currency: (p.currency || "usd").toUpperCase() });
-  await admin.from("admin_events").insert({ kind: "proposal_accepted", title: `Proposta aceita: ${p.title} · ${p.clients?.name || ""}`,
-    body: `${name} aceitou (${total}).` + (invoice ? ` Fatura ${invoice.number} criada e aguardando pagamento no portal.` : " Gere a fatura em Pagamentos."), link: "#/pagamentos?tab=propostas" });
-  return { ...publicProposal({ ...p, status: "accepted", accepted_name: name, accepted_at: new Date().toISOString() }), portal_url: portal, first_access: firstAccess, access_email: accessEmail, email, invoice };
+  const { data: client } = await admin.from("clients").select("*").eq("id", p.client_id).single();
+  const items = (p.items || []) as any[], once = items.filter((i) => i.recurring !== "month"), monthly = items.filter((i) => i.recurring === "month");
+  if (!monthly.length) {
+    const id = await createInvoice({ client_id: p.client_id, items: once, days_until_due: p.days_until_due, description: p.title, partner_id: p.partner_id, partner_pct: p.partner_pct,
+      referral_id: p.referral_id, proposal_id: p.id, finalize: true, created_by: "proposal", kind: "proposal", row_id: row?.id });
+    if (!row) await admin.from("proposals").update({ invoice_id: id }).eq("id", p.id);
+    const { data: saved } = await admin.from("invoices").select("stripe_invoice_id").eq("id", id).single();
+    const inv = await stripe("GET", `/invoices/${saved!.stripe_invoice_id}`, { expand: ["payment_intent"] });
+    return { mode: "payment", client_secret: inv.payment_intent?.client_secret || null, pk: PK, amount: inv.amount_due, hosted: inv.hosted_invoice_url, monthly: 0 };
+  }
+  const customer = await ensureCustomer(client);
+  const prod = async (name: string, k: string) => (await stripe("POST", "/products", { name: String(name || "Service").slice(0, 250), metadata: { kind: k } }, `prod-${p.id}-${k}-${name}`.slice(0, 250))).id;
+  const add: any[] = [], subItems: any[] = [];
+  for (const i of once) add.push({ price_data: { currency: p.currency || "usd", product: await prod(i.description, "one_time"), unit_amount: i.amount_cents }, quantity: i.quantity || 1 });
+  for (const i of monthly) subItems.push({ price_data: { currency: p.currency || "usd", product: await prod(i.description, "monthly"), unit_amount: i.amount_cents, recurring: { interval: "month" } }, quantity: i.quantity || 1 });
+  const sub = await stripe("POST", "/subscriptions", { customer, items: subItems, add_invoice_items: add, trial_period_days: 30, payment_behavior: "default_incomplete",
+    payment_settings: { save_default_payment_method: "on_subscription" }, collection_method: "charge_automatically", description: p.title.slice(0, 500),
+    metadata: { client_id: p.client_id, proposal_id: p.id }, expand: ["latest_invoice.payment_intent", "pending_setup_intent"] }, "sub-prop-" + p.id);
+  const inv = sub.latest_invoice || {};
+  const monthlyCents = monthly.reduce((s: number, i: any) => s + i.amount_cents * (i.quantity || 1), 0);
+  const fields = { client_id: p.client_id, kind: "proposal", proposal_id: p.id, stripe_invoice_id: inv.id, stripe_subscription_id: sub.id, items: once, description: p.title, customer_email: client.primary_email,
+    created_by: "proposal", days_until_due: p.days_until_due, partner_id: p.partner_id || null, partner_pct: p.partner_id ? p.partner_pct : null,
+    partner_amount_cents: p.partner_id ? Math.round(once.reduce((s: number, i: any) => s + i.amount_cents * (i.quantity || 1), 0) * Number(p.partner_pct || 0) / 100) : 0,
+    transfer_status: p.partner_id && Number(p.partner_pct) > 0 ? "pending" : "none", ...invoiceFields(inv) };
+  if (row) await admin.from("invoices").update(fields).eq("id", row.id);
+  else { const { data: ins } = await admin.from("invoices").insert(fields).select("id").single(); await admin.from("proposals").update({ invoice_id: ins!.id }).eq("id", p.id); }
+  await admin.from("clients").update({ stripe_subscription_id: sub.id, subscription_status: sub.status, monthly_cents: monthlyCents, subscription_started_at: sub.trial_end ? new Date(sub.trial_end * 1000).toISOString() : null }).eq("id", p.client_id);
+  if (inv.payment_intent?.client_secret) return { mode: "payment", client_secret: inv.payment_intent.client_secret, pk: PK, amount: inv.amount_due, hosted: inv.hosted_invoice_url, monthly: monthlyCents, first_charge: sub.trial_end };
+  return { mode: "setup", client_secret: sub.pending_setup_intent?.client_secret || null, pk: PK, amount: 0, monthly: monthlyCents, first_charge: sub.trial_end };
+}
+
+// admin: send the proposal with its invoice (pending until the client accepts and pays); e-mail + WhatsApp from Endeavor
+async function sendProposal(p: any) {
+  const items = (p.items || []) as any[], once = items.filter((i) => i.recurring !== "month"), monthly = items.filter((i) => i.recurring === "month");
+  const oneTime = once.reduce((s: number, i: any) => s + i.amount_cents * (i.quantity || 1), 0), monthlyCents = monthly.reduce((s: number, i: any) => s + i.amount_cents * (i.quantity || 1), 0);
+  const token = p.token || newToken();
+  const valid = p.valid_until && p.valid_until >= new Date().toISOString().slice(0, 10) ? p.valid_until : new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const { data: client } = await admin.from("clients").select("*").eq("id", p.client_id).single();
+  let invId = p.invoice_id, number = "";
+  const { data: cur } = invId ? await admin.from("invoices").select("id, status, number").eq("id", invId).maybeSingle() : { data: null };
+  if (!cur || cur.status === "void") {
+    number = `PRO-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+    const share = p.partner_id ? Math.round(oneTime * Number(p.partner_pct || 0) / 100) : 0;
+    const { data: ins, error } = await admin.from("invoices").insert({ client_id: p.client_id, kind: "proposal", proposal_id: p.id, status: "draft", number, items: once, total_cents: oneTime, amount_paid_cents: 0, currency: p.currency || "usd",
+      description: p.title, customer_email: client.primary_email, created_by: "proposal", days_until_due: p.days_until_due, partner_id: p.partner_id || null, partner_pct: p.partner_id ? p.partner_pct : null,
+      partner_amount_cents: share, transfer_status: share > 0 ? "pending" : "none" }).select("id").single();
+    if (error) throw new Fail("db_error", 500, error.message);
+    invId = ins!.id;
+  } else number = cur.number || "";
+  await admin.from("proposals").update({ token, status: "sent", sent_at: new Date().toISOString(), valid_until: valid, invoice_id: invId, monthly_cents: monthlyCents }).eq("id", p.id);
+  const lang = p.language || client.language || "pt", url = `${SITE}/proposal.html?t=${token}&lang=${lang}`;
+  let mailed = false;
+  try {
+    const m = proposalEmail({ lang, name: client.name, title: p.title, intro: p.intro, included: p.included || [], items, cur: p.currency || "usd", oneTime, monthly: monthlyCents, validUntil: valid, acceptUrl: url + "&a=pay", rejectUrl: url + "&a=reject", number });
+    await sendMail(client.primary_email, m.subject, m.html, m.text); mailed = true;
+  } catch (e) { console.error("proposal mail", e); }
+  await sendWa(client.phone, "endeavor_proposal", lang, [firstName(client.name), p.title, url]);
+  return { ok: true, url, mailed };
+}
+
+// ACH on the company's US account: request (admin), then the public page creates the SetupIntent and switches the subscription
+async function achPublic(body: any) {
+  const tok = String(body.token || "");
+  if (!tokenOk(tok)) throw new Fail("not_found", 404);
+  const { data: br } = await admin.from("billing_requests").select("*, clients(*)").eq("token", tok).maybeSingle();
+  if (!br || br.status === "closed" || new Date(br.expires_at) < new Date()) throw new Fail("not_found", 404);
+  const cl: any = br.clients;
+  if (body.action === "ach_get") {
+    if (br.status === "done") return { done: true, client_name: cl.name, bank: br.bank_label, language: br.language };
+    if (!SK || !PK) throw new Fail("stripe_not_configured", 503);
+    const customer = await ensureCustomer(cl);
+    const si = await stripe("POST", "/setup_intents", { customer, payment_method_types: ["us_bank_account"], usage: "off_session",
+      payment_method_options: { us_bank_account: { verification_method: "automatic", financial_connections: { permissions: ["payment_method"] } } }, metadata: { client_id: cl.id, billing_request: br.id } });
+    return { client_secret: si.client_secret, pk: PK, client_name: cl.name, email: cl.primary_email, monthly: cl.monthly_cents || 0, language: br.language };
+  }
+  // ach_complete
+  const si = await stripe("GET", `/setup_intents/${String(body.setup_intent || "")}`, { expand: ["payment_method"] });
+  if (si.metadata?.billing_request !== br.id) throw new Fail("forbidden", 403);
+  if (!["succeeded", "processing"].includes(si.status)) throw new Fail("not_confirmed");
+  const pm = si.payment_method, label = pm?.us_bank_account ? `${pm.us_bank_account.bank_name || "Bank"} ····${pm.us_bank_account.last4 || ""}` : "US bank account";
+  await stripe("POST", `/customers/${si.customer}`, { invoice_settings: { default_payment_method: pm.id || pm } });
+  if (cl.stripe_subscription_id) await stripe("POST", `/subscriptions/${cl.stripe_subscription_id}`, { default_payment_method: pm.id || pm });
+  await admin.from("billing_requests").update({ status: "done", done_at: new Date().toISOString(), bank_label: label }).eq("id", br.id);
+  await bell("ach_authorized", `Débito na conta da empresa autorizado: ${cl.name}`, `${label}. A mensalidade passa a ser debitada desta conta a partir da próxima cobrança.`, "#/clientes?id=" + cl.id);
+  return { done: true, bank: label };
 }
 
 /* ---------------- actions ---------------- */
@@ -330,10 +558,7 @@ async function handle(req: Request, body: any) {
     if (!p) throw new Fail("not_found", 404);
     if (a === "proposal_send") {
       if (!["draft", "sent", "expired"].includes(p.status)) throw new Fail("proposal_closed");
-      const token = p.token || Array.from(crypto.getRandomValues(new Uint8Array(32))).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 48);
-      const valid = p.valid_until && p.valid_until >= new Date().toISOString().slice(0, 10) ? p.valid_until : new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
-      await admin.from("proposals").update({ token, status: "sent", sent_at: new Date().toISOString(), valid_until: valid }).eq("id", p.id);
-      return { ok: true, url: `${SITE}/proposal.html?t=${token}&lang=${p.language}` };
+      return await sendProposal(p);
     }
     if (p.status !== "accepted") throw new Fail("proposal_not_accepted");
     if (p.invoice_id) return { ok: true, id: p.invoice_id };
@@ -387,6 +612,54 @@ async function handle(req: Request, body: any) {
     return { url: link.url };
   }
 
+  if (a === "invoice_preview") {
+    needAdmin(c);
+    let r: any = null;
+    if (body.invoice_id) { const { data } = await admin.from("invoices").select("*").eq("id", String(body.invoice_id)).single(); r = data; }
+    const clientId = r?.client_id || String(body.client_id || "");
+    const { data: cl } = await admin.from("clients").select("name, language").eq("id", clientId).maybeSingle();
+    const items = r?.items || (Array.isArray(body.items) ? body.items : []);
+    const total = r ? r.total_cents - r.amount_paid_cents : items.reduce((s: number, i: any) => s + Math.round(Number(i.amount_cents) || 0) * (Number(i.quantity) || 1), 0);
+    const due = r?.due_date || new Date(Date.now() + (Number(body.days_until_due ?? 7)) * 864e5).toISOString().slice(0, 10);
+    const m = invoiceEmail({ lang: cl?.language || "pt", name: cl?.name || "", number: r?.number || "INV-XXXX", total, cur: r?.currency || "usd", due, items, description: r?.description || body.description, payUrl: SITE + "/client.html#/invoices", pdfUrl: r?.invoice_pdf, reminder: Number(body.reminder || 0), daysLate: 1 });
+    return { subject: m.subject, html: m.html };
+  }
+  if (["invoice_schedule", "invoice_delete", "invoice_hide", "invoice_edit"].includes(a)) {
+    needAdmin(c);
+    const { data: r } = await admin.from("invoices").select("*").eq("id", String(body.invoice_id || "")).single();
+    if (!r) throw new Fail("not_found", 404);
+    if (a === "invoice_hide") { await admin.from("invoices").update({ archived_at: r.archived_at ? null : new Date().toISOString() }).eq("id", r.id); return { ok: true }; }
+    if (r.status !== "draft" || r.kind === "proposal") throw new Fail("not_draft");
+    if (a === "invoice_schedule") {
+      const at = new Date(String(body.send_at || "")); if (isNaN(at.getTime())) throw new Fail("invalid_date");
+      await admin.from("invoices").update({ scheduled_send_at: at.toISOString() }).eq("id", r.id); return { ok: true };
+    }
+    if (r.stripe_invoice_id) { try { await stripe("DELETE", `/invoices/${r.stripe_invoice_id}`); } catch (e) { console.error("delete draft", e); } }
+    await admin.from("invoices").delete().eq("id", r.id);
+    if (a === "invoice_delete") return { ok: true };
+    const id = await createInvoice({ ...body, client_id: body.client_id || r.client_id, created_by: c.email });
+    return { ok: true, id };
+  }
+  if (a === "intake_send") {
+    needAdmin(c);
+    const { data: cl } = await admin.from("clients").select("id, language").eq("id", String(body.client_id || "")).single();
+    if (!cl) throw new Fail("not_found", 404);
+    const q: any = await ensureIntake(cl.id, null, cl.language || "pt", true);
+    return { ok: true, url: `${SITE}/intake.html?t=${q.token}&lang=${q.language}` };
+  }
+  if (a === "ach_request") {
+    needAdmin(c);
+    const { data: cl } = await admin.from("clients").select("*").eq("id", String(body.client_id || "")).single();
+    if (!cl) throw new Fail("not_found", 404);
+    await admin.from("billing_requests").update({ status: "closed" }).eq("client_id", cl.id).eq("status", "open");
+    const { data: br } = await admin.from("billing_requests").insert({ client_id: cl.id, token: newToken(), language: cl.language || "pt", created_by: c.email }).select("*").single();
+    const url = `${SITE}/autorizar.html?t=${br!.token}&lang=${br!.language}`;
+    const m = achEmail({ lang: br!.language, name: cl.name, url, monthly: cl.monthly_cents || 0, cur: "usd" });
+    await sendMail(cl.primary_email, m.subject, m.html, m.text);
+    await sendWa(cl.phone, "endeavor_ach_request", br!.language, [firstName(cl.name), url]);
+    await admin.from("billing_requests").update({ sent_at: new Date().toISOString() }).eq("id", br!.id);
+    return { ok: true, url };
+  }
   if (a === "invoice_create") {
     needAdmin(c);
     const id = await createInvoice({ ...body, created_by: c.email });
@@ -396,8 +669,9 @@ async function handle(req: Request, body: any) {
   if (["invoice_send", "invoice_void", "invoice_sync", "transfer"].includes(a)) {
     needAdmin(c);
     const { data: row } = await admin.from("invoices").select("*").eq("id", String(body.invoice_id || "")).single();
+    if (row && a === "invoice_void" && (!row.stripe_invoice_id || row.stripe_subscription_id)) { await voidPending(row.id); return { ok: true }; }
     if (!row?.stripe_invoice_id) throw new Fail("not_found", 404);
-    if (a === "invoice_send") { await finalizeAndSend(row); return { ok: true }; }
+    if (a === "invoice_send") { await finalizeAndSend(row); await admin.from("invoices").update({ scheduled_send_at: null }).eq("id", row.id); return { ok: true }; }
     if (a === "invoice_sync") { await syncInvoice(await stripe("GET", `/invoices/${row.stripe_invoice_id}`)); return { ok: true }; }
     if (a === "invoice_void") {
       if (row.status === "draft") { await stripe("DELETE", `/invoices/${row.stripe_invoice_id}`); await admin.from("invoices").update({ status: "void" }).eq("id", row.id); }
@@ -424,8 +698,18 @@ async function webhook(raw: string, sig: string) {
   try {
     if (ev.type?.startsWith("invoice.")) {
       await syncInvoice(o);
-      if (ev.type === "invoice.payment_failed") await admin.from("admin_events").insert({ kind: "payment_failed", title: `Pagamento recusado: fatura ${o.number || ""}`, body: o.customer_email || null, link: "#/pagamentos?tab=faturas" });
+      if (ev.type === "invoice.payment_failed") {
+        await admin.from("admin_events").insert({ kind: "payment_failed", title: `Pagamento recusado: fatura ${o.number || ""}`, body: o.customer_email || null, link: "#/pagamentos?tab=faturas" });
+        const { data: r } = await admin.from("invoices").select("id, client_id, number, currency, clients(name, primary_email, phone, language)").eq("stripe_invoice_id", o.id).maybeSingle();
+        const cl: any = r?.clients;
+        if (cl && o.hosted_invoice_url) {
+          const m = failedEmail({ lang: cl.language || "pt", name: cl.name, number: o.number || "", amount: o.amount_due, cur: o.currency, payUrl: o.hosted_invoice_url });
+          await sendMail(cl.primary_email, m.subject, m.html, m.text).catch((e) => console.error("failed mail", e));
+          await sendWa(cl.phone, "endeavor_payment_failed", cl.language || "pt", [firstName(cl.name), o.number || "", fmtMoney(o.amount_due, o.currency, cl.language), o.hosted_invoice_url]);
+        }
+      }
     }
+    else if (ev.type?.startsWith("customer.subscription.") && o.id) await admin.from("clients").update({ subscription_status: o.status }).eq("stripe_subscription_id", o.id);
     else if (ev.type === "account.updated" && o.metadata?.partner_id) await syncPartner(o.metadata.partner_id, o);
     else if (ev.type === "transfer.reversed" && o.metadata?.invoice_id) await admin.from("invoices").update({ transfer_status: "reversed" }).eq("id", o.metadata.invoice_id);
   } catch (e) { console.error("webhook", ev.type, e); return json({ error: "processing_failed" }, 500); }
@@ -443,7 +727,16 @@ Deno.serve(async (req) => {
     try { return json(await accessReset(body)); }
     catch (e) { if (e instanceof Fail) return json({ error: e.code }, e.status); console.error(e); return json({ error: "server_error" }, 500); }
   }
-  if (body.action === "proposal_get" || body.action === "proposal_accept") {
+  if (body.action === "billing_tick") {
+    const { data: ok } = await admin.rpc("booking_hook_key_ok", { p_key: req.headers.get("x-booking-key") ?? "" });
+    if (!ok) return json({ error: "forbidden" }, 403);
+    try { return json(await billingTick()); } catch (e) { console.error(e); return json({ error: "server_error" }, 500); }
+  }
+  if (body.action === "ach_get" || body.action === "ach_complete") {
+    try { return json(await achPublic(body)); }
+    catch (e) { if (e instanceof Fail) return json({ error: e.code, detail: e.detail }, e.status); console.error(e); return json({ error: "server_error" }, 500); }
+  }
+  if (body.action === "proposal_get" || body.action === "proposal_accept" || body.action === "proposal_reject") {
     try { return json(await publicAction(req, body)); }
     catch (e) { if (e instanceof Fail) return json({ error: e.code }, e.status); console.error(e); return json({ error: "server_error" }, 500); }
   }

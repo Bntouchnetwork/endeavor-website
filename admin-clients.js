@@ -6,7 +6,7 @@
     llc_single: 'LLC, sócio único (EUA)', llc_foreign: 'LLC, sócio único estrangeiro (Form 5472)', llc_multi: 'LLC, vários sócios',
     s_corp: 'S-Corporation', c_corp: 'C-Corporation', partnership: 'Partnership', sole_prop: 'Sole proprietorship', other: 'Outro'
   };
-  var DOC_CAT = { formation: 'Formação', tax_return: 'Imposto de renda', compliance: 'Compliance', report: 'Relatório financeiro', uploaded: 'Enviado pelo cliente', other: 'Outro' };
+  var DOC_CAT = { formation: 'Formação', tax_return: 'Imposto de renda', compliance: 'Compliance', report: 'Relatório financeiro', onboarding: 'Documentos de abertura', uploaded: 'Enviado pelo cliente', other: 'Outro' };
   var DL_CAT = { annual_report: 'Annual Report', federal_tax: 'Imposto federal', state_tax: 'Imposto estadual', payroll: 'Folha', sales_tax: 'Sales tax', boi: 'BOI', license: 'Licença', other: 'Outro' };
   var DL_STATUS = { pending: 'Pendente', in_progress: 'Em andamento', done: 'Concluído', not_applicable: 'Não se aplica' };
   var COLLAB = { accountant: 'Contador', bookkeeping: 'Bookkeeping', property_management: 'Property management', other: 'Outro' };
@@ -91,7 +91,7 @@
     list: async function (view, ctx) {
       var esc = ctx.esc, sb = ctx.sb;
       var res = await Promise.all([
-        ctx.q(sb.from('clients').select('*').neq('status', 'prospect').order('name')),
+        ctx.q(sb.from('clients').select('*').not('status', 'in', '(prospect,internal)').order('name')),
         ctx.q(sb.from('companies').select('id, client_id')),
         ctx.q(sb.from('client_users').select('client_id, status, role')),
         ctx.q(sb.from('compliance_items').select('client_id, due_date, status').neq('status', 'done').neq('status', 'not_applicable'))
@@ -127,15 +127,18 @@
       var tab = (ERoute.get().match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
-      var TABS = [['empresas', 'Empresas'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios']];
+      var TABS = [['empresas', 'Empresas'], ['abertura', 'Abertura'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios']];
       view.innerHTML = '<p class="crumbs"><a href="#/crm?tipo=client">CRM</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
-        '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
+        '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-ach">Pedir débito na conta da empresa</button><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
+        (c.stripe_subscription_id || c.monthly_cents ? '<p class="portal-muted sub-line">Mensalidade: <strong>' + esc(new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'USD' }).format((c.monthly_cents || 0) / 100)) + '/mês</strong>' + (c.subscription_status ? ' · ' + esc(SUB_ST[c.subscription_status] || c.subscription_status) : '') + (c.subscription_started_at ? ' · 1ª cobrança ' + esc(fmtD(String(c.subscription_started_at).slice(0, 10))) : '') + '</p>' : '') +
+        '<div class="portal-alert" id="c-top-msg" role="status"></div>' +
         '<nav class="subtabs" aria-label="Seções do cliente">' + TABS.map(function (t) { return '<a href="#/clientes?id=' + id + '&tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav>' +
         '<div id="c-body"></div>';
       view.querySelector('#c-edit').onclick = function () { editClient(ctx, c); };
+      view.querySelector('#c-ach').onclick = function () { achRequest(ctx, c); };
       var body = view.querySelector('#c-body');
-      var fn = { empresas: tabCompanies, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance }[tab] || tabCompanies;
+      var fn = { empresas: tabCompanies, abertura: tabOnboarding, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance }[tab] || tabCompanies;
       await fn(body, ctx, c, companies);
     }
   };
@@ -202,6 +205,106 @@
     };
   }
 
+  var SUB_ST = { trialing: 'aguardando a 1ª cobrança', active: 'ativa', past_due: 'pagamento atrasado', unpaid: 'não paga', canceled: 'cancelada', incomplete: 'aguardando pagamento', incomplete_expired: 'expirada' };
+  async function payCall(ctx, payload) {
+    var sess = (await ctx.sb.auth.getSession()).data.session;
+    var r = await fetch(ctx.CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + sess.access_token }, body: JSON.stringify(payload) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || j.error) { var e = new Error(j.error || 'HTTP ' + r.status); e.detail = j.detail; throw e; }
+    return j;
+  }
+  function achRequest(ctx, c) {
+    var o = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">Débito na conta da empresa (ACH)</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
+      '<p>Use quando a conta bancária americana da empresa já estiver aberta. ' + ctx.esc(c.name) + ' recebe por e-mail (e WhatsApp, quando ativo) um link seguro para conectar a conta pelo Stripe e autorizar o débito. A mensalidade passa a sair dessa conta a partir da próxima cobrança.</p>' +
+      '<p class="portal-muted" style="font-size:.88rem">A Endeavor não vê o login do banco nem o número completo da conta. Você é avisado no sino quando o cliente autorizar.</p>' +
+      '<div class="portal-alert" id="ach-m" role="status"></div><div class="portal-btn-row"><button class="btn btn--navy" type="button" id="ach-go">Enviar pedido ao cliente</button><button class="btn btn--ghost close-x" type="button">Cancelar</button></div>', true);
+    o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = ctx.closeOverlay; });
+    ctx.$('#ach-go', o).onclick = async function () {
+      var b = this; b.disabled = true;
+      try {
+        var j = await payCall(ctx, { action: 'ach_request', client_id: c.id });
+        var m = ctx.$('#ach-m', o); m.className = 'portal-alert portal-alert--ok'; m.innerHTML = 'Pedido enviado para ' + ctx.esc(c.primary_email) + '. <button class="btn btn--ghost btn--xs" type="button">Copiar link</button>';
+        m.querySelector('button').onclick = function () { ctx.copy(j.url, this); };
+      } catch (e) { b.disabled = false; ctx.msg(ctx.$('#ach-m', o), ctx.errText(e), 'error'); }
+    };
+  }
+  // logo: resized in the browser to fit 600x200 (keeps the aspect ratio and transparency), saved as PNG
+  function logoField(ctx, c, co) {
+    var prev = $('#co-logo-prev'), path = c.id + '/' + co.id + '/branding/logo.png';
+    var show = async function (p) {
+      if (!p) { prev.innerHTML = '<span class="portal-muted">Sem logo</span>'; return; }
+      var r = await ctx.sb.storage.from('client-docs').createSignedUrl(p, 300);
+      prev.innerHTML = r.error ? '<span class="portal-muted">Logo salvo</span>' : '<img src="' + ctx.esc(r.data.signedUrl) + '" alt="Logo de ' + ctx.esc(co.legal_name) + '">';
+    };
+    show(co.logo_path);
+    var lab = $('#co-logo').parentNode; lab.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#co-logo').click(); } };
+    $('#co-logo').onchange = async function () {
+      var f = this.files[0], m = $('#co-msg'); if (!f) return;
+      if (f.size > 8 * 1024 * 1024) return ctx.msg(m, 'A imagem precisa ter até 8 MB.', 'error');
+      ctx.msg(m, 'Ajustando e enviando o logo…', 'info');
+      try {
+        var blob = await fitImage(f, 600, 200);
+        var up = await ctx.sb.storage.from('client-docs').upload(path, blob, { contentType: 'image/png', upsert: true });
+        if (up.error) throw up.error;
+        var r = await ctx.sb.from('companies').update({ logo_path: path }).eq('id', co.id); if (r.error) throw r.error;
+        co.logo_path = path; await show(path); $('#co-logo-rm').hidden = false; ctx.msg(m, 'Logo salvo. Ele aparece nos próximos relatórios publicados.', 'ok');
+      } catch (e) { ctx.msg(m, ctx.errText(e), 'error'); }
+      this.value = '';
+    };
+    $('#co-logo-rm').onclick = async function () {
+      if (!confirm('Remover o logo desta empresa?')) return;
+      await ctx.sb.storage.from('client-docs').remove([co.logo_path || path]);
+      await ctx.sb.from('companies').update({ logo_path: null }).eq('id', co.id);
+      co.logo_path = null; show(null); this.hidden = true;
+    };
+  }
+  function fitImage(file, maxW, maxH) {
+    return new Promise(function (ok, no) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var w = img.naturalWidth || maxW, h = img.naturalHeight || maxH, k = Math.min(maxW / w, maxH / h, 1);
+        if (/svg/.test(file.type)) k = Math.min(maxW / w, maxH / h);
+        var cw = Math.max(1, Math.round(w * k)), ch = Math.max(1, Math.round(h * k)), cv = document.createElement('canvas');
+        cv.width = cw; cv.height = ch; var g = cv.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(img, 0, 0, cw, ch);
+        URL.revokeObjectURL(url); cv.toBlob(function (b) { b ? ok(b) : no(new Error('Imagem inválida')); }, 'image/png');
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); no(new Error('Não foi possível ler a imagem.')); };
+      img.src = url;
+    });
+  }
+
+  /* ---------- opening documents (intake) ---------- */
+  async function tabOnboarding(body, ctx, c, companies) {
+    var esc = ctx.esc;
+    var res = await Promise.all([ctx.q(ctx.sb.from('intake_requests').select('*').eq('client_id', c.id).neq('status', 'closed').order('created_at', { ascending: false }).limit(1)),
+      ctx.q(ctx.sb.from('company_documents').select('*').eq('client_id', c.id).eq('category', 'onboarding').order('created_at', { ascending: false }))]);
+    var q = res[0][0], docs = res[1], a = (q && q.answers) || {}, names = a.names || [], members = a.members || [];
+    var fileOf = function (mid, k) { return docs.find(function (d) { return d.note === 'intake:' + mid + ':' + k; }); };
+    var url = q ? ctx.siteUrl('intake.html') + '?t=' + q.token + '&lang=' + q.language : '';
+    var dot = function (ok) { return '<span class="ik-dot' + (ok ? ' is-ok' : '') + '" aria-hidden="true"></span>'; };
+    var pct = members.reduce(function (s, m) { return s + (+m.pct || 0); }, 0);
+    var K = { passport: 'Passaporte', address: 'Comprovante de endereço', visa: 'Visto americano (se tiver)' };
+    body.innerHTML = '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><div><h2 class="portal-h2" style="margin:0">Informações e documentos de abertura</h2>' +
+        '<p class="portal-muted" style="margin:.25rem 0 0">' + (q ? (q.status === 'complete' ? 'Completo em ' + esc(ctx.fmtDT(q.completed_at)) : 'Pedido enviado ' + esc(q.sent_at ? ctx.fmtDT(q.sent_at) : '—') + ' · aguardando o cliente') : 'O pedido sai automaticamente quando o cliente paga a proposta. Você também pode enviar agora.') + '</p></div>' +
+        '<div class="portal-btn-row"><button class="btn btn--navy btn--xs" type="button" id="ob-send">' + (q ? 'Reenviar pedido' : 'Enviar pedido ao cliente') + '</button>' + (q ? '<button class="btn btn--ghost btn--xs" type="button" id="ob-copy">Copiar link</button><a class="btn btn--ghost btn--xs" href="' + esc(url) + '" target="_blank" rel="noopener">Abrir página</a>' : '') + '</div></div><div class="portal-alert" id="ob-m" role="status"></div>' +
+      (q ? '<div class="ob-grid"><div><h3 class="portal-h2" style="font-size:1rem">' + dot(names.filter(Boolean).length >= 3) + ' Opções de nome</h3>' + (names.filter(Boolean).length ? '<ol>' + names.filter(Boolean).map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol>' : '<p class="portal-muted">Ainda não informado.</p>') + '</div>' +
+        '<div><h3 class="portal-h2" style="font-size:1rem">' + dot(members.length && Math.abs(pct - 100) < 0.01) + ' Sócios e participação</h3>' + (members.length ? '<ul>' + members.map(function (m) { return '<li>' + esc(m.name) + ' · <strong>' + esc(String(m.pct)) + '%</strong></li>'; }).join('') + '</ul>' + (Math.abs(pct - 100) < 0.01 ? '' : '<p class="prop-why">Total: ' + pct + '%</p>') : '<p class="portal-muted">Ainda não informado.</p>') + '</div></div>' +
+        (members.length ? '<h3 class="portal-h2" style="font-size:1rem;margin-top:1rem">Documentos por sócio</h3>' + members.map(function (m) {
+          return '<div class="ik-docs"><h3>' + esc(m.name) + '</h3>' + Object.keys(K).map(function (k) { var f = fileOf(m.id, k);
+            return '<div class="ik-row"><div class="ik-row__l">' + dot(!!f) + '<strong>' + K[k] + '</strong>' + (f ? ' <span class="ik-row__f">' + esc(ctx.fmtDT(f.created_at)) + '</span>' : (k === 'visa' ? ' <span class="portal-muted">opcional</span>' : ' <span class="portal-muted">pendente</span>')) + '</div>' + (f ? '<button class="btn btn--ghost btn--xs" type="button" data-view="' + f.id + '">Ver</button>' : '') + '</div>'; }).join('') + '</div>';
+        }).join('') : '') : '') + '</section>' +
+      '<section class="portal-card"><h2 class="portal-h2">Pasta "Documentos de abertura"</h2>' + (docs.length ? '<ul class="doclist">' + docs.map(function (d) { var co = companies.find(function (x) { return x.id === d.company_id; });
+        return '<li><span class="ficon" aria-hidden="true">📄</span><div><div class="dname">' + esc(d.title) + '</div><div class="dmeta">' + esc(co ? co.legal_name : '') + ' · ' + esc(ctx.fmtDT(d.created_at)) + '</div></div><div class="portal-btn-row"><button class="btn btn--ghost btn--xs" data-view="' + d.id + '">Ver</button></div></li>'; }).join('') + '</ul>' : '<p class="portal-muted">Nenhum arquivo ainda. Os arquivos que o cliente enviar aparecem aqui e no portal dele, na pasta "Documentos de abertura".</p>') + '</section>';
+    body.querySelectorAll('[data-view]').forEach(function (b) { b.onclick = function () { var d = docs.find(function (x) { return x.id === b.dataset.view; }); ctx.viewFile('client-docs', d.path, d.title, { mime: d.mime }); }; });
+    if (ctx.$('#ob-copy')) ctx.$('#ob-copy').onclick = function () { ctx.copy(url, this); };
+    ctx.$('#ob-send').onclick = async function () {
+      if (!confirm('Enviar a ' + c.name + ' o e-mail (e WhatsApp, quando ativo) com o pedido das informações e documentos de abertura?')) return;
+      var b = this; b.disabled = true;
+      try { await payCall(ctx, { action: 'intake_send', client_id: c.id }); ctx.msg(ctx.$('#ob-m'), 'Pedido enviado para ' + c.primary_email + '.', 'ok'); setTimeout(ctx.route, 1200); }
+      catch (e) { b.disabled = false; ctx.msg(ctx.$('#ob-m'), ctx.errText(e), 'error'); }
+    };
+  }
+
   /* ---------- companies ---------- */
   async function tabCompanies(body, ctx, c, companies) {
     var esc = ctx.esc;
@@ -227,9 +330,13 @@
       field('co-doc', 'Número do documento (Sunbiz)', co.document_number) + field('co-ein', 'EIN', co.ein ? einFmt(co.ein) : '', 'text', false, ' placeholder="12-3456789" inputmode="numeric" maxlength="10" autocomplete="off" pattern="[0-9]{2}-[0-9]{7}"') +
       field('co-fye', 'Fim do ano fiscal (MM-DD)', co.fiscal_year_end) + field('co-ra', 'Registered agent', co.registered_agent) + '</div>' +
       field('co-addr', 'Endereço principal', co.address) +
+      '<fieldset class="perm-box logo-box"><legend>Logo nos relatórios (opcional)</legend>' + (co.id ? '<div class="logo-prev" id="co-logo-prev"><span class="portal-muted">Sem logo</span></div>' +
+        '<div class="portal-btn-row"><label class="btn btn--ghost btn--xs" tabindex="0" role="button">Subir logo<input type="file" id="co-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></label><button class="btn btn--ghost btn--xs btn--danger-text" type="button" id="co-logo-rm"' + (co.logo_path ? '' : ' hidden') + '>Remover logo</button></div>' +
+        '<p class="portal-muted" style="font-size:.82rem;margin:.35rem 0 0">A imagem é ajustada automaticamente ao tamanho padrão do cabeçalho dos relatórios (até 600 × 200 px, fundo transparente preservado). Os relatórios em PDF saem com o logo, a razão social, o endereço e o EIN da empresa.</p>' : '<p class="portal-muted" style="font-size:.85rem;margin:0">Salve a empresa primeiro para subir o logo.</p>') + '</fieldset>' +
       '<div class="field"><label for="co-notes">Notas</label><textarea id="co-notes" rows="3">' + ctx.esc(co.notes || '') + '</textarea></div>' +
       '<div class="portal-alert" id="co-msg" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
       (co.id ? '<button class="btn btn--danger" type="button" id="co-del">Excluir empresa</button>' : '') + '</div></form>');
+    if (co.id) logoField(ctx, c, co);
     $('#co-ein').addEventListener('input', function () { var el = this, pos = el.selectionStart, before = el.value.length; el.value = einFmt(el.value); var np = Math.max(0, pos + el.value.length - before); try { el.setSelectionRange(np, np); } catch (er) { /* ignore */ } });
     $('#co-form').onsubmit = async function (e) {
       e.preventDefault();
@@ -273,7 +380,7 @@
     var docs = await ctx.q(ctx.sb.from('company_documents').select('*').eq('client_id', c.id).order('created_at', { ascending: false }));
     body.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Adicionar documento</h2><form class="portal-form" id="up-form">' +
       '<div class="portal-grid2"><div class="field"><label for="up-co">Empresa</label><select id="up-co">' + companies.map(function (co) { return '<option value="' + co.id + '">' + esc(co.legal_name) + '</option>'; }).join('') + '</select></div>' +
-      select('up-cat', 'Categoria', { formation: DOC_CAT.formation, tax_return: DOC_CAT.tax_return, compliance: DOC_CAT.compliance, report: DOC_CAT.report, other: DOC_CAT.other }, 'formation') +
+      select('up-cat', 'Categoria', { formation: DOC_CAT.formation, onboarding: DOC_CAT.onboarding, tax_return: DOC_CAT.tax_return, compliance: DOC_CAT.compliance, report: DOC_CAT.report, other: DOC_CAT.other }, 'formation') +
       field('up-title', 'Título', '', 'text', true, ' placeholder="Ex.: Articles of Organization"') + field('up-year', 'Ano (opcional)', '', 'number', false, ' min="1990" max="2100"') + '</div>' +
       '<label class="upload-zone" for="up-file"><input type="file" id="up-file" class="sr-only" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.csv,.xls,.xlsx,.doc,.docx"><strong>Escolher arquivo</strong><span class="portal-muted" id="up-fname">PDF, imagem, planilha ou Word · até 25 MB</span></label>' +
       '<div class="check-row"><input type="checkbox" id="up-vis" checked><label for="up-vis">Visível para o cliente no portal</label></div>' +

@@ -19,7 +19,7 @@ let tr: ReturnType<typeof nodemailer.createTransport> | null = null;
 const transport = () => (tr ??= sesOn()
   ? nodemailer.createTransport({ host: SES_HOST, port: 465, secure: true, auth: { user: SES_USER, pass: SES_PASS } })
   : nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user: G_USER, pass: G_PASS } }));
-const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 const L = (l: unknown): Lang => (l === "en" || l === "es" ? l : "pt");
 
 const T: Record<Lang, Any> = {
@@ -94,9 +94,9 @@ const T: Record<Lang, Any> = {
   },
 };
 
-const btn = (href: string, label: string) =>
+export const btn = (href: string, label: string) =>
   `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0"><tr><td style="border-radius:8px;background:#0b1f3a"><a href="${esc(href)}" style="display:inline-block;padding:14px 26px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none;border-radius:8px">${esc(label)}</a></td></tr></table>`;
-function layout(inner: string) {
+export function layout(inner: string) {
   return `<!doctype html><html><head><meta name="color-scheme" content="light only"></head><body style="margin:0;background:#f4f6f9"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;border:1px solid #e3e7ee">
 <tr><td style="padding:22px 30px;border-bottom:3px solid #c9a24a"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="190" style="display:block;width:190px;height:auto"></td></tr>
@@ -135,4 +135,22 @@ ${mfa ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width
 export async function sendAccessMail(to: string, m: { subject: string; html: string; text: string }) {
   const from = sesOn() ? SUPPORT : G_USER;
   await transport().sendMail({ from: { name: "Endeavor Business Solutions", address: from }, to, subject: m.subject, html: m.html, text: m.text, replyTo: SUPPORT });
+}
+
+// generic sender used by the billing e-mails (invoice, reminders, receipt, proposal, opening documents, ACH)
+export async function sendMail(to: string | string[], subject: string, html: string, text: string, opts: { replyTo?: string; bcc?: string } = {}) {
+  const from = sesOn() ? SUPPORT : G_USER;
+  await transport().sendMail({ from: { name: "Endeavor Business Solutions", address: from }, to, subject, html, text, replyTo: opts.replyTo || SUPPORT, bcc: opts.bcc });
+}
+// WhatsApp (Meta Cloud API) — only when WHATSAPP_TOKEN and WHATSAPP_PHONE_ID exist and the template was approved; otherwise e-mail only
+const WA_TOKEN = Deno.env.get("WHATSAPP_TOKEN") ?? "", WA_PHONE = Deno.env.get("WHATSAPP_PHONE_ID") ?? "", WA_VER = Deno.env.get("WHATSAPP_API_VERSION") ?? "v21.0";
+export const waOn = () => !!(WA_TOKEN && WA_PHONE);
+export async function sendWa(phone: string | null | undefined, template: string, lang: string, params: string[]) {
+  if (!waOn() || !phone || !/^\+?[1-9]\d{6,14}$/.test(phone.replace(/[\s()-]/g, ""))) return false;
+  try {
+    const r = await fetch(`https://graph.facebook.com/${WA_VER}/${WA_PHONE}/messages`, { method: "POST", headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ messaging_product: "whatsapp", to: phone.replace(/\D/g, ""), type: "template",
+        template: { name: template, language: { code: ({ pt: "pt_BR", en: "en_US", es: "es" } as Record<string, string>)[lang] || "pt_BR" }, components: [{ type: "body", parameters: params.map((x) => ({ type: "text", text: String(x).slice(0, 900) })) }] } }) });
+    return r.ok;
+  } catch { return false; }
 }

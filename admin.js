@@ -13,7 +13,7 @@
   function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
-  var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', client: 'Cliente', partner: 'Virou parceiro', lost: 'Perdido',
+  var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', rejected: 'Proposta rejeitada', client: 'Cliente', partner: 'Virou parceiro', lost: 'Perdido',
     sent: 'Enviado', viewed: 'Visualizado', signed: 'Assinado', voided: 'Anulado', expired: 'Expirado',
     confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído', no_show: 'Não compareceu' };
   var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro', chat: 'Chat do site' };
@@ -323,9 +323,9 @@
   /* ---------- CRM ---------- */
   // CRM types and the statuses of each type
   var KIND_PT = { lead: 'Lead', prospect: 'Prospect', partner: 'Parceiro (prospect)', client: 'Cliente' };
-  var KIND_ST = { lead: ['new', 'contacted', 'lost'], prospect: ['qualified', 'proposal', 'lost'], partner: ['new', 'contacted', 'qualified', 'partner', 'lost'], client: ['active', 'archived'] };
+  var KIND_ST = { lead: ['new', 'contacted', 'lost'], prospect: ['qualified', 'proposal', 'rejected', 'lost'], partner: ['new', 'contacted', 'qualified', 'partner', 'lost'], client: ['active', 'archived'] };
   var CST_PT = { active: 'Ativo', archived: 'Arquivado' };
-  function kindOf(l) { return l.status === 'client' ? 'client' : l.kind === 'partner' || l.status === 'partner' ? 'partner' : /qualified|proposal/.test(l.status) ? 'prospect' : /new|contacted/.test(l.status) ? 'lead' : (l.kind === 'prospect' ? 'prospect' : 'lead'); }
+  function kindOf(l) { return l.status === 'client' ? 'client' : l.kind === 'partner' || l.status === 'partner' ? 'partner' : /qualified|proposal|rejected/.test(l.status) ? 'prospect' : /new|contacted/.test(l.status) ? 'lead' : (l.kind === 'prospect' ? 'prospect' : 'lead'); }
   function stLabel(st) { return CST_PT[st] || STATUS_PT[st] || st; }
   function crmBadges(kind, st) {
     return '<span class="pill pill--kind-' + kind + '">' + KIND_PT[kind] + '</span> <span class="badge badge--' + (st === 'active' ? 'client' : st === 'archived' ? 'lost' : esc(st)) + '">' + esc(stLabel(st)) + '</span>';
@@ -334,7 +334,7 @@
   async function viewCrm(view) {
     var res = await Promise.all([
       q(sb.from('leads').select('*').order('created_at', { ascending: false }).limit(1000)),
-      q(sb.from('clients').select('*').neq('status', 'prospect').order('created_at', { ascending: false })),
+      q(sb.from('clients').select('*').not('status', 'in', '(prospect,internal)').order('created_at', { ascending: false })),
       q(sb.from('companies').select('id, client_id')),
       q(sb.from('compliance_items').select('client_id, due_date, status').neq('status', 'done').neq('status', 'not_applicable'))
     ]);
@@ -363,7 +363,7 @@
       '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência / empresas</th><th>Origem</th><th>Tipo e status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
     function fillStatus() {
       var k = $('#crm-kind').value, cur = $('#crm-status').value;
-      var list = k ? KIND_ST[k] : ['new', 'contacted', 'qualified', 'proposal', 'lost', 'active', 'archived'];
+      var list = k ? KIND_ST[k] : ['new', 'contacted', 'qualified', 'proposal', 'rejected', 'lost', 'active', 'archived'];
       $('#crm-status').innerHTML = '<option value="">Todos os status</option>' + list.map(function (x) { return '<option value="' + x + '">' + stLabel(x) + '</option>'; }).join('');
       if (list.indexOf(cur) > -1) $('#crm-status').value = cur;
     }

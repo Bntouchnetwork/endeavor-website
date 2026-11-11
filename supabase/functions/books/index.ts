@@ -61,7 +61,7 @@ async function plaid(path: string, body: Record<string, unknown>) {
 /* ---------------- helpers ---------------- */
 async function company(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Fail("bad_request");
-  const { data } = await db.from("companies").select("id, client_id, legal_name, books_provider").eq("id", id).maybeSingle();
+  const { data } = await db.from("companies").select("id, client_id, legal_name, books_provider, logo_path, is_house, ein, address, state, entity_type").eq("id", id).maybeSingle();
   if (!data) throw new Fail("not_found", 404);
   return data;
 }
@@ -207,15 +207,28 @@ function toQbo(rep: Any) {
   }
   return { Header: { ReportBasis: "Accrual", Currency: "USD" }, Columns: { Column: [{ ColTitle: "" }, { ColTitle: "Total" }] }, Rows: { Row: rows } };
 }
+// Report header: the company's own logo (admin uploads it in the company form), or Endeavor's logo for Endeavor's own company
+const SITE = (Deno.env.get("SITE_URL") || "https://endeavorbiz.com").replace(/\/$/, "");
+async function branding(co: Any) {
+  let logo: Uint8Array | null = null;
+  try {
+    if (co.logo_path) { const { data } = await db.storage.from("client-docs").download(co.logo_path); if (data) logo = new Uint8Array(await data.arrayBuffer()); }
+    else if (co.is_house) { const r = await fetch(`${SITE}/logo-endeavor-report.png`); if (r.ok) logo = new Uint8Array(await r.arrayBuffer()); }
+  } catch { logo = null; }
+  const ein = co.ein ? `EIN ${String(co.ein).replace(/^(\d{2})(\d{7})$/, "$1-$2")}` : "";
+  const companyLines = [co.address || "", [co.state ? `${co.state} ${co.entity_type && /llc/.test(co.entity_type) ? "LLC" : ""}`.trim() : "", ein].filter(Boolean).join("  |  ")];
+  return { logo, companyLines };
+}
 async function publish(co: Any, year: number, quarter: number) {
   const { start, end, label } = quarterRange(year, quarter);
   if (new Date(start) > new Date()) throw new Fail("future_period");
   const generatedAt = day(new Date()), out = [];
+  const { logo, companyLines } = await branding(co);
   for (const [type, kind] of [["ProfitAndLoss", "pl"], ["BalanceSheet", "bs"], ["CashFlow", "cf"]]) {
     const { data: rep, error } = await db.rpc("bk_report", { p_company: co.id, p_kind: kind, p_from: kind === "bs" ? null : start, p_to: end });
     if (error) throw new Fail("db_error", 500, error.message);
     const report = toQbo(rep);
-    const bytes = await reportPdf(PDFLib, { report, type, companyName: co.legal_name, periodLabel: label, start, end, generatedAt, source: "Endeavor Bookkeeping" });
+    const bytes = await reportPdf(PDFLib, { report, type, companyName: co.legal_name, periodLabel: label, start, end, generatedAt, source: "Endeavor Bookkeeping", logo, companyLines });
     const path = `${co.client_id}/${co.id}/reports/${start}_${end}_${type}.pdf`;
     const up = await db.storage.from("client-docs").upload(path, bytes, { contentType: "application/pdf", upsert: true });
     if (up.error) throw new Fail("storage_error", 500, up.error.message);
@@ -263,7 +276,11 @@ async function handle(req: Request, body: Any) {
       if (ins.error) throw new Fail("db_error", 500, ins.error.message);
       conn = ins.data;
     }
-    const s = await stripe("POST", "/financial_connections/sessions", { account_holder: { type: "customer", customer: conn.external_id }, permissions: ["transactions", "balances"], filters: { countries: ["US"] } });
+    // separate buttons for bank accounts and credit cards: the session only offers the chosen kind
+    const filters: Any = { countries: ["US"] };
+    if (body.kind === "card") filters.account_subcategories = ["credit_card"];
+    else if (body.kind === "bank") filters.account_subcategories = ["checking", "savings"];
+    const s = await stripe("POST", "/financial_connections/sessions", { account_holder: { type: "customer", customer: conn.external_id }, permissions: ["transactions", "balances"], filters });
     return { client_secret: s.client_secret, session_id: s.id, pk: PK, connection_id: conn.id };
   }
   if (a === "stripe_complete") {
@@ -283,7 +300,8 @@ async function handle(req: Request, body: Any) {
   }
   if (a === "plaid_link") {
     const r = await plaid("/link/token/create", { client_name: "Endeavor Business Solutions", user: { client_user_id: co.id }, products: ["transactions"], country_codes: ["US"], language: body.lang === "es" ? "es" : "en",
-      transactions: { days_requested: 730 } });
+      transactions: { days_requested: 730 },
+      account_filters: body.kind === "card" ? { credit: { account_subtypes: ["credit card"] } } : body.kind === "bank" ? { depository: { account_subtypes: ["checking", "savings"] } } : undefined });
     return { link_token: r.link_token };
   }
   if (a === "plaid_exchange") {
