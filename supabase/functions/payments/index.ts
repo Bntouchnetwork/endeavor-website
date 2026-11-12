@@ -168,6 +168,13 @@ async function afterPaid(id: string) {
   if (!r) return;
   try { await admin.rpc("bk_record_invoice_payment", { p_invoice: id }); } catch (e) { console.error("books", e); }
   try { await admin.rpc("bk_record_vendor_costs", { p_invoice: id }); } catch (e) { console.error("payables", e); }
+  // AI Projects: the payment confirmed by Stripe starts the schedule and the development agents
+  if (r.ai_project_id) {
+    try {
+      const { data: key } = await admin.rpc("internal_hook_key");
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/projects`, { method: "POST", headers: { "Content-Type": "application/json", "x-booking-key": String(key || "") }, body: JSON.stringify({ action: "paid", invoice_id: id }) });
+    } catch (e) { console.error("projects paid", e); }
+  }
   const cl: any = r.clients || {}, lang = cl.language || "pt";
   if (!r.receipt_sent_at) {
     let receiptUrl: string | null = null;
@@ -771,6 +778,17 @@ Deno.serve(async (req) => {
     const { data: ok } = await admin.rpc("booking_hook_key_ok", { p_key: req.headers.get("x-booking-key") ?? "" });
     if (!ok) return json({ error: "forbidden" }, 403);
     try { return json(await billingTick()); } catch (e) { console.error(e); return json({ error: "server_error" }, 500); }
+  }
+  // AI Projects (internal, from the projects function): invoice for the approved project or a paid update, sent right away
+  if (body.action === "project_invoice") {
+    const { data: ok } = await admin.rpc("booking_hook_key_ok", { p_key: req.headers.get("x-booking-key") ?? "" });
+    if (!ok) return json({ error: "forbidden" }, 403);
+    try {
+      const id = await createInvoice({ client_id: body.client_id, items: body.items, description: body.description, days_until_due: body.days_until_due ?? 7, kind: "project", created_by: "ai-projects", send: "now" });
+      await admin.from("invoices").update({ ai_project_id: body.ai_project_id || null, ai_release_id: body.ai_release_id || null }).eq("id", id);
+      const { data: inv } = await admin.from("invoices").select("id, number, hosted_invoice_url, total_cents").eq("id", id).single();
+      return json({ ok: true, invoice: inv });
+    } catch (e) { if (e instanceof Fail) return json({ error: e.code, detail: e.detail }, e.status); console.error(e); return json({ error: "server_error" }, 500); }
   }
   if (body.action === "ach_get" || body.action === "ach_complete") {
     try { return json(await achPublic(body)); }

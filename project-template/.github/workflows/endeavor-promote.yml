@@ -1,0 +1,43 @@
+# Promotes the version the client approved on staging to production (main) and tags it for rollback.
+name: endeavor-promote
+on:
+  workflow_dispatch:
+    inputs:
+      release_id: { required: true }
+      sha: { required: true, description: "staging commit approved by the client" }
+      tag: { required: true }
+concurrency: { group: endeavor-production, cancel-in-progress: false }
+permissions: { contents: write }
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    env:
+      HOOK: ${{ vars.ENDEAVOR_HOOK_URL }}
+      KEY: ${{ secrets.ENDEAVOR_HOOK_KEY }}
+      REL: ${{ inputs.release_id }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Merge the approved commit into main
+        run: |
+          git config user.name "Endeavor AI" && git config user.email "ai@endeavorbiz.com"
+          git fetch origin staging
+          git merge --no-ff "${{ inputs.sha }}" -m "Release ${{ inputs.tag }} approved by the client"
+          git tag -f "${{ inputs.tag }}" && git push origin main && git push -f origin "${{ inputs.tag }}"
+      - name: Build
+        run: |
+          if [ -f package.json ]; then npm ci || npm install; npm run build --if-present; fi
+          if [ ! -d dist ]; then mkdir -p dist && cp -r public/* dist/ 2>/dev/null || true; fi
+      - name: Deploy to production
+        env: { GCP_SA_KEY: "${{ secrets.GCP_SA_KEY }}" }
+        run: |
+          echo "$GCP_SA_KEY" > /tmp/sa.json && export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+          npx -y firebase-tools@13 deploy --only hosting:production --project "${{ vars.FIREBASE_PROJECT_ID }}" --non-interactive
+      - name: Report
+        run: curl -fsS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d "{\"action\":\"published\",\"release_id\":\"$REL\",\"sha\":\"$(git rev-parse HEAD)\",\"tag\":\"${{ inputs.tag }}\",\"run_url\":\"$RUN_URL\"}"
+      - name: Report failure
+        if: failure()
+        run: curl -sS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d "{\"action\":\"failed\",\"release_id\":\"$REL\",\"error\":\"Promotion failed\",\"run_url\":\"$RUN_URL\"}"

@@ -10,6 +10,8 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
 import "./oa-rules.js";
 import "./oa-render.js";
+import { meter } from "../_shared/ai-meter.ts";
+meter("oa"); // Hub AI: records tokens and cost of this agent
 
 const R: any = (globalThis as any).EOARules;
 const RENDER: any = (globalThis as any).EOARender;

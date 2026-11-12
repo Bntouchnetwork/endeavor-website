@@ -9,6 +9,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
 import { REPORTS, quarterRange, reportPdf } from "./report.mjs";
+import { meter } from "../_shared/ai-meter.ts";
+meter("books"); // Hub AI: records tokens and cost of this agent
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

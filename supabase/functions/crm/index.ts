@@ -10,6 +10,8 @@
 // Every message is logged in crm_messages with a unique key, so nothing is sent twice.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
+import { meter } from "../_shared/ai-meter.ts";
+meter("crm"); // Hub AI: records tokens and cost of this agent
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;

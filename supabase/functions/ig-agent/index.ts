@@ -7,6 +7,8 @@
 //   a DM with an e-mail address after asking for a proposal becomes a CRM lead.
 // - Video (Reels / video Stories) is prepared for Creatomate + ElevenLabs and HeyGen and stays off until their keys exist.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { meter } from "../_shared/ai-meter.ts";
+meter("ig-agent"); // Hub AI: records tokens and cost of this agent
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;

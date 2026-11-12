@@ -32,7 +32,7 @@
       code: 'Code', verify: 'Verify', badCode: 'Invalid code. Check your phone time and try again.', enrollTitle: 'Turn on two-step verification',
       enrollLead: 'Required to protect your tax and company documents. Scan the QR code with Google Authenticator, Microsoft Authenticator or 1Password and enter the code.',
       noCamera: 'No camera? Enter this key in the app:', activate: 'Activate and continue', noAccess: 'No active access', noAccessText: 'Your account is not linked to an active client portal. If you received an invitation, confirm you used the same email. Questions: support@endeavorbiz.com.',
-      nav_attorneys: 'Attorneys', nav_overview: 'Overview', nav_companies: 'My Companies', nav_documents: 'Documents', nav_compliance: 'Tax Compliance', nav_reports: 'Financial Reports', nav_upload: 'Upload Documents', nav_collab: 'Collaborators', nav_settings: 'Settings',
+      nav_attorneys: 'Attorneys', nav_projects: 'AI Projects', nav_overview: 'Overview', nav_companies: 'My Companies', nav_documents: 'Documents', nav_compliance: 'Tax Compliance', nav_reports: 'Financial Reports', nav_upload: 'Upload Documents', nav_collab: 'Collaborators', nav_settings: 'Settings',
       account: 'Account', hello: 'Hello, {n}', overviewLead: 'Everything about your U.S. companies in one place.',
       k_companies: 'Companies', k_next: 'Next deadline', k_docs: 'Documents', k_reports: 'Financial reports', none: 'None',
       nextDeadlines: 'Next deadlines', recentDocs: 'Recent documents', seeAll: 'See all', quick: 'Quick actions', qUpload: 'Upload documents for your tax return', qInvite: 'Invite your accountant or bookkeeper', qQbo: 'Connect QuickBooks',
@@ -83,7 +83,7 @@
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Confira o horário do celular e tente de novo.', enrollTitle: 'Ative a verificação em duas etapas',
       enrollLead: 'Obrigatória para proteger seus documentos fiscais e da empresa. Escaneie o QR code com Google Authenticator, Microsoft Authenticator ou 1Password e digite o código.',
       noCamera: 'Sem câmera? Digite esta chave no app:', activate: 'Ativar e continuar', noAccess: 'Sem acesso ativo', noAccessText: 'Sua conta não está ligada a um portal de cliente ativo. Se você recebeu um convite, confira se usou o mesmo e-mail. Dúvidas: support@endeavorbiz.com.',
-      nav_attorneys: 'Advogados', nav_overview: 'Visão geral', nav_companies: 'Minhas empresas', nav_documents: 'Documentos', nav_compliance: 'Prazos fiscais', nav_reports: 'Relatórios financeiros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configurações',
+      nav_attorneys: 'Advogados', nav_projects: 'AI Projects', nav_overview: 'Visão geral', nav_companies: 'Minhas empresas', nav_documents: 'Documentos', nav_compliance: 'Prazos fiscais', nav_reports: 'Relatórios financeiros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configurações',
       account: 'Conta', hello: 'Olá, {n}', overviewLead: 'Tudo sobre as suas empresas nos EUA em um só lugar.',
       k_companies: 'Empresas', k_next: 'Próximo prazo', k_docs: 'Documentos', k_reports: 'Relatórios financeiros', none: 'Nenhum',
       nextDeadlines: 'Próximos prazos', recentDocs: 'Documentos recentes', seeAll: 'Ver todos', quick: 'Ações rápidas', qUpload: 'Enviar documentos para o imposto', qInvite: 'Convidar seu contador ou bookkeeper', qQbo: 'Conectar QuickBooks',
@@ -134,7 +134,7 @@
       code: 'Código', verify: 'Verificar', badCode: 'Código inválido. Revise la hora del celular e intente de nuevo.', enrollTitle: 'Active la verificación en dos pasos',
       enrollLead: 'Obligatoria para proteger sus documentos fiscales y de la empresa. Escanee el código QR con Google Authenticator, Microsoft Authenticator o 1Password e ingrese el código.',
       noCamera: '¿Sin cámara? Ingrese esta clave en la app:', activate: 'Activar y continuar', noAccess: 'Sin acceso activo', noAccessText: 'Su cuenta no está vinculada a un portal de cliente activo. Si recibió una invitación, confirme que usó el mismo correo. Dudas: support@endeavorbiz.com.',
-      nav_attorneys: 'Abogados', nav_overview: 'Resumen', nav_companies: 'Mis empresas', nav_documents: 'Documentos', nav_compliance: 'Plazos fiscales', nav_reports: 'Reportes financieros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configuración',
+      nav_attorneys: 'Abogados', nav_projects: 'AI Projects', nav_overview: 'Resumen', nav_companies: 'Mis empresas', nav_documents: 'Documentos', nav_compliance: 'Plazos fiscales', nav_reports: 'Reportes financieros', nav_upload: 'Enviar documentos', nav_collab: 'Colaboradores', nav_settings: 'Configuración',
       account: 'Cuenta', hello: 'Hola, {n}', overviewLead: 'Todo sobre sus empresas en EE. UU. en un solo lugar.',
       k_companies: 'Empresas', k_next: 'Próximo plazo', k_docs: 'Documentos', k_reports: 'Reportes financieros', none: 'Ninguno',
       nextDeadlines: 'Próximos plazos', recentDocs: 'Documentos recientes', seeAll: 'Ver todos', quick: 'Acciones rápidas', qUpload: 'Enviar documentos para el impuesto', qInvite: 'Invitar a su contador o bookkeeper', qQbo: 'Conectar QuickBooks',
@@ -424,6 +424,7 @@
     if (S.perms.reports) n.push(['reports', 'nav_reports', 'i-chart']);
     if (S.perms.upload) n.push(['upload', 'nav_upload', 'i-up']);
     if (S.perms.owner) n.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
+    if (window.EProjects && S.perms.owner && !PARTNER) n.push(['projetos', 'nav_projects', 'i-bot']);
     if (window.EAttorney) n.push(['advogados', 'nav_attorneys', 'i-law']);
     n.push(['settings', 'nav_settings', 'i-gear']);
     return n;
@@ -469,6 +470,7 @@
     if (window.EAttorney) V.advogados = function (view) { return EAttorney.clientView(view, refCtx()); };
     if (S.ref) Object.assign(V, S.ref.views);
     if (window.EClientOA) V.oa = EClientOA.view;
+    if (window.EProjects) V.projetos = function (view) { return EProjects.view(view, refCtx()); };
     if (v === 'oa') $$('.console__nav a').forEach(function (a) { if (a.dataset.view === 'companies') a.setAttribute('aria-current', 'page'); });
     V[v](view).catch(function (e) { view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>'; console.error(e); });
   }
@@ -556,10 +558,11 @@
   async function vCompanies(view) {
     var id = param('id');
     if (id && coById(id)) return companyDetail(view, coById(id));
-    view.innerHTML = head(t('nav_companies'), '') + (S.companies.length ? '<div class="cards">' + S.companies.map(function (c) {
+    view.innerHTML = head(t('nav_companies'), '', window.EProjects && S.perms.owner && !PARTNER ? '<button class="btn btn--navy" type="button" id="co-add">+ ' + esc(EProjects.addLabel(L)) + '</button>' : '') + (S.companies.length ? '<div class="cards">' + S.companies.map(function (c) {
       return '<a class="co-card" href="#/companies?id=' + c.id + '"><h3>' + esc(c.legal_name) + '</h3><div class="meta">' + esc(c.state || '') + (c.formation_date ? ' · ' + esc(t('formed', { d: fmtDate(c.formation_date) })) : '') + '</div>' +
         '<div class="row"><span>' + (c.ein ? 'EIN ' + esc(c.ein) : '') + '</span><span class="pill' + (c.status === 'active' ? ' pill--done' : '') + '">' + esc(t('st_' + c.status)) + '</span></div>' + (window.EOAUI && c.stage ? EOAUI.stepper(L, c, null) : '') + '</a>';
     }).join('') + '</div>' : '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong>' + t('noCompaniesText') + '</div>');
+    if ($('#co-add')) $('#co-add').onclick = function () { EProjects.addCompany(refCtx(), function () { route(); }); };
   }
   async function companyDetail(view, co) {
     var tabs = [];

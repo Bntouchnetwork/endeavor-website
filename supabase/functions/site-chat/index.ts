@@ -4,6 +4,8 @@
 // Prices are never given in the chat: the team sends a proposal by e-mail.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
+import { meter } from "../_shared/ai-meter.ts";
+meter("site-chat"); // Hub AI: records tokens and cost of this agent
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
