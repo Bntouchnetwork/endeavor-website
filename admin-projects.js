@@ -209,8 +209,8 @@
   async function hub(view, ctx) {
     var esc = ctx.esc, m = param('mes') || new Date().toISOString().slice(0, 7);
     var from = m + '-01', d = new Date(from + 'T00:00:00Z'); d.setUTCMonth(d.getUTCMonth() + 1); var to = d.toISOString().slice(0, 10);
-    var res = await Promise.all([ctx.q(ctx.sb.from('ai_usage').select('*, companies(legal_name), ai_projects(title)').gte('created_at', from).lt('created_at', to).order('created_at', { ascending: false }).limit(5000)), ctx.q(ctx.sb.from('ai_limits').select('*').eq('id', 1).single())]);
-    var rows = res[0], lim = res[1];
+    var res = await Promise.all([ctx.q(ctx.sb.from('ai_usage').select('*, companies(legal_name), ai_projects(title)').gte('created_at', from).lt('created_at', to).order('created_at', { ascending: false }).limit(5000)), ctx.q(ctx.sb.from('ai_limits').select('*').eq('id', 1))]);
+    var rows = res[0], lim = res[1][0] || { monthly_cap_usd: 300, alert_pct: 80, markup_pct: 30, project_hour_usd: 85, project_min_usd: 1500, update_price_usd: 450 };
     var total = rows.reduce(function (s, r) { return s + Number(r.cost_usd || 0); }, 0);
     var group = function (key, label) { var g = {}; rows.forEach(function (r) { var k = key(r) || '—'; g[k] = g[k] || { n: 0, c: 0, i: 0, o: 0, label: label(r) || '—' }; g[k].n++; g[k].c += Number(r.cost_usd || 0); g[k].i += r.input_tokens; g[k].o += r.output_tokens; }); return Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.c - a.c; }); };
     var table = function (title, list) { return '<section class="portal-card"><h2 class="portal-h2">' + title + '</h2>' + (list.length ? '<div class="table-wrap"><table class="data"><thead><tr><th></th><th class="num">Chamadas</th><th class="num">Tokens (entrada / saída)</th><th class="num">Custo</th></tr></thead><tbody>' + list.map(function (x) { return '<tr><td>' + esc(x.label) + '</td><td class="num">' + x.n + '</td><td class="num">' + x.i.toLocaleString('pt-BR') + ' / ' + x.o.toLocaleString('pt-BR') + '</td><td class="num">' + usd(x.c) + '</td></tr>'; }).join('') + '</tbody></table></div>' : '<p class="portal-muted">Sem uso no período.</p>') + '</section>'; };
