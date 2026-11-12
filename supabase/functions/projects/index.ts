@@ -612,6 +612,12 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return json({ error: "bad_request" }, 400); }
   try {
     const key = req.headers.get("x-booking-key") || "";
+    if (body.action === "pm_turn") { // internal: re-run the AI Project Manager on a project (retry after an AI outage)
+      const { data: ok } = await db.rpc("booking_hook_key_ok", { p_key: key });
+      if (!ok) return json({ error: "forbidden" }, 403);
+      const p = await loadProject(String(body.project_id || ""));
+      return json(await pmTurn(p, (await clientLang(p.client_id))?.language || "pt"));
+    }
     if (body.action === "paid") {
       const { data: ok } = await db.rpc("booking_hook_key_ok", { p_key: key });
       if (!ok) return json({ error: "forbidden" }, 403);
