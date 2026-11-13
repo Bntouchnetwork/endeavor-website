@@ -6,8 +6,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
 import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@41877a6e5d76f67c58aee8079b8645ce7c1b057d/mkt-template.js";
-import { meter } from "../_shared/ai-meter.ts";
-meter("marketing"); // Hub AI: records tokens and cost of this agent
+import { HubFail, hubJson, hubOn } from "../_shared/hub-ai.ts"; // AI goes through Endeavor's central HUB AI ("marketing-email" agent)
 
 // deno-lint-ignore no-explicit-any
 const EMkt = (globalThis as any).EMkt;
@@ -26,8 +25,6 @@ const SES_PASS = Deno.env.get("SES_SMTP_PASS") ?? "";
 const G_USER = Deno.env.get("SMTP_USER") ?? "support@endeavorbiz.com";
 const G_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
 // AI template writer (same key as the Operating Agreement module)
-const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
-const AI_MODEL = Deno.env.get("MKT_MODEL") || Deno.env.get("OA_MODEL") || "claude-sonnet-5-5";
 const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
 const db = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });
 
@@ -108,25 +105,7 @@ async function tick() {
 }
 
 /* ---------- AI template writer ---------- */
-const AI_SYSTEM = `You write marketing e-mail templates for Endeavor Business Solutions LLC (Orlando, FL; https://endeavorbiz.com).
-About Endeavor: helps foreign entrepreneurs and investors open and maintain companies in the United States: LLC and corporation formation, registered agent and compliance, tax coordination with CPAs (ITIN/EIN guidance), U.S. bank account support, real estate and property management support, family office. Serves clients in Portuguese, English and Spanish. Has a Partner Program for realtors, accountants, attorneys and other professionals who refer clients (they earn a commission, follow referrals in their own Partner Portal and get paid automatically through Stripe).
-Contact (added automatically by the layout, do not repeat in the text): WhatsApp +1 (630) 689-8702, phone +1 (407) 436-9567, support@endeavorbiz.com. Booking page: https://endeavorbiz.com/schedule.html.
-The layout (logo, colours, footer with address and unsubscribe link) is added by the system. You only write the content and choose the design options.
-Rules:
-- Honest, professional, warm. No exaggerated or false promises, no guaranteed results, no invented numbers, prices, percentages, testimonials or deadlines unless the brief gives them. Never state a commission percentage.
-- Subject lines must be truthful and not misleading (CAN-SPAM). No ALL CAPS, no spam words, at most one emoji and only if the brief asks.
-- Never ask the reader for SSN, ITIN, passport or bank numbers.
-- Use {{nome}} where the contact's first name should go (only in subject or heading if natural) and {{empresa}} for their company, only if useful.
-- Write natively in each requested language (pt = Brazilian Portuguese, en = American English, es = neutral Latin American Spanish), not word-for-word translations.
-- Keep it scannable: intro 1 to 3 short paragraphs, 1 to 4 sections, each item 1 to 2 sentences.
-Reply with ONLY a JSON object, no markdown, in this shape:
-{"name": "short internal name in Portuguese",
- "style": {"accent": "gold|teal|sky|emerald|coral", "hero": "navy|light"},
- "button_url": "https://... (only if the brief gives a specific link; otherwise omit)",
- "<lang>": {"kicker": "2-4 word label", "subject": "...", "preheader": "...", "heading": "...", "intro": "paragraphs separated by a blank line",
-   "sections": [{"type": "cards|steps|list|highlight|text", "title": "...", "items": [{"title": "...", "text": "..."}], "text": "for highlight/text only"}],
-   "cta": "button label (2-5 words)", "closing": "1-2 short sentences", "sign": "signature line"}}
-with one "<lang>" object for each requested language. "cards" works best with 2 or 4 items, "steps" with 2 to 4.`;
+// The instructions and the JSON format of the e-mail templates live in the HUB AI agent "marketing-email".
 
 const LANGS3 = ["pt", "en", "es"];
 const SEC_TYPES = ["cards", "steps", "list", "highlight", "text"];
@@ -149,24 +128,18 @@ function cleanTemplate(raw: Row, langs: string[]) {
   return { name: str(raw?.name, 100), data: out };
 }
 async function aiTemplate(body: Row) {
-  if (!ANTHROPIC) return { error: "no_ai_key" };
+  if (!hubOn()) return { error: "no_ai_key" };
   const brief = str(body.brief, 4000), adjust = str(body.adjust, 2000);
   const langs = (Array.isArray(body.languages) ? body.languages : LANGS3).filter((l: string) => LANGS3.includes(l));
   if (brief.length < 10 || !langs.length) return { error: "brief" };
   let user = `Brief from the Endeavor team (may be in Portuguese):\n${brief}\n\nLanguages to write: ${langs.join(", ")}.`;
   if (adjust && body.previous) user += `\n\nThis is the current version:\n${JSON.stringify(body.previous).slice(0, 20000)}\n\nApply these changes and return the full JSON again:\n${adjust}`;
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: AI_MODEL, max_tokens: 6000, system: AI_SYSTEM, messages: [{ role: "user", content: user }] }),
-  });
-  const j = await r.json().catch(() => null);
-  if (!r.ok) return { error: "ai_failed", detail: String(j?.error?.message || r.status).slice(0, 200) };
-  const text = (j.content || []).filter((b: Row) => b.type === "text").map((b: Row) => b.text).join("");
-  const m = text.match(/\{[\s\S]*\}/); if (!m) return { error: "ai_format" };
-  let raw: Row; try { raw = JSON.parse(m[0]); } catch { return { error: "ai_format" }; }
+  let raw: Row;
+  try { raw = await hubJson({ agent: "marketing-email", userId: "endeavor-admin", idempotencyKey: `endeavor-mkt-${crypto.randomUUID()}`, task: "email_template", input: user, maxOutputTokens: 6000, timeoutMs: 120_000, meter: { agent: "marketing" } }); }
+  catch (e) { return { error: e instanceof HubFail && e.kind === "format" ? "ai_format" : "ai_failed", detail: String((e as Error).message).slice(0, 200) }; }
   const t = cleanTemplate(raw, langs);
   if (!t.data.languages.length) return { error: "ai_format" };
-  return { ok: true, name: t.name, data: t.data, model: j.model || AI_MODEL };
+  return { ok: true, name: t.name, data: t.data, model: "hub:marketing-email" };
 }
 
 Deno.serve(async (req) => {
@@ -236,7 +209,7 @@ Deno.serve(async (req) => {
       if (!isAdmin) return json({ error: "forbidden" }, 403);
       const { data: s } = await db.from("mkt_settings").select("*").eq("id", 1).single();
       if (s && s.ses_connected !== sesOn()) await db.from("mkt_settings").update({ ses_connected: sesOn() }).eq("id", 1);
-      if (body.action === "status") return json({ ses: sesOn(), gmail_test: G_PASS.length >= 8, ai: !!ANTHROPIC });
+      if (body.action === "status") return json({ ses: sesOn(), gmail_test: G_PASS.length >= 8, ai: hubOn() });
       if (body.action === "ai_template") { const r = await aiTemplate(body); return json(r, r.error ? (r.error === "no_ai_key" ? 503 : 400) : 200); }
       const { data: c } = await db.from("mkt_campaigns").select("*").eq("id", String(body.campaign_id || "")).single();
       if (!c) return json({ error: "not_found" }, 404);

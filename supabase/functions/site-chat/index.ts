@@ -109,7 +109,7 @@ async function turn(req: Request, b: Row) {
       idempotencyKey: `endeavor-site-${id}-${um.data?.id ?? crypto.randomUUID()}`, // one key per message: safe retries
       task: "website_chat",
       metadata: { channel: "website_chat", language: l, page: String(b.page || "/").slice(0, 100), lead_already_requested: !!chat.lead_id },
-      maxOutputTokens: 450,
+      maxOutputTokens: 450, meter: { agent: "site-chat" },
     });
     if (r.kind === "ok" && r.output) { reply = r.output; action = null; }
     else if (r.kind === "review") { reply = REVIEW_MSG[l]; action = chat.lead_id ? "human" : "lead"; }

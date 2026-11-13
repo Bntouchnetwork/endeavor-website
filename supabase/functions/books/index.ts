@@ -3,14 +3,13 @@
 // Secrets (Supabase > Edge Functions > Secrets):
 //   STRIPE_SECRET_KEY / STRIPE_PUBLISHABLE_KEY   (already used by payments) — Financial Connections
 //   PLAID_CLIENT_ID, PLAID_SECRET, PLAID_ENV ("sandbox" | "production")       — optional, Plaid Link
-//   ANTHROPIC_API_KEY                                                           — AI suggestions
+//   HUB_AI_API_KEY                                                              — AI suggestions (HUB AI agent "bookkeeping")
 // Called by the admin console (admin session with MFA) and by the daily cron job (internal key).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
 import { REPORTS, quarterRange, reportPdf } from "./report.mjs";
-import { meter } from "../_shared/ai-meter.ts";
-meter("books"); // Hub AI: records tokens and cost of this agent
+import { hubJson, hubOn } from "../_shared/hub-ai.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -19,8 +18,6 @@ const SK = Deno.env.get("STRIPE_SECRET_KEY") || "";
 const PK = (Deno.env.get("STRIPE_PUBLISHABLE_KEY") || "").startsWith("pk_") ? Deno.env.get("STRIPE_PUBLISHABLE_KEY")! : "";
 const PLAID_ID = Deno.env.get("PLAID_CLIENT_ID") || "", PLAID_SECRET = Deno.env.get("PLAID_SECRET") || "";
 const PLAID_ENV = (Deno.env.get("PLAID_ENV") || "sandbox").toLowerCase() === "production" ? "production" : "sandbox";
-const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
-const AI_MODEL = Deno.env.get("BOOKS_MODEL") || "claude-haiku-5-5";
 const db = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false } });
 
 const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
@@ -141,7 +138,7 @@ async function syncConnection(conn: Any) {
 
 /* ---------------- AI suggestions ---------------- */
 async function aiSuggest(companyId: string, limit = 80) {
-  if (!ANTHROPIC) return { suggested: 0, ai: false };
+  if (!hubOn()) return { suggested: 0, ai: false };
   const { data: txns } = await db.from("bk_transactions").select("id, txn_date, description, merchant, amount_cents")
     .eq("company_id", companyId).eq("status", "review").or("suggest_source.is.null,suggest_source.eq.ai").order("txn_date", { ascending: false }).limit(limit);
   if (!txns?.length) return { suggested: 0, ai: true };
@@ -150,10 +147,8 @@ async function aiSuggest(companyId: string, limit = 80) {
   const { data: hist } = await db.from("bk_transactions").select("description, merchant, amount_cents, account_id").eq("company_id", companyId).eq("status", "posted").order("txn_date", { ascending: false }).limit(60);
   const codeOf: Record<string, string> = {}; usable.forEach((a: Any) => { codeOf[a.id] = a.code; });
   const co = await company(companyId);
-  const prompt = `You are a US small-business bookkeeper working in Endeavor Bookkeeping (QuickBooks-style double entry) for "${co.legal_name}", a US LLC.
-Suggest the best account for each bank transaction. Money in (amount > 0) usually goes to income, owner contributions (equity) or loans; money out (amount < 0) usually goes to expenses, cost of goods sold, owner distributions (equity), fixed assets or loan payments.
-Use only the account codes listed. If unsure, use 6999 (Uncategorized Expense) for money out or 4999 (Uncategorized Income) for money in, with low confidence. Transfers between the company's own accounts or credit card payments: pick the matching balance-sheet account if listed, otherwise uncategorized with low confidence.
-Reply by calling the tool save_suggestions once with every transaction.
+  // the bookkeeping rules and the JSON answer format live in the HUB AI agent "bookkeeping"
+  const input = `Company: "${co.legal_name}", a US LLC.
 
 Accounts:
 ${usable.map((a: Any) => `${a.code} | ${a.name} | ${a.subtype}`).join("\n")}
@@ -163,16 +158,10 @@ ${(hist ?? []).filter((h: Any) => codeOf[h.account_id]).slice(0, 40).map((h: Any
 
 Transactions:
 ${txns.map((t: Any) => `${t.id} | ${t.txn_date} | ${(t.merchant ? t.merchant + " - " : "") + t.description.slice(0, 120)} | ${(t.amount_cents / 100).toFixed(2)}`).join("\n")}`;
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: AI_MODEL, max_tokens: 8000, tool_choice: { type: "auto" }, messages: [{ role: "user", content: prompt }],
-      tools: [{ name: "save_suggestions", description: "Save one account suggestion per transaction.", input_schema: { type: "object", properties: { items: { type: "array", items: { type: "object",
-        properties: { id: { type: "string" }, account_code: { type: "string" }, confidence: { type: "number", description: "0 to 1" }, reason: { type: "string", description: "short, in English" } },
-        required: ["id", "account_code", "confidence"] } } }, required: ["items"] } }] }),
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Fail("ai_error", 502, j?.error?.message || String(r.status));
-  const use = (j.content || []).find((c: Any) => c.type === "tool_use");
+  let out: Any;
+  try { out = await hubJson({ agent: "bookkeeping", userId: "endeavor-books", idempotencyKey: `endeavor-books-${companyId}-${crypto.randomUUID()}`, task: "categorize_transactions", input, maxOutputTokens: 8000, timeoutMs: 120_000, meter: { agent: "books", company_id: companyId } }); }
+  catch (e) { throw new Fail("ai_error", 502, String((e as Error).message)); }
+  const use = { input: { items: Array.isArray(out?.items) ? out.items : [] } };
   const byCode: Record<string, string> = {}; usable.forEach((a: Any) => { byCode[a.code] = a.id; });
   const rows = (use?.input?.items || []).filter((x: Any) => byCode[x.account_code]).map((x: Any) => ({ id: x.id, account_id: byCode[x.account_code], confidence: x.confidence, reason: String(x.reason || "").slice(0, 200) }));
   const { data } = await db.rpc("bk_save_ai", { p_rows: rows });
@@ -266,7 +255,7 @@ async function handle(req: Request, body: Any) {
   if (!isAdmin) throw new Fail("forbidden", 403);
   const who = u.user.email || "admin";
 
-  if (a === "config") return { stripe: !!(SK && PK), pk: PK || null, plaid: !!(PLAID_ID && PLAID_SECRET), plaid_env: PLAID_ENV, ai: !!ANTHROPIC };
+  if (a === "config") return { stripe: !!(SK && PK), pk: PK || null, plaid: !!(PLAID_ID && PLAID_SECRET), plaid_env: PLAID_ENV, ai: hubOn() };
   const co = await company(String(body.company_id || ""));
   if (co.books_provider !== "endeavor" && a !== "publish") throw new Fail("books_not_enabled");
 

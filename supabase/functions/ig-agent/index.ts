@@ -7,17 +7,13 @@
 //   a DM with an e-mail address after asking for a proposal becomes a CRM lead.
 // - Video (Reels / video Stories) is prepared for Creatomate + ElevenLabs and HeyGen and stays off until their keys exist.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { meter } from "../_shared/ai-meter.ts";
-import { hubExecute, hubOn } from "../_shared/hub-ai.ts"; // customer replies (comments, DMs) go through the HUB AI Customer Service Agent
-meter("ig-agent"); // Hub AI: records tokens and cost of this agent
+import { hubAsk, hubExecute, hubJson, hubOn } from "../_shared/hub-ai.ts"; // customer replies (comments, DMs) go through the HUB AI Customer Service Agent
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
-const MODEL = Deno.env.get("IG_MODEL") || "claude-sonnet-5-5";
 const IG_TOKEN = Deno.env.get("IG_ACCESS_TOKEN") ?? "", IG_USER = Deno.env.get("IG_USER_ID") ?? "";
 const IG_HOST = (Deno.env.get("IG_GRAPH_HOST") || "https://graph.facebook.com").replace(/\/$/, ""), IG_VER = Deno.env.get("IG_API_VERSION") || "v21.0";
 const IG_VERIFY = Deno.env.get("IG_VERIFY_TOKEN") ?? "", IG_SECRET = Deno.env.get("IG_APP_SECRET") || Deno.env.get("WHATSAPP_APP_SECRET") || "";
@@ -28,53 +24,18 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 const igOn = () => !!(IG_TOKEN && IG_USER);
 const clean = (v: unknown, n: number) => (typeof v === "string" ? v.replace(/<[^>]*>/g, "").trim().slice(0, n) : "");
 
-/* ---------- what the agent knows ---------- */
-const BRAND = `Endeavor Business Solutions (Orlando, FL; https://endeavorbiz.com; WhatsApp +1 (630) 689-8702) helps Brazilian and other foreign entrepreneurs and investors build and run a business in the U.S.: company formation (LLC, corporation, branch of a foreign company), EIN/ITIN guidance, Florida registered agent, compliance and annual reports, tax coordination with licensed CPAs, U.S. bank account support, real estate holding structures, financing referrals, Brazil-U.S. expansion, family office coordination. It also runs a Partner Program for realtors, accountants and attorneys who refer clients.
-Endeavor is not a law firm, CPA firm, bank or investment adviser; licensed services are done by independent licensed professionals. It never promises visas, tax results or returns.`;
-const RULES_CONTENT = `Content rules (mandatory):
-- Educational and trustworthy. No guarantees, no "get rich", no promises of visas, approvals, tax savings or returns. Immigration content is informational only and always says each case needs analysis by an immigration attorney. Tax content is general and says to confirm with a CPA.
-- Never state prices. CTA examples: "Fale com a gente pelo link na bio", "Comente QUERO", "Mande DIRECT", "Agende uma conversa gratuita".
-- Facts must be accurate and current; if unsure, keep it general. Do not cite numbers you did not verify in the research.
-- Write for Brazilian entrepreneurs, investors and professionals (pt = Brazilian Portuguese); en/es when asked.
-- Hooks that stop the scroll: a question, a myth vs. fact, a comparison Brazil x USA, a common mistake, a checklist, a surprising (verified) fact.
-- Hashtags: 8-15, mix of broad and niche, chosen from the research (what people search in this niche), no banned/spammy tags.`;
-const DESIGN = `Art: you design each image as structured text for Endeavor's brand templates (navy #0b1f3a, gold #c8a45d, cream #f6f1e7; serif headlines). Templates:
-- "statement": kicker + big title (max 8 words) + short body (max 22 words).
-- "list": title + 3-5 short bullets (max 7 words each).
-- "compare": title + two columns (left label, right label) and 3-4 rows [left, right] (max 5 words each), e.g. Brasil x EUA.
-- "stat": a big number or short word (verified) + title + body.
-- "quote": a short strong sentence + attribution "Endeavor Business Solutions".
-- "cta": closing slide: title + body + "Link na bio" style action.
-Formats: "post" (1 slide, 1080x1350), "carousel" (3-7 slides, first slide is the hook, last slide is "cta"), "story" (1 slide, 1080x1920, short, with a question or poll-like prompt).
-Palette per post: "navy" (dark), "cream" (light) or "gold" (accent).`;
-
-async function claude(system: string, user: string, opts: { max?: number; search?: boolean; model?: string } = {}) {
-  const body: Row = { model: opts.model || MODEL, max_tokens: opts.max ?? 4000, system, messages: [{ role: "user", content: user }] };
-  if (opts.search) body.tools = [{ type: "web_search_20250305", name: "web_search", max_uses: 4 }];
-  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" }, body: JSON.stringify(body) });
-  const j = await r.json().catch(() => null);
-  if (!r.ok) throw new Error(j?.error?.message || `ai_${r.status}`);
-  return (j.content || []).filter((b: Row) => b.type === "text").map((b: Row) => b.text).join("").trim();
+/* ---------- what the agent knows ----------
+   The marketing agent's role, brand facts, content rules, design templates and the JSON item format live in the
+   HUB AI agent "instagram-content". Here we send the task, the context (themes, recent posts, brand notes) and parse the JSON. */
+async function claude(context: string, user: string, opts: { max?: number } = {}) {
+  return await hubAsk({ agent: "instagram-content", userId: "endeavor-instagram", idempotencyKey: `endeavor-ig-${crypto.randomUUID()}`, task: "instagram_research",
+    input: (context ? context + "\n\n" : "") + user, maxOutputTokens: opts.max ?? 3000, timeoutMs: 120_000, meter: { agent: "ig-agent" } });
 }
 
-// structured output: the AI fills a tool whose input is always valid JSON (no hand-written JSON to parse)
-const SLIDE = { type: "object", properties: { template: { type: "string", enum: ["statement", "list", "compare", "stat", "quote", "cta"] }, kicker: { type: "string" }, title: { type: "string" }, body: { type: "string" },
-  bullets: { type: "array", items: { type: "string" } }, left: { type: "string" }, right: { type: "string" }, rows: { type: "array", items: { type: "array", items: { type: "string" } } }, stat: { type: "string" } }, required: ["template", "title"] };
-const ITEM = { type: "object", properties: { format: { type: "string", enum: ["post", "carousel", "story"] }, language: { type: "string", enum: ["pt", "en", "es"] }, topic: { type: "string" }, hook: { type: "string" },
-  palette: { type: "string", enum: ["navy", "cream", "gold"] }, slides: { type: "array", items: SLIDE }, caption: { type: "string" }, hashtags: { type: "array", items: { type: "string" } }, why: { type: "string" },
-  reel_script: { type: "string" }, video_style: { type: "string", enum: ["scenes", "presenter"] } }, required: ["format", "topic", "hook", "palette", "slides", "caption", "hashtags", "why"] };
-async function claudeItems(system: string, user: string, max = 8000): Promise<Row[]> {
-  const tool = { name: "save_items", description: "Save the Instagram items you created.", input_schema: { type: "object", properties: { items: { type: "array", items: ITEM } }, required: ["items"] } };
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: MODEL, max_tokens: max, system: system + "\n\nAlways deliver your work by calling the save_items tool exactly once (never write JSON in the text).", messages: [{ role: "user", content: user + (attempt ? "\n\nIMPORTANT: call the save_items tool now." : "") }], tools: [tool], tool_choice: { type: "auto" } }) });
-    const j = await r.json().catch(() => null);
-    if (!r.ok) throw new Error(j?.error?.message || `ai_${r.status}`);
-    const use = (j.content || []).find((b: Row) => b.type === "tool_use");
-    const items = use?.input?.items;
-    if (Array.isArray(items) && items.length) return items;
-    if (j.stop_reason === "max_tokens") max = Math.min(16000, max + 4000);
-  }
+async function claudeItems(context: string, user: string, max = 8000): Promise<Row[]> {
+  const o: Row = await hubJson({ agent: "instagram-content", userId: "endeavor-instagram", idempotencyKey: `endeavor-ig-${crypto.randomUUID()}`, task: "instagram_items",
+    input: (context ? context + "\n\n" : "") + user + '\n\nReply with ONLY the JSON object {"items":[...]}.', maxOutputTokens: Math.min(16000, max + 2000), timeoutMs: 140_000, meter: { agent: "ig-agent" } });
+  if (Array.isArray(o?.items) && o.items.length) return o.items;
   throw new Error("ai_format");
 }
 const chunk = <T,>(a: T[], n: number) => { const out: T[][] = []; for (let i = 0; i < a.length; i += n) out.push(a.slice(i, i + n)); return out; };
@@ -115,30 +76,29 @@ function slots(cfg: Row, n: number, taken: string[]) {
 
 
 async function plan(by: string, b: Row) {
-  if (!ANTHROPIC) return { error: "no_ai_key" };
+  if (!hubOn()) return { error: "no_ai_key" };
   const cfg: Row = (await db.from("ig_settings").select("*").eq("id", 1).single()).data ?? {};
   const nPosts = Math.min(10, Math.max(1, Number(b.posts) || cfg.posts_per_week || 4)), nStories = Math.min(10, Math.max(0, b.stories != null ? Number(b.stories) : cfg.stories_per_week ?? 3));
   const lang = (cfg.languages || ["pt"])[0] || "pt";
   const { data: recent } = await db.from("ig_posts").select("topic, hook, format").order("created_at", { ascending: false }).limit(30);
   const { data: future } = await db.from("ig_posts").select("scheduled_at").in("status", ["pending", "approved"]).not("scheduled_at", "is", null);
-  const role = `You are the Marketing agent of Endeavor Business Solutions: a senior social media strategist and copywriter specialized in the niche of Brazilians doing business, investing and protecting wealth in the United States. You know Instagram growth (hooks, carousels, saves and shares, Stories engagement).\n\n${BRAND}\n\n${RULES_CONTENT}`;
   const themes = (cfg.topics || []).map((t: string) => "\n- " + t).join("");
-  // 1. research (web search): a short brief with trends, angles and hashtags
+  // 1. research: a short brief with trends, angles and hashtags (HUB is text-only: no live web search)
   let brief = "";
   try {
-    brief = await claude(role, `Research what is trending right now for this niche on Instagram and in the news (dollar and exchange rate, U.S. taxes for foreigners, Florida real estate, U.S. company rules, visa news for entrepreneurs, what Brazilian investors are searching, popular Portuguese hashtags for this niche).${b.focus ? " Extra focus: " + String(b.focus).slice(0, 300) + "." : ""}
+    brief = await claude("", `Research what is trending right now for this niche on Instagram and in the news (dollar and exchange rate, U.S. taxes for foreigners, Florida real estate, U.S. company rules, visa news for entrepreneurs, what Brazilian investors are searching, popular Portuguese hashtags for this niche).${b.focus ? " Extra focus: " + String(b.focus).slice(0, 300) + "." : ""}
 Themes we cover: ${themes}
-Write a short brief in Portuguese (max 250 words): 1) 5-8 trending angles with one line each, 2) 20 hashtags people actually use in this niche, 3) what to avoid. Plain text, no JSON.`, { max: 3000, search: true });
+Write a short brief in Portuguese (max 250 words): 1) 5-8 trending angles with one line each, 2) 20 hashtags people actually use in this niche, 3) what to avoid. Plain text, no JSON.`, { max: 3000 });
   } catch (e) { console.error("ig research", e); }
-  // 2. the items, in small batches run in parallel (always valid JSON via tool use)
-  const sys = role + "\n\n" + DESIGN + "\n\nBrand notes from the admin: " + (cfg.brand_notes || "-");
+  // 2. the items, in small batches run in parallel (JSON answers parsed and normalized)
+  const sys = "Brand notes from the admin: " + (cfg.brand_notes || "-");
   const ctxText = `Language: "${lang}". Themes to rotate (pick the best for now, do not repeat recent topics): ${themes}
 Recent posts (avoid repeating): ${JSON.stringify(recent ?? []).slice(0, 2500)}
 Research brief: ${brief.slice(0, 3000) || "(not available: stay evergreen and general)"}${b.focus ? "\nExtra focus: " + String(b.focus).slice(0, 300) : ""}`;
   const jobs: Promise<Row[]>[] = [];
   const postBatches = chunk(Array.from({ length: nPosts }, (_, i) => i), 3);
-  postBatches.forEach((bt, k) => jobs.push(claudeItems(sys, `${ctxText}\n\nCreate ${bt.length} feed item(s) (mix "carousel" and "post"; carousels 3-7 slides with a "cta" last slide). Batch ${k + 1} of ${postBatches.length}: choose different themes from other batches (start from theme number ${k * 3 + 1} of the list). Captions: value first, line breaks, soft CTA at the end, no hashtags inside. 8-15 hashtags each. Add reel_script only when the topic also works as a 60-120 s Reel. Save them with the tool.`)));
-  if (nStories) jobs.push(claudeItems(sys, `${ctxText}\n\nCreate ${nStories} "story" item(s): 1 slide each, short, with a question or an invitation to reply. Caption can be empty. Save them with the tool.`, 5000));
+  postBatches.forEach((bt, k) => jobs.push(claudeItems(sys, `${ctxText}\n\nCreate ${bt.length} feed item(s) (mix "carousel" and "post"; carousels 3-7 slides with a "cta" last slide). Batch ${k + 1} of ${postBatches.length}: choose different themes from other batches (start from theme number ${k * 3 + 1} of the list). Captions: value first, line breaks, soft CTA at the end, no hashtags inside. 8-15 hashtags each. Add reel_script only when the topic also works as a 60-120 s Reel. Return them as JSON items.`)));
+  if (nStories) jobs.push(claudeItems(sys, `${ctxText}\n\nCreate ${nStories} "story" item(s): 1 slide each, short, with a question or an invitation to reply. Caption can be empty. Return them as JSON items.`, 5000));
   const settled = await Promise.allSettled(jobs);
   const items: Row[] = settled.flatMap((r) => (r.status === "fulfilled" ? r.value : []));
   if (!items.length) { const e = settled.find((r) => r.status === "rejected") as PromiseRejectedResult | undefined; throw new Error(e ? String(e.reason?.message || e.reason) : "ai_format"); }
@@ -153,11 +113,11 @@ Research brief: ${brief.slice(0, 3000) || "(not available: stay evergreen and ge
 }
 
 async function redo(id: string, feedback: string, by: string) {
-  if (!ANTHROPIC) return { error: "no_ai_key" };
+  if (!hubOn()) return { error: "no_ai_key" };
   const { data: p } = await db.from("ig_posts").select("*").eq("id", id).single();
   if (!p) return { error: "not_found" };
-  const sys = `You are the Marketing agent of Endeavor Business Solutions (Instagram).\n\n${BRAND}\n\n${RULES_CONTENT}\n\n${DESIGN}`;
-  const items = await claudeItems(sys, `Rewrite this ${p.format} following the admin's feedback. Keep what works. Feedback: "${feedback.slice(0, 800)}"\nCurrent: ${JSON.stringify({ format: p.format, language: p.language, topic: p.topic, hook: p.hook, palette: p.design?.palette, slides: p.design?.slides, caption: p.caption, hashtags: p.hashtags })}\nSave exactly 1 item with the tool.`, 6000);
+  const sys = "";
+  const items = await claudeItems(sys, `Rewrite this ${p.format} following the admin's feedback. Keep what works. Feedback: "${feedback.slice(0, 800)}"\nCurrent: ${JSON.stringify({ format: p.format, language: p.language, topic: p.topic, hook: p.hook, palette: p.design?.palette, slides: p.design?.slides, caption: p.caption, hashtags: p.hashtags })}\nReturn exactly 1 item as JSON.`, 6000);
   const n = normPost(items[0], p.language);
   const upd = await db.from("ig_posts").update({ ...n, research: n.research || p.research, feedback: (p.feedback ? p.feedback + "\n" : "") + "• " + feedback.slice(0, 500), image_urls: [], status: "pending", updated_at: new Date().toISOString(), video: n.video ?? p.video }).eq("id", id).select("*").single();
   return { ok: true, post: upd.data, by };
@@ -216,13 +176,13 @@ type Reply = { text: string | null; review?: boolean };
 async function aiReply(kind: "comment" | "dm", text: string, ref: { thread: string; msgId: string }): Promise<Reply> {
   if (!hubOn()) return { text: null };
   const r = await hubExecute({
-    input: text.slice(0, 1000),
+    input: `[Channel: Instagram ${kind === "dm" ? "DM" : "public comment"}]\n` + text.slice(0, 1000),
     sessionId: kind === "dm" ? `endeavor-ig-dm-${ref.thread}` : `endeavor-ig-comment-${ref.msgId}`,
     userId: `instagram:${ref.thread || "unknown"}`,
     idempotencyKey: `endeavor-ig-${kind}-${ref.msgId}`,      // Instagram's own message/comment id: webhook retries never run twice
     task: kind === "dm" ? "instagram_dm" : "instagram_comment",
     metadata: { channel: kind === "dm" ? "instagram_dm" : "instagram_comment", public_reply: kind === "comment", max_words: kind === "dm" ? 70 : 25 },
-    maxOutputTokens: kind === "dm" ? 350 : 120,
+    maxOutputTokens: kind === "dm" ? 350 : 120, meter: { agent: "ig-agent" },
   });
   if (r.kind === "ok") return { text: r.output.slice(0, 1000) };
   if (r.kind === "review") return { text: null, review: true };
@@ -323,7 +283,7 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await user.rpc("is_admin");
     if (!isAdmin) return json({ error: "forbidden" }, 403);
     const by = (await user.auth.getUser()).data.user?.email ?? "admin";
-    if (b.action === "status") return json({ ai: !!ANTHROPIC, hub: hubOn(), instagram: igOn(), webhook: !!(IG_VERIFY && IG_SECRET), video: VIDEO_KEYS });
+    if (b.action === "status") return json({ ai: hubOn(), hub: hubOn(), instagram: igOn(), webhook: !!(IG_VERIFY && IG_SECRET), video: VIDEO_KEYS });
     if (b.action === "plan") { const r = await plan(by, b); return json(r, (r as Row).error ? 400 : 200); }
     if (b.action === "redo") { const r = await redo(String(b.id || ""), String(b.feedback || "").trim() || "Melhore o gancho e a arte.", by); return json(r, (r as Row).error ? 400 : 200); }
     if (b.action === "publish_now") {

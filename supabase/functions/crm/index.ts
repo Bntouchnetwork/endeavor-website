@@ -10,8 +10,7 @@
 // Every message is logged in crm_messages with a unique key, so nothing is sent twice.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
-import { meter } from "../_shared/ai-meter.ts";
-meter("crm"); // Hub AI: records tokens and cost of this agent
+import { HubFail, hubAsk, hubJson, hubOn } from "../_shared/hub-ai.ts"; // all AI goes through Endeavor's central HUB AI
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
@@ -26,8 +25,7 @@ const G_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
 const WA_TOKEN = Deno.env.get("WHATSAPP_TOKEN") ?? "", WA_PHONE = Deno.env.get("WHATSAPP_PHONE_ID") ?? "", WA_VER = Deno.env.get("WHATSAPP_API_VERSION") ?? "v21.0";
 const WA_TPL = Deno.env.get("WA_TPL_CRM") ?? "endeavor_status_update";
 const WA_VERIFY = Deno.env.get("WHATSAPP_VERIFY_TOKEN") ?? "", WA_SECRET = Deno.env.get("WHATSAPP_APP_SECRET") ?? "";
-const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
-const AI_MODEL = Deno.env.get("CRM_MODEL") || Deno.env.get("OA_MODEL") || "claude-sonnet-5-5";
+const AI_ON = hubOn() ? "hub" : ""; // AI available (HUB AI key configured)
 const SUPPORT = "support@endeavorbiz.com", PHONE = "+1 (407) 436-9567", WA_NUM = "+1 (630) 689-8702";
 const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
 const mailOn = () => sesOn() || G_PASS.length >= 8;
@@ -292,23 +290,14 @@ function nextStep(p: Row, video: string | null) {
   if (p.payout_method === "stripe" && !(p.stripe_details_submitted || p.stripe_transfers_active)) return "stripe";
   return null;
 }
-const KNOW = `Endeavor Business Solutions (Orlando, FL; https://endeavorbiz.com) helps foreign entrepreneurs open and keep companies in the U.S. (LLC/corporation formation, registered agent, compliance, tax coordination with CPAs, EIN/ITIN guidance, U.S. bank account support, real estate structure, family office) in Portuguese, English and Spanish.
-Partner Program: realtors, accountants, attorneys and advisors refer clients and earn a commission on the invoices paid by those clients (standard 10%, the exact % is in the partner's agreement). No cost, no minimum.
-Partner Portal (partner.html), menu: "Start here" (onboarding), Dashboard, My referrals (pipeline: Received, In contact, Proposal, Onboarding, In process, Completed), New referral (client name, email, phone, service; the client must agree to be contacted), Commissions, Stripe payouts.
-Onboarding steps in "Start here", in order: 1) portal access (password + two-step verification, already done when they are in the portal); 2) watch the welcome video and click "I watched it"; 3) sign the partner agreement online (button in the step; the agreement is in English; Endeavor countersigns later); 4) choose the country of the bank account: U.S. (also Canada, UK, Europe) = Stripe Connect Express, they click "Connect Stripe account" and finish on Stripe's site (photo ID, bank details, SSN/ITIN/EIN when in the U.S.; Stripe collects the W-9/W-8); other countries such as Brazil = Stripe Global Payouts: Endeavor registers them as a recipient and Stripe emails them a link to add the bank, and Endeavor sends each commission after the client pays (payouts in BRL depend on Stripe enabling them); an optional Pix key (email, phone or random key, never CPF) is kept for a future Pix option. 5) When all steps are done the account is activated automatically, referrals are unlocked and a "Book your welcome call" button appears.
-The partner gets an email (and WhatsApp when available) at every step of each referred client, when the client pays and when the commission is sent.
-Contact: support@endeavorbiz.com, WhatsApp +1 (630) 689-8702, phone +1 (407) 436-9567.`;
-const AGENT_RULES = `You are the Endeavor onboarding assistant (the "Admin agent") talking to a partner.
-Rules: reply in the partner's language (pt = Brazilian Portuguese, en, es); be warm, clear and short (at most 120 words, plain text, no markdown headings); guide them to the next pending step with concrete clicks;
-never ask for or accept SSN, ITIN, passport, CPF, card or bank numbers (if they send any, tell them not to share it here and that Stripe collects it securely); do not give legal or tax advice and do not change commissions or contract terms (a person from the team handles that);
-never invent features, prices, deadlines or promises. If the partner asks for a person, wants to negotiate the commission or contract, reports a problem you cannot solve, or is upset, say the team will contact them and end your message with the exact token [[HANDOFF]].`;
-async function claude(system: string, messages: { role: string; content: string }[], max = 700) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: AI_MODEL, max_tokens: max, system, messages }) });
-  const j = await r.json().catch(() => null);
-  if (!r.ok) throw new Error(j?.error?.message || `ai_${r.status}`);
-  return (j.content || []).filter((b: Row) => b.type === "text").map((b: Row) => b.text).join("").trim();
-}
+// The partner onboarding agent ("partner-onboarding") and the CRM assistant ("crm-assistant") live in the HUB AI,
+// with their instructions and knowledge. Here we only send the partner's state, the task and the conversation.
+const ctxMsg = (ctx: string, msgs: { role: string; content: string }[]) => {
+  const out = msgs.map((m) => ({ ...m }));
+  const i = out.findIndex((m) => m.role === "user");
+  if (i >= 0) out[i].content = `[Context]\n${ctx}\n[/Context]\n\n` + out[i].content; else out.unshift({ role: "user", content: `[Context]\n${ctx}\n[/Context]` });
+  return out;
+};
 function partnerState(p: Row, video: string | null) {
   return { name: first(p.name), language: lang(p.language), country: p.country, commission_pct: p.contract_pct ?? p.default_share_pct ?? 10, account_active: !!p.onboarding_done_at,
     video_required: !!video, video_seen: !!p.video_seen_at, agreement: p.contract_status, payout_method: p.payout_method, payout_country: p.payout_country,
@@ -316,11 +305,10 @@ function partnerState(p: Row, video: string | null) {
 }
 async function agentNudge(p: Row, step: string, n: number) {
   const l = lang(p.language), fb = { subject: T[l].obSubj, body: [first(p.name) ? fill(T[l].hi, { n: first(p.name) }) : T[l].hiAnon, T[l].obP + " " + T[l]["m_" + step] + ".", SIGN[l]].join("\n\n"), short: T[l].obP + " " + T[l]["m_" + step], ai: false };
-  if (!ANTHROPIC) return fb;
+  if (!AI_ON) return fb;
   try {
-    const txt = await claude(AGENT_RULES + "\n\nWhat you know:\n" + KNOW + `\n\nWrite reminder e-mail number ${n} (of at most 3) to a partner who stopped at the onboarding step "${step}". Be specific about how to do that step. Reply with ONLY a JSON object {"subject": "...", "body": "plain text, 2-4 short paragraphs, signed with the Endeavor team signature in their language", "short": "one sentence for WhatsApp"}.`,
-      [{ role: "user", content: "Partner record: " + JSON.stringify(partnerState(p, S.partner_video_url)) }], 900);
-    const o = JSON.parse((txt.match(/\{[\s\S]*\}/) || ["{}"])[0]);
+    const o: Row = await hubJson({ agent: "partner-onboarding", userId: `partner:${p.id}`, idempotencyKey: `endeavor-nudge-${p.id}-${step}-${n}`, task: "partner_reminder_email", maxOutputTokens: 900, meter: { agent: "partner-onboarding" },
+      input: `[Context]\nTask: write reminder e-mail number ${n} (of at most 3) to a partner who stopped at the onboarding step "${step}". Be specific about how to do that step. Reply with ONLY a JSON object {"subject": "...", "body": "plain text, 2-4 short paragraphs, signed with the Endeavor team signature in their language", "short": "one sentence for WhatsApp"}.\n[/Context]\n\nPartner record: ` + JSON.stringify(partnerState(p, S.partner_video_url)) });
     const clean = (v: unknown, k: number) => (typeof v === "string" ? v.replace(/<[^>]*>/g, "").trim().slice(0, k) : "");
     if (clean(o.subject, 150) && clean(o.body, 3000)) return { subject: clean(o.subject, 150), body: clean(o.body, 3000), short: clean(o.short, 400) || fb.short, ai: true };
   } catch (e) { console.error("agent nudge", e); }
@@ -335,10 +323,11 @@ async function agentReply(p: Row, channel: "portal" | "whatsapp", text: string) 
   for (const m of (hist ?? []).reverse()) { const role = m.role === "user" ? "user" : "assistant"; if (msgs.length && msgs[msgs.length - 1].role === role) msgs[msgs.length - 1].content += "\n\n" + m.content; else msgs.push({ role, content: m.content }); }
   while (msgs.length && msgs[0].role !== "user") msgs.shift();
   let reply = "", handoff = false;
-  if (!ANTHROPIC) { reply = { pt: "Obrigado pela mensagem! A nossa equipe vai responder em breve.", en: "Thanks for your message! Our team will reply soon.", es: "¡Gracias por su mensaje! Nuestro equipo responderá pronto." }[lang(p.language)]; handoff = true; }
+  if (!AI_ON) { reply = { pt: "Obrigado pela mensagem! A nossa equipe vai responder em breve.", en: "Thanks for your message! Our team will reply soon.", es: "¡Gracias por su mensaje! Nuestro equipo responderá pronto." }[lang(p.language)]; handoff = true; }
   else {
     try {
-      reply = await claude(AGENT_RULES + "\n\nWhat you know:\n" + KNOW + "\n\nThis partner right now: " + JSON.stringify(partnerState(p, S0.partner_video_url)) + `\nChannel: ${channel === "whatsapp" ? "WhatsApp (keep it very short)" : "chat inside the Partner Portal"}.`, msgs);
+      reply = await hubAsk({ agent: "partner-onboarding", userId: `partner:${p.id}`, idempotencyKey: `endeavor-partner-${p.id}-${crypto.randomUUID()}`, task: "partner_chat", maxOutputTokens: 700, meter: { agent: "partner-onboarding" },
+        messages: ctxMsg("This partner right now: " + JSON.stringify(partnerState(p, S0.partner_video_url)) + `\nChannel: ${channel === "whatsapp" ? "WhatsApp (keep it very short)" : "chat inside the Partner Portal"}.`, msgs) });
     } catch (e) { console.error("agent chat", e); reply = { pt: "Tive um problema agora. A equipe da Endeavor vai responder você em breve.", en: "I had a problem just now. The Endeavor team will reply to you soon.", es: "Tuve un problema ahora. El equipo de Endeavor le responderá pronto." }[lang(p.language)]; handoff = true; }
   }
   if (/\[\[HANDOFF\]\]/.test(reply)) { handoff = true; reply = reply.replace(/\s*\[\[HANDOFF\]\]\s*/g, "").trim(); }
@@ -378,15 +367,8 @@ async function waWebhook(payload: Row) {
 }
 
 /* ---------- AI assistant for one lead ---------- */
-const AI_SYSTEM = `You are the CRM assistant of Endeavor Business Solutions (Orlando, FL; https://endeavorbiz.com).
-Endeavor helps foreign entrepreneurs open and keep companies in the U.S. (LLC/corporation formation, registered agent, compliance, tax coordination with CPAs, EIN/ITIN guidance, U.S. bank account support, real estate structure, family office), in Portuguese, English and Spanish, and runs a Partner Program for realtors, accountants, attorneys and advisors who refer clients (commission, Partner Portal, payouts through Stripe).
-You receive one CRM record with its history. Reply with ONLY a JSON object:
-{"kind": "lead|prospect|partner", "status": "new|contacted|qualified|proposal|lost", "service": "short service name or empty", "summary": "1-2 sentences in Portuguese about who this is and what they want",
- "next_action": "one concrete next step for the Endeavor team, in Portuguese", "urgency": "high|normal|low",
- "reply_subject": "e-mail subject in the contact's language", "reply_body": "short e-mail reply in the contact's language (pt = Brazilian Portuguese), plain text, 3-6 short paragraphs, signed 'Equipe Endeavor Business Solutions' (or the EN/ES equivalent), inviting them to book a call at https://endeavorbiz.com/schedule.html when useful"}
-Rules: be honest and warm; never promise results, prices, timelines or tax outcomes not in the record; never ask for SSN, ITIN, passport or bank numbers by e-mail; do not give legal or tax advice, offer a call instead.`;
 async function aiSuggest(leadId: string) {
-  if (!ANTHROPIC) return { error: "no_ai_key" };
+  if (!AI_ON) return { error: "no_ai_key" };
   const { data: l } = await db.from("leads").select("*").eq("id", leadId).single();
   if (!l) return { error: "not_found" };
   const [bk, msgs, ref] = await Promise.all([
@@ -397,14 +379,12 @@ async function aiSuggest(leadId: string) {
   const rec = { name: l.name, email_domain: String(l.email).split("@")[1], country: l.country, company: l.company, language: l.language, source: l.source, kind: l.kind, status: l.status,
     created_at: l.created_at, interest: l.assistance, message: String(l.message || "").slice(0, 3000), internal_notes: String(l.notes || "").slice(0, 2000),
     bookings: bk.data ?? [], messages_sent: msgs.data ?? [], referred_by: ref.data?.[0] ? { partner: (ref.data[0].partners as Row | null)?.name, service: ref.data[0].service, note: ref.data[0].message } : null };
-  const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: AI_MODEL, max_tokens: 2000, system: AI_SYSTEM, messages: [{ role: "user", content: `CRM record (today is ${new Date().toISOString().slice(0, 10)}):\n${JSON.stringify(rec)}` }] }) });
-  const j = await r.json().catch(() => null);
-  if (!r.ok) return { error: "ai_failed", detail: String(j?.error?.message || r.status).slice(0, 200) };
-  const text = (j.content || []).filter((b: Row) => b.type === "text").map((b: Row) => b.text).join("");
-  const m = text.match(/\{[\s\S]*\}/); if (!m) return { error: "ai_format" };
+  let o: Row;
+  try { o = await hubJson({ agent: "crm-assistant", userId: "endeavor-admin", idempotencyKey: `endeavor-crm-${leadId}-${crypto.randomUUID()}`, task: "crm_lead_review", maxOutputTokens: 2000, meter: { agent: "crm-assistant" },
+    input: `CRM record (today is ${new Date().toISOString().slice(0, 10)}):\n${JSON.stringify(rec)}` }); }
+  catch (e) { return { error: e instanceof HubFail && e.kind === "format" ? "ai_format" : "ai_failed", detail: String((e as Error).message).slice(0, 200) }; }
   try {
-    const o = JSON.parse(m[0]), s = (v: unknown, n: number) => (typeof v === "string" ? v.replace(/<[^>]*>/g, "").trim().slice(0, n) : "");
+    const s = (v: unknown, n: number) => (typeof v === "string" ? v.replace(/<[^>]*>/g, "").trim().slice(0, n) : "");
     return { ok: true, kind: ["lead", "prospect", "partner"].includes(o.kind) ? o.kind : l.kind, status: ["new", "contacted", "qualified", "proposal", "lost"].includes(o.status) ? o.status : l.status,
       service: s(o.service, 100), summary: s(o.summary, 600), next_action: s(o.next_action, 400), urgency: ["high", "normal", "low"].includes(o.urgency) ? o.urgency : "normal",
       reply_subject: s(o.reply_subject, 150), reply_body: s(o.reply_body, 4000) };
@@ -448,7 +428,7 @@ Deno.serve(async (req) => {
       const { data: isAdmin } = await user.rpc("is_admin");
       if (!isAdmin) return json({ error: "forbidden" }, 403);
       const email = (await user.auth.getUser()).data.user?.email ?? "admin";
-      if (body.action === "status") return json({ email: mailOn(), via: sesOn() ? "ses" : mailOn() ? "gmail" : null, whatsapp: waOn(), whatsapp_webhook: !!(WA_VERIFY && WA_SECRET), ai: !!ANTHROPIC });
+      if (body.action === "status") return json({ email: mailOn(), via: sesOn() ? "ses" : mailOn() ? "gmail" : null, whatsapp: waOn(), whatsapp_webhook: !!(WA_VERIFY && WA_SECRET), ai: !!AI_ON });
       if (body.action === "run_now") return json(await tick());
       if (body.action === "agent_human_reply") {
         // the team answers a partner from the Agents page (portal chat; WhatsApp too when the 24-hour window is open)

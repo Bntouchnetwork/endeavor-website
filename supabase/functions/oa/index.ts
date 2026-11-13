@@ -4,14 +4,14 @@
 //       one envelope per signer, in sequence) -> signed -> archived (signed PDF + evidence in the company folder).
 // Reuses: envelopes/envelope_events + the `esign` function (signing), client-docs + company_documents (archive),
 // admin_events (bell), audit_log (protected trail), operating_agreements realtime (both portals update automatically).
-// Secrets: ANTHROPIC_API_KEY (or OPENAI_API_KEY), OA_MODEL / OA_OPENAI_MODEL (optional), RESEND_API_KEY + OA_EMAIL_FROM (optional, co-signer e-mails), SITE_URL.
+// Secrets: HUB_AI_API_KEY (AI through Endeavor's HUB AI: agents "oa-drafting" and "oa-extraction"), RESEND_API_KEY + OA_EMAIL_FROM (optional, co-signer e-mails), SITE_URL.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
 import "./oa-rules.js";
 import "./oa-render.js";
-import { meter } from "../_shared/ai-meter.ts";
-meter("oa"); // Hub AI: records tokens and cost of this agent
+import { hubExecute, hubOn } from "../_shared/hub-ai.ts";
+import { extractText, getDocumentProxy } from "npm:unpdf@0.12.1";
 
 const R: any = (globalThis as any).EOARules;
 const RENDER: any = (globalThis as any).EOARender;
@@ -19,9 +19,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY") || "sb_publishable_BXyVbQtTEpA5cmJHQiIl4A_4DO1quqO";
 const SITE = (Deno.env.get("SITE_URL") || "https://endeavorbiz.com").replace(/\/$/, "");
-const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
-const OPENAI = Deno.env.get("OPENAI_API_KEY") || "";
-const AI_MODEL = ANTHROPIC ? (Deno.env.get("OA_MODEL") || "claude-sonnet-5-5") : (Deno.env.get("OA_OPENAI_MODEL") || "gpt-4.1");
+const AI_ON = hubOn();
+const AI_MODEL = "hub:oa-drafting";
 const RESEND = Deno.env.get("RESEND_API_KEY") || "";
 const MAIL_FROM = Deno.env.get("OA_EMAIL_FROM") || "Endeavor Business Solutions <support@endeavorbiz.com>";
 const CONSENT_VERSION = "2026-11-05";
@@ -103,23 +102,17 @@ async function seedRules() {
 
 /* ---------------- AI (official APIs) ---------------- */
 function parseJson(t: string) { const s = t.indexOf("{"), e = t.lastIndexOf("}"); if (s < 0 || e < s) throw new Error("no_json"); return JSON.parse(t.slice(s, e + 1)); }
-async function ai(system: string, content: any[], maxTokens = 12000) {
-  if (ANTHROPIC) {
-    const r = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: AI_MODEL, max_tokens: maxTokens, temperature: 0, system, messages: [{ role: "user", content }] }) });
-    const j = await r.json();
-    if (!r.ok) throw new Error("anthropic " + r.status + " " + (j?.error?.message || ""));
-    return { text: (j.content || []).filter((b: any) => b.type === "text").map((b: any) => b.text).join(""), provider: "anthropic", model: j.model || AI_MODEL, id: j.id, usage: j.usage };
-  }
-  if (OPENAI) {
-    const parts = content.map((b: any) => b.type === "document" ? { type: "file", file: { filename: "articles.pdf", file_data: "data:application/pdf;base64," + b.source.data } } : { type: "text", text: b.text });
-    const r = await fetch("https://api.openai.com/v1/chat/completions", { method: "POST", headers: { Authorization: "Bearer " + OPENAI, "content-type": "application/json" },
-      body: JSON.stringify({ model: AI_MODEL, temperature: 0, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: parts }] }) });
-    const j = await r.json();
-    if (!r.ok) throw new Error("openai " + r.status + " " + (j?.error?.message || ""));
-    return { text: j.choices?.[0]?.message?.content || "", provider: "openai", model: j.model || AI_MODEL, id: j.id, usage: j.usage };
-  }
-  throw new Error("ai_not_configured");
+// AI calls go through the HUB AI (text in, text out). The agent's instructions live in the HUB; the provenance kept
+// in the OA version records the HUB agent and request id.
+async function ai(agent: string, text: string, maxTokens = 12000) {
+  const r = await hubExecute({ agent, input: text, userId: "endeavor-oa", idempotencyKey: `endeavor-oa-${agent}-${crypto.randomUUID()}`, task: agent, maxOutputTokens: maxTokens, timeoutMs: 140_000, meter: { agent: "oa" } });
+  if (r.kind !== "ok") throw new Error("hub " + r.kind + ("code" in r ? " " + r.code : ""));
+  return { text: r.output, provider: "hub", model: "hub:" + agent, id: r.requestId, usage: null };
+}
+async function pdfText(bytes: Uint8Array) {
+  const pdf = await getDocumentProxy(bytes);
+  const { text } = await extractText(pdf, { mergePages: true });
+  return String(Array.isArray(text) ? text.join("\n") : text || "").replace(/[ \t]+/g, " ").trim();
 }
 const b64 = (u: Uint8Array) => { let s = ""; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); };
 
@@ -134,14 +127,15 @@ async function prefill(oa: any) {
   let articles: any = null, note = "";
   const { data: docs } = await admin.from("company_documents").select("id, title, path, mime").eq("company_id", oa.company_id).eq("category", "formation").order("created_at", { ascending: false });
   const art = (docs || []).find((d: any) => /\.pdf$/i.test(d.path) && /articles|certificate of formation|formation|organiza|constitui|arquivamento/i.test(d.title));
-  if (art && (ANTHROPIC || OPENAI)) {
+  if (art && AI_ON) {
     try {
       const { data: f } = await admin.storage.from("client-docs").download(art.path);
       const bytes = new Uint8Array(await f!.arrayBuffer());
       if (bytes.length < 9_000_000) {
-        const r = await ai("You extract facts from a U.S. limited liability company formation filing (Articles of Organization or Certificate of Formation). Return only JSON. Use null for anything not printed in the document. Never guess.",
-          [{ type: "document", source: { type: "base64", media_type: "application/pdf", data: b64(bytes) } },
-           { type: "text", text: 'Return JSON: {"legal_name":string|null,"state":"two-letter code"|null,"filing_number":string|null,"formation_date":"YYYY-MM-DD"|null,"principal_address":string|null,"registered_agent":string|null,"management":"member"|"manager"|null,"listed_managers_or_members":[string],"document_type":string|null}. "management" only if the document states whether the company is managed by managers or by members.' }], 1500);
+        // the HUB is text-only: the PDF's text is extracted here (scanned PDFs without text are skipped)
+        const txt = (await pdfText(bytes)).slice(0, 60000);
+        if (txt.length < 80) throw new Error("pdf_without_text");
+        const r = await ai("oa-extraction", "Document text:\n" + txt + '\n\nReturn JSON: {"legal_name":string|null,"state":"two-letter code"|null,"filing_number":string|null,"formation_date":"YYYY-MM-DD"|null,"principal_address":string|null,"registered_agent":string|null,"management":"member"|"manager"|null,"listed_managers_or_members":[string],"document_type":string|null}. "management" only if the document states whether the company is managed by managers or by members.', 1500);
         articles = parseJson(r.text);
         articles._ai = { provider: r.provider, model: r.model, id: r.id, document_id: art.id };
       }
@@ -168,15 +162,8 @@ function sanitizeAnswers(rs: any, input: any, prev: any) {
   }
   return out;
 }
-const SYSTEM = [
-  "You are drafting a U.S. limited liability company operating agreement for Endeavor Business Solutions.",
-  "You may ONLY use the approved clauses supplied in the input. Each clause has a rule id, a title and an approved model text that already contains the client's facts.",
-  "For every clause, return a final text that has exactly the same legal effect as the model text, adapted for clarity and consistency with the other clauses (defined terms, singular/plural, cross-references).",
-  "Do not add, remove or change any right, obligation, threshold, percentage, number, deadline, name, statute or election. Do not add provisions, warranties, recitals or legal advice that are not in the model texts.",
-  "Keep every name, number, percentage, dollar amount and section reference of the model text exactly as written. Use plain, professional U.S. legal English. No markdown.",
-  "If a clause cannot be drafted from the facts given, or two clauses conflict, keep the model text and add a short explanation to review_reasons and set needs_review to true.",
-  'Return only JSON: {"sections":[{"rule":"<rule id>","text":"<final text>"}],"needs_review":boolean,"review_reasons":[string]} with one entry per supplied rule id, in the same order.'
-].join("\n");
+// The drafting rules live in the HUB AI agent "oa-drafting" (only approved clauses, same legal effect, JSON answer).
+const DRAFT_AGENT = "oa-drafting";
 async function draft(oaId: string, opts: { reasons?: any[]; notes?: string; actor: string; ctx?: Ctx | null }) {
   const oa = await loadOA(oaId);
   try {
@@ -188,14 +175,14 @@ async function draft(oaId: string, opts: { reasons?: any[]; notes?: string; acto
     let source = "template", prov: any = null, promptHash: string | null = null;
     const reasons: any[] = (opts.reasons || []).slice();
     if (!rsInfo.approved) reasons.push({ q: "state", code: "rules_not_approved" });
-    if (ANTHROPIC || OPENAI) {
+    if (AI_ON) {
       const { data: comments } = await admin.from("oa_comments").select("section, body").eq("oa_id", oa.id).is("resolved_at", null);
       const clauses: any[] = []; model.articles.forEach((a: any) => a.sections.forEach((s: any) => clauses.push({ rule: s.rule, article: a.title, title: s.title, model_text: s.model, references: s.refs.map((x: any) => x.cite) })));
       const input = { company: model.company, state: rs.state_name, governing_act: rs.act, single_member: model.single, approved_clauses: clauses, reviewer_notes: opts.notes || null, client_comments: (comments || []).map((c: any) => ({ section: c.section, comment: c.body })) };
       const prompt = JSON.stringify(input);
-      promptHash = await sha256(SYSTEM + "\n" + prompt);
+      promptHash = await sha256("hub:" + DRAFT_AGENT + "\n" + prompt);
       try {
-        const r = await ai(SYSTEM, [{ type: "text", text: prompt }]);
+        const r = await ai(DRAFT_AGENT, prompt);
         const out = parseJson(r.text);
         prov = { provider: r.provider, model: r.model, id: r.id, usage: r.usage };
         const byRule: Record<string, string> = {}; (out.sections || []).forEach((s: any) => { if (s && typeof s.text === "string") byRule[s.rule] = s.text.trim(); });
@@ -375,7 +362,7 @@ async function handle(req: Request, body: any) {
     const signers = (oa.signers || []).map((s: any) => ({ name: s.name, capacity: s.capacity, status: s.status, signed_at: s.signed_at || null, me: s.email === ctx.c.email, email: ctx.role === "admin" || s.email === ctx.c.email ? s.email : undefined }));
     return { oa: { ...oa, signers, answers: oa.answers, companies: undefined, clients: undefined }, company: oa.companies, client: { name: oa.clients?.name, language: oa.clients?.language },
       rules: rsInfo ? { ...rsInfo.rs, clauses: ctx.role === "admin" ? rsInfo.rs.clauses : undefined, approved: rsInfo.approved, rule_set_id: rsInfo.id } : null,
-      versions: (versions || []).map((v: any) => ctx.role === "admin" || v.final || v.version === oa.version ? v : { ...v, content: undefined }), comments: comments || [], ai_configured: !!(ANTHROPIC || OPENAI), email_configured: !!RESEND, reviewer: ctx.c.isReviewer };
+      versions: (versions || []).map((v: any) => ctx.role === "admin" || v.final || v.version === oa.version ? v : { ...v, content: undefined }), comments: comments || [], ai_configured: AI_ON, email_configured: !!RESEND, reviewer: ctx.c.isReviewer };
   }
 
   if (a === "pdf") {
@@ -564,7 +551,7 @@ async function handle(req: Request, body: any) {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (req.method !== "POST") return json({ ok: true, ai: !!(ANTHROPIC || OPENAI), model: AI_MODEL, email: !!RESEND });
+  if (req.method !== "POST") return json({ ok: true, ai: AI_ON, model: AI_MODEL, email: !!RESEND });
   let body: any = {};
   try { body = await req.json(); } catch { return json({ error: "bad_request" }, 400); }
   try { return json(await handle(req, body)); }

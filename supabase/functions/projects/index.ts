@@ -6,15 +6,13 @@
 // Rules: nothing is built before the payment is confirmed by Stripe; nothing goes to production without the client's approval.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { meter, record, withAiContext } from "../_shared/ai-meter.ts";
+import { record } from "../_shared/ai-meter.ts";
+import { hubExecute, hubOn, parseJsonLoose } from "../_shared/hub-ai.ts";
 import { btn, esc, layout, sendMail } from "../payments/access-mail.ts";
-meter("project-manager");
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY") || "sb_publishable_BXyVbQtTEpA5cmJHQiIl4A_4DO1quqO";
-const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
-const PM_MODEL = Deno.env.get("PROJECTS_MODEL") || "claude-sonnet-5-5";
 const GH_TOKEN = Deno.env.get("GITHUB_TOKEN") || "";
 const GH_OWNER = Deno.env.get("GITHUB_OWNER") || "";
 const HOOK_KEY = Deno.env.get("PROJECTS_HOOK_KEY") || "";
@@ -45,31 +43,15 @@ async function team(subject: string, lines: string[], link: string) {
 async function settings() { const { data } = await db.from("ai_limits").select("*").eq("id", 1).single(); return data || { project_hour_usd: 85, project_min_usd: 1500, update_price_usd: 450, monthly_cap_usd: 300, alert_pct: 80 }; }
 
 // ---------------- AI Project Manager ----------------
-const PM_TOOL = {
-  name: "update_plan",
-  description: "Save the current understanding of the project: scope, phases with tasks and hour estimates, timeline, and what is still unclear. Call it every time the plan changes.",
-  input_schema: { type: "object", properties: {
-    summary: { type: "string", description: "2-5 sentences describing what will be built, in the client's language" },
-    phases: { type: "array", items: { type: "object", properties: { name: { type: "string" }, weeks: { type: "number" }, tasks: { type: "array", items: { type: "object", properties: { title: { type: "string" }, detail: { type: "string" }, hours: { type: "number" } }, required: ["title", "hours"] } } }, required: ["name", "tasks"] } },
-    weeks: { type: "number", description: "total calendar weeks for the first functional version" },
-    out_of_scope: { type: "array", items: { type: "string" } },
-    assumptions: { type: "array", items: { type: "string" } },
-    open_questions: { type: "array", items: { type: "string" } },
-    ready_for_proposal: { type: "boolean", description: "true only when the scope is clear enough to price" },
-  }, required: ["summary", "phases", "ready_for_proposal"] },
-};
-function pmSystem(p: Any, lang: string, connectors: Any[]) {
+// The AI Project Manager's instructions live in the HUB AI agent "project-manager". Each turn sends a [Project context]
+// block (language, project, current plan, integrations) plus the conversation; the agent answers the client and appends
+// the complete plan as JSON between <plan> and </plan>, which is saved here and never shown to the client.
+function pmContext(p: Any, lang: string, connectors: Any[]) {
   const L = { pt: "Portuguese (Brazil)", en: "English", es: "Spanish" }[lang] || "Portuguese (Brazil)";
-  return `You are the AI Project Manager of Endeavor Business Solutions (Orlando, FL). Endeavor builds business platforms (web apps, portals, internal systems, automations) for its clients with AI development agents; the client never codes. You are dedicated to this project.
-Always answer in ${L}, warm and professional, short paragraphs, at most one or two questions per message.
-Your job: understand the business goal, users, main features, data, integrations, branding and any deadline; then define scope, phases, tasks with hour estimates and a timeline. Call update_plan whenever the plan changes. When the scope is clear, set ready_for_proposal=true and tell the client they can click "Request proposal".
-How Endeavor works (explain when useful): the first functional version plus 3 updates within the contracted scope are included; from the 4th update each update is charged; anything outside the scope gets its own quote. Every version is published first on a test address (staging) for the client to review; production only after the client's explicit approval. Development starts only after the invoice is paid.
-Hosting: Firebase (Google), code in GitHub. Integrations available for this client: ${connectors.map((c) => c.name).join(", ") || "none yet"}. Endeavor Bookkeeping is a separate service, never an integration of a project.
-Never state prices, hourly rates or totals: Endeavor reviews the estimate and sends the proposal with the price. Never ask for passwords, API keys, bank or card numbers, SSN/ITIN or passport numbers; credentials are configured later through the secure connectors area. Do not promise legal, tax or immigration outcomes.
-Project: "${p.title}". Client's brief: ${p.brief || "(none yet)"}. Requirements captured: ${JSON.stringify(p.requirements || {})}. Current plan: ${JSON.stringify(p.scope || {})}.`;
+  return `[Project context]\nClient language: ${L}.\nProject: "${p.title}". Client's brief: ${p.brief || "(none yet)"}.\nRequirements captured: ${JSON.stringify(p.requirements || {})}.\nIntegrations available for this client: ${connectors.map((c) => c.name).join(", ") || "none yet"}.\nCurrent plan: ${JSON.stringify(p.scope || {})}.\n[/Project context]`;
 }
 async function pmTurn(p: Any, lang: string) {
-  if (!ANTHROPIC) throw new Fail("ai_not_configured", 503);
+  if (!hubOn()) throw new Fail("ai_not_configured", 503);
   const { data: msgs } = await db.from("ai_project_messages").select("role, content").eq("project_id", p.id).in("role", ["client", "pm", "admin"]).order("created_at").limit(60);
   const messages: Any[] = [];
   for (const m of msgs ?? []) {
@@ -80,22 +62,13 @@ async function pmTurn(p: Any, lang: string) {
   }
   if (!messages.length || messages[0].role !== "user") messages.unshift({ role: "user", content: `New project: ${p.title}. ${p.brief || ""}` });
   const { data: conns } = await db.rpc("project_connectors_internal", { p_company: p.company_id });
-  let reply = "", plan: Any = null;
-  for (let turn = 0; turn < 3; turn++) {
-    const r = await withAiContext({ project_id: p.id, client_id: p.client_id, company_id: p.company_id }, () => fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST", headers: { "x-api-key": ANTHROPIC, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: PM_MODEL, max_tokens: 4000, system: pmSystem(p, lang, conns || []), messages, tools: [PM_TOOL], tool_choice: { type: "auto" } }) }));
-    const j = await r.json().catch(() => null);
-    if (!r.ok || !j) throw new Fail("ai_error", 502, j?.error?.message || String(r.status));
-    const text = (j.content || []).filter((b: Any) => b.type === "text").map((b: Any) => b.text).join("\n").trim();
-    const use = (j.content || []).find((b: Any) => b.type === "tool_use");
-    if (text) reply = reply ? reply + "\n\n" + text : text;
-    if (!use) break;
-    plan = use.input;
-    messages.push({ role: "assistant", content: j.content });
-    messages.push({ role: "user", content: [{ type: "tool_result", tool_use_id: use.id, content: "Plan saved." }] });
-    if (j.stop_reason !== "tool_use") break;
-  }
+  messages[0].content = pmContext(p, lang, conns || []) + "\n\n" + messages[0].content;
+  const r = await hubExecute({ agent: "project-manager", messages, userId: `project:${p.id}`, idempotencyKey: `endeavor-pm-${p.id}-${crypto.randomUUID()}`, task: "project_scoping",
+    maxOutputTokens: 5000, timeoutMs: 120_000, meter: { agent: "project-manager", project_id: p.id, client_id: p.client_id, company_id: p.company_id } });
+  if (r.kind !== "ok") throw new Fail(r.kind === "limit" ? "ai_limit_reached" : "ai_error", r.kind === "limit" ? 409 : 502, "code" in r ? r.code : r.kind);
+  const m = r.output.match(/<plan>([\s\S]*?)<\/plan>/i);
+  const plan: Any = m ? parseJsonLoose(m[1]) ?? null : null;
+  const reply = r.output.replace(/<plan>[\s\S]*?(<\/plan>|$)/gi, "").trim();
   if (plan) {
     const hours = (plan.phases || []).reduce((s: number, ph: Any) => s + (ph.tasks || []).reduce((t: number, k: Any) => t + (Number(k.hours) || 0), 0), 0);
     const s = await settings();

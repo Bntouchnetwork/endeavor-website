@@ -229,7 +229,7 @@
     var draw = function () { var r = renderTpl(data, $('#tv-lang', o).value, st); $('#tv-subject', o).innerHTML = '<strong>Assunto:</strong> ' + esc(r.subject); $('#tv-frame', o).srcdoc = r.html; };
     $('#tv-lang', o).onchange = draw; draw();
   }
-  var AI_ERR = { no_ai_key: 'A IA ainda não está conectada: falta a chave ANTHROPIC_API_KEY no Supabase (Edge Functions → Secrets), a mesma do Operating Agreement. Assim que ela for adicionada, este botão funciona.', brief: 'Descreva o e-mail com um pouco mais de detalhe.', ai_format: 'A IA respondeu num formato inesperado. Tente de novo.', ai_failed: 'A IA não respondeu agora. Tente de novo em instantes.' };
+  var AI_ERR = { no_ai_key: 'A IA ainda não está conectada: falta a chave HUB_AI_API_KEY (HUB AI) no Supabase (Edge Functions → Secrets). Assim que ela for adicionada, este botão funciona.', brief: 'Descreva o e-mail com um pouco mais de detalhe.', ai_format: 'A IA respondeu num formato inesperado. Tente de novo.', ai_failed: 'A IA não respondeu agora. Tente de novo em instantes.' };
   // existing: template row to adjust (or null to create); done(savedRow)
   function aiCreator(existing, done) {
     var st = null, data = existing ? existing.data : null;
@@ -522,7 +522,7 @@
       '<div class="portal-alert" id="ms-msg" role="status"></div><button class="btn btn--navy" type="button" id="ms-save">Salvar</button>';
     $('#ses-check').onclick = async function () {
       var b = this; b.disabled = true; var j = await fnCall({ action: 'status' }); b.disabled = false;
-      if (!j.error) { $('#ai-st').textContent = j.ai ? 'Conectada: a IA cria templates na aba Templates.' : 'Pendente: falta a chave ANTHROPIC_API_KEY no Supabase (a mesma do Operating Agreement).'; $('#ai-badge').textContent = j.ai ? 'Ativa' : 'Pendente'; $('#ai-badge').className = 'badge badge--' + (j.ai ? 'client' : 'new'); }
+      if (!j.error) { $('#ai-st').textContent = j.ai ? 'Conectada: a IA cria templates na aba Templates.' : 'Pendente: falta a chave HUB_AI_API_KEY (HUB AI) no Supabase.'; $('#ai-badge').textContent = j.ai ? 'Ativa' : 'Pendente'; $('#ai-badge').className = 'badge badge--' + (j.ai ? 'client' : 'new'); }
       ctx.msg($('#ms-msg'), j.ses ? 'Amazon SES conectada.' : j.error ? 'Não foi possível verificar: ' + j.error : 'Ainda não conectada: faltam os segredos SES_SMTP_HOST, SES_SMTP_USER e SES_SMTP_PASS no Supabase.', j.ses ? 'ok' : 'error');
       if (j.ses && !st.ses_connected) { st.ses_connected = true; $('#ses-st').textContent = 'Conectada: as campanhas saem pela Amazon SES.'; }
     };
