@@ -4,7 +4,10 @@
 // The key is the Supabase secret HUB_AI_API_KEY (never in code).
 
 const BASE = (Deno.env.get("HUB_AI_URL") || "https://ciqmeyngbbpjowmsjxhj.supabase.co/functions/v1/hub").replace(/\/$/, "");
-const KEY = Deno.env.get("HUB_AI_API_KEY") || "";
+// tolerate a value pasted with quotes, spaces or "NAME=" in front: use the hub_live_ token inside it
+const RAW_KEY = (Deno.env.get("HUB_AI_API_KEY") || "").trim();
+const KEY = (RAW_KEY.match(/hub_live_[A-Za-z0-9_\-]+/) || [RAW_KEY.replace(/^["']|["']$/g, "")])[0];
+if (RAW_KEY && !KEY.startsWith("hub_live_")) console.error(`HUB_AI_API_KEY is set but does not contain a hub_live_ key (length ${RAW_KEY.length}, starts with "${RAW_KEY.slice(0, 4).replace(/[A-Za-z0-9]/g, "x")}")`);
 export const HUB_AGENT = Deno.env.get("HUB_AI_AGENT") || "customer-service";
 export const hubOn = () => KEY.length > 10;
 
