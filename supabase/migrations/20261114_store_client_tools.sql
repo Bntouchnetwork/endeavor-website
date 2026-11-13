@@ -26,9 +26,9 @@ insert into public.store_products (code, price_cents, interval, status, sort) va
 on conflict (code) do nothing;
 alter table public.store_products enable row level security;
 drop policy if exists sp_public_read on public.store_products;
-create policy sp_public_read on public.store_products for select using (status <> 'hidden' or public.is_admin());
+create policy sp_public_read on public.store_products for select using (status <> 'hidden'); -- visitors (anon) cannot call is_admin()
 drop policy if exists sp_admin on public.store_products;
-create policy sp_admin on public.store_products for all using (public.is_admin()) with check (public.is_admin());
+create policy sp_admin on public.store_products for all to authenticated using (public.is_admin()) with check (public.is_admin());
 grant select on public.store_products to anon, authenticated;
 
 create table if not exists public.store_orders (
