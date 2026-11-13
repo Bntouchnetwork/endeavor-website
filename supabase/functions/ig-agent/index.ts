@@ -8,6 +8,7 @@
 // - Video (Reels / video Stories) is prepared for Creatomate + ElevenLabs and HeyGen and stays off until their keys exist.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { meter } from "../_shared/ai-meter.ts";
+import { hubExecute, hubOn } from "../_shared/hub-ai.ts"; // customer replies (comments, DMs) go through the HUB AI Customer Service Agent
 meter("ig-agent"); // Hub AI: records tokens and cost of this agent
 
 // deno-lint-ignore no-explicit-any
@@ -17,7 +18,6 @@ const SB_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const SB_ANON = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 const ANTHROPIC = Deno.env.get("ANTHROPIC_API_KEY") || "";
 const MODEL = Deno.env.get("IG_MODEL") || "claude-sonnet-5-5";
-const REPLY_MODEL = Deno.env.get("IG_REPLY_MODEL") || "claude-haiku-5-5";
 const IG_TOKEN = Deno.env.get("IG_ACCESS_TOKEN") ?? "", IG_USER = Deno.env.get("IG_USER_ID") ?? "";
 const IG_HOST = (Deno.env.get("IG_GRAPH_HOST") || "https://graph.facebook.com").replace(/\/$/, ""), IG_VER = Deno.env.get("IG_API_VERSION") || "v21.0";
 const IG_VERIFY = Deno.env.get("IG_VERIFY_TOKEN") ?? "", IG_SECRET = Deno.env.get("IG_APP_SECRET") || Deno.env.get("WHATSAPP_APP_SECRET") || "";
@@ -209,13 +209,26 @@ async function publishDue() {
 }
 
 /* ---------- comments and DMs ---------- */
-const REPLY_RULES = `You are the Endeavor Business Solutions account replying on Instagram. Reply in the language of the message (pt = Brazilian Portuguese). Warm, short and human: comments max 25 words (public), DMs max 70 words. Never give prices: say the team sends a personalized proposal. Never ask for or accept SSN, ITIN, passport, CPF or bank numbers. No legal, tax, immigration or investment advice: explain generally and invite to a free call (https://endeavorbiz.com/schedule.html) or to the team. Never promise visas or results.
-Comments: thank, answer briefly, and invite to DM ("te chamei no direct" is not allowed; say "manda um direct" or "link na bio"). Ignore spam/insults: reply with exactly [[SKIP]].
-DMs: understand the need, answer, and when they want a proposal ask for their full name and e-mail in the DM and end with [[LEAD]]. If they ask for a person or it is a complaint/client issue, say the team will reply and end with [[HUMAN]].`;
-async function aiReply(kind: "comment" | "dm", text: string, history: string) {
-  if (!ANTHROPIC) return null;
-  const t = await claude(REPLY_RULES + "\n\nFacts:\n" + BRAND, (history ? "Conversation so far:\n" + history + "\n\n" : "") + `New ${kind === "dm" ? "direct message" : "comment"}: "${text.slice(0, 1000)}"\nWrite only the reply.`, { max: 400, model: REPLY_MODEL });
-  return t.slice(0, 1000);
+// Replies to comments and DMs come from Endeavor's central HUB AI ("Customer Service Agent"), which holds the prompt,
+// model, limits and memory (one session per Instagram thread). Tokens understood at the end of a reply:
+// [[LEAD]] (asked for name and e-mail), [[HUMAN]] (team takes over), [[SKIP]] (spam: no reply).
+type Reply = { text: string | null; review?: boolean };
+async function aiReply(kind: "comment" | "dm", text: string, ref: { thread: string; msgId: string }): Promise<Reply> {
+  if (!hubOn()) return { text: null };
+  const r = await hubExecute({
+    input: text.slice(0, 1000),
+    sessionId: kind === "dm" ? `endeavor-ig-dm-${ref.thread}` : `endeavor-ig-comment-${ref.msgId}`,
+    userId: `instagram:${ref.thread || "unknown"}`,
+    idempotencyKey: `endeavor-ig-${kind}-${ref.msgId}`,      // Instagram's own message/comment id: webhook retries never run twice
+    task: kind === "dm" ? "instagram_dm" : "instagram_comment",
+    metadata: { channel: kind === "dm" ? "instagram_dm" : "instagram_comment", public_reply: kind === "comment", max_words: kind === "dm" ? 70 : 25 },
+    maxOutputTokens: kind === "dm" ? 350 : 120,
+  });
+  if (r.kind === "ok") return { text: r.output.slice(0, 1000) };
+  if (r.kind === "review") return { text: null, review: true };
+  if (r.kind === "blocked") return { text: "[[SKIP]]" };
+  console.error("ig hub", r);
+  return { text: null };                                       // limit, rate or error: no automatic reply, the message stays in the inbox
 }
 async function hmacOk(raw: string, sig: string | null) {
   if (!IG_SECRET || !sig?.startsWith("sha256=")) return false;
@@ -230,7 +243,10 @@ async function handleComment(v: Row) {
   const cfg: Row = (await db.from("ig_settings").select("auto_reply").eq("id", 1).single()).data ?? {};
   if (!cfg.auto_reply || !igOn()) return;
   try {
-    const r = await aiReply("comment", String(v.text || ""), "");
+    const ar = await aiReply("comment", String(v.text || ""), { thread: String(v.from?.id || ""), msgId: String(v.id) });
+    if (ar.review) { await db.from("ig_inbox").update({ status: "handoff" }).eq("id", ins.data.id); await db.from("admin_events").insert({ kind: "lead_chat", title: "Instagram: comentário para revisão da equipe", body: String(v.text || "").slice(0, 300), link: "#/instagram?tab=inbox" }); return; }
+    if (!ar.text) { await db.from("ig_inbox").update({ status: "failed", error: "hub_unavailable" }).eq("id", ins.data.id); return; }
+    const r = ar.text.replace(/\s*\[\[(LEAD|HUMAN)\]\]\s*/g, " ").trim();
     if (!r || /\[\[SKIP\]\]/.test(r)) { await db.from("ig_inbox").update({ status: "ignored" }).eq("id", ins.data.id); return; }
     await graph(`${v.id}/replies`, { message: r });
     await db.from("ig_inbox").update({ reply: r, replied_at: new Date().toISOString(), status: "replied" }).eq("id", ins.data.id);
@@ -259,8 +275,11 @@ async function handleDm(m: Row) {
   const cfg: Row = (await db.from("ig_settings").select("auto_reply").eq("id", 1).single()).data ?? {};
   if (!cfg.auto_reply || !igOn()) return;
   try {
-    let r = await aiReply("dm", text, past.map((h) => "Them: " + (h.text || "") + (h.reply ? "\nYou: " + h.reply : "")).join("\n"));
-    if (!r) return;
+    const ar = await aiReply("dm", text, { thread: from, msgId: String(m.message?.mid || ins.data.id) });
+    if (ar.review) { await db.from("ig_inbox").update({ status: "handoff" }).eq("id", ins.data.id); await db.from("admin_events").insert({ kind: "lead_chat", title: "Instagram: direct para revisão da equipe", body: text.slice(0, 300), link: "#/instagram?tab=inbox" }); return; }
+    if (!ar.text) { await db.from("ig_inbox").update({ status: "failed", error: "hub_unavailable" }).eq("id", ins.data.id); return; }
+    let r = ar.text;
+    if (/\[\[SKIP\]\]/.test(r)) { await db.from("ig_inbox").update({ status: "ignored" }).eq("id", ins.data.id); return; }
     const handoff = /\[\[HUMAN\]\]/.test(r);
     r = r.replace(/\s*\[\[(LEAD|HUMAN|SKIP)\]\]\s*/g, " ").trim();
     if (em && askedLead && !hasLead) r = r || "Recebemos! A nossa equipe vai enviar a proposta por e-mail.";
@@ -304,7 +323,7 @@ Deno.serve(async (req) => {
     const { data: isAdmin } = await user.rpc("is_admin");
     if (!isAdmin) return json({ error: "forbidden" }, 403);
     const by = (await user.auth.getUser()).data.user?.email ?? "admin";
-    if (b.action === "status") return json({ ai: !!ANTHROPIC, instagram: igOn(), webhook: !!(IG_VERIFY && IG_SECRET), video: VIDEO_KEYS });
+    if (b.action === "status") return json({ ai: !!ANTHROPIC, hub: hubOn(), instagram: igOn(), webhook: !!(IG_VERIFY && IG_SECRET), video: VIDEO_KEYS });
     if (b.action === "plan") { const r = await plan(by, b); return json(r, (r as Row).error ? 400 : 200); }
     if (b.action === "redo") { const r = await redo(String(b.id || ""), String(b.feedback || "").trim() || "Melhore o gancho e a arte.", by); return json(r, (r as Row).error ? 400 : 200); }
     if (b.action === "publish_now") {
