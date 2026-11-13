@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Checkout | Endeavor Business Solutions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20261114">
+  <link rel="stylesheet" href="portal.css?v=20261114">
+  <style>
+    .buy { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+    @media (min-width: 900px) { .buy { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr); } }
+    .buy__sum h1 { font-family: var(--font-serif); font-size: clamp(1.6rem, 1.3rem + 1.2vw, 2.2rem); line-height: 1.15; margin: .35rem 0 .5rem; color: var(--ink); }
+    .buy__price { display: flex; align-items: baseline; gap: .3rem; margin: 1rem 0; color: var(--ink); }
+    .buy__price strong { font-family: var(--font-serif); font-size: 2.4rem; line-height: 1; }
+    .buy__feats { display: grid; gap: .5rem; margin: 0 0 1rem; padding: 0; list-style: none; }
+    .buy__feats li { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr); gap: .5rem; }
+    .buy__feats li::before { content: "✓"; color: var(--gold-ink); font-weight: 700; }
+    .buy__steps { display: flex; gap: .5rem; margin: 0 0 1rem; padding: 0; list-style: none; font-size: .85rem; color: var(--muted); flex-wrap: wrap; }
+    .buy__steps li { display: flex; align-items: center; gap: .35rem; }
+    .buy__steps li span { display: inline-grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--gray-100); color: var(--navy-900); font-weight: 700; font-size: .78rem; }
+    .buy__steps li.is-on { color: var(--ink); font-weight: 600; }
+    .buy__steps li.is-on span { background: var(--navy-900); color: #fff; }
+    .buy__secure { display: flex; gap: .5rem; align-items: flex-start; font-size: .85rem; color: var(--muted); margin-top: 1rem; }
+    #checkout { min-height: 22rem; }
+    .buy__done { text-align: center; padding: 1rem 0; }
+    .buy__done .ok { display: inline-grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: #e6f4ea; color: var(--success); font-size: 1.8rem; font-weight: 700; margin-bottom: .75rem; }
+    .buy__done ol { text-align: left; max-width: 32rem; margin: 1rem auto; display: grid; gap: .45rem; }
+    .buy__check { display: flex; gap: .55rem; align-items: flex-start; font-size: .9rem; }
+    .buy__check input { margin-top: .25rem; width: 1.05rem; height: 1.05rem; flex: none; }
+    .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .buy > * { margin-top: 0 !important; }
+  </style>
+</head>
+<body class="portal">
+<a class="skip-link" href="#main" data-t="skip">Skip to content</a>
+<header class="portal-top">
+  <div class="portal-top__inner">
+    <a href="index.html" id="home-link"><img class="portal-top__logo" src="logo-endeavor.svg" alt="Endeavor Business Solutions" width="950" height="180"></a>
+    <nav class="lang-mini" aria-label="Language">
+      <a href="#" data-lang="en">EN</a>
+      <a href="#" data-lang="pt">PT</a>
+      <a href="#" data-lang="es">ES</a>
+    </nav>
+  </div>
+</header>
+<main class="portal-main" id="main" tabindex="-1" style="max-width:72rem">
+  <div id="app" aria-live="polite"><p class="portal-muted" data-t="loading">Loading…</p></div>
+</main>
+<p class="portal-muted" style="text-align:center;font-size:.85rem;margin:2rem 1rem">Endeavor Business Solutions · 111 N. Orange Ave, Suite 800, Orlando, FL 32801 · support@endeavorbiz.com · +1 (407) 436-9567</p>
+<script src="app-config.js"></script>
+<script src="comprar.js?v=20261114"></script>
+</body>
+</html>

@@ -8,6 +8,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { accessEmail, accessMailOn, sendAccessMail, sendMail, sendWa, type AccessKind } from "./access-mail.ts";
+import { store, type StoreDeps } from "./store.ts";
 import { achEmail, failedEmail, intakeEmail, invoiceEmail, money as fmtMoney, proposalEmail, receiptEmail, teamEmail } from "./billing-mail.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -223,7 +224,7 @@ async function insertSubscriptionInvoice(inv: any) {
   if (!clientId) { try { const cus = await stripe("GET", `/customers/${inv.customer}`); clientId = cus?.metadata?.client_id || null; } catch { /* ignore */ } }
   if (!clientId) return null;
   const items = (inv.lines?.data || []).map((l: any) => ({ description: String(l.description || "Monthly maintenance").slice(0, 300), amount_cents: l.amount, quantity: 1, recurring: l.price?.recurring ? "month" : undefined }));
-  const { data } = await admin.from("invoices").insert({ client_id: clientId, kind: "subscription", stripe_invoice_id: inv.id, stripe_subscription_id: inv.subscription, items, description: "Manutenção mensal",
+  const { data } = await admin.from("invoices").insert({ client_id: clientId, kind: "subscription", stripe_invoice_id: inv.id, stripe_subscription_id: inv.subscription, items, description: inv.subscription_details?.metadata?.store === "1" ? String(items[0]?.description || "Assinatura").slice(0, 300) : "Manutenção mensal",
     customer_email: inv.customer_email, partner_amount_cents: 0, transfer_status: "none", created_by: "stripe", sent_at: new Date().toISOString(), ...invoiceFields(inv) })
     .select("id, client_id, status, number, archive_path, transfer_status, partner_amount_cents, total_cents, currency, clients(name, primary_email)").single();
   // the monthly items keep the vendor cost set on the client's proposal (matched by amount)
@@ -372,7 +373,7 @@ function publicProposal(p: any) {
 const likeEsc = (v: string) => v.replace(/[\\%_]/g, (m) => "\\" + m);
 // Portal access e-mail: one-time link from the Admin API, sent by Endeavor in the client's language
 // (welcome with what the portal does and the authenticator steps, or password reset). Falls back to Supabase's own mail if no SMTP is set.
-async function sendAccess(email: string, page: string, lang: string, o: { kind?: AccessKind; name?: string; clientName?: string; reset?: boolean } = {}) {
+async function sendAccess(email: string, page: string, lang: string, o: { kind?: AccessKind; name?: string; clientName?: string; reset?: boolean; services?: string[] } = {}) {
   const l = ["pt", "en", "es"].includes(lang) ? lang : "pt";
   const redirectTo = `${SITE}/${page}?lang=${l}`;
   if (!accessMailOn()) {
@@ -395,7 +396,7 @@ async function sendAccess(email: string, page: string, lang: string, o: { kind?:
   const link = (gen.data as any)?.properties?.action_link;
   if (!link) throw new Fail("access_email_failed", 502, "no_link");
   const kind: AccessKind = o.kind || (page === "client.html" ? "client" : "collab");
-  await sendAccessMail(email, accessEmail({ lang: l, kind, reset: !!o.reset, name: o.name, clientName: o.clientName, link, page }));
+  await sendAccessMail(email, accessEmail({ lang: l, kind, reset: !!o.reset, name: o.name, clientName: o.clientName, link, page, services: o.services }));
   return kindOut;
 }
 // "Forgot password" on the portals: same branded e-mail; never says whether the address exists; at most 3 per hour per address
@@ -564,7 +565,7 @@ async function handle(req: Request, body: any) {
   if (a === "invoice_checkout" || a === "invoice_refresh") {
     const { data: row } = await c.user.from("invoices").select("id, stripe_invoice_id, status").eq("id", String(body.invoice_id || "")).maybeSingle();
     if (!row?.stripe_invoice_id) throw new Fail("not_found", 404);
-    if (a === "invoice_refresh") { const s = await syncInvoice(await stripe("GET", `/invoices/${row.stripe_invoice_id}`)); return { ok: true, status: s?.status }; }
+    if (a === "invoice_refresh") { const s = await syncInvoice(await stripe("GET", `/invoices/${row.stripe_invoice_id}`)); return { ok: true, status: (s as any)?.status }; }
     const inv = await stripe("GET", `/invoices/${row.stripe_invoice_id}`, { expand: ["payment_intent"] });
     await syncInvoice(inv);
     const base = { status: inv.status, hosted_invoice_url: inv.hosted_invoice_url || null, invoice_pdf: inv.invoice_pdf || null, amount_due: inv.amount_due, currency: inv.currency };
@@ -756,11 +757,39 @@ async function webhook(raw: string, sig: string) {
         }
       }
     }
-    else if (ev.type?.startsWith("customer.subscription.") && o.id) await admin.from("clients").update({ subscription_status: o.status }).eq("stripe_subscription_id", o.id);
+    else if (ev.type === "checkout.session.completed" && o.metadata?.store === "1" && o.metadata?.order_id) {
+      if (o.payment_status === "paid" || o.payment_status === "no_payment_required") await STORE().fulfill(o.metadata.order_id, o);
+    }
+    else if (ev.type === "checkout.session.async_payment_succeeded" && o.metadata?.store === "1" && o.metadata?.order_id) await STORE().fulfill(o.metadata.order_id, o);
+    else if (ev.type?.startsWith("customer.subscription.") && o.id) {
+      await admin.from("clients").update({ subscription_status: o.status }).eq("stripe_subscription_id", o.id);
+      await STORE().subscriptionChanged(o);
+    }
     else if (ev.type === "account.updated" && o.metadata?.partner_id) await syncPartner(o.metadata.partner_id, o);
     else if (ev.type === "transfer.reversed" && o.metadata?.invoice_id) await admin.from("invoices").update({ transfer_status: "reversed" }).eq("id", o.metadata.invoice_id);
   } catch (e) { console.error("webhook", ev.type, e); return json({ error: "processing_failed" }, 500); }
   return json({ received: true });
+}
+
+// online store (home page cards and portal upgrades)
+let storeMod: ReturnType<typeof store> | null = null;
+const STORE = () => (storeMod ??= store({ admin, SITE, PK, stripe, Fail: Fail as StoreDeps["Fail"], sendAccess, syncInvoice }));
+async function storeAction(req: Request, body: any) {
+  const a = String(body.action);
+  if (a === "store_status") return await STORE().status(body);
+  if (a === "store_checkout" && !body.client_id) return await STORE().checkout(req, body, null);
+  // from the portal: the owner of the client account (with the authenticator)
+  const c = await caller(req);
+  const clientId = String(body.client_id || "");
+  const { data: role } = await c.user.rpc("my_client_role", { p_client: clientId });
+  if (role !== "owner") throw new Fail("forbidden", 403);
+  if (a === "store_cancel") return await STORE().cancel(clientId, String(body.product || ""));
+  if (a === "store_checkout") {
+    const { data: cl } = await admin.from("clients").select("name, language, stripe_customer_id").eq("id", clientId).single();
+    const { data: me } = await c.user.from("client_users").select("name, email").eq("client_id", clientId).eq("role", "owner").ilike("email", likeEsc(c.email)).maybeSingle();
+    return await STORE().checkout(req, body, { clientId, email: c.email.toLowerCase(), name: me?.name || cl?.name || c.email, lang: String(body.lang || cl?.language || "pt"), customer: cl?.stripe_customer_id || null });
+  }
+  throw new Fail("unknown_action");
 }
 
 Deno.serve(async (req) => {
@@ -770,6 +799,10 @@ Deno.serve(async (req) => {
   if (sig) return webhook(await req.text(), sig);
   let body: any = {};
   try { body = await req.json(); } catch { return json({ error: "bad_request" }, 400); }
+  if (typeof body.action === "string" && body.action.startsWith("store_")) {
+    try { return json(await storeAction(req, body)); }
+    catch (e) { if (e instanceof Fail) return json({ error: e.code, detail: e.detail }, e.status); console.error(e); return json({ error: "server_error" }, 500); }
+  }
   if (body.action === "access_reset") {
     try { return json(await accessReset(body)); }
     catch (e) { if (e instanceof Fail) return json({ error: e.code }, e.status); console.error(e); return json({ error: "server_error" }, 500); }

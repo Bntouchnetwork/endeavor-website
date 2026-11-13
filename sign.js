@@ -122,6 +122,8 @@
     $('state').hidden = true; $('flow').hidden = false;
     $('doc-title').textContent = doc.title;
     $('doc-signer').textContent = doc.signer_name;
+    // documents sent by an Endeavor client through the e-signature service show who sent them
+    if (doc.sender) { var sb0 = document.querySelector('[data-t="sentBy"]'); if (sb0) sb0.textContent = (document.documentElement.lang.indexOf('pt') === 0 ? 'enviado por ' + doc.sender + ' pela plataforma da Endeavor Business Solutions' : document.documentElement.lang.indexOf('es') === 0 ? 'enviado por ' + doc.sender + ' a través de la plataforma de Endeavor Business Solutions' : 'sent by ' + doc.sender + ' through the Endeavor Business Solutions platform'); }
     if (doc.message) { $('doc-msg').hidden = false; $('doc-msg').textContent = doc.message; }
     $('doc-hash').textContent = doc.document_sha256;
     $('s-name').value = doc.signer_name || '';

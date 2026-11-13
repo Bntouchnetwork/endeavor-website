@@ -532,7 +532,7 @@
 
   async function payments(view, ctx) {
     var esc = ctx.esc, tab = param('tab') || 'faturas';
-    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['modelos', 'Modelos de proposta'], ['nova', 'Nova fatura'], ['servicos', 'Lista de serviços'], ['fornecedores', 'Fornecedores'], ['apagar', 'Contas a pagar'], ['margem', 'Margem por cliente'], ['stripe', 'Conta Stripe']];
+    var tabs = [['faturas', 'Faturas'], ['propostas', 'Propostas'], ['nova-proposta', 'Nova proposta'], ['modelos', 'Modelos de proposta'], ['nova', 'Nova fatura'], ['servicos', 'Lista de serviços'], ['fornecedores', 'Fornecedores'], ['apagar', 'Contas a pagar'], ['margem', 'Margem por cliente'], ['loja', 'Loja online'], ['stripe', 'Conta Stripe']];
     view.innerHTML = head(esc, 'Pagamentos', 'Propostas, faturas pelo Stripe, lembretes automáticos e repasse da comissão para o parceiro via Stripe Connect.', '<div class="portal-btn-row"><a class="btn btn--ghost" href="#/pagamentos?tab=nova-proposta">Nova proposta</a><a class="btn btn--navy" href="#/pagamentos?tab=nova">Nova fatura</a></div>') +
       '<nav class="subtabs" aria-label="Seções">' + tabs.map(function (t) { return '<a href="#/pagamentos?tab=' + t[0] + '"' + (t[0] === tab ? ' aria-current="page"' : '') + '>' + t[1] + '</a>'; }).join('') + '</nav><div id="pg-body"></div>';
     var body = ctx.$('#pg-body');
@@ -544,6 +544,7 @@
     if (tab === 'fornecedores') return vendorsTab(body, ctx);
     if (tab === 'apagar') return payablesTab(body, ctx);
     if (tab === 'margem') return marginTab(body, ctx);
+    if (tab === 'loja') return storeTab(body, ctx);
     if (tab === 'stripe') return stripeTab(body, ctx);
     var rows = await ctx.q(ctx.sb.from('invoices').select('*, clients(name), partners(name, stripe_transfers_active, payout_method)').order('created_at', { ascending: false }));
     var st = param('status') || '', arch = param('arquivadas') === '1';
@@ -583,6 +584,36 @@
     body.querySelectorAll('[data-sv]').forEach(function (b) { b.onclick = async function () {
       var id = b.dataset.sv, r = await ctx.sb.from('billing_services').update({ name: body.querySelector('[data-n="' + id + '"]').value.trim(), amount_cents: Math.round((+body.querySelector('[data-a="' + id + '"]').value || 0) * 100), active: body.querySelector('[data-on="' + id + '"]').checked, vendor_id: body.querySelector('[data-v="' + id + '"]').value || null, vendor_cost_cents: body.querySelector('[data-v="' + id + '"]').value ? Math.round((+body.querySelector('[data-c="' + id + '"]').value || 0) * 100) : 0 }).eq('id', id);
       ctx.msg(m, r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
+    }; });
+  }
+
+  /* ---------- online store: prices of the cards on the home page, purchases and active services ---------- */
+  var SP = { crm: 'CRM', agenda: 'Agenda Online', esign: 'Assinatura Eletrônica', bookkeeping: 'Bookkeeping com IA', registered_agent: 'Registered Agent', virtual_address: 'Endereço Virtual' };
+  async function storeTab(body, ctx) {
+    var esc = ctx.esc;
+    var res = await Promise.all([ctx.q(ctx.sb.from('store_products').select('*').order('sort')),
+      ctx.q(ctx.sb.from('store_orders').select('*, clients(name)').order('created_at', { ascending: false }).limit(100)),
+      ctx.q(ctx.sb.from('client_services').select('*, clients(name, primary_email)').order('started_at', { ascending: false }).limit(300))]);
+    var prods = res[0], orders = res[1], svcs = res[2];
+    var OST = { pending: 'Aguardando pagamento', paid: 'Pago (conta pendente)', fulfilled: 'Pago e conta criada', failed: 'Falhou', expired: 'Expirou' };
+    var money = function (c) { return '$' + (c / 100).toLocaleString('en-US', { minimumFractionDigits: 2 }); };
+    body.innerHTML = '<p class="portal-muted">Os serviços que aparecem na home com o botão de compra. Quem compra paga pelo Stripe, a conta no portal é criada sozinha e o e-mail de acesso sai na hora. "Em breve" mostra o card sem permitir a compra.</p>' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Serviço</th><th class="num">Preço (US$)</th><th>Cobrança</th><th>Situação na home</th><th></th></tr></thead><tbody>' + prods.map(function (p) {
+        return '<tr><td><strong>' + esc(SP[p.code] || p.code) + '</strong></td><td class="num"><input data-pp="' + p.code + '" type="number" min="0" step="0.01" value="' + (p.price_cents / 100).toFixed(2) + '" style="width:8rem" aria-label="Preço"></td>' +
+          '<td><select data-pi="' + p.code + '" aria-label="Cobrança">' + [['month', 'Mensal'], ['year', 'Anual'], ['once', 'Única']].map(function (x) { return '<option value="' + x[0] + '"' + (p.interval === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></td>' +
+          '<td><select data-ps="' + p.code + '" aria-label="Situação">' + [['active', 'À venda'], ['coming_soon', 'Em breve'], ['hidden', 'Escondido']].map(function (x) { return '<option value="' + x[0] + '"' + (p.status === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></td>' +
+          '<td><button class="btn btn--ghost btn--xs" type="button" data-psave="' + p.code + '">Salvar</button></td></tr>';
+      }).join('') + '</tbody></table></div><div class="portal-alert" id="st-m" role="status"></div>' +
+      '<p class="portal-muted" style="font-size:.85rem">Mudar o preço vale para as novas compras. Quem já assina continua com o preço que contratou.</p>' +
+      '<h2 class="portal-h2" style="margin-top:1.5rem">Compras recentes</h2>' + (orders.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Serviço</th><th>Comprador</th><th>Origem</th><th class="num">Valor</th><th>Situação</th></tr></thead><tbody>' + orders.map(function (o) {
+        return '<tr><td>' + esc(ctx.fmtDT(o.created_at)) + '</td><td>' + esc(SP[o.product_code] || o.product_code) + '</td><td>' + esc(o.name) + '<div class="portal-muted" style="font-size:.8rem">' + esc(o.email) + (o.company ? ' · ' + esc(o.company) : '') + (o.phone ? ' · ' + esc(o.phone) : '') + '</div></td><td>' + (o.source === 'portal' ? 'Portal' : 'Site') + '</td><td class="num">' + money(o.amount_cents) + '</td><td><span class="pill' + (o.status === 'fulfilled' ? ' pill--report' : '') + '">' + (OST[o.status] || o.status) + '</span>' + (o.error ? '<div class="portal-muted" style="font-size:.78rem;color:var(--error)">' + esc(o.error) + '</div>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="portal-muted">Nenhuma compra ainda.</p>') +
+      '<h2 class="portal-h2" style="margin-top:1.5rem">Serviços ativos nas contas</h2>' + (svcs.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Cliente</th><th>Serviço</th><th>Desde</th><th>Situação</th></tr></thead><tbody>' + svcs.map(function (x) {
+        return '<tr><td>' + esc(x.clients ? x.clients.name : '') + '<div class="portal-muted" style="font-size:.8rem">' + esc(x.clients ? x.clients.primary_email : '') + '</div></td><td>' + esc(SP[x.product_code] || x.product_code) + '</td><td>' + esc(ctx.fmtDT(x.started_at)) + '</td><td>' + ({ active: 'Ativo', past_due: 'Pagamento pendente', canceled: 'Cancelado' }[x.status] || x.status) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="portal-muted">Nenhum serviço contratado ainda.</p>');
+    body.querySelectorAll('[data-psave]').forEach(function (b) { b.onclick = async function () {
+      var c = b.dataset.psave, r = await ctx.sb.from('store_products').update({ price_cents: Math.round((+body.querySelector('[data-pp="' + c + '"]').value || 0) * 100), interval: body.querySelector('[data-pi="' + c + '"]').value, status: body.querySelector('[data-ps="' + c + '"]').value, updated_at: new Date().toISOString() }).eq('code', c);
+      ctx.msg(ctx.$('#st-m'), r.error ? ctx.errText(r.error) : 'Salvo. A home já mostra o novo valor.', r.error ? 'error' : 'ok');
     }; });
   }
 

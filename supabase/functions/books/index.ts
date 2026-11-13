@@ -252,10 +252,18 @@ async function handle(req: Request, body: Any) {
   const { data: u } = await user.auth.getUser();
   if (!u?.user) throw new Fail("unauthorized", 401);
   const { data: isAdmin } = await user.rpc("is_admin");
-  if (!isAdmin) throw new Fail("forbidden", 403);
+  // a client who bought "Bookkeeping com IA" connects the bank and card accounts of its own company from the portal
+  if (!isAdmin) {
+    if (!["config", "stripe_session", "stripe_complete", "plaid_link", "plaid_exchange"].includes(a)) throw new Fail("forbidden", 403);
+    if (a !== "config") {
+      const { data: co0 } = await db.from("companies").select("client_id").eq("id", String(body.company_id || "")).maybeSingle();
+      const { data: ok } = co0 ? await user.rpc("my_tool", { p_client: co0.client_id, p_code: "bookkeeping" }) : { data: false };
+      if (!ok) throw new Fail("forbidden", 403);
+    }
+  }
   const who = u.user.email || "admin";
 
-  if (a === "config") return { stripe: !!(SK && PK), pk: PK || null, plaid: !!(PLAID_ID && PLAID_SECRET), plaid_env: PLAID_ENV, ai: hubOn() };
+  if (a === "config") return { stripe: !!(SK && PK), pk: PK || null, plaid: !!(PLAID_ID && PLAID_SECRET), plaid_env: PLAID_ENV, ai: isAdmin ? hubOn() : undefined };
   const co = await company(String(body.company_id || ""));
   if (co.books_provider !== "endeavor" && a !== "publish") throw new Fail("books_not_enabled");
 

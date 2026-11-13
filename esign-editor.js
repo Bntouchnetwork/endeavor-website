@@ -27,7 +27,7 @@
       var envId = crypto.randomUUID(), ENV_LABEL = 'Endeavor Envelope ID: ' + envId.toUpperCase();
 
       view.innerHTML =
-        '<div class="console__head"><div><h1>Novo documento para assinatura</h1><p class="portal-muted">Suba o PDF, arraste os campos para o documento e envie. Tudo acontece aqui no console.</p></div>' +
+        '<div class="console__head"><div><h1>Novo documento para assinatura</h1><p class="portal-muted">Suba o PDF, arraste os campos para o documento e envie. Tudo acontece aqui.</p></div>' +
         '<button class="btn btn--ghost btn--xs" type="button" id="esx-cancel">Voltar para a lista</button></div>' +
         '<div class="esx">' +
           '<aside class="esx__tools" aria-label="Ferramentas">' +
@@ -54,14 +54,14 @@
           '</div>' +
           '<aside class="esx__side" aria-label="Destinatário e envio">' +
             '<section class="portal-card"><h2 class="portal-h2">Destinatário</h2>' +
-              '<div class="field"><label for="ev-lead">Vincular a um lead (opcional)</label><select id="ev-lead"><option value="">Nenhum</option>' +
-                ctx.leads.map(function (l) { return '<option value="' + esc(l.id) + '"' + (l.id === ctx.preLeadId ? ' selected' : '') + '>' + esc(l.name) + ' · ' + esc(l.email) + '</option>'; }).join('') + '</select></div>' +
+              (ctx.clientId ? '' : '<div class="field"><label for="ev-lead">Vincular a um lead (opcional)</label><select id="ev-lead"><option value="">Nenhum</option>' +
+                (ctx.leads || []).map(function (l) { return '<option value="' + esc(l.id) + '"' + (l.id === ctx.preLeadId ? ' selected' : '') + '>' + esc(l.name) + ' · ' + esc(l.email) + '</option>'; }).join('') + '</select></div>') +
               field('ev-name', 'Nome do signatário', ctx.preLead ? ctx.preLead.name : '', 'text') +
               field('ev-email', 'E-mail do signatário', ctx.preLead ? ctx.preLead.email : '', 'email') +
               field('ev-title', 'Título do documento', '', 'text') +
               '<div class="field"><label for="ev-msg">Mensagem (opcional)</label><textarea id="ev-msg" rows="3"></textarea></div>' +
               '<div class="field"><label for="ev-days">Link válido por (dias)</label><input id="ev-days" type="number" min="1" max="90" value="30"></div>' +
-              '<div class="check-row"><input type="checkbox" id="ev-mail" checked><label for="ev-mail">Enviar o link por e-mail ao signatário (cópia para ' + esc(CFG.adminEmail) + ')</label></div>' +
+              '<div class="check-row"><input type="checkbox" id="ev-mail" checked><label for="ev-mail">Enviar o link por e-mail ao signatário' + (ctx.clientId ? '' : ' (cópia para ' + esc(CFG.adminEmail) + ')') + '</label></div>' +
             '</section>' +
             '<section class="portal-card" id="esx-props" hidden><h2 class="portal-h2">Item selecionado</h2><div id="esx-propbody"></div></section>' +
             '<section class="portal-card"><h2 class="portal-h2">Resumo</h2><ul class="esx__sum" id="esx-sum"></ul>' +
@@ -82,7 +82,7 @@
       }
 
       $('#esx-cancel').onclick = ctx.onCancel;
-      $('#ev-lead').onchange = function () {
+      if ($('#ev-lead')) $('#ev-lead').onchange = function () {
         var l = ctx.leads.find(function (x) { return x.id === $('#ev-lead').value; });
         if (l) { $('#ev-name').value = l.name; $('#ev-email').value = l.email; }
       };
@@ -482,7 +482,7 @@
           var bytes = await bake();
           var hash = await ctx.sha256Hex(bytes);
           ctx.msg(m, 'Enviando…', 'info');
-          var path = 'originals/' + crypto.randomUUID() + '.pdf';
+          var path = (ctx.clientId ? 'clients/' + ctx.clientId + '/' : 'originals/') + crypto.randomUUID() + '.pdf';
           var up = await sb.storage.from('documents').upload(path, new Blob([bytes], { type: 'application/pdf' }), { contentType: 'application/pdf', upsert: false });
           if (up.error) throw up.error;
           var days = Math.min(90, Math.max(1, +$('#ev-days').value || 30));
@@ -490,7 +490,7 @@
             return { id: i.id, type: i.tool, page: i.page, x: +i.x.toFixed(5), y: +i.y.toFixed(5), w: +i.w.toFixed(5), h: +i.h.toFixed(5), required: i.tool === 'date' || i.tool === 'name' || i.tool === 'email' ? true : !!i.required };
           });
           var ins = await sb.from('envelopes').insert({ id: envId, id_stamped: true, title: title, signer_name: name, signer_email: email, message: $('#ev-msg').value.trim() || null,
-            lead_id: $('#ev-lead').value || null, document_path: path, document_sha256: hash, fields: fields,
+            lead_id: $('#ev-lead') ? $('#ev-lead').value || null : null, client_id: ctx.clientId || null, document_path: path, document_sha256: hash, fields: fields,
             token_expires_at: new Date(Date.now() + days * 864e5).toISOString() }).select('*').single();
           if (ins.error) throw ins.error;
           var env = ins.data;

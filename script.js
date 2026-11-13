@@ -67,6 +67,7 @@
     document.querySelectorAll('.js-partners').forEach(function (l) { l.href = 'partners.html?lang=' + lang; });
     document.querySelectorAll('.js-partners-signup').forEach(function (l) { l.href = 'partners.html?lang=' + lang + '#cadastro'; });
     document.querySelectorAll('.js-client').forEach(function (l) { l.href = 'client.html?lang=' + lang; });
+    document.querySelectorAll('.js-buy').forEach(function (l) { l.href = 'comprar.html?p=' + l.getAttribute('data-p') + '&lang=' + lang; });
     document.querySelectorAll('.js-partner').forEach(function (l) { l.href = 'partner.html?lang=' + lang; });
     document.querySelectorAll('#wa-float, .js-wa').forEach(function (l) {
       l.href = 'https://wa.me/16306898702?text=' + encodeURIComponent(ui('waText'));
@@ -419,5 +420,18 @@
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll);
     update();
+  })();
+
+  /* ---------- Hire online: current prices from the catalog (Admin > Pagamentos > Loja) ---------- */
+  (function () {
+    var C = window.ENDEAVOR_CFG; if (!C || !document.querySelector('[data-price]') || !window.fetch) return;
+    fetch(C.supabaseUrl + '/rest/v1/store_products?select=code,price_cents,interval,status', { headers: { apikey: C.supabaseKey, Authorization: 'Bearer ' + C.supabaseKey } })
+      .then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) {
+        (rows || []).forEach(function (p) {
+          var card = document.querySelector('.shop-card[data-product="' + p.code + '"]'); if (!card) return;
+          var a = card.querySelector('[data-price]'); if (a) a.textContent = '$' + (p.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: p.price_cents % 100 ? 2 : 0 });
+          card.querySelectorAll('[data-int]').forEach(function (x) { x.hidden = x.getAttribute('data-int') !== p.interval; });
+        });
+      }).catch(function () { /* keep the printed prices */ });
   })();
 })();

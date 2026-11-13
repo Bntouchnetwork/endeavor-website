@@ -270,7 +270,8 @@
   function refCtx() {
     return { sb: sb, CFG: CFG, L: L, locale: EP.locale, t: t, esc: esc, $: $, $$: $$, msg: msg, q: q, errText: errText, fmtDate: fmtDate, fmtDT: fmtDT,
       head: function (a, b, c) { return head(a, b, c); }, kpi: function (a, b, c) { return kpi(a, b, c); }, openOverlay: function (h, c) { return openOverlay(h, c); }, closeOverlay: function () { closeOverlay(); },
-      param: function (k) { return param(k); }, siteUrl: siteUrl, route: function () { route(); }, S: S };
+      param: function (k) { return param(k); }, siteUrl: siteUrl, route: function () { route(); }, S: S, sha256Hex: sha256Hex,
+      reload: async function () { await selectClient(S.client.id); await checkOpenInvoices(); startShell(); } };
   }
   // red counter next to "Invoices" (and a dot on the mobile menu button) while there are invoices to pay
   function updateInvBadge() {
@@ -305,6 +306,10 @@
     S.perms = { owner: own, cats: cats, view: own || cats.length > 0, reports: own || cats.indexOf('report') > -1,
       deadlines: own || me.perm_deadlines !== false, upload: own || !!me.can_upload };
     S.companies = await q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
+    // services bought online (CRM, Agenda, E-signature, Bookkeeping...): unlock the tools in the menu
+    var sv = await sb.from('client_services').select('product_code, status').eq('client_id', id).in('status', ['active', 'past_due']);
+    S.services = (sv.data || []).map(function (x) { return x.product_code; });
+    S.kind = S.client.portal_kind === 'tools' ? 'tools' : 'full';
     try { localStorage.setItem('endeavor-client-id', id); } catch (e) { /* ignore */ }
   }
 
@@ -314,6 +319,8 @@
   }
   function wireEyes() { $$('[data-eye]').forEach(function (b) { b.onclick = function () { var i = document.getElementById(b.dataset.eye), on = i.type === 'password'; i.type = on ? 'text' : 'password'; b.setAttribute('aria-pressed', String(on)); }; }); }
   function renderLogin() {
+    // "Forgot my password" button of the access e-mail / checkout page
+    if (/[?&]forgot=1/.test(location.search)) { history.replaceState(null, '', location.pathname + location.search.replace(/[?&]forgot=1/, '').replace(/^&/, '?')); return renderForgot(false); }
     if (AUTH_ERR) { var e0 = AUTH_ERR; AUTH_ERR = null; history.replaceState(null, '', location.pathname + location.search); return renderForgot(true, e0); }
     authShell('<h1 class="portal-h1">' + t('loginTitle') + '</h1><p class="portal-muted">' + t('loginLead') + '</p>' +
       '<form class="portal-form" id="f-login" novalidate><div class="field"><label for="l-email">' + t('email') + '</label><input id="l-email" type="email" autocomplete="username" required></div>' +
@@ -415,9 +422,18 @@
     var setL = S.ref && S.ref.accLabel ? S.ref.accLabel : t('nav_settings');
     if (!S.client) return out.concat([['settings', setL, 'i-gear']]);
     if (S.ref) out.push(['-', S.ref.sep]);
-    return out.concat(clientNav().map(function (x) { return [x[0], x[0] === 'settings' ? setL : t(x[1]), x[2]]; }));
+    return out.concat(clientNav().map(function (x) { return [x[0], x[0] === 'settings' ? setL : x[3] ? x[1] : t(x[1]), x[2]]; }));
   }
   function clientNav() {
+    // account created by an online purchase: only what was bought (bookkeeping brings the company, documents and reports)
+    if (S.kind === 'tools' && !PARTNER) {
+      var b = S.services.indexOf('bookkeeping') > -1, m = [['overview', 'nav_overview', 'i-grid']];
+      if (b) m.push(['companies', 'nav_companies', 'i-brief'], ['documents', 'nav_documents', 'i-file'], ['reports', 'nav_reports', 'i-chart'], ['upload', 'nav_upload', 'i-up']);
+      if (S.perms.owner && window.ETools) ETools.nav().forEach(function (x) { m.push([x[0], x[1], x[2], 1]); });
+      if (S.perms.owner) m.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
+      m.push(['settings', 'nav_settings', 'i-gear']);
+      return m;
+    }
     var n = [['overview', 'nav_overview', 'i-grid'], ['companies', 'nav_companies', 'i-brief']];
     if (S.perms.view) n.push(['documents', 'nav_documents', 'i-file']);
     if (S.perms.deadlines) n.push(['compliance', 'nav_compliance', 'i-cal']);
@@ -426,11 +442,13 @@
     if (S.perms.owner) n.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
     if (window.EProjects && S.perms.owner && !PARTNER) n.push(['projetos', 'nav_projects', 'i-bot']);
     if (window.EAttorney) n.push(['advogados', 'nav_attorneys', 'i-law']);
+    if (S.perms.owner && !PARTNER && window.ETools) ETools.nav().forEach(function (x) { n.push([x[0], x[1], x[2], 1]); });
     n.push(['settings', 'nav_settings', 'i-gear']);
     return n;
   }
   function startShell() {
     document.body.classList.add('app-shell');
+    if (window.ETools && S.client) ETools.init(refCtx());
     if (window.EClientOA && S.client) {
       EClientOA.init(refCtx());
       if (!S.accessLogged) { S.accessLogged = true; sb.rpc('audit_event', { p_action: 'portal.access', p_entity_type: 'portal', p_entity_id: PARTNER ? 'partner' : 'client', p_company: null, p_details: { client_id: S.client.id } }).then(function () {}, function () {}); }
@@ -471,6 +489,10 @@
     if (S.ref) Object.assign(V, S.ref.views);
     if (window.EClientOA) V.oa = EClientOA.view;
     if (window.EProjects) V.projetos = function (view) { return EProjects.view(view, refCtx()); };
+    if (window.ETools && S.client && !PARTNER) {
+      Object.assign(V, ETools.views);
+      if (S.kind === 'tools') V.overview = ETools.overview;
+    }
     if (v === 'oa') $$('.console__nav a').forEach(function (a) { if (a.dataset.view === 'companies') a.setAttribute('aria-current', 'page'); });
     V[v](view).catch(function (e) { view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>'; console.error(e); });
   }

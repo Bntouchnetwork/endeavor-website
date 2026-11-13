@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Booking</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=20261114">
+  <link rel="stylesheet" href="portal.css?v=20261114">
+  <style>
+    .bk { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); align-items: start; max-width: 60rem; margin: 0 auto; }
+    @media (min-width: 860px) { .bk { grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); } }
+    .bk h1 { font-family: var(--font-serif); font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem); line-height: 1.2; margin: .3rem 0 .5rem; color: var(--ink); }
+    .bk__meta { display: grid; gap: .4rem; margin: 1rem 0 0; color: var(--text); font-size: .95rem; }
+    .days { display: flex; gap: .5rem; overflow-x: auto; padding: .25rem 0 .75rem; scroll-snap-type: x mandatory; }
+    .day { flex: none; scroll-snap-align: start; min-width: 4.6rem; padding: .55rem .4rem; border: 1px solid var(--line); border-radius: 10px; background: #fff; font: inherit; cursor: pointer; text-align: center; line-height: 1.25; }
+    .day small { display: block; color: var(--muted); font-size: .75rem; text-transform: capitalize; }
+    .day strong { font-size: 1.15rem; }
+    .day[aria-pressed="true"] { border-color: var(--navy-900); background: var(--navy-900); color: #fff; }
+    .day[aria-pressed="true"] small { color: var(--on-dark-muted); }
+    .day:disabled { opacity: .4; cursor: default; }
+    .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(6.2rem, 1fr)); gap: .5rem; margin: .5rem 0 1rem; }
+    .slot { min-height: 2.75rem; border: 1px solid var(--line); border-radius: 8px; background: #fff; font: inherit; font-weight: 600; color: var(--navy-900); cursor: pointer; }
+    .slot[aria-pressed="true"] { background: var(--gold); border-color: var(--gold); color: var(--navy-950); }
+    .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+    .bk > * { margin-top: 0 !important; }
+  </style>
+</head>
+<body class="portal">
+<a class="skip-link" href="#main" data-t="skip">Skip to content</a>
+<header class="portal-top">
+  <div class="portal-top__inner">
+    <a href="index.html" id="home-link"><img class="portal-top__logo" src="logo-endeavor.svg" alt="Endeavor Business Solutions" width="950" height="180"></a>
+    <nav class="lang-mini" aria-label="Language">
+      <a href="#" data-lang="en">EN</a>
+      <a href="#" data-lang="pt">PT</a>
+      <a href="#" data-lang="es">ES</a>
+    </nav>
+  </div>
+</header>
+<main class="portal-main" id="main" tabindex="-1" style="max-width:72rem">
+  <div id="app" aria-live="polite"><p class="portal-muted" data-t="loading">Loading…</p></div>
+</main>
+<p class="portal-muted" style="text-align:center;font-size:.85rem;margin:2rem 1rem">Endeavor Business Solutions · 111 N. Orange Ave, Suite 800, Orlando, FL 32801 · support@endeavorbiz.com · +1 (407) 436-9567</p>
+<script src="app-config.js"></script>
+<script src="agendar.js?v=20261114"></script>
+</body>
+</html>

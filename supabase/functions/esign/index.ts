@@ -3,6 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
 import { safe, wrap, cleanFields, validateValues, stampFields, stampEnvelopeId } from "./stamp.mjs";
+import { layout, btn, sendMail } from "../payments/access-mail.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -64,7 +65,10 @@ Deno.serve(async (req) => {
       const firstView = !env.viewed_at;
       if (firstView) await admin.from("envelopes").update({ status: "viewed", viewed_at: new Date().toISOString() }).eq("id", env.id);
       await event(env.id, "viewed", ip, ua);
-      return json({ status: "viewed", first_view: firstView, title: env.title, message: env.message, signer_name: env.signer_name, signer_email: env.signer_email,
+      // documents sent by an Endeavor client (online e-signature tool) show who sent them
+      let sender: string | null = null;
+      if (env.client_id) { const { data: cl } = await admin.from("clients").select("name").eq("id", env.client_id).maybeSingle(); sender = cl?.name || null; }
+      return json({ status: "viewed", first_view: firstView, title: env.title, message: env.message, signer_name: env.signer_name, signer_email: env.signer_email, sender,
         fields: env.fields || [], document_sha256: env.document_sha256, document_url: await signedUrl(env.document_path, 1800) });
     }
 
@@ -172,6 +176,21 @@ Deno.serve(async (req) => {
       }).eq("id", env.id).neq("status", "signed");
       await event(env.id, "signed", ip, ua, { typed_name: typed });
       await event(env.id, "completed", ip, ua, { signed_sha256: signedHash });
+      // the client who sent it gets a notice with the link to the signed copy in the portal
+      if (env.client_id) {
+        try {
+          const { data: cl } = await admin.from("clients").select("name, primary_email, language").eq("id", env.client_id).maybeSingle();
+          if (cl?.primary_email) {
+            const pt = cl.language !== "en" && cl.language !== "es", es = cl.language === "es";
+            const url = `https://endeavorbiz.com/client.html?lang=${cl.language || "pt"}#/assinaturas`;
+            const subj = pt ? `Documento assinado: ${env.title}` : es ? `Documento firmado: ${env.title}` : `Document signed: ${env.title}`;
+            const body = pt ? `${env.signer_name} assinou o documento "${env.title}". A cópia assinada, com o certificado, está no seu portal em Assinatura eletrônica.`
+              : es ? `${env.signer_name} firmó el documento "${env.title}". La copia firmada, con el certificado, está en su portal en Firma electrónica.`
+              : `${env.signer_name} signed "${env.title}". The signed copy, with the certificate, is in your portal under Electronic signature.`;
+            await sendMail(cl.primary_email, subj, layout(`<p>${body.replace(/[<>&]/g, "")}</p>${btn(url, pt ? "Abrir no portal" : es ? "Abrir en el portal" : "Open in the portal")}`), `${body}\n${url}`);
+          }
+        } catch (e) { console.error("client notice", e); }
+      }
 
       return json({ status: "signed", signed_at: signedAt.toISOString(), signed_sha256: signedHash, signed_url: await signedUrl(signedPath) });
     }

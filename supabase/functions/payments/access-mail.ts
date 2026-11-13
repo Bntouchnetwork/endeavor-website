@@ -4,7 +4,7 @@
 import nodemailer from "npm:nodemailer@6.9.16";
 
 type Lang = "pt" | "en" | "es";
-export type AccessKind = "client" | "collab" | "partner";
+export type AccessKind = "client" | "collab" | "partner" | "store";
 // deno-lint-ignore no-explicit-any
 type Any = any;
 
@@ -28,12 +28,15 @@ const T: Record<Lang, Any> = {
     hi: (n: string) => (n ? `Olá, ${n}!` : "Olá!"),
     lead: { client: "A Endeavor Business Solutions criou o seu acesso ao <strong>Portal do Cliente</strong>. É nele que você acompanha tudo sobre as suas empresas nos EUA, num só lugar e com segurança.",
       collab: "A Endeavor Business Solutions convidou você para o <strong>Portal do Parceiro</strong> como colaborador{c}. Por ele você acessa as informações que o cliente compartilhou com você.",
-      partner: "A Endeavor Business Solutions criou o seu acesso ao <strong>Portal do Parceiro</strong>, onde você envia indicações e acompanha suas comissões." },
+      partner: "A Endeavor Business Solutions criou o seu acesso ao <strong>Portal do Parceiro</strong>, onde você envia indicações e acompanha suas comissões.",
+      store: "Obrigado pela sua compra! O pagamento foi confirmado e a sua conta no <strong>Portal do Cliente</strong> da Endeavor já está pronta, com {s} liberado. Para entrar, confirme o seu e-mail criando a sua senha." },
+    services: "Serviço contratado", forgotQ: "Já criou a senha e esqueceu?", forgotBtn: "Esqueci minha senha",
     can: "O que você pode fazer no portal",
     feats: {
       client: ["Gerenciar sua conta e os dados das suas empresas", "Ver, imprimir e baixar seus documentos (Articles, EIN, Operating Agreement e outros)", "Acompanhar a linha do tempo de cada serviço e os prazos fiscais, com avisos antes de cada data", "Receber notificações e mensagens da equipe Endeavor", "Convidar colaboradores, como seu contador ou sócio, com o acesso que você escolher", "Ver e pagar faturas, e consultar relatórios financeiros", "Agendar consultas com advogados parceiros"],
       collab: ["Ver os documentos e prazos que o cliente liberou para você", "Enviar documentos para a equipe Endeavor, se o cliente permitir", "Receber notificações sobre as empresas que você acompanha"],
-      partner: ["Enviar indicações e acompanhar cada uma pela linha do tempo", "Ver os pacotes fechados e as suas comissões", "Receber seus pagamentos pelo Stripe", "Atualizar seus dados em Minha conta"] },
+      partner: ["Enviar indicações e acompanhar cada uma pela linha do tempo", "Ver os pacotes fechados e as suas comissões", "Receber seus pagamentos pelo Stripe", "Atualizar seus dados em Minha conta"],
+      store: ["Usar o serviço que você contratou, direto no portal", "Ver as faturas e os recibos da sua assinatura", "Convidar colaboradores, como o seu contador, com o acesso que você escolher", "Contratar outros serviços da Endeavor quando quiser, com o mesmo login"] },
     steps: "Como entrar pela primeira vez",
     st: { client: ["Clique no botão <strong>Criar minha senha</strong> abaixo.", "Crie uma senha com pelo menos 12 caracteres.", "Ative a verificação em duas etapas: instale no celular o <strong>Google Authenticator</strong> ou o <strong>Microsoft Authenticator</strong>, escaneie o QR code que aparece na tela e digite o código de 6 dígitos.", "Pronto. Nos próximos acessos, entre com e-mail, senha e o código do aplicativo."],
       partner: ["Clique no botão <strong>Criar minha senha</strong> abaixo.", "Crie uma senha com pelo menos 12 caracteres.", "Pronto, você já entra no portal. Se quiser mais proteção, ative a verificação em duas etapas em <strong>Minha conta</strong>."] },
@@ -51,12 +54,15 @@ const T: Record<Lang, Any> = {
     hi: (n: string) => (n ? `Hi ${n},` : "Hi,"),
     lead: { client: "Endeavor Business Solutions has created your access to the <strong>Client Portal</strong>. It is where you follow everything about your US companies, in one secure place.",
       collab: "Endeavor Business Solutions has invited you to the <strong>Partner Portal</strong> as a collaborator{c}. There you can see the information the client shared with you.",
-      partner: "Endeavor Business Solutions has created your access to the <strong>Partner Portal</strong>, where you send referrals and follow your commissions." },
+      partner: "Endeavor Business Solutions has created your access to the <strong>Partner Portal</strong>, where you send referrals and follow your commissions.",
+      store: "Thank you for your purchase! Your payment is confirmed and your Endeavor <strong>Client Portal</strong> account is ready, with {s} turned on. To sign in, confirm your e-mail by creating your password." },
+    services: "Service purchased", forgotQ: "Already created your password and forgot it?", forgotBtn: "Forgot my password",
     can: "What you can do in the portal",
     feats: {
       client: ["Manage your account and your companies' details", "View, print and download your documents (Articles, EIN, Operating Agreement and more)", "Follow the timeline of each service and your tax deadlines, with reminders before each date", "Get notifications and messages from the Endeavor team", "Invite collaborators, such as your accountant or partner, with the access you choose", "See and pay invoices, and check financial reports", "Book consultations with partner attorneys"],
       collab: ["See the documents and deadlines the client shared with you", "Send documents to the Endeavor team, if the client allows it", "Get notifications about the companies you follow"],
-      partner: ["Send referrals and follow each one on its timeline", "See closed packages and your commissions", "Get paid through Stripe", "Update your details in My account"] },
+      partner: ["Send referrals and follow each one on its timeline", "See closed packages and your commissions", "Get paid through Stripe", "Update your details in My account"],
+      store: ["Use the service you purchased, right in the portal", "See the invoices and receipts of your subscription", "Invite collaborators, such as your accountant, with the access you choose", "Add other Endeavor services whenever you want, with the same login"] },
     steps: "How to sign in the first time",
     st: { client: ["Click <strong>Create my password</strong> below.", "Create a password with at least 12 characters.", "Turn on two-step verification: install <strong>Google Authenticator</strong> or <strong>Microsoft Authenticator</strong> on your phone, scan the QR code shown on screen and type the 6-digit code.", "Done. Next time, sign in with your e-mail, password and the code from the app."],
       partner: ["Click <strong>Create my password</strong> below.", "Create a password with at least 12 characters.", "Done, you are in. For extra protection, turn on two-step verification in <strong>My account</strong>."] },
@@ -74,12 +80,15 @@ const T: Record<Lang, Any> = {
     hi: (n: string) => (n ? `¡Hola, ${n}!` : "¡Hola!"),
     lead: { client: "Endeavor Business Solutions creó su acceso al <strong>Portal del Cliente</strong>. Allí sigue todo sobre sus empresas en EE. UU., en un solo lugar y con seguridad.",
       collab: "Endeavor Business Solutions lo invitó al <strong>Portal del Socio</strong> como colaborador{c}. Allí ve la información que el cliente compartió con usted.",
-      partner: "Endeavor Business Solutions creó su acceso al <strong>Portal del Socio</strong>, donde envía referidos y sigue sus comisiones." },
+      partner: "Endeavor Business Solutions creó su acceso al <strong>Portal del Socio</strong>, donde envía referidos y sigue sus comisiones.",
+      store: "¡Gracias por su compra! El pago fue confirmado y su cuenta en el <strong>Portal del Cliente</strong> de Endeavor ya está lista, con {s} activado. Para entrar, confirme su correo creando su contraseña." },
+    services: "Servicio contratado", forgotQ: "¿Ya creó su contraseña y la olvidó?", forgotBtn: "Olvidé mi contraseña",
     can: "Lo que puede hacer en el portal",
     feats: {
       client: ["Gestionar su cuenta y los datos de sus empresas", "Ver, imprimir y descargar sus documentos (Articles, EIN, Operating Agreement y otros)", "Seguir la línea de tiempo de cada servicio y sus plazos fiscales, con avisos antes de cada fecha", "Recibir notificaciones y mensajes del equipo Endeavor", "Invitar colaboradores, como su contador o socio, con el acceso que usted elija", "Ver y pagar facturas, y consultar informes financieros", "Agendar consultas con abogados socios"],
       collab: ["Ver los documentos y plazos que el cliente compartió con usted", "Enviar documentos al equipo Endeavor, si el cliente lo permite", "Recibir notificaciones sobre las empresas que sigue"],
-      partner: ["Enviar referidos y seguir cada uno en su línea de tiempo", "Ver los paquetes cerrados y sus comisiones", "Recibir sus pagos por Stripe", "Actualizar sus datos en Mi cuenta"] },
+      partner: ["Enviar referidos y seguir cada uno en su línea de tiempo", "Ver los paquetes cerrados y sus comisiones", "Recibir sus pagos por Stripe", "Actualizar sus datos en Mi cuenta"],
+      store: ["Usar el servicio que contrató, directo en el portal", "Ver las facturas y recibos de su suscripción", "Invitar colaboradores, como su contador, con el acceso que usted elija", "Contratar otros servicios de Endeavor cuando quiera, con el mismo login"] },
     steps: "Cómo entrar la primera vez",
     st: { client: ["Haga clic en <strong>Crear mi contraseña</strong> abajo.", "Cree una contraseña de al menos 12 caracteres.", "Active la verificación en dos pasos: instale en el celular <strong>Google Authenticator</strong> o <strong>Microsoft Authenticator</strong>, escanee el código QR de la pantalla y escriba el código de 6 dígitos.", "Listo. En los próximos accesos, entre con correo, contraseña y el código de la aplicación."],
       partner: ["Haga clic en <strong>Crear mi contraseña</strong> abajo.", "Cree una contraseña de al menos 12 caracteres.", "Listo, ya puede entrar. Para más protección, active la verificación en dos pasos en <strong>Mi cuenta</strong>."] },
@@ -106,7 +115,7 @@ export function layout(inner: string) {
 }
 const h2 = (s: string) => `<h2 style="font:700 16px/1.35 Georgia,serif;color:#0b1f3a;margin:24px 0 10px">${s}</h2>`;
 
-export function accessEmail(o: { lang: string; kind: AccessKind; reset: boolean; name?: string; clientName?: string; link: string; page: string }) {
+export function accessEmail(o: { lang: string; kind: AccessKind; reset: boolean; name?: string; clientName?: string; link: string; page: string; services?: string[] }) {
   const lang = L(o.lang), t = T[lang], first = String(o.name || "").trim().split(/\s+/)[0] || "";
   const portalUrl = `${SITE}/${o.page}?lang=${lang}`;
   if (o.reset) {
@@ -117,18 +126,23 @@ export function accessEmail(o: { lang: string; kind: AccessKind; reset: boolean;
     return { subject: t.s_reset, html: layout(inner), text: `${t.hi(first)}\n\n${t.resetLead}\n${o.link}\n\n${t.resetIgnore}\n\n${t.sign}` };
   }
   const k = o.kind, mfa = k !== "partner";
-  const lead = t.lead[k].replace("{c}", o.clientName ? (lang === "en" ? ` of <strong>${esc(o.clientName)}</strong>` : ` de <strong>${esc(o.clientName)}</strong>`) : "");
+  const svc = (o.services || []).map((x) => `<strong>${esc(x)}</strong>`).join(", ");
+  const lead = t.lead[k].replace("{c}", o.clientName ? (lang === "en" ? ` of <strong>${esc(o.clientName)}</strong>` : ` de <strong>${esc(o.clientName)}</strong>`) : "").replace("{s}", svc || "");
   const steps: string[] = mfa ? t.st.client : t.st.partner;
+  // second button: the portal's "forgot my password" screen (for whoever already created the password and lost it)
+  const forgotUrl = `${portalUrl}&forgot=1`;
+  const forgot = `<p style="margin:18px 0 0;font-size:14px;color:#374151">${esc(t.forgotQ)} <a href="${esc(forgotUrl)}" style="color:#0b1f3a;font-weight:700">${esc(t.forgotBtn)}</a></p>`;
   const inner = `<p style="margin:0 0 6px">${esc(t.hi(first))}</p><h1 style="font:700 22px/1.35 Georgia,serif;color:#0b1f3a;margin:0 0 14px">${esc(t.s_invite)}</h1>
 <p style="margin:0">${lead}</p>${btn(o.link, t.btn)}
 ${h2(esc(t.can))}<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%">${(t.feats[k] as string[]).map((f) => `<tr><td valign="top" style="width:22px;padding:3px 0;color:#c9a24a;font:700 15px Arial,sans-serif">✓</td><td style="padding:3px 0;font:14px/1.5 Arial,sans-serif">${esc(f)}</td></tr>`).join("")}</table>
 ${h2(esc(t.steps))}<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%">${steps.map((s, i) => `<tr><td valign="top" style="width:30px;padding:5px 0"><span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#0b1f3a;color:#fff;font:700 12px/22px Arial,sans-serif;text-align:center">${i + 1}</span></td><td style="padding:5px 0;font:14px/1.55 Arial,sans-serif">${s}</td></tr>`).join("")}</table>
 ${mfa ? `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:20px 0 0;background:#f6f1e4;border-left:3px solid #c9a24a;border-radius:8px"><tr><td style="padding:14px 16px;font:14px/1.55 Arial,sans-serif;color:#3a3326"><strong>${esc(t.whyH)}</strong><br>${esc(t.why)}</td></tr></table>` : ""}
+${forgot}
 <p style="margin:20px 0 6px;font-size:13px;color:#4b5563">${t.expire}</p>
 <p style="margin:0 0 6px;font-size:13px;color:#4b5563">${esc(t.portal)}: <a href="${esc(portalUrl)}" style="color:#0b1f3a">${esc(portalUrl.replace(/^https?:\/\//, "").replace(/\?.*$/, ""))}</a></p>
 <p style="margin:0 0 6px;font-size:13px;color:#4b5563">${esc(t.never)}</p>
 <p style="margin:16px 0 0">${esc(t.help)} <a href="mailto:${SUPPORT}" style="color:#0b1f3a">${SUPPORT}</a> · ${PHONE}</p><p style="margin:18px 0 0">${esc(t.sign)}</p>`;
-  const text = `${t.hi(first)}\n\n${lead.replace(/<[^>]+>/g, "")}\n\n${t.btn}: ${o.link}\n\n${t.can}:\n- ${(t.feats[k] as string[]).join("\n- ")}\n\n${t.steps}:\n${steps.map((s, i) => `${i + 1}. ${s.replace(/<[^>]+>/g, "")}`).join("\n")}\n\n${mfa ? t.why + "\n\n" : ""}${t.never}\n\n${t.sign}`;
+  const text = `${t.hi(first)}\n\n${lead.replace(/<[^>]+>/g, "")}\n\n${t.btn}: ${o.link}\n\n${t.can}:\n- ${(t.feats[k] as string[]).join("\n- ")}\n\n${t.steps}:\n${steps.map((s, i) => `${i + 1}. ${s.replace(/<[^>]+>/g, "")}`).join("\n")}\n\n${t.forgotQ} ${forgotUrl}\n${t.portal}: ${portalUrl}\n\n${mfa ? t.why + "\n\n" : ""}${t.never}\n\n${t.sign}`;
   return { subject: t.s_invite, html: layout(inner), text };
 }
 
