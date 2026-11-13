@@ -41,7 +41,7 @@
       pending: 'Su pago todavía se está procesando. Los pagos bancarios pueden tardar un momento. Recibirá el correo de acceso en cuanto se confirme.', failed: 'Recibimos su pago, pero no pudimos terminar de crear su cuenta automáticamente. Nuestro equipo ya fue avisado y lo contactará pronto.', expired: 'Este pago venció. Comience de nuevo.', again: 'Comenzar de nuevo' }
   };
   var qs = new URLSearchParams(location.search);
-  var L = (function () { var l = qs.get('lang'); if (D[l]) return l; try { l = localStorage.getItem('endeavor-lang'); } catch (e) { l = null; } if (D[l]) return l; return /^pt/i.test(navigator.language) ? 'pt' : /^es/i.test(navigator.language) ? 'es' : 'en'; })();
+  var L = D[window.EP && EP.lang] ? EP.lang : 'en'; // ?lang=, last choice, country, browser (portal-common.js)
   function t(k, v) { var s = (D[L][k] != null ? D[L][k] : D.en[k]); if (v && typeof s === 'string') Object.keys(v).forEach(function (x) { s = s.split('{' + x + '}').join(v[x]); }); return s; }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   document.documentElement.lang = L === 'pt' ? 'pt-BR' : L;
@@ -51,7 +51,7 @@
     if (a.getAttribute('data-lang') === L) a.setAttribute('aria-current', 'true');
   });
   document.getElementById('home-link').href = 'index.html?lang=' + L + '#online-services';
-  try { localStorage.setItem('endeavor-lang', L); } catch (e) { /* ignore */ }
+  if (window.EP && EP.langMenu) EP.langMenu(L);
 
   async function api(body) {
     var r = await fetch(CFG.functionsUrl + '/payments', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey }, body: JSON.stringify(body) });

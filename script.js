@@ -124,6 +124,8 @@
     if (q && LANGS[q]) return q;
     var saved = store.get(LANG_KEY);
     if (saved && LANGS[saved]) return saved;
+    var geo = window.ENDEAVOR_GEO_LANG && window.ENDEAVOR_GEO_LANG();
+    if (geo && LANGS[geo]) return geo;
     var nl = (navigator.language || 'en').toLowerCase();
     if (nl.indexOf('pt') === 0) return 'pt';
     if (nl.indexOf('es') === 0) return 'es';

@@ -24,7 +24,7 @@
       apptTitle: 'Su cita', status_confirmed: 'Confirmada', status_cancelled: 'Cancelada', cancel: 'Cancelar esta cita', cancelQ: '¿Cancelar esta cita?', cancelYes: 'Sí, cancelar', keep: 'Mantener', cancelled: 'Su cita fue cancelada. Enviamos la confirmación por correo.', e_not_changeable: 'Esta cita ya no se puede cambiar.', powered: 'Agenda por Endeavor Business Solutions' }
   };
   var qs = new URLSearchParams(location.search);
-  var L = (function () { var l = qs.get('lang'); if (D[l]) return l; return /^pt/i.test(navigator.language) ? 'pt' : /^es/i.test(navigator.language) ? 'es' : 'en'; })();
+  var L = D[window.EP && EP.lang] ? EP.lang : 'en'; // ?lang=, last choice, country, browser (portal-common.js)
   var LOC = { en: 'en-US', pt: 'pt-BR', es: 'es' }[L];
   var TZ = (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York'; } catch (e) { return 'America/New_York'; } })();
   function t(k, v) { var s = D[L][k] != null ? D[L][k] : D.en[k]; if (v) Object.keys(v).forEach(function (x) { s = s.split('{' + x + '}').join(v[x]); }); return s; }
@@ -33,6 +33,7 @@
   document.querySelectorAll('[data-t]').forEach(function (e) { e.textContent = t(e.getAttribute('data-t')); });
   document.querySelectorAll('.lang-mini a').forEach(function (a) { var u = new URL(location.href); u.searchParams.set('lang', a.getAttribute('data-lang')); a.href = u.pathname.split('/').pop() + u.search; if (a.getAttribute('data-lang') === L) a.setAttribute('aria-current', 'true'); });
   document.getElementById('home-link').href = 'index.html?lang=' + L;
+  if (window.EP && EP.langMenu) EP.langMenu(L);
 
   async function api(body) {
     var r = await fetch(CFG.functionsUrl + '/tools', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey }, body: JSON.stringify(Object.assign({ lang: L }, body)) });

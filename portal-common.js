@@ -8,6 +8,8 @@
     try { q = new URL(location.href).searchParams.get('lang'); } catch (e) { /* ignore */ }
     if (q && LANGS[q]) { try { localStorage.setItem(KEY, JSON.stringify(q)); } catch (e) { /* ignore */ } return q; }
     try { var s = JSON.parse(localStorage.getItem(KEY)); if (LANGS[s]) return s; } catch (e) { /* ignore */ }
+    var geo = window.ENDEAVOR_GEO_LANG && window.ENDEAVOR_GEO_LANG();
+    if (geo && LANGS[geo]) return geo;
     var n = (navigator.language || 'en').toLowerCase();
     return n.indexOf('pt') === 0 ? 'pt' : n.indexOf('es') === 0 ? 'es' : 'en';
   }
