@@ -27,7 +27,7 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   ok((await page.textContent("#sAvisoDemo")).includes("demonstração"), `${rotulo}: aviso de modo demonstração`);
   ok(await page.isVisible('.pre-fundos [data-fundo="desfoque"]') && await page.isVisible(".pre-fundos .fundo-virtual") && !(await page.isVisible(".pre-fundos .fundos-lista")), `${rotulo}: pré-sala mostra Nenhum, Desfocado e Fundo virtual`);
   await page.click(".pre-fundos .fundo-virtual");
-  ok(await page.$$eval(".pre-fundos .fundos-lista .fundo-op", (b) => b.length) === 10 && await page.isVisible(".pre-fundos .fundos-lista"), `${rotulo}: Fundo virtual abre a lista (9 imagens + Sua foto)`);
+  ok(await page.$$eval(".pre-fundos .fundos-lista .fundo-op", (b) => b.length) === 7 && await page.isVisible(".pre-fundos .fundos-lista"), `${rotulo}: Fundo virtual abre a lista (6 imagens + Sua foto)`);
   await page.click("#sPreTitulo");
   ok(!(await page.isVisible(".pre-fundos .fundos-lista")), `${rotulo}: lista fecha ao clicar fora`);
   await page.fill("#sNome", "Convidado Teste");
@@ -88,12 +88,12 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   ok(erros.length === 0, "anfitrião: fundo desfocado sem erro " + erros.join(" | "));
   ok(await page.evaluate(() => { const t = document.querySelector(".tile.local video"); return !!(t && t.srcObject && t.srcObject.getVideoTracks()[0]); }), "anfitrião: vídeo local com fundo");
   await page.click("#sMenu .fundo-virtual");
-  ok(await page.$$eval("#sMenu .fundos-lista .fundo-op", (b) => b.length) === 10, "anfitrião: 9 fundos prontos + Sua foto na lista");
-  await page.click('#sMenu [data-fundo="img:escritorio"]');
+  ok(await page.$$eval("#sMenu .fundos-lista .fundo-op", (b) => b.length) === 7, "anfitrião: 6 fundos prontos + Sua foto na lista");
+  await page.click('#sMenu [data-fundo="img:claro"]');
   await page.waitForTimeout(2500);
   ok((await page.textContent("#sMenu .fundo-virtual")).includes("Escritório") && (await page.getAttribute("#sMenu .fundo-virtual", "class")).includes("sel") && erros.length === 0, "anfitrião: fundo virtual Escritório " + erros.join(" | "));
   ok(await page.evaluate(() => document.querySelector(".tile.local").classList.contains("sem-espelho")), "anfitrião: fundo virtual não espelhado");
-  await page.click("#sMenu .fundo-virtual"); await page.click('#sMenu [data-fundo="img:janela"]'); await page.waitForTimeout(600);
+  await page.click("#sMenu .fundo-virtual"); await page.click('#sMenu [data-fundo="img:chicago"]'); await page.waitForTimeout(600);
   ok((await page.textContent("#sMenu .fundo-virtual")).includes("Chicago") && erros.length === 0, "anfitrião: troca de imagem direto pela lista");
   await page.click("#sMenu .fundo-virtual");
   // foto própria: fica só no navegador

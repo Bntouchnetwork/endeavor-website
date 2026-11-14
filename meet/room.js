@@ -28,12 +28,11 @@
   const IMG_NOIR = () => (S && S.op.marcaImg) || IMG_MARCA_PADRAO;
   /** Fundos virtuais prontos. "Sua foto" fica só no computador da pessoa (nunca vai para o servidor). */
   const FUNDOS_PRONTOS = [
-    ["marca", "Marca"], ["escritorio", "Escritório"], ["reuniao", "Sala de reunião"],
-    ["estante", "Estante"], ["janela", "Chicago"], ["claro", "Escritório claro"],
-    ["bh", "Belo Horizonte"], ["biblioteca", "Biblioteca"], ["estudio", "Estúdio"],
+    ["marca", "Marca"], ["reuniao", "Sala de reunião"], ["claro", "Escritório claro"],
+    ["chicago", "Chicago"], ["bh", "Belo Horizonte"], ["biblioteca", "Biblioteca"],
   ];
-  const imgFundo = id => id === "marca" ? IMG_NOIR() : BASE + "img/fundo-" + id + ".jpg?v=2";
-  const miniFundo = id => id === "marca" ? ((S && S.op.marcaImg) || IMG_MARCA_PADRAO.replace(".jpg", "-mini.jpg")) : BASE + "img/fundo-" + id + "-mini.jpg?v=2";
+  const imgFundo = id => id === "marca" ? IMG_NOIR() : BASE + "img/fundo-" + id + ".jpg?v=3";
+  const miniFundo = id => id === "marca" ? ((S && S.op.marcaImg) || IMG_MARCA_PADRAO.replace(".jpg", "-mini.jpg")) : BASE + "img/fundo-" + id + "-mini.jpg?v=3";
   const CHAVE_FOTO = "emeet-fundo-foto", CHAVE_FUNDO = "emeet-fundo";
   const ehImagem = f => /^img:|^foto$/.test(f || "");
   const lerLocal = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -400,7 +399,7 @@ ${htmlFundos()}
     await listarDispositivos();
     medirNivel();
     const ultimo = lerLocal(CHAVE_FUNDO);
-    if (temV && ultimo && ultimo !== "nenhum" && (ultimo !== "foto" || S.fotoFundo) && (ultimo === "desfoque" || ehImagem(ultimo))) escolherFundo(ultimo).catch(() => { });
+    if (temV && ultimo && ultimo !== "nenhum" && (ultimo !== "foto" || S.fotoFundo) && (ultimo === "desfoque" || ultimo === "foto" || FUNDOS_PRONTOS.some(([id]) => "img:" + id === ultimo))) escolherFundo(ultimo).catch(() => { });
   }
 
   /** Vídeo da câmera local antes de entrar (e no modo demonstração): com o fundo aplicado, se houver. */
