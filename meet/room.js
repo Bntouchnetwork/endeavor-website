@@ -22,10 +22,27 @@
   const SCRIPT_SRC = (document.currentScript && document.currentScript.src) || new URL("meet/room.js", location.href).href;
   const BASE = SCRIPT_SRC.replace(/room\.js(\?.*)?$/, "");
   const SDK_SRC = BASE + "vendor/livekit-client.umd.js";
-  const FUNDOS_SRC = BASE + "vendor/livekit-fundos.js";
+  const FUNDOS_SRC = BASE + "vendor/fundo-suave.js";
   const MEDIAPIPE = BASE + "vendor/mediapipe";
   const IMG_MARCA_PADRAO = BASE + "img/fundo-endeavor.jpg";
   const IMG_NOIR = () => (S && S.op.marcaImg) || IMG_MARCA_PADRAO;
+  /** Fundos virtuais prontos. "Sua foto" fica só no computador da pessoa (nunca vai para o servidor). */
+  const FUNDOS_PRONTOS = [
+    ["marca", "Marca"], ["escritorio", "Escritório"], ["reuniao", "Sala de reunião"],
+    ["estante", "Estante"], ["janela", "Janela"], ["estudio", "Estúdio"],
+  ];
+  const imgFundo = id => id === "marca" ? IMG_NOIR() : BASE + "img/fundo-" + id + ".jpg";
+  const miniFundo = id => id === "marca" ? ((S && S.op.marcaImg) || IMG_MARCA_PADRAO.replace(".jpg", "-mini.jpg")) : BASE + "img/fundo-" + id + "-mini.jpg";
+  const CHAVE_FOTO = "emeet-fundo-foto", CHAVE_FUNDO = "emeet-fundo";
+  const ehImagem = f => /^img:|^foto$/.test(f || "");
+  const lerLocal = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const gravarLocal = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); return true; } catch (e) { return false; } };
+  const htmlFundos = () => `
+      <div class="fundos-linha"><button type="button" data-fundo="nenhum" class="sel">Nenhum</button><button type="button" data-fundo="desfoque">Desfocado</button></div>
+      <div class="fundos-grade">${FUNDOS_PRONTOS.map(([id, nome]) => `<button type="button" class="fundo-img" data-fundo="img:${id}" title="${nome}" aria-label="Fundo ${nome}"><img src="${miniFundo(id)}" alt="" loading="lazy" data-mini="${id}"><span>${nome}</span></button>`).join("")}
+        <button type="button" class="fundo-img fundo-foto" data-fundo="foto" title="Sua foto" aria-label="Fundo com sua foto"><img alt="" hidden data-mini="foto"><b>+</b><span>Sua foto</span></button>
+      </div>
+      <p class="fundo-nota" hidden>Sua foto fica só neste computador. <button type="button" class="fundo-trocar">Trocar</button> · <button type="button" class="fundo-remover">Remover</button></p>`;
   const enc = new TextEncoder(), dec = new TextDecoder();
   const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
   let LK = null, el = null, S = null;
@@ -80,7 +97,7 @@
     });
   }
   const carregarSDK = () => carregarScript(SDK_SRC, () => !!window.LivekitClient).then(() => (LK = window.LivekitClient));
-  const carregarFundos = () => carregarSDK().then(() => carregarScript(FUNDOS_SRC, () => !!window.NoirFundos));
+  const carregarFundos = () => carregarSDK().then(() => carregarScript(FUNDOS_SRC, () => !!window.EndeavorFundo));
 
   /* ---------------- estrutura ---------------- */
   function ctl(id, rotulo, icone, extra = "") {
@@ -101,11 +118,9 @@
       <div class="pre-toggles">${ctl("sPreMic", "Microfone", I.mic)}${ctl("sPreCam", "Câmera", I.cam)}</div>
     </div>
     <div class="pre-fundos" role="radiogroup" aria-label="Fundo da câmera">
-      <span>Fundo</span>
-      <button type="button" data-fundo="nenhum" class="sel">Nenhum</button>
-      <button type="button" data-fundo="desfoque">Desfocado</button>
-      <button type="button" data-fundo="noir"><img id="sMarcaMini" src="${IMG_MARCA_PADRAO.replace(".jpg", "-mini.jpg")}" alt="">Marca</button>
+      <span class="menu-rot">Fundo</span>${htmlFundos()}
     </div>
+    <input type="file" id="sFotoFundo" accept="image/*" hidden>
   </div>
   <div class="pre-form">
     <h2 id="sPreTitulo"></h2>
@@ -165,7 +180,7 @@
     <button type="button" role="menuitemcheckbox" data-f="legendas">${I.cc}<span>Legendas ao vivo</span><em id="sEstLeg"></em></button>
     <div class="menu-fundos" role="radiogroup" aria-label="Fundo da câmera">
       <span class="menu-rot">Fundo da câmera</span>
-      <div><button type="button" data-fundo="nenhum" class="sel">Nenhum</button><button type="button" data-fundo="desfoque">Desfocado</button><button type="button" data-fundo="noir">Marca</button></div>
+${htmlFundos()}
     </div>
     <div class="menu-mentor">
       <p class="sub-l">Ferramentas do anfitrião</p>
@@ -222,7 +237,14 @@
     $("sAudio").onclick = () => S.room && S.room.startAudio().then(() => $("sAudio").classList.remove("on"));
     $("painelPessoas").onclick = acaoPessoa;
     $("sMenu").onclick = acaoMenu;
-    el.querySelectorAll("[data-fundo]").forEach(b => b.onclick = e => { e.stopPropagation(); escolherFundo(b.dataset.fundo); });
+    el.querySelectorAll("[data-fundo]").forEach(b => b.onclick = e => {
+      e.stopPropagation();
+      if (b.dataset.fundo === "foto" && !S.fotoFundo) return $("sFotoFundo").click();
+      escolherFundo(b.dataset.fundo);
+    });
+    el.querySelectorAll(".fundo-trocar").forEach(b => b.onclick = e => { e.stopPropagation(); $("sFotoFundo").click(); });
+    el.querySelectorAll(".fundo-remover").forEach(b => b.onclick = e => { e.stopPropagation(); removerFoto(); });
+    $("sFotoFundo").onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) usarFoto(f); };
     $("sModalX").onclick = fecharModal;
     $("sModal").onclick = e => { if (e.target.id === "sModal") fecharModal(); };
     $("sEnquete").onclick = acaoEnquete;
@@ -282,7 +304,9 @@
     el.classList.add("aberta");
     document.body.style.overflow = "hidden";
     $("sPreTitulo").textContent = op.titulo || "Web Meeting";
-    if (op.marcaImg) $("sMarcaMini").src = op.marcaImg;
+    el.querySelectorAll('[data-mini="marca"]').forEach(i => i.src = miniFundo("marca"));
+    S.fotoFundo = lerLocal(CHAVE_FOTO);
+    mostrarFoto();
     $("sPreQuando").textContent = op.quando || "";
     $("sNome").value = S.nome; $("sPreAvatar").textContent = ini(S.nome);
     $("sGravarBox").style.display = S.papel === "mentor" && op.gravacaoPermitida !== false && !S.demo ? "" : "none";
@@ -312,6 +336,8 @@
     aplicarPreview(temV || temA ? "" : "Não conseguimos acessar a câmera nem o microfone. Libere o acesso no navegador ou entre sem eles.");
     await listarDispositivos();
     medirNivel();
+    const ultimo = lerLocal(CHAVE_FUNDO);
+    if (temV && ultimo && ultimo !== "nenhum" && (ultimo !== "foto" || S.fotoFundo) && (ultimo === "desfoque" || ehImagem(ultimo))) escolherFundo(ultimo).catch(() => { });
   }
 
   /** Vídeo da câmera local antes de entrar (e no modo demonstração): com o fundo aplicado, se houver. */
@@ -325,7 +351,7 @@
     if (!v) S.camOn = false; if (!a) S.micOn = false;
     if (v) v.enabled = S.camOn; if (a) a.enabled = S.micOn;
     const video = $("sPreVideo"), mostrar = trilhaLocal();
-    video.classList.toggle("sem-espelho", S.fundo === "noir");
+    video.classList.toggle("sem-espelho", ehImagem(S.fundo));
     if (!mostrar) video.srcObject = null;
     else if (!video.srcObject || video.srcObject.getVideoTracks()[0] !== mostrar) video.srcObject = new MediaStream([mostrar]);
     video.style.visibility = S.camOn ? "visible" : "hidden";
@@ -573,7 +599,7 @@
   function atualizarTile(d, t) {
     const p = t.p;
     d.classList.toggle("local", p.local);
-    d.classList.toggle("sem-espelho", p.local && S.fundo === "noir");
+    d.classList.toggle("sem-espelho", p.local && ehImagem(S.fundo));
     d.classList.toggle("tela", t.tela);
     d.classList.toggle("falando", !t.tela && p.falando);
     d.classList.toggle("mao-on", !t.tela && p.mao);
@@ -1196,16 +1222,44 @@
 
   /* ================= FUNDO DA CÂMERA ================= */
   function marcarFundo(tipo) { el.querySelectorAll("[data-fundo]").forEach(b => { const on = b.dataset.fundo === tipo; b.classList.toggle("sel", on); b.setAttribute("aria-checked", String(on)); b.setAttribute("role", "radio"); }); }
-  async function escolherFundo(tipo) {
-    if (tipo === S.fundo) return;
+  async function escolherFundo(tipo, forcar) {
+    if (tipo === S.fundo && !forcar) return;
     const anterior = S.fundo;
     marcarFundo(tipo);
-    try { await aplicarFundo(tipo); }
+    try { await aplicarFundo(tipo); gravarLocal(CHAVE_FUNDO, tipo); }
     catch (e) { console.error(e); marcarFundo(anterior); S.fundo = anterior; toast(e.message || "Não foi possível aplicar o fundo."); }
   }
   function criarProcessador(tipo) {
-    const opcoes = { assetPaths: { tasksVisionFileSet: MEDIAPIPE, modelAssetPath: MEDIAPIPE + "/selfie_segmenter.tflite" } };
-    return tipo === "desfoque" ? NoirFundos.BackgroundBlur(14, undefined, undefined, opcoes) : NoirFundos.VirtualBackground(IMG_NOIR(), undefined, undefined, opcoes);
+    const base = MEDIAPIPE;
+    if (tipo === "desfoque") return EndeavorFundo.criar({ modo: "desfoque", base });
+    const imagem = tipo === "foto" ? S.fotoFundo : imgFundo(tipo.slice(4));
+    return EndeavorFundo.criar({ modo: "imagem", imagem, base });
+  }
+  /** Foto própria: reduzida no navegador e guardada só neste computador (localStorage). Nunca é enviada. */
+  async function usarFoto(arquivo) {
+    if (!/^image\//.test(arquivo.type)) return toast("Escolha uma imagem (JPG ou PNG).");
+    if (arquivo.size > 25 * 1024 * 1024) return toast("Imagem muito grande. Use uma de até 25 MB.");
+    try {
+      const url = URL.createObjectURL(arquivo), img = new Image();
+      img.src = url; await img.decode();
+      const esc = Math.min(1, 1600 / img.naturalWidth, 1600 / img.naturalHeight);
+      const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * esc); c.height = Math.round(img.naturalHeight * esc);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      let dado = c.toDataURL("image/jpeg", 0.85);
+      if (!gravarLocal(CHAVE_FOTO, dado)) { dado = c.toDataURL("image/jpeg", 0.6); gravarLocal(CHAVE_FOTO, dado); }
+      S.fotoFundo = dado; mostrarFoto();
+      await escolherFundo("foto", true);
+    } catch (e) { console.error(e); toast("Não foi possível abrir essa imagem."); }
+  }
+  function removerFoto() {
+    gravarLocal(CHAVE_FOTO, null); S.fotoFundo = null; mostrarFoto();
+    if (S.fundo === "foto") escolherFundo("nenhum");
+  }
+  function mostrarFoto() {
+    el.querySelectorAll('[data-mini="foto"]').forEach(i => { if (S.fotoFundo) i.src = S.fotoFundo; i.hidden = !S.fotoFundo; });
+    el.querySelectorAll(".fundo-foto").forEach(b => b.classList.toggle("tem", !!S.fotoFundo));
+    el.querySelectorAll(".fundo-nota").forEach(p => p.hidden = !S.fotoFundo);
   }
   /** Aplica o fundo na câmera: na sala real, na trilha publicada; antes de entrar e no demo, numa cópia local. */
   async function aplicarFundo(tipo) {
@@ -1213,13 +1267,13 @@
     if (tipo !== "nenhum") {
       if (!S._avisoFundo) { S._avisoFundo = true; toast("Preparando o fundo…"); }
       await carregarFundos();
-      if (!NoirFundos.supportsBackgroundProcessors()) throw new Error("Este navegador não suporta fundo virtual.");
+      if (!EndeavorFundo.suportado()) throw new Error("Este navegador não suporta fundo virtual.");
     }
     if (S.room) {
       const pub = S.room.localParticipant.getTrackPublication(LK.Track.Source.Camera), t = pub && pub.track;
       if (!t) return;
       if (tipo === "nenhum") await t.stopProcessor(); else await t.setProcessor(criarProcessador(tipo));
-      S.tiles.forEach(d => { if (d.classList.contains("local")) d.classList.toggle("sem-espelho", tipo === "noir"); });
+      S.tiles.forEach(d => { if (d.classList.contains("local")) d.classList.toggle("sem-espelho", ehImagem(tipo)); });
       return render();
     }
     const v = S.preStream && S.preStream.getVideoTracks()[0];

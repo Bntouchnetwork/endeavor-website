@@ -12,7 +12,8 @@ Videoconferência da Endeavor Business Solutions com LiveKit. A própria Endeavo
 | Página da sala | `reuniao.html?s=SALA` + `meet/page.js` |
 | Sala (vídeo, chat, ferramentas) | `meet/room.js`, `meet/room.css` (do Noir Hub) |
 | Slides com IA | `meet/slides.js`, `meet/slides.css` (do Noir Hub) |
-| SDK e fundos | `meet/vendor/livekit-client.umd.js`, `meet/vendor/livekit-fundos.js` (@livekit/track-processors), `meet/vendor/mediapipe/` |
+| SDK | `meet/vendor/livekit-client.umd.js` |
+| Fundo da câmera | `meet/vendor/fundo-suave.js` (fonte `fundo-suave.src.js`, com MediaPipe), `meet/vendor/mediapipe/`, imagens em `meet/img/fundo-*.jpg` |
 | Servidor | `supabase/functions/meet` (token, salas, ações do anfitrião, resumo e slides) |
 | Webhook do LiveKit | `supabase/functions/meet-webhook` |
 | Banco | `supabase/migrations/20261115_web_meeting.sql` |
@@ -32,7 +33,16 @@ Vídeo e áudio, escolha de câmera e microfone na pré-sala, compartilhamento d
 
 Anfitrião: silenciar, remover participante, encerrar a sala para todos, gravar, transmitir por RTMP (YouTube e Instagram), enquetes, cronômetro, salas em grupos, legendas ao vivo, resumo da reunião por IA e assistente de slides com IA (apresenta para todos, sincronizado em tempo real).
 
-Todos: fundo desfocado ou com a marca (logo da empresa, se cadastrado na empresa; senão a marca Endeavor), ver legendas, votar nas enquetes.
+Todos: fundo da câmera, ver legendas, votar nas enquetes.
+
+## Fundo da câmera
+
+Na pré-sala e no menu **Mais**: **Nenhum**, **Desfocado** ou um **fundo virtual**: Marca (logo da empresa, se cadastrado; senão a marca Endeavor), Escritório, Sala de reunião, Estante, Janela, Estúdio ou **Sua foto**.
+
+- **Recorte suave e estável:** o processador próprio (`fundo-suave.js`) usa a máscara de confiança do MediaPipe (em vez da máscara binária), mistura cada máscara com a anterior (rápido onde a pessoa se mexe, lento onde é só ruído), suaviza a borda e, no desfoque, tira a pessoa da média para não formar halo. Isso acaba com o "pisca" e com o fundo real aparecendo na borda.
+- **Sua foto:** a imagem é reduzida no navegador e guardada só naquele computador (localStorage). Nunca é enviada ao servidor. Dá para trocar ou remover.
+- A última escolha fica lembrada no navegador e volta na próxima reunião.
+- O fundo virtual aparece sem espelho para a própria pessoa, para textos e logos ficarem legíveis.
 
 **Gravação:** todos os participantes veem o selo "Gravando" e um aviso quando a gravação começa. A Flórida exige o consentimento de todas as partes para gravar conversas: o aviso na tela ajuda, mas valide os termos de uso com um advogado.
 
@@ -52,4 +62,4 @@ Sem o passo 2, as salas abrem em **modo demonstração**: câmera, microfone e t
 ## Testes
 
 - `deno run --allow-read tests/meet-parity.test.ts` confere que o navegador e o servidor validam os slides do mesmo jeito.
-- `python3 -m http.server 8092` e `node tests/meet-room.e2e.mjs http://localhost:8092` abrem a sala no Chromium com câmera e microfone falsos, como convidado (computador e celular) e como anfitrião, e conferem entrada, grade, chat, reações, mão levantada, enquete, gravação, menu do anfitrião, fundo desfocado e assistente de slides.
+- `python3 -m http.server 8092` e `node tests/meet-room.e2e.mjs http://localhost:8092` abrem a sala no Chromium com câmera e microfone falsos, como convidado (computador e celular) e como anfitrião, e conferem entrada, grade, chat, reações, mão levantada, enquete, gravação, menu do anfitrião, fundo desfocado, fundos virtuais, foto própria (confere que fica só no navegador) e assistente de slides.

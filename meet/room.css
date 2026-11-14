@@ -1,6 +1,7 @@
 /* Endeavor Web Meeting · sala de reunião (LiveKit), adaptada do Noir Hub com as cores da Endeavor */
 .sala{position:fixed;inset:0;z-index:80;background:#061226;color:#fff;display:none;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
 .sala.aberta{display:flex;flex-direction:column}
+.sala,.sala *,.sala *::before,.sala *::after{box-sizing:border-box}
 .sala button{font-family:inherit}
 .sala :focus-visible{outline:2px solid #c8a45d;outline-offset:2px}
 
@@ -16,7 +17,7 @@
 .pre-form h2{font-family:"Source Serif 4",Georgia,serif;letter-spacing:0;font-size:clamp(28px,3.4vw,40px);line-height:1.08;font-weight:700}
 .pre-form .quando{color:#a8a8a8;margin:8px 0 20px;letter-spacing:.04em}
 .pre-form label{display:block;color:#a8a8a8;font-size:13px;margin-top:14px;letter-spacing:.04em}
-.pre-form input,.pre-form select{width:100%;margin-top:6px;padding:11px 12px;background:#0d2240;border:1px solid #2a4a7a;border-radius:4px;color:#fff;font:15px inherit;font-family:inherit}
+.pre-form input,.pre-form select{box-sizing:border-box;max-width:100%;width:100%;margin-top:6px;padding:11px 12px;background:#0d2240;border:1px solid #2a4a7a;border-radius:4px;color:#fff;font:15px inherit;font-family:inherit}
 .pre-form input:focus,.pre-form select:focus{outline:2px solid #c8a45d;border-color:transparent}
 .pre-form .check{display:flex;gap:10px;align-items:flex-start;color:#cfcfcf;font-size:14px;margin-top:16px}
 .pre-form .check input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:#fff}
@@ -120,7 +121,7 @@
 .toast-sala.ver{opacity:1}
 
 @media (max-width:900px){
-  .sala-pre{grid-template-columns:1fr;gap:24px;align-items:start;padding-top:24px}
+  .sala-pre{grid-template-columns:minmax(0,1fr);gap:24px;align-items:start;padding-top:24px}
   .lateral{position:absolute;inset:0;width:auto;z-index:4;border-left:0}
   .palco.com-tela .grade{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) auto}
   .palco.com-tela .tile.tela{grid-column:1 / -1;grid-row:1}
@@ -143,12 +144,27 @@
 .palco{position:relative;flex-direction:column}
 .palco > .grade{flex:1}
 
-/* fundo na pré-sala */
-.pre-fundos{display:flex;align-items:center;gap:8px;margin-top:14px;flex-wrap:wrap}
-.pre-fundos span{color:#a8a8a8;font-size:13px;letter-spacing:.04em;margin-right:4px}
-.pre-fundos button,.menu-fundos button{display:inline-flex;align-items:center;gap:6px;background:#0f2545;border:1px solid #2a4a7a;color:#ddd;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer}
-.pre-fundos button img{width:28px;height:16px;object-fit:cover;border-radius:2px}
-.pre-fundos button.sel,.menu-fundos button.sel{background:#fff;color:#07162b;border-color:#fff;font-weight:700}
+/* fundo da câmera (pré-sala e menu Mais) */
+.pre-fundos{margin-top:14px}
+.pre-fundos .menu-rot{color:#a8a8a8;letter-spacing:.04em}
+.fundos-linha{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.pre-fundos .fundos-linha button,.menu-fundos .fundos-linha button{display:inline-flex;align-items:center;gap:6px;background:#0f2545;border:1px solid #2a4a7a;color:#ddd;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer}
+.fundos-linha button.sel{background:#fff;color:#07162b;border-color:#fff;font-weight:700}
+.fundos-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
+.menu-fundos .fundos-grade{grid-template-columns:repeat(4,1fr)}
+.fundo-img{position:relative;aspect-ratio:16/9;padding:0;border:2px solid transparent;border-radius:6px;overflow:hidden;background:#0f2545;cursor:pointer;color:#fff}
+.fundo-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.fundo-img span{position:absolute;left:0;right:0;bottom:0;padding:10px 4px 3px;font-size:10.5px;line-height:1.2;text-align:left;background:linear-gradient(transparent,rgba(0,0,0,.72));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fundo-img:hover{border-color:#5c7fb3}
+.fundo-img.sel{border-color:#e3cf9f;box-shadow:0 0 0 1px #e3cf9f}
+.fundo-img:focus-visible,.fundos-linha button:focus-visible{outline:2px solid #e3cf9f;outline-offset:2px}
+.fundo-foto{border:2px dashed #3a5d90;background:#0b1d38}
+.fundo-foto b{position:absolute;inset:0 0 14px;display:grid;place-items:center;font-size:22px;font-weight:400;color:#e3cf9f}
+.fundo-foto.tem{border-style:solid;border-color:transparent}
+.fundo-foto.tem b{display:none}
+.fundo-foto.tem.sel{border-color:#e3cf9f}
+.fundo-nota{margin:8px 0 0;font-size:12px;color:#a8b6cc}
+.fundo-nota button{background:none;border:0;padding:0;color:#e3cf9f;font-size:12px;cursor:pointer;text-decoration:underline}
 
 /* selo de transmissão (visível para todos) */
 .selo-tx{display:none;align-items:center;gap:6px;color:#fff;background:#b71c1c;border-radius:20px;padding:3px 10px 3px 8px;font-weight:700;font-size:12px;letter-spacing:.04em}
@@ -165,7 +181,6 @@
 .menu-sala .sub-l{margin:8px 10px 4px}
 .menu-fundos{padding:8px 10px 10px}
 .menu-rot{display:block;color:#bbb;font-size:13px;margin-bottom:8px}
-.menu-fundos div{display:flex;gap:6px;flex-wrap:wrap}
 .menu-mentor{display:none;border-top:1px solid #1d3a66;margin-top:6px;padding-top:4px}
 .sala.papel-mentor .menu-mentor{display:block}
 
@@ -345,3 +360,4 @@
 .reacao-voa .re-n{font-size:12px;background:rgba(7,22,43,.75);color:#fff;padding:2px 8px;border-radius:10px;white-space:nowrap}
 @keyframes reacaoSobe{0%{transform:translateY(0) scale(.6);opacity:0}12%{transform:translateY(-20px) scale(1.1);opacity:1}80%{opacity:1}100%{transform:translateY(-240px) scale(1);opacity:0}}
 @media (prefers-reduced-motion:reduce){.reacao-voa{animation:none;bottom:40%}}
+.sala-pre > div{min-width:0}
