@@ -86,7 +86,7 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   ok((await page.textContent("#sMenu .fundo-virtual")).includes("Escritório") && (await page.getAttribute("#sMenu .fundo-virtual", "class")).includes("sel") && erros.length === 0, "anfitrião: fundo virtual Escritório " + erros.join(" | "));
   ok(await page.evaluate(() => document.querySelector(".tile.local").classList.contains("sem-espelho")), "anfitrião: fundo virtual não espelhado");
   await page.click("#sMenu .fundo-virtual"); await page.click('#sMenu [data-fundo="img:janela"]'); await page.waitForTimeout(600);
-  ok((await page.textContent("#sMenu .fundo-virtual")).includes("Janela") && erros.length === 0, "anfitrião: troca de imagem direto pela lista");
+  ok((await page.textContent("#sMenu .fundo-virtual")).includes("Chicago") && erros.length === 0, "anfitrião: troca de imagem direto pela lista");
   await page.click("#sMenu .fundo-virtual");
   // foto própria: fica só no navegador
   const foto = await page.evaluate(() => { const c = document.createElement("canvas"); c.width = 1200; c.height = 800; const g = c.getContext("2d"); const gr = g.createLinearGradient(0, 0, 1200, 800); gr.addColorStop(0, "#2a6"); gr.addColorStop(1, "#14a"); g.fillStyle = gr; g.fillRect(0, 0, 1200, 800); return c.toDataURL("image/jpeg", 0.9).split(",")[1]; });

@@ -29,10 +29,10 @@
   /** Fundos virtuais prontos. "Sua foto" fica só no computador da pessoa (nunca vai para o servidor). */
   const FUNDOS_PRONTOS = [
     ["marca", "Marca"], ["escritorio", "Escritório"], ["reuniao", "Sala de reunião"],
-    ["estante", "Estante"], ["janela", "Janela"], ["estudio", "Estúdio"],
+    ["estante", "Estante"], ["janela", "Chicago"], ["estudio", "Estúdio"],
   ];
-  const imgFundo = id => id === "marca" ? IMG_NOIR() : BASE + "img/fundo-" + id + ".jpg";
-  const miniFundo = id => id === "marca" ? ((S && S.op.marcaImg) || IMG_MARCA_PADRAO.replace(".jpg", "-mini.jpg")) : BASE + "img/fundo-" + id + "-mini.jpg";
+  const imgFundo = id => id === "marca" ? IMG_NOIR() : BASE + "img/fundo-" + id + ".jpg?v=2";
+  const miniFundo = id => id === "marca" ? ((S && S.op.marcaImg) || IMG_MARCA_PADRAO.replace(".jpg", "-mini.jpg")) : BASE + "img/fundo-" + id + "-mini.jpg?v=2";
   const CHAVE_FOTO = "emeet-fundo-foto", CHAVE_FUNDO = "emeet-fundo";
   const ehImagem = f => /^img:|^foto$/.test(f || "");
   const lerLocal = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
