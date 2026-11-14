@@ -127,7 +127,7 @@
       var tab = (ERoute.get().match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
-      var TABS = [['empresas', 'Empresas'], ['abertura', 'Abertura'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios']];
+      var TABS = [['empresas', 'Empresas'], ['abertura', 'Abertura'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios'], ['webmeeting', 'Web Meeting']];
       view.innerHTML = '<p class="crumbs"><a href="#/crm?tipo=client">CRM</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-ach">Pedir débito na conta da empresa</button><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
@@ -138,7 +138,7 @@
       view.querySelector('#c-edit').onclick = function () { editClient(ctx, c); };
       view.querySelector('#c-ach').onclick = function () { achRequest(ctx, c); };
       var body = view.querySelector('#c-body');
-      var fn = { empresas: tabCompanies, abertura: tabOnboarding, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance }[tab] || tabCompanies;
+      var fn = { empresas: tabCompanies, abertura: tabOnboarding, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance, webmeeting: tabMeet }[tab] || tabCompanies;
       await fn(body, ctx, c, companies);
     }
   };
@@ -274,6 +274,35 @@
   }
 
   /* ---------- opening documents (intake) ---------- */
+  /* ---------- Web Meeting: habilitar para a empresa e limites (vazio = sem limite) ---------- */
+  async function tabMeet(body, ctx, c) {
+    var esc = ctx.esc;
+    var ma = (await ctx.sb.from('meet_access').select('*').eq('client_id', c.id).maybeSingle()).data || { enabled: false, recording_allowed: true, streaming_allowed: false };
+    var uso = (await ctx.sb.rpc('meet_usage', { p_client: c.id })).data || { rooms_month: 0, minutes_month: 0 };
+    var num = function (id, label, v, hint) { return '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="number" min="0" step="1" inputmode="numeric" value="' + (v == null ? '' : v) + '" placeholder="Sem limite">' + (hint ? '<p class="portal-muted" style="font-size:.82rem;margin:.3rem 0 0">' + hint + '</p>' : '') + '</div>'; };
+    body.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Web Meeting</h2>' +
+      '<p class="portal-muted">Com o Web Meeting habilitado, a aba “Web Meeting” aparece no Portal do Cliente: a equipe da empresa cria salas, entra como anfitriã e manda o link para os convidados. A empresa vê só as próprias salas.</p>' +
+      '<p>Neste mês: <strong>' + uso.rooms_month + '</strong> salas criadas · <strong>' + uso.minutes_month + '</strong> minutos de reunião · <a href="#/webmeeting?empresa=' + c.id + '">ver as salas</a></p>' +
+      '<form class="portal-form" id="ma-f"><div class="check-row"><input type="checkbox" id="ma-on"' + (ma.enabled ? ' checked' : '') + '><label for="ma-on"><strong>Habilitar o Web Meeting para ' + esc(c.name) + '</strong></label></div>' +
+      '<fieldset class="ag-hours"><legend class="portal-h2" style="font-size:1rem">Limites (opcional)</legend><div class="portal-grid2">' +
+      num('ma-rooms', 'Salas por mês', ma.max_rooms_month) + num('ma-part', 'Participantes por sala', ma.max_participants, 'Entre 2 e 500. Sem limite, a sala aceita até 100.') + '</div>' +
+      num('ma-min', 'Minutos de reunião por mês', ma.max_minutes_month, 'Somados pelo tempo em que cada sala ficou aberta.') +
+      '<div class="check-row"><input type="checkbox" id="ma-rec"' + (ma.recording_allowed ? ' checked' : '') + '><label for="ma-rec">Permitir gravação</label></div>' +
+      '<div class="check-row"><input type="checkbox" id="ma-tx"' + (ma.streaming_allowed ? ' checked' : '') + '><label for="ma-tx">Permitir transmissão no YouTube e no Instagram</label></div></fieldset>' +
+      '<div class="portal-alert" id="ma-m" role="status"></div><button class="btn btn--navy" type="submit">Salvar</button></form></section>';
+    var $b = function (q) { return body.querySelector(q); };
+    var lim = function (id, min, max) { var v = $b(id).value.trim(); if (v === '') return null; var n = Math.round(Number(v)); if (!isFinite(n) || n < min || n > max) throw new Error('Confira os limites: ' + $b('label[for="' + id.slice(1) + '"]').textContent + ' entre ' + min + ' e ' + max + '.'); return n; };
+    $b('#ma-f').onsubmit = async function (e) {
+      e.preventDefault();
+      var m = $b('#ma-m'), row;
+      try { row = { client_id: c.id, enabled: $b('#ma-on').checked, max_rooms_month: lim('#ma-rooms', 0, 10000), max_participants: lim('#ma-part', 2, 500), max_minutes_month: lim('#ma-min', 0, 1000000),
+        recording_allowed: $b('#ma-rec').checked, streaming_allowed: $b('#ma-tx').checked, updated_at: new Date().toISOString(), updated_by: (await ctx.sb.auth.getUser()).data.user.email }; }
+      catch (err) { return ctx.msg(m, err.message, 'error'); }
+      var r = await ctx.sb.from('meet_access').upsert(row, { onConflict: 'client_id' });
+      ctx.msg(m, r.error ? ctx.errText(r.error) : (row.enabled ? 'Salvo. A aba Web Meeting já aparece no portal do cliente.' : 'Salvo. O Web Meeting está desabilitado para esta empresa.'), r.error ? 'error' : 'ok');
+    };
+  }
+
   async function tabOnboarding(body, ctx, c, companies) {
     var esc = ctx.esc;
     var res = await Promise.all([ctx.q(ctx.sb.from('intake_requests').select('*').eq('client_id', c.id).neq('status', 'closed').order('created_at', { ascending: false }).limit(1)),

@@ -1348,3 +1348,14 @@ tr.is-archived td { opacity: .6; }
 .ag-day__on { min-width: 8rem; font-weight: 600; display: flex; align-items: center; gap: .4rem; }
 .ag-day input[type="time"] { min-height: 2.25rem; padding: 0 .35rem; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
 .bk-how { padding-left: 1.2rem; display: grid; gap: .5rem; font-size: .9rem; margin: 0 0 1rem; }
+
+/* ---------- Web Meeting (meet-panel.js) ---------- */
+.wm-acts { justify-content: flex-end; flex-wrap: wrap; }
+.wm-table td { vertical-align: middle; }
+.wm-kind { border: 0; padding: 0; margin: 0 0 1rem; display: grid; gap: .35rem; }
+.wm-kind legend { font-weight: 600; margin-bottom: .35rem; }
+.wm-sum { border: 1px solid var(--line); border-radius: 10px; padding: .6rem .8rem; margin: 0 0 .6rem; }
+.wm-sum summary { cursor: pointer; font-weight: 600; }
+.wm-sum pre { white-space: pre-wrap; font: inherit; font-size: .9rem; margin: .6rem 0; }
+.btn.is-copied { border-color: var(--success); color: var(--success); }
+.pill--muted { background: var(--gray-100); color: var(--muted); }

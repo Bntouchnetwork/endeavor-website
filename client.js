@@ -310,6 +310,9 @@
     var sv = await sb.from('client_services').select('product_code, status').eq('client_id', id).in('status', ['active', 'past_due']);
     S.services = (sv.data || []).map(function (x) { return x.product_code; });
     S.kind = S.client.portal_kind === 'tools' ? 'tools' : 'full';
+    // Web Meeting habilitado pela Endeavor na ficha do cliente
+    var ma = await sb.from('meet_access').select('enabled').eq('client_id', id).maybeSingle();
+    S.meetOn = !!(ma.data && ma.data.enabled);
     try { localStorage.setItem('endeavor-client-id', id); } catch (e) { /* ignore */ }
   }
 
@@ -430,6 +433,7 @@
       var b = S.services.indexOf('bookkeeping') > -1, m = [['overview', 'nav_overview', 'i-grid']];
       if (b) m.push(['companies', 'nav_companies', 'i-brief'], ['documents', 'nav_documents', 'i-file'], ['reports', 'nav_reports', 'i-chart'], ['upload', 'nav_upload', 'i-up']);
       if (S.perms.owner && window.ETools) ETools.nav().forEach(function (x) { m.push([x[0], x[1], x[2], 1]); });
+      if (S.meetOn && window.EMeetPanel) m.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
       if (S.perms.owner) m.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
       m.push(['settings', 'nav_settings', 'i-gear']);
       return m;
@@ -443,6 +447,7 @@
     if (window.EProjects && S.perms.owner && !PARTNER) n.push(['projetos', 'nav_projects', 'i-bot']);
     if (window.EAttorney) n.push(['advogados', 'nav_attorneys', 'i-law']);
     if (S.perms.owner && !PARTNER && window.ETools) ETools.nav().forEach(function (x) { n.push([x[0], x[1], x[2], 1]); });
+    if (S.meetOn && !PARTNER && window.EMeetPanel) n.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
     n.push(['settings', 'nav_settings', 'i-gear']);
     return n;
   }
@@ -489,6 +494,7 @@
     if (S.ref) Object.assign(V, S.ref.views);
     if (window.EClientOA) V.oa = EClientOA.view;
     if (window.EProjects) V.projetos = function (view) { return EProjects.view(view, refCtx()); };
+    if (window.EMeetPanel && S.client && S.meetOn && !PARTNER) V.webmeeting = function (view) { return EMeetPanel.render(view, refCtx(), { scope: 'client', clientId: S.client.id, clientName: S.client.name }); };
     if (window.ETools && S.client && !PARTNER) {
       Object.assign(V, ETools.views);
       if (S.kind === 'tools') V.overview = ETools.overview;

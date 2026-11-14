@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#07162b">
+  <title>Web Meeting | Endeavor Business Solutions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="meet/room.css?v=20261115">
+  <link rel="stylesheet" href="meet/slides.css?v=20261115">
+  <style>
+    html, body { margin: 0; min-height: 100%; background: #07162b; color: #fff; font-family: "Inter", system-ui, sans-serif; }
+    .wm-capa { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; box-sizing: border-box; }
+    .wm-cartao { width: 100%; max-width: 30rem; text-align: center; }
+    .wm-cartao img { height: 34px; width: auto; margin-bottom: 28px; }
+    .wm-cartao h1 { font-family: "Source Serif 4", Georgia, serif; font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem); line-height: 1.2; margin: 0 0 .5rem; }
+    .wm-cartao p { color: #c7d2e3; line-height: 1.55; margin: .4rem 0; }
+    .wm-cartao .wm-emp { color: #c8a45d; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .8rem; }
+    .wm-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  </style>
+</head>
+<body>
+<main class="wm-capa" id="wm" aria-live="polite">
+  <div class="wm-cartao">
+    <img src="logo-endeavor-light.svg" alt="Endeavor Business Solutions" width="180" height="34">
+    <h1>Web Meeting</h1>
+    <p id="wm-msg">Carregando a sala…</p>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="app-config.js?v=20261115"></script>
+<script src="meet/slides.js?v=20261115"></script>
+<script src="meet/room.js?v=20261115"></script>
+<script src="meet/page.js?v=20261115"></script>
+</body>
+</html>
