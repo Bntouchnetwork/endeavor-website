@@ -45,9 +45,7 @@
 .sala-corpo{flex:1;display:flex;min-height:0;position:relative}
 .palco{flex:1;min-width:0;padding:14px;display:flex}
 .grade{flex:1;display:grid;gap:10px;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));grid-auto-rows:minmax(0,1fr);align-content:center;min-height:0}
-.palco.com-tela .grade{grid-template-columns:minmax(0,1fr) 220px;grid-template-rows:repeat(var(--linhas,4),minmax(0,1fr));grid-auto-rows:auto}
-.palco.com-tela .tile.tela{grid-column:1;grid-row:1 / -1}
-.palco.com-tela .tile:not(.tela){grid-column:2}
+.palco.com-tela .grade{grid-template-columns:minmax(0,1fr);grid-auto-rows:minmax(0,1fr);grid-template-rows:none}
 
 .tile{position:relative;background:#0f2545;border-radius:6px;overflow:hidden;min-height:0;aspect-ratio:16/9;max-height:100%;justify-self:center;width:100%;border:2px solid transparent;transition:border-color .15s}
 .palco.com-tela .tile.tela{aspect-ratio:auto}
@@ -66,7 +64,7 @@
 .tile.mao-on .mao{display:flex}
 .tile .mao svg{width:18px;height:18px}
 
-.lateral{width:340px;border-left:1px solid #16305a;display:none;flex-direction:column;background:#081a33;min-height:0}
+.lateral{width:var(--lat-w,340px);flex:none;border-left:1px solid #16305a;display:none;flex-direction:column;background:#081a33;min-height:0}
 .sala.lateral-on .lateral{display:flex}
 .abas{display:flex;border-bottom:1px solid #16305a}
 .abas button{flex:1;background:none;border:0;color:#a8a8a8;padding:14px 10px;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-bottom:2px solid transparent}
@@ -123,9 +121,6 @@
 @media (max-width:900px){
   .sala-pre{grid-template-columns:minmax(0,1fr);gap:24px;align-items:start;padding-top:24px}
   .lateral{position:absolute;inset:0;width:auto;z-index:4;border-left:0}
-  .palco.com-tela .grade{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:minmax(0,1fr) auto}
-  .palco.com-tela .tile.tela{grid-column:1 / -1;grid-row:1}
-  .palco.com-tela .tile:not(.tela){grid-column:auto;grid-row:2}
   .sala-topo .meta .dur{display:none}
 }
 @media (max-width:600px){
@@ -298,7 +293,6 @@
 /* ================= assistente de apresentação ================= */
 .abas .aba-mentor{display:none}
 .sala.papel-mentor .abas .aba-mentor{display:block}
-.sala.lateral-on.aba-slides .lateral{width:420px}
 #painelSlides.ativo{display:flex;flex-direction:column;padding:0;min-height:0}
 .ap-rolagem{flex:1;overflow:auto;padding:14px;min-height:0}
 .ap-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
@@ -369,3 +363,58 @@
 @keyframes reacaoSobe{0%{transform:translateY(0) scale(.6);opacity:0}12%{transform:translateY(-20px) scale(1.1);opacity:1}80%{opacity:1}100%{transform:translateY(-240px) scale(1);opacity:0}}
 @media (prefers-reduced-motion:reduce){.reacao-voa{animation:none;bottom:40%}}
 .sala-pre > div{min-width:0}
+
+/* ================= palco com apresentação: divisor arrastável e coluna de participantes ================= */
+.divisor{flex:none;width:8px;margin:0 -4px;position:relative;z-index:3;cursor:col-resize;display:none;touch-action:none}
+.divisor::after{content:"";position:absolute;top:0;bottom:0;left:3px;width:2px;background:#16305a;transition:background .15s}
+.divisor:hover::after,.divisor:focus-visible::after,.sala.arrastando .divisor::after{background:#c8a45d}
+.divisor:focus-visible{outline:none}
+.sala.lateral-on .divisor{display:block}
+.sala.lateral-on .lateral{border-left:0}
+.sala.arrastando{cursor:col-resize;user-select:none}
+.sala.arrastando iframe,.sala.arrastando video{pointer-events:none}
+.faixa-pessoas{display:none;flex-direction:column;width:232px;flex:none;border-left:1px solid #16305a;background:#061428;min-height:0}
+.sala.com-faixa .faixa-pessoas{display:flex}
+.sala.com-faixa.faixa-fechada .faixa-pessoas{display:none}
+.faixa-topo{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 8px 14px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#a8b6cc}
+.faixa-topo b{font-weight:600;color:#fff;letter-spacing:0}
+.faixa-topo button{width:30px;height:30px;border-radius:50%;border:0;background:#0f2545;color:#ddd;display:grid;place-items:center;cursor:pointer}
+.faixa-topo button:hover{background:#244372;color:#fff}
+.faixa-topo button svg{width:16px;height:16px}
+.faixa-lista{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:0 10px 12px;scrollbar-width:thin}
+.faixa-lista .tile{width:100%;flex:none;max-height:none}
+.faixa-lista .tile .rot{font-size:12px;left:6px;bottom:6px;padding:3px 7px}
+.faixa-abrir{display:none;position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:3;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border:1px solid #2a4a7a;border-right:0;border-radius:8px 0 0 8px;background:#0f2545;color:#ddd;cursor:pointer;font-size:11px}
+.faixa-abrir span{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.06em}
+.faixa-abrir b{background:#c8a45d;color:#07162b;border-radius:9px;min-width:18px;padding:1px 4px;font-size:11px}
+.faixa-abrir svg{width:16px;height:16px}
+.faixa-abrir:hover{background:#244372;color:#fff}
+.sala.com-faixa.faixa-fechada .faixa-abrir{display:flex}
+.tile.apres .ap-rascunho{display:none;position:absolute;left:12px;top:12px;z-index:2;background:rgba(7,22,43,.82);border:1px solid #c8a45d;color:#e3cf9f;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:4px 9px;border-radius:3px;font-weight:700}
+.tile.apres.rascunho .ap-rascunho{display:block}
+@media (min-width:901px){
+  /* no computador a apresentação aparece grande no palco: a prévia pequena do painel some */
+  .sala.lateral-on.aba-slides #apPrevia{display:none}
+}
+/* gravação de voz do pedido */
+.ap-gravando{display:flex;align-items:center;gap:8px;margin:0 12px;padding:8px 10px;border-radius:8px;background:#2a1216;border:1px solid #7a2b31;color:#ffd7d7;font-size:12.5px}
+.ap-gravando[hidden]{display:none}
+.ap-gravando i{width:9px;height:9px;border-radius:50%;background:#e53935;flex:none;animation:apPulso 1.2s ease-in-out infinite}
+.ap-gravando span{flex:1;min-width:0}
+.ap-gravando button{background:none;border:1px solid #7a2b31;color:#ffd7d7;border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer}
+.ap-gravando button:hover{background:#3a181d}
+@keyframes apPulso{50%{opacity:.35;transform:scale(.8)}}
+#apDitar.ativo{box-shadow:0 0 0 4px rgba(229,57,53,.28)}
+.ap-ic.ap-apagar:hover:not(:disabled){background:#5a1d22;color:#ffb3b3}
+@media (prefers-reduced-motion:reduce){.ap-gravando i{animation:none}}
+@media (max-width:900px){
+  /* celular e tablet: a coluna vira uma faixa horizontal embaixo da apresentação */
+  .sala-corpo{flex-direction:column}
+  .divisor{display:none!important}
+  .faixa-pessoas{width:auto;height:104px;border-left:0;border-top:1px solid #16305a}
+  .faixa-topo{display:none}
+  .faixa-lista{flex-direction:row;overflow-x:auto;overflow-y:hidden;padding:8px}
+  .faixa-lista .tile{width:150px;height:84px}
+  .faixa-abrir{display:none!important}
+  .sala.com-faixa.faixa-fechada .faixa-pessoas{display:flex}
+}

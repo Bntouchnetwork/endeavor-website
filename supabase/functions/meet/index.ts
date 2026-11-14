@@ -15,7 +15,7 @@
 //     iniciar_gravacao | parar_gravacao { egressId? } | silenciar { identidade } | remover { identidade } | encerrar
 //     voltar_grupos { grupos } | iniciar_transmissao { destinos[] } | parar_transmissao { egressId }
 //     resumo { titulo, duracaoMin, participantes[], transcricao[], enquetes[], pitches[] }   (IA do HUB: meeting-summary)
-//     gerar { instrucao, apresentacao?, slideAtual?, contexto? } | ultima                     (IA do HUB: meeting-slides)
+//     gerar { instrucao, apresentacao?, slideAtual?, contexto? } | ultima | apagar_apresentacao                     (IA do HUB: meeting-slides)
 //
 // Segredos: LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, HUB_AI_API_KEY (motor de IA).
 // Gravação: MEET_S3_ENDPOINT, MEET_S3_REGION, MEET_S3_ACCESS_KEY, MEET_S3_SECRET (S3 do Supabase Storage, bucket meet-recordings).
@@ -261,6 +261,10 @@ async function acaoAnfitriao(req: Request, b: Any) {
     }
     case "resumo": return await resumo(r, b);
     case "gerar": return await slides(r, b);
+    case "apagar_apresentacao": {
+      await db.from("meet_presentations").delete().eq("room_id", r.id);
+      return { ok: true };
+    }
     case "ultima": {
       const { data } = await db.from("meet_presentations").select("content").eq("room_id", r.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
       return { apresentacao: data?.content ?? null };

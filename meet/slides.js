@@ -298,7 +298,9 @@
       async ultima() {
         const j = await chamar({ acao: "ultima" });
         return j.apresentacao ? validar(j.apresentacao) : null;
-      }
+      },
+      /** Apaga as apresentações desta sala guardadas no servidor (só o anfitrião). */
+      async apagar() { await chamar({ acao: "apagar_apresentacao" }); return true; }
     };
   }
 

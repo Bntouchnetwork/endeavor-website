@@ -84,6 +84,9 @@
     desfazer: svg('<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'),
     refazer: svg('<path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>'),
     pdf: svg('<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>'),
+    lixo: svg('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>'),
+    parar: svg('<rect x="7" y="7" width="10" height="10" rx="1.5" fill="currentColor" stroke="none"/>'),
+    faixa: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>'),
     enviarIc: svg('<path d="M4 12l16-8-6 16-2-7z"/>'),
     reacao: svg('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>')
   };
@@ -156,6 +159,7 @@
       <div class="cartao-enquete" id="sEnquete" hidden></div>
       <div class="legendas" id="sLegendas" aria-live="polite" hidden></div>
     </main>
+    <div class="divisor" id="sDivisor" role="separator" aria-orientation="vertical" aria-label="Arraste para ajustar a largura do painel" tabindex="0"></div>
     <aside class="lateral" id="sLateral" aria-label="Chat e participantes">
       <div class="abas" role="tablist"><button type="button" data-aba="chat" class="sel" role="tab">Chat</button><button type="button" data-aba="pessoas" role="tab">Participantes</button><button type="button" data-aba="slides" role="tab" class="aba-mentor">Slides</button><button type="button" class="fechar" id="sFecharLat" aria-label="Fechar painel">×</button></div>
       <div class="painel-l ativo" id="painelChat"><div class="msgs" id="sMsgs" aria-live="polite"><p class="vazio">As mensagens da reunião aparecem aqui.</p></div>
@@ -168,7 +172,7 @@
           <div class="ap-barra">
             <button type="button" class="ap-ic" id="apAnt" aria-label="Slide anterior">${I.ant}</button><span id="apPos" aria-live="polite">0 / 0</span><button type="button" class="ap-ic" id="apProx" aria-label="Próximo slide">${I.prox}</button>
             <span class="ap-sep"></span>
-            <button type="button" class="ap-ic" id="apDesfazer" aria-label="Desfazer">${I.desfazer}</button><button type="button" class="ap-ic" id="apRefazer" aria-label="Refazer">${I.refazer}</button><button type="button" class="ap-ic" id="apPdf" aria-label="Baixar PDF">${I.pdf}</button>
+            <button type="button" class="ap-ic" id="apDesfazer" aria-label="Desfazer">${I.desfazer}</button><button type="button" class="ap-ic" id="apRefazer" aria-label="Refazer">${I.refazer}</button><button type="button" class="ap-ic" id="apPdf" aria-label="Baixar PDF">${I.pdf}</button><button type="button" class="ap-ic ap-apagar" id="apApagar" aria-label="Apagar apresentação" title="Apagar apresentação">${I.lixo}</button>
           </div>
           <button type="button" class="btn-sala ap-vivo" id="apVivo">Apresentar para todos</button>
           <p class="ap-notas" id="apNotas" hidden></p>
@@ -176,13 +180,19 @@
           <div class="ap-conversa" id="apConversa" aria-live="polite"></div>
         </div>
         <div class="ap-sugestoes" id="apSugestoes"></div>
+        <div class="ap-gravando" id="apGravando" hidden><i aria-hidden="true"></i><span id="apGravTxt">Gravando… clique em parar para criar a apresentação</span><button type="button" id="apCancelarVoz">Cancelar</button></div>
         <form class="ap-form" id="apForm">
           <textarea id="apTexto" rows="2" maxlength="2000" placeholder="Peça uma apresentação ou uma mudança" aria-label="Pedido ao assistente"></textarea>
-          <button type="button" class="ap-ic" id="apDitar" aria-label="Ditar o pedido">${I.mic}</button>
+          <button type="button" class="ap-ic" id="apDitar" aria-label="Gravar o pedido por voz" title="Clique para falar; clique de novo para parar e criar">${I.mic}</button>
           <button type="submit" class="ap-ic ap-enviar" id="apEnviar" aria-label="Enviar pedido">${I.enviarIc}</button>
         </form>
       </div>
     </aside>
+    <aside class="faixa-pessoas" id="sFaixa" aria-label="Câmeras dos participantes">
+      <div class="faixa-topo"><span>Participantes <b id="sFaixaQtd"></b></span><button type="button" id="sFaixaFechar" aria-label="Esconder a coluna de participantes" title="Esconder participantes">${I.prox}</button></div>
+      <div class="faixa-lista" id="sFaixaLista"></div>
+    </aside>
+    <button type="button" class="faixa-abrir" id="sFaixaAbrir" aria-label="Mostrar a coluna de participantes" title="Mostrar participantes">${I.ant}<span>Participantes</span><b id="sFaixaAbrirQtd"></b></button>
   </div>
   <div class="menu-sala" id="sMenu" role="menu" hidden>
     <p class="sub-l">Para você</p>
@@ -236,7 +246,10 @@ ${htmlFundos()}
     $("sChat").onclick = () => abrirLateral("chat");
     $("sPessoas").onclick = () => abrirLateral("pessoas");
     $("sMais").onclick = e => { e.stopPropagation(); alternarMenu(); };
-    $("sFecharLat").onclick = () => el.classList.remove("lateral-on");
+    $("sFecharLat").onclick = fecharLateral;
+    $("sFaixaFechar").onclick = () => alternarFaixa(false);
+    $("sFaixaAbrir").onclick = () => alternarFaixa(true);
+    ligarDivisor();
     el.querySelectorAll(".abas [data-aba]").forEach(b => b.onclick = () => abrirLateral(b.dataset.aba, true));
     $("sEnviar").onsubmit = e => { e.preventDefault(); const t = $("sTexto").value.trim(); if (!t) return; enviar({ t: "chat", texto: t }); $("sTexto").value = ""; };
     $("sGravar").onclick = alternarGravacao;
@@ -279,6 +292,8 @@ ${htmlFundos()}
     $("apDesfazer").onclick = () => voltarVersao(-1);
     $("apRefazer").onclick = () => voltarVersao(1);
     $("apPdf").onclick = baixarPdf;
+    $("apApagar").onclick = confirmarApagar;
+    $("apCancelarVoz").onclick = () => pararDitado(false);
     $("apVivo").onclick = alternarApresentar;
     $("apDitar").onclick = ditarPedido;
     $("apMinis").onclick = e => { const b = e.target.closest("[data-slide]"); if (b) irParaSlide(+b.dataset.slide); };
@@ -293,7 +308,7 @@ ${htmlFundos()}
     document.addEventListener("keydown", e => {
       if (e.key !== "Escape" || !el.classList.contains("aberta")) return;
       if ([...el.querySelectorAll(".fundos-lista")].some(l => !l.hidden)) { fecharListasFundo(true); return; }
-      if (!$("sModal").hidden) fecharModal(); else if (!$("sMenu").hidden) $("sMenu").hidden = true; else el.classList.remove("lateral-on");
+      if (!$("sModal").hidden) fecharModal(); else if (!$("sMenu").hidden) $("sMenu").hidden = true; else if (S.ditando) pararDitado(false); else fecharLateral();
     });
     window.addEventListener("beforeunload", () => { if (S && S.room) S.room.disconnect(); });
     new ResizeObserver(() => S && layout()).observe($("sPalco"));
@@ -304,7 +319,7 @@ ${htmlFundos()}
       op, papel: op.papel === "mentor" ? "mentor" : "aluno", salaBase: op.sala || "demo-reuniao", sala: op.sala || "demo-reuniao", nome: op.nome || "",
       micOn: true, camOn: true, camId: "", micId: "", preStream: null, telaStream: null, codigoMentor: "",
       room: null, token: "", demo: !!op.demo, tiles: new Map(), maos: new Map(), maoMinha: false,
-      gravando: false, egressId: "", inicioRec: 0, inicio: 0, timers: [], naoLidas: 0, aba: "chat",
+      gravando: false, egressId: "", inicioRec: 0, inicio: 0, timers: [], naoLidas: 0, aba: "chat", faixaFechada: lerLocal("emeet-faixa") === "fechada",
       demoPessoas: [], demoFiltro: null, demoFalando: "", nivelLocal: 0, encerrado: false, trocando: false,
       // ferramentas
       fundo: "nenhum", lkCam: null, fundoTrack: null,
@@ -583,21 +598,31 @@ ${htmlFundos()}
     const ps = pessoas();
     const ordem = [...ps].sort((a, b) => (b.papel === "mentor") - (a.papel === "mentor"));
     const tiles = [];
-    if (S.apres.aoVivo && S.apres.doc) tiles.push({ chave: "apres", apres: true, tela: true, p: { id: "apres", nome: S.apres.doc.titulo, local: false } });
+    if (apresNoPalco()) tiles.push({ chave: "apres", apres: true, tela: true, p: { id: "apres", nome: S.apres.doc.titulo, local: false } });
     ordem.forEach(p => { if (p.tela) tiles.push({ chave: p.id + ":tela", p, tela: true, video: p.tela }); });
     ordem.forEach(p => tiles.push({ chave: p.id, p, tela: false, video: p.cam }));
-    const grade = $("sGrade"), vistos = new Set();
+    const grade = $("sGrade"), lista = $("sFaixaLista"), vistos = new Set();
+    // com apresentação ou tela compartilhada: o palco mostra só isso e as câmeras vão para a coluna da direita
+    const temTela = tiles.some(t => t.tela);
+    const pos = new Map([[grade, 0], [lista, 0]]);
     tiles.forEach((t, i) => {
       let d = S.tiles.get(t.chave);
       if (!d) { d = t.apres ? criarTileApres() : criarTile(); S.tiles.set(t.chave, d); }
       vistos.add(t.chave);
+      const falava = d.classList.contains("falando");
       if (t.apres) atualizarTileApres(d); else atualizarTile(d, t);
       d.classList.toggle("destaque", i === 0 && t.tela);
-      if (grade.children[i] !== d) grade.insertBefore(d, grade.children[i] || null);
+      const alvo = temTela && !t.tela ? lista : grade, j = pos.get(alvo); pos.set(alvo, j + 1);
+      if (alvo.children[j] !== d) alvo.insertBefore(d, alvo.children[j] || null);
+      if (alvo === lista && !falava && d.classList.contains("falando")) mostrarNaFaixa(d);
     });
     for (const [k, d] of S.tiles) if (!vistos.has(k)) { soltarVideo(d); d.remove(); S.tiles.delete(k); }
-    const temTela = tiles.some(t => t.tela);
+    const naFaixa = lista.children.length;
     $("sPalco").classList.toggle("com-tela", temTela);
+    el.classList.toggle("com-faixa", temTela && naFaixa > 0);
+    el.classList.toggle("faixa-fechada", !!S.faixaFechada);
+    $("sFaixaQtd").textContent = naFaixa ? "(" + naFaixa + ")" : "";
+    $("sFaixaAbrirQtd").textContent = naFaixa || "";
     grade.style.setProperty("--linhas", Math.max(1, tiles.length - 1));
     layout();
 
@@ -738,9 +763,62 @@ ${htmlFundos()}
     toast(S.maoMinha ? "Você levantou a mão." : "Você abaixou a mão.");
     render();
   }
+  function fecharLateral() { el.classList.remove("lateral-on"); render(); }
+  /** A apresentação aparece no palco quando está ao vivo ou quando o anfitrião está com o painel de slides aberto. */
+  function apresNoPalco() {
+    const ap = S.apres;
+    return !!ap.doc && (ap.aoVivo || (S.papel === "mentor" && S.aba === "slides" && el.classList.contains("lateral-on")));
+  }
+  function alternarFaixa(abrir) {
+    S.faixaFechada = !abrir; gravarLocal("emeet-faixa", abrir ? null : "fechada");
+    el.classList.toggle("faixa-fechada", !abrir);
+    (abrir ? $("sFaixaFechar") : $("sFaixaAbrir")).focus();
+    layout();
+  }
+  /** Mostra quem começou a falar, se estiver fora da área visível da coluna (sem rolar a página). */
+  function mostrarNaFaixa(d) {
+    const l = $("sFaixaLista"); if (l.matches(":hover")) return;
+    const top = d.offsetTop - l.offsetTop, fim = top + d.offsetHeight;
+    if (top < l.scrollTop) l.scrollTo({ top, behavior: "smooth" });
+    else if (fim > l.scrollTop + l.clientHeight) l.scrollTo({ top: fim - l.clientHeight, behavior: "smooth" });
+  }
+  /* largura do painel lateral: arrastar a borda (ou setas do teclado); fica salva no navegador */
+  const LARG_PADRAO = { slides: 420, outro: 340 };
+  const modoLarg = () => S.aba === "slides" ? "slides" : "outro";
+  function aplicarLargura(w, salvar) {
+    const corpo = el.querySelector(".sala-corpo"), faixa = el.classList.contains("com-faixa") && !el.classList.contains("faixa-fechada") ? $("sFaixa").offsetWidth : 0;
+    const max = Math.max(300, Math.min(960, corpo.clientWidth - faixa - 320));
+    w = Math.round(Math.min(Math.max(w, 280), max));
+    el.style.setProperty("--lat-w", w + "px");
+    $("sDivisor").setAttribute("aria-valuenow", String(w));
+    if (salvar) gravarLocal("emeet-lat-" + modoLarg(), String(w));
+    layout();
+  }
+  function larguraSalva() { return Number(lerLocal("emeet-lat-" + modoLarg())) || LARG_PADRAO[modoLarg()]; }
+  function ligarDivisor() {
+    const dv = $("sDivisor");
+    dv.setAttribute("aria-valuemin", "280");
+    dv.onpointerdown = e => {
+      if (e.button !== 0) return;
+      e.preventDefault(); dv.setPointerCapture(e.pointerId); el.classList.add("arrastando");
+      const lat = $("sLateral"), dir = lat.getBoundingClientRect().right;
+      dv.onpointermove = ev => aplicarLargura(dir - ev.clientX, false);
+      dv.onpointerup = dv.onpointercancel = ev => {
+        dv.onpointermove = dv.onpointerup = dv.onpointercancel = null; el.classList.remove("arrastando");
+        try { dv.releasePointerCapture(ev.pointerId); } catch (_) { }
+        aplicarLargura($("sLateral").offsetWidth, true);
+      };
+    };
+    dv.ondblclick = () => { gravarLocal("emeet-lat-" + modoLarg(), null); aplicarLargura(LARG_PADRAO[modoLarg()], false); };
+    dv.onkeydown = e => {
+      const passo = e.shiftKey ? 80 : 24;
+      if (e.key === "ArrowLeft") { e.preventDefault(); aplicarLargura($("sLateral").offsetWidth + passo, true); }
+      if (e.key === "ArrowRight") { e.preventDefault(); aplicarLargura($("sLateral").offsetWidth - passo, true); }
+    };
+  }
   function abrirLateral(aba, deAba) {
     const aberta = el.classList.contains("lateral-on");
-    if (aberta && S.aba === aba && !deAba) { el.classList.remove("lateral-on"); return; }
+    if (aberta && S.aba === aba && !deAba) { fecharLateral(); return; }
     S.aba = aba;
     el.classList.add("lateral-on");
     el.querySelectorAll(".abas [data-aba]").forEach(b => { const on = b.dataset.aba === aba; b.classList.toggle("sel", on); b.setAttribute("aria-selected", on); });
@@ -750,7 +828,8 @@ ${htmlFundos()}
     el.classList.toggle("aba-slides", aba === "slides");
     if (aba === "slides") { desenharPainelSlides(); setTimeout(() => $("apTexto").focus(), 50); }
     if (aba === "chat") { S.naoLidas = 0; marcarNaoLidas(); setTimeout(() => $("sTexto").focus(), 50); }
-    layout();
+    aplicarLargura(larguraSalva(), false);
+    render();
   }
   function marcarNaoLidas() { const b = $("sChat").querySelector(".badge"); b.textContent = S.naoLidas; b.classList.toggle("on", S.naoLidas > 0); }
 
@@ -1356,7 +1435,7 @@ ${htmlFundos()}
         S.apres.doc = NoirApresentacao.validar(salvo.doc);
         S.apres.atual = Math.min(salvo.atual | 0, S.apres.doc.slides.length - 1);
         S.apres.conversa = Array.isArray(salvo.conversa) ? salvo.conversa.slice(-20) : [];
-      } else if (!S.demo && CFG.assistenteUrl) {
+      } else if (!(salvo && salvo.apagada) && !S.demo && CFG.assistenteUrl) {
         const doc = await motorIA().ultima();
         if (doc && S && !S.apres.doc) { S.apres.doc = doc; S.apres.conversa = [{ quem: "ia", texto: "Recuperei a última apresentação desta sala." }]; }
       }
@@ -1364,7 +1443,7 @@ ${htmlFundos()}
     if (S) { S.apres.versao++; desenharPainelSlides(); atualizarMenu(); }
   }
   function salvarLocal() {
-    try { localStorage.setItem(chaveLocal(), JSON.stringify({ doc: S.apres.doc, atual: S.apres.atual, conversa: S.apres.conversa.slice(-20) })); } catch (e) { }
+    try { localStorage.setItem(chaveLocal(), JSON.stringify({ doc: S.apres.doc, atual: S.apres.atual, conversa: S.apres.conversa.slice(-20), apagada: !S.apres.doc })); } catch (e) { }
   }
 
   function contextoEncontro() {
@@ -1411,7 +1490,7 @@ ${htmlFundos()}
   function voltarVersao(direcao) {
     const ap = S.apres, de = direcao < 0 ? ap.hist : ap.fut, para = direcao < 0 ? ap.fut : ap.hist;
     if (!de.length) return;
-    para.push(ap.doc);
+    if (ap.doc) para.push(ap.doc);
     aplicarApresentacao(de.pop(), false, null);
     toast(direcao < 0 ? "Alteração desfeita." : "Alteração refeita.");
   }
@@ -1423,6 +1502,23 @@ ${htmlFundos()}
     ap.atual = novo; ap.versao++;
     if (ap.aoVivo) enviar({ t: "apres_nav", rev: ap.rev, atual: novo });
     salvarLocal(); desenharPainelSlides(); render();
+  }
+  function confirmarApagar() {
+    if (!S.apres.doc) return;
+    modal("Apagar apresentação", `<p>A apresentação <b>${esc(S.apres.doc.titulo)}</b> sai do palco e do painel${S.apres.aoVivo ? " e para de aparecer para os participantes" : ""}. Logo depois, ainda dá para recuperar com Desfazer.</p>`,
+      [{ rot: "Cancelar", acao: () => true }, { rot: "Apagar", primario: true, acao: apagarApresentacao }]);
+  }
+  async function apagarApresentacao() {
+    const ap = S.apres;
+    if (!ap.doc) return;
+    if (ap.aoVivo) { ap.aoVivo = false; enviar({ t: "apres_vivo", ativo: false }); }
+    ap.hist.push(ap.doc); if (ap.hist.length > 30) ap.hist.shift();
+    ap.fut = []; ap.doc = null; ap.atual = 0; ap.versao++;
+    ap.conversa.push({ quem: "ia", texto: "Apresentação apagada. Peça uma nova quando quiser." });
+    salvarLocal(); desenharPainelSlides(); atualizarMenu(); render();
+    const m = motorIA();
+    if (m.apagar) m.apagar().catch(e => console.error(e));
+    toast("Apresentação apagada.");
   }
   function alternarApresentar() {
     const ap = S.apres;
@@ -1458,12 +1554,13 @@ ${htmlFundos()}
   function criarTileApres() {
     const d = document.createElement("div");
     d.className = "tile tela apres com-video";
-    d.innerHTML = `<div class="slide-host"></div><div class="ap-tile-nav so-mentor"><button type="button" data-ap="-1" aria-label="Slide anterior">${I.ant}</button><span></span><button type="button" data-ap="1" aria-label="Próximo slide">${I.prox}</button></div>`;
+    d.innerHTML = `<div class="slide-host"></div><div class="ap-rascunho">Rascunho: só você vê</div><div class="ap-tile-nav so-mentor"><button type="button" data-ap="-1" aria-label="Slide anterior">${I.ant}</button><span></span><button type="button" data-ap="1" aria-label="Próximo slide">${I.prox}</button></div>`;
     d.querySelector(".ap-tile-nav").onclick = e => { const b = e.target.closest("[data-ap]"); if (b) irParaSlide(S.apres.atual + Number(b.dataset.ap)); };
     return d;
   }
   function atualizarTileApres(d) {
     const ap = S.apres;
+    d.classList.toggle("rascunho", !ap.aoVivo);
     if (d._versao === ap.versao || !ap.doc) return;
     d._versao = ap.versao;
     const total = ap.doc.slides.length;
@@ -1501,6 +1598,7 @@ ${htmlFundos()}
     $("apDesfazer").disabled = !ap.hist.length;
     $("apRefazer").disabled = !ap.fut.length;
     $("apPdf").disabled = !doc;
+    $("apApagar").disabled = !doc || ap.ocupado;
     $("apVivo").disabled = !doc;
     $("apVivo").textContent = ap.aoVivo ? "Parar de apresentar" : "Apresentar para todos";
     $("apVivo").classList.toggle("vazado", ap.aoVivo);
@@ -1519,17 +1617,63 @@ ${htmlFundos()}
     $("apForm").classList.toggle("ocupado", ap.ocupado);
   }
 
+  /** Ditado do pedido, como no ChatGPT: um clique começa a gravar; outro clique para, e o texto vai direto para o assistente. */
   function ditarPedido() {
+    if (S.ditando) return pararDitado(true);
     if (!Reconhecimento) return toast("Seu navegador não permite ditar. Use Chrome, Edge ou Safari.");
-    if (S.ditando) { if (S._ditado) S._ditado.stop(); return; }
+    if (S.apres.ocupado) return toast("Espere o assistente terminar o pedido anterior.");
     if (S.rec) { const r = S.rec; S.rec = null; try { r.stop(); } catch (e) { } }
-    const r = new Reconhecimento(), campo = $("apTexto"), antes = campo.value;
-    r.lang = "pt-BR"; r.interimResults = true; r.continuous = false;
-    S.ditando = true; S._ditado = r; $("apDitar").classList.add("ativo");
-    r.onresult = ev => { campo.value = (antes ? antes + " " : "") + [...ev.results].map(x => x[0].transcript).join(""); };
-    r.onerror = ev => { if (ev.error === "not-allowed") toast("O navegador bloqueou o microfone para ditado."); };
-    r.onend = () => { S.ditando = false; S._ditado = null; $("apDitar").classList.remove("ativo"); sincronizarReconhecimento(); campo.focus(); };
-    try { r.start(); } catch (e) { r.onend(); }
+    const campo = $("apTexto"), antes = campo.value.trim();
+    const dit = S.ditado = { finais: "", parcial: "", enviar: false, inicio: Date.now(), r: null };
+    S.ditando = true;
+    const mostrar = () => { campo.value = [antes, dit.finais, dit.parcial].filter(Boolean).join(" "); campo.scrollTop = campo.scrollHeight; };
+    const iniciar = () => {
+      const r = dit.r = new Reconhecimento();
+      r.lang = "pt-BR"; r.interimResults = true; r.continuous = true;
+      r.onresult = ev => {
+        let parcial = "";
+        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+          const t = ev.results[i][0].transcript.trim(); if (!t) continue;
+          if (ev.results[i].isFinal) dit.finais = (dit.finais + " " + t).trim(); else parcial += " " + t;
+        }
+        dit.parcial = parcial.trim(); mostrar();
+      };
+      r.onerror = ev => {
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") { toast("O navegador bloqueou o microfone para ditado."); dit.bloqueado = true; }
+      };
+      // o navegador encerra o reconhecimento depois de um silêncio: enquanto a pessoa não clicar em parar, continua gravando
+      r.onend = () => {
+        if (S && S.ditado === dit && S.ditando && !dit.bloqueado) { try { iniciar(); return; } catch (e) { } }
+        if (S && S.ditado === dit) concluirDitado(dit, antes);
+      };
+      try { r.start(); } catch (e) { dit.bloqueado = true; r.onend(); }
+    };
+    $("apDitar").classList.add("ativo"); $("apDitar").innerHTML = I.parar;
+    $("apDitar").setAttribute("aria-label", "Parar e criar a apresentação");
+    $("apGravando").hidden = false; campo.readOnly = true;
+    clearInterval(S._tDitado);
+    S._tDitado = setInterval(() => { const s = Math.floor((Date.now() - dit.inicio) / 1000); $("apGravTxt").textContent = `Gravando ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}… clique em parar para criar a apresentação`; }, 500);
+    iniciar();
+  }
+  /** Para a gravação. enviar = true manda o texto para o assistente; false descarta o que foi gravado. */
+  function pararDitado(enviarPedido) {
+    const dit = S.ditado; if (!dit) return;
+    dit.enviar = enviarPedido; dit.cancelado = !enviarPedido; S.ditando = false;
+    if (dit.r) { try { dit.r.stop(); } catch (e) { concluirDitado(dit, ""); } } else concluirDitado(dit, "");
+  }
+  function concluirDitado(dit, antes) {
+    if (S.ditado !== dit) return;
+    S.ditado = null; S.ditando = false; clearInterval(S._tDitado);
+    const campo = $("apTexto");
+    campo.readOnly = false;
+    $("apDitar").classList.remove("ativo"); $("apDitar").innerHTML = I.mic; $("apDitar").setAttribute("aria-label", "Gravar o pedido por voz");
+    $("apGravando").hidden = true;
+    const texto = [antes, dit.finais, dit.parcial].filter(Boolean).join(" ").trim();
+    sincronizarReconhecimento();
+    if (dit.cancelado) { campo.value = antes; campo.focus(); return; }
+    campo.value = texto;
+    if (dit.enviar && texto) pedirAssistente(texto);
+    else { if (!texto) toast("Não ouvi nada. Tente de novo ou escreva o pedido."); campo.focus(); }
   }
 
   function baixarPdf() {

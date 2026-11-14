@@ -60,6 +60,14 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   const ctx = await browser.newContext({ viewport: { width: 1366, height: 820 }, permissions: ["camera", "microphone"] });
   const page = await ctx.newPage();
   const erros = []; page.on("pageerror", (e) => erros.push(e.message));
+  // reconhecimento de voz simulado: "ouve" uma frase até alguém clicar em parar
+  await page.addInitScript(() => {
+    class FalsoReconhecimento {
+      start() { window.__ditadoAtivo = true; setTimeout(() => this.onresult && this.onresult({ resultIndex: 0, results: [Object.assign([{ transcript: "Crie 3 slides sobre o plano de vendas" }], { isFinal: true })] }), 150); }
+      stop() { window.__ditadoAtivo = false; setTimeout(() => this.onend && this.onend(), 30); }
+    }
+    window.SpeechRecognition = window.webkitSpeechRecognition = FalsoReconhecimento;
+  });
   await page.route("**/functions/v1/meet", (r) => r.fulfill({ status: 404, json: { erro: "Sala não encontrada" } }));
   await page.goto(`${BASE}/reuniao.html?s=eb-host12345`);
   await page.waitForFunction(() => !!window.EMeetRoom);
@@ -107,6 +115,44 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   await page.press("#apTexto", "Enter");
   await page.waitForTimeout(2500);
   ok(!!(await page.$("#apPrevia .slide")), "anfitrião: assistente criou os slides");
+  // layout: apresentação no palco, painel de controle ao lado e câmeras na coluna da direita
+  ok(await page.isVisible("#sGrade .tile.apres") && (await page.$$eval("#sGrade .tile", (t) => t.length)) === 1, "anfitrião: rascunho da apresentação ocupa o palco");
+  ok((await page.textContent("#sGrade .tile.apres")).includes("Rascunho"), "anfitrião: palco indica que é rascunho");
+  ok(await page.isVisible("#sFaixa") && (await page.$$eval("#sFaixaLista .tile", (t) => t.length)) >= 2, "anfitrião: câmeras na coluna da direita");
+  const ordem = await page.evaluate(() => ["#sPalco", "#sLateral", "#sFaixa"].map((q) => Math.round(document.querySelector(q).getBoundingClientRect().left)));
+  ok(ordem[0] < ordem[1] && ordem[1] < ordem[2], "anfitrião: ordem palco, painel, participantes " + ordem.join(","));
+  // arrastar a borda entre o palco e o painel
+  const larg0 = await page.$eval("#sLateral", (e) => e.offsetWidth);
+  const dv = await page.$eval("#sDivisor", (e) => { const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
+  await page.mouse.move(dv.x, dv.y); await page.mouse.down(); await page.mouse.move(dv.x - 120, dv.y, { steps: 6 }); await page.mouse.up();
+  const larg1 = await page.$eval("#sLateral", (e) => e.offsetWidth);
+  ok(larg1 - larg0 > 100, `anfitrião: arrastar a borda alarga o painel (${larg0} → ${larg1})`);
+  ok(await page.evaluate(() => Number(localStorage.getItem("emeet-lat-slides"))) === larg1, "anfitrião: largura do painel fica salva");
+  // esconder e mostrar a coluna de participantes
+  const palco0 = await page.$eval("#sPalco", (e) => e.offsetWidth);
+  await page.click("#sFaixaFechar"); await page.waitForTimeout(150);
+  ok(!(await page.isVisible("#sFaixa")) && await page.isVisible("#sFaixaAbrir"), "anfitrião: esconde a coluna de participantes");
+  ok((await page.$eval("#sPalco", (e) => e.offsetWidth)) > palco0, "anfitrião: palco cresce sem a coluna");
+  await page.click("#sFaixaAbrir"); await page.waitForTimeout(150);
+  ok(await page.isVisible("#sFaixa"), "anfitrião: mostra a coluna de novo");
+  // ditado: clica para gravar, clica de novo para parar e criar
+  const msgs0 = await page.$$eval("#apConversa .ap-msg", (m) => m.length);
+  await page.click("#apDitar"); await page.waitForTimeout(500);
+  ok(await page.isVisible("#apGravando") && (await page.inputValue("#apTexto")).includes("plano de vendas"), "anfitrião: gravando e transcrevendo a fala");
+  ok(await page.evaluate(() => window.__ditadoAtivo === true), "anfitrião: continua gravando até clicar de novo");
+  await page.click("#apDitar"); await page.waitForTimeout(1500);
+  ok(!(await page.isVisible("#apGravando")) && (await page.textContent("#apConversa")).includes("plano de vendas") && (await page.$$eval("#apConversa .ap-msg", (m) => m.length)) > msgs0, "anfitrião: parar envia o pedido falado ao assistente");
+  // cancelar a gravação não envia nada
+  const msgs1 = await page.$$eval("#apConversa .ap-msg", (m) => m.length);
+  await page.click("#apDitar"); await page.waitForTimeout(400); await page.click("#apCancelarVoz"); await page.waitForTimeout(400);
+  ok((await page.$$eval("#apConversa .ap-msg", (m) => m.length)) === msgs1 && !(await page.isVisible("#apGravando")), "anfitrião: cancelar descarta a gravação");
+  // apagar a apresentação (com confirmação) e recuperar com Desfazer
+  await page.click("#apApagar");
+  ok(await page.isVisible("#sModal") && (await page.textContent("#sModalTit")) === "Apagar apresentação", "anfitrião: pede confirmação para apagar");
+  await page.click('#sModalAcoes button:has-text("Apagar")'); await page.waitForTimeout(300);
+  ok(!(await page.$("#sGrade .tile.apres")) && await page.isDisabled("#apApagar") && !(await page.isVisible("#sFaixa")), "anfitrião: apresentação apagada e o palco volta à grade");
+  await page.click("#apDesfazer"); await page.waitForTimeout(300);
+  ok(!!(await page.$("#sGrade .tile.apres")), "anfitrião: Desfazer recupera a apresentação");
   await page.screenshot({ path: `${OUT}/meet-anfitriao.png` });
   ok(erros.length === 0, "anfitrião: sem erros de JavaScript " + erros.join(" | "));
   await ctx.close();
