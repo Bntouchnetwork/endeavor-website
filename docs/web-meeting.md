@@ -44,6 +44,14 @@ Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fu
 - A última escolha fica lembrada no navegador e volta na próxima reunião.
 - O fundo virtual aparece sem espelho para a própria pessoa, para textos e logos ficarem legíveis.
 
+## Apresentação com IA (anfitrião)
+
+- **Layout:** com o painel de Slides aberto, a apresentação aparece grande no palco (com o selo "Rascunho: só você vê" até clicar em Apresentar para todos). Da esquerda para a direita: apresentação, painel de controle dos slides e a coluna com as câmeras dos participantes.
+- **Coluna de participantes:** tem rolagem, destaca quem está falando e rola até a pessoa quando ela começa a falar. A seta no topo esconde a coluna (a apresentação cresce); a aba "Participantes" na borda direita mostra de novo. A escolha fica salva no navegador. No celular, as câmeras ficam numa faixa embaixo.
+- **Largura do painel:** arraste a borda entre a apresentação e o painel (ou use as setas do teclado com a borda selecionada). Duplo clique volta ao padrão. A largura fica salva no navegador.
+- **Pedido por voz:** um clique no microfone começa a gravar; outro clique para, transcreve e manda o pedido para o assistente criar a apresentação. "Cancelar" descarta a gravação.
+- **Apagar apresentação:** botão da lixeira, com confirmação. Se estava ao vivo, para de aparecer para os participantes. Apaga também a cópia guardada no servidor; logo depois, Desfazer ainda recupera.
+
 **Gravação:** todos os participantes veem o selo "Gravando" e um aviso quando a gravação começa. A Flórida exige o consentimento de todas as partes para gravar conversas: o aviso na tela ajuda, mas valide os termos de uso com um advogado.
 
 ## Limites por empresa (opcional)
@@ -62,4 +70,4 @@ Sem o passo 2, as salas abrem em **modo demonstração**: câmera, microfone e t
 ## Testes
 
 - `deno run --allow-read tests/meet-parity.test.ts` confere que o navegador e o servidor validam os slides do mesmo jeito.
-- `python3 -m http.server 8092` e `node tests/meet-room.e2e.mjs http://localhost:8092` abrem a sala no Chromium com câmera e microfone falsos, como convidado (computador e celular) e como anfitrião, e conferem entrada, grade, chat, reações, mão levantada, enquete, gravação, menu do anfitrião, fundo desfocado, fundos virtuais, foto própria (confere que fica só no navegador) e assistente de slides.
+- `python3 -m http.server 8092` e `node tests/meet-room.e2e.mjs http://localhost:8092` abrem a sala no Chromium com câmera e microfone falsos, como convidado (computador e celular) e como anfitrião, e conferem entrada, grade, chat, reações, mão levantada, enquete, gravação, menu do anfitrião, fundo desfocado, fundos virtuais, foto própria (confere que fica só no navegador), assistente de slides, layout com a coluna de participantes, arrasto do painel, pedido por voz e apagar apresentação.
