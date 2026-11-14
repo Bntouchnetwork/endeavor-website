@@ -16,6 +16,14 @@
 //     voltar_grupos { grupos } | iniciar_transmissao { destinos[] } | parar_transmissao { egressId }
 //     resumo { titulo, duracaoMin, participantes[], transcricao[], enquetes[], pitches[] }   (IA do HUB: meeting-summary)
 //     gerar { instrucao, apresentacao?, slideAtual?, contexto? } | ultima | apagar_apresentacao                     (IA do HUB: meeting-slides)
+//     Painel de ações (regras em acoes-core.js; integrações em acoes.ts):
+//     acoes_status { sessao? }              conexões disponíveis (e-mail, proposta, cobrança, assinatura, documentos, agenda, tarefas, CRM)
+//     acoes_analisar { linhas[], participantes[], titulo }   sugestões da IA do HUB (meeting-actions), conferidas contra a conversa
+//     acao_executar { acao, contatos[], comando, sessao? }    executa (só com comando explícito, dados completos e conexão ativa)
+//     acoes_listar                          ações executadas, tarefas e pedidos de documentos da sala
+//   Página pública de envio de documentos (enviar-documentos.html?t=TOKEN)
+//     docs_info { t } | docs_upload_url { t, item, nome, tipo, tamanho } | docs_confirmar { t, item, path }
+//   Painel (admin e portal): doc_arquivo_url { pedido_id, path }  link de 10 minutos para um arquivo recebido
 //
 // Segredos: LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, HUB_AI_API_KEY (motor de IA).
 // Gravação: MEET_S3_ENDPOINT, MEET_S3_REGION, MEET_S3_ACCESS_KEY, MEET_S3_SECRET (S3 do Supabase Storage, bucket meet-recordings).
@@ -27,6 +35,7 @@ import {
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { hubAsk, hubJson, hubKey, hubOn, HubFail } from "../_shared/hub-ai.ts";
 import { ApresentacaoInvalida, montarPedido, validar } from "./presentation.ts";
+import { A as Acoes, docArquivoUrl, docsPublico, integracoes } from "./acoes.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -50,14 +59,15 @@ const bearer = (req: Request) => (req.headers.get("Authorization") ?? "").replac
 const looksLiveKit = (jwt: string) => { try { const p = JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))); return !!p.video; } catch { return false; } };
 
 /* ---------------- quem está pedindo ---------------- */
-async function usuario(req: Request) {
-  const jwt = bearer(req);
+async function usuario(req: Request, jwtExplicito?: string) {
+  const jwt = jwtExplicito || bearer(req);
   if (!jwt || jwt === ANON || looksLiveKit(jwt)) return null;
   const user = createClient(SUPABASE_URL, ANON, { global: { headers: { Authorization: "Bearer " + jwt } }, auth: { persistSession: false } });
   const { data } = await user.auth.getUser(jwt);
   if (!data?.user) return null;
   const { data: admin } = await user.rpc("is_admin");
-  return { id: data.user.id, email: data.user.email || "", admin: !!admin, user };
+  const aal = (() => { try { return JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).aal; } catch { return ""; } })();
+  return { id: data.user.id, email: data.user.email || "", admin: !!admin && aal === "aal2", user, jwt };
 }
 type U = NonNullable<Awaited<ReturnType<typeof usuario>>>;
 async function papelNoCliente(u: U, clientId: string) { const { data } = await u.user.rpc("my_client_role", { p_client: clientId }); return data as string | null; }
@@ -265,6 +275,8 @@ async function acaoAnfitriao(req: Request, b: Any) {
       await db.from("meet_presentations").delete().eq("room_id", r.id);
       return { ok: true };
     }
+    case "acoes_status": case "acao_executar": case "acoes_analisar": case "acoes_listar":
+      return await painelAcoes(req, b, r, quem);
     case "ultima": {
       const { data } = await db.from("meet_presentations").select("content").eq("room_id", r.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
       return { apresentacao: data?.content ?? null };
@@ -321,6 +333,64 @@ async function slides(r: Any, d: Any) {
   return { apresentacao, mensagem, foco, motor: "endeavor" };
 }
 
+/* ---------------- painel de ações ---------------- */
+const TIPOS_ACAO = Object.keys(Acoes.TIPOS);
+function limparLinhas(l: unknown) {
+  return (Array.isArray(l) ? l : []).slice(-400).map((x: Any, i: number) => ({ id: txt(x?.id || "l" + i, 40), nome: txt(x?.nome, 60), texto: txt(x?.texto, 600), via: x?.via === "chat" ? "chat" : "fala", anfitriao: !!x?.anfitriao })).filter((x) => x.texto);
+}
+function limparContatos(c: unknown) {
+  return (Array.isArray(c) ? c : []).slice(0, 50).filter((x: Any) => Acoes.emailValido(x?.email)).map((x: Any) => ({ email: String(x.email).toLowerCase().slice(0, 254), nome: txt(x.nome, 80), confirmado: x.confirmado === true, organizador: !!x.organizador }));
+}
+function limparAcao(a: Any) {
+  if (!a || typeof a !== "object" || !TIPOS_ACAO.includes(a.tipo)) throw new Erro("Ação inválida.");
+  const dados = a.dados && typeof a.dados === "object" ? a.dados : {};
+  if (JSON.stringify(dados).length > 60_000) throw new Erro("Ação grande demais.");
+  return { id: txt(a.id, 60), tipo: a.tipo, dados, reenvio: Number(a.reenvio) || 0 };
+}
+async function painelAcoes(req: Request, b: Any, r: Any, quem: string) {
+  const sessao = b.sessao ? await usuario(req, String(b.sessao)) : null;
+  // a sessão do portal só vale se for da equipe dona da sala (ou admin da Endeavor)
+  const sessaoValida = sessao && (sessao.admin || (r.client_id && await papelNoCliente(sessao, r.client_id))) ? sessao : null;
+  const { conexoes, admin, integ } = await integracoes({ db, r, sessao: sessaoValida, quem, jwtSessao: sessaoValida?.jwt || "" });
+  if (b.acao === "acoes_status") return { conexoes, admin, ia: hubOn(), empresa: !!r.client_id };
+  if (b.acao === "acoes_listar") {
+    const [ac, ta, dc] = await Promise.all([
+      db.from("meet_actions").select("idem, kind, status, result, error, created_at, updated_at").eq("room_id", r.id).order("created_at", { ascending: false }).limit(100),
+      db.from("meet_tasks").select("*").eq("room_id", r.id).order("created_at"),
+      db.from("meet_doc_requests").select("id, email, name, items, status, expires_at, created_at").eq("room_id", r.id).order("created_at"),
+    ]);
+    return { acoes: ac.data || [], tarefas: ta.data || [], documentos: (dc.data || []).map((d: Any) => ({ ...d, items: (d.items || []).map((i: Any) => ({ nome: i.nome, status: i.status, arquivos: (i.arquivos || []).length })) })) };
+  }
+  if (b.acao === "acao_executar") {
+    const acao = limparAcao(b.acao_dados || b.item);
+    const ctx = { papel: "anfitriao", admin, conexoes, contatos: limparContatos(b.contatos), comando: b.comando === true };
+    const res = await Acoes.executar(acao, ctx, integ);
+    return { acao: res };
+  }
+  // acoes_analisar: IA do HUB lê a conversa; tudo que ela devolve é conferido contra o que foi dito
+  if (!hubOn()) throw new Erro("A IA da Endeavor não está configurada. O painel usa a leitura local.", 503);
+  const linhas = limparLinhas(b.linhas);
+  if (!linhas.length) return { sugestoes: [], removidos: [] };
+  const conteudo = `<reuniao titulo="${txt(b.titulo || r.title, 120)}" data="${new Date().toISOString().slice(0, 10)}" fuso="${txt(b.tz || "America/New_York", 40)}">\n<participantes>${(Array.isArray(b.participantes) ? b.participantes : []).slice(0, 50).map((p: Any) => txt(p?.nome, 60) + (p?.papel === "mentor" ? " (organizador)" : "")).join(", ")}</participantes>\n<conversa>\n${linhas.map((l) => `[${l.id}] ${l.nome}${l.via === "chat" ? " (chat)" : ""}: ${l.texto}`).join("\n")}\n</conversa>\n</reuniao>`;
+  let j: Any;
+  try {
+    j = await hubJson({ agent: "meeting-actions", input: conteudo, userId: `meet:${r.slug}`, idempotencyKey: hubKey("meet-ac", r.id, linhas.length, linhas[linhas.length - 1].id),
+      maxOutputTokens: 4000, timeoutMs: 60_000, meter: { agent: "meeting-actions", client_id: r.client_id } });
+  } catch (e) { throw new Erro(e instanceof HubFail ? "A IA não respondeu agora; o painel segue com a leitura local." : "A IA não respondeu agora.", 502); }
+  const removidos: string[] = [];
+  const sugestoes = (Array.isArray(j?.sugestoes) ? j.sugestoes : []).slice(0, 30).filter((s: Any) => TIPOS_ACAO.includes(s?.tipo)).map((s: Any) => {
+    const base = { id: Acoes.novoId(s.tipo), tipo: s.tipo, status: "sugerida", origem: "ia", dados: s.dados && typeof s.dados === "object" ? s.dados : {}, fonte: Array.isArray(s.fonte) ? s.fonte.map((x: unknown) => txt(x, 40)) : [], motivo: txt(s.motivo, 200) };
+    const c = Acoes.conferirComFonte(base, linhas); removidos.push(...c.removidos); return c.acao;
+  });
+  return { sugestoes, removidos, decisoes: (Array.isArray(j?.decisoes) ? j.decisoes : []).slice(0, 20).map((d: unknown) => txt(d, 300)) };
+}
+async function arquivoPedido(req: Request, b: Any) {
+  const u = await usuario(req); if (!u) throw new Erro("Entre no portal.", 401);
+  const { data: p } = await db.from("meet_doc_requests").select("id, client_id").eq("id", String(b.pedido_id || "")).maybeSingle();
+  if (!p || !await podeGerenciar(u, { client_id: p.client_id })) throw new Erro("Pedido não encontrado.", 404);
+  return { url: await docArquivoUrl(db, p.id, String(b.path || "")) };
+}
+
 /* ---------------- roteador ---------------- */
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -335,6 +405,9 @@ Deno.serve(async (req) => {
       case "encerrar_sala": return json(await encerrarSala(req, b));
       case "gravacao_url": return json(await gravacaoUrl(req, b));
       case "status": return json({ configurado: lkOn(), gravacao: !!Deno.env.get("MEET_S3_ACCESS_KEY"), ia: hubOn() });
+      case "docs_info": case "docs_upload_url": case "docs_confirmar":
+        try { return json(await docsPublico(db, b)); } catch (e) { return json({ erro: (e as Error).message }, (e as Any).status || 400); }
+      case "doc_arquivo_url": return json(await arquivoPedido(req, b));
       default: return json(await acaoAnfitriao(req, b));
     }
   } catch (e) {

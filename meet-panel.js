@@ -113,8 +113,10 @@
     var esc = ctx.esc;
     var res = await Promise.all([ctx.q(ctx.sb.from('meet_participants').select('*').eq('room_id', r.id).order('joined_at')),
       ctx.q(ctx.sb.from('meet_recordings').select('*').eq('room_id', r.id).order('started_at', { ascending: false })),
-      ctx.q(ctx.sb.from('meet_summaries').select('*').eq('room_id', r.id).order('created_at', { ascending: false }))]);
-    var ps = res[0], recs = res[1], sums = res[2];
+      ctx.q(ctx.sb.from('meet_summaries').select('*').eq('room_id', r.id).order('created_at', { ascending: false })),
+      ctx.q(ctx.sb.from('meet_tasks').select('*').eq('room_id', r.id).order('created_at')).catch(function () { return []; }),
+      ctx.q(ctx.sb.from('meet_doc_requests').select('id, email, name, items, status, expires_at, created_at').eq('room_id', r.id).order('created_at')).catch(function () { return []; })]);
+    var ps = res[0], recs = res[1], sums = res[2], tasks = res[3] || [], docs = res[4] || [];
     function dur(a, b) { var s = Math.max(0, Math.round((new Date(b || Date.now()) - new Date(a)) / 1000)); return Math.floor(s / 60) + ' min'; }
     var ov = ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + esc(r.title) + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<p class="portal-muted">' + esc((ST[r.status] || [r.status])[0]) + (r.started_at ? ' · início ' + esc(ctx.fmtDT(r.started_at)) : '') + (r.ended_at ? ' · fim ' + esc(ctx.fmtDT(r.ended_at)) : '') + '</p>' +
@@ -124,12 +126,37 @@
           (g.status === 'complete' && g.file_path ? '<button class="btn btn--navy btn--xs" type="button" data-rec="' + g.id + '">Baixar vídeo</button>' : '') + '</li>';
       }).join('') + '</ul>' : '<p class="portal-muted">Nenhuma gravação.</p>') +
       '<h3 class="portal-h2" style="margin-top:1.25rem">Resumos da IA</h3>' + (sums.length ? sums.map(function (s) { return '<details class="wm-sum"><summary>' + esc(ctx.fmtDT(s.created_at)) + '</summary><pre>' + esc(s.summary) + '</pre><button class="btn btn--ghost btn--xs" type="button" data-sum="' + s.id + '">Copiar resumo</button></details>'; }).join('') : '<p class="portal-muted">Nenhum resumo. O anfitrião gera o resumo dentro da sala, no menu Mais › Resumo da reunião.</p>') +
+      '<h3 class="portal-h2" style="margin-top:1.25rem">Tarefas da reunião</h3>' + (tasks.length ? '<ul class="ag-list">' + tasks.map(function (t) {
+        return '<li class="ag-item"><label style="display:flex;gap:.6rem;align-items:flex-start"><input type="checkbox" data-task="' + t.id + '"' + (t.status === 'done' ? ' checked' : '') + '><span><strong' + (t.status === 'done' ? ' style="text-decoration:line-through"' : '') + '>' + esc(t.title) + '</strong><span class="portal-muted" style="display:block;font-size:.85rem">' + esc([t.owner_name, t.due_date ? 'até ' + new Date(t.due_date + 'T12:00:00').toLocaleDateString('pt-BR') : 'sem prazo'].filter(Boolean).join(' · ')) + '</span></span></label></li>';
+      }).join('') + '</ul>' : '<p class="portal-muted">Nenhuma tarefa. Os compromissos confirmados na reunião (painel Ações, com a IA) aparecem aqui.</p>') +
+      '<h3 class="portal-h2" style="margin-top:1.25rem">Documentos pedidos</h3>' + (docs.length ? '<ul class="ag-list">' + docs.map(function (d) {
+        var its = d.items || [], rec = its.filter(function (i) { return i.status === 'recebido'; }).length;
+        return '<li class="ag-item" style="display:block"><strong>' + esc(d.name || d.email) + '</strong> <span class="portal-muted" style="font-size:.85rem">' + esc(d.email) + ' · ' + rec + ' de ' + its.length + ' recebidos' + (d.status === 'pendente' && new Date(d.expires_at) < new Date() ? ' · link expirado' : '') + '</span><ul style="margin:.4rem 0 0;padding-left:1.1rem">' + its.map(function (i) {
+          return '<li>' + esc(i.nome) + ': ' + (i.status === 'recebido' ? (i.arquivos || []).map(function (a) { return '<button class="btn btn--ghost btn--xs" type="button" data-doc="' + d.id + '" data-path="' + esc(a.path) + '">' + esc(a.nome) + '</button>'; }).join(' ') : '<span class="portal-muted">pendente</span>') + '</li>';
+        }).join('') + '</ul></li>';
+      }).join('') + '</ul><div class="portal-alert" id="wm-docm" role="status"></div>' : '<p class="portal-muted">Nenhum pedido de documentos. O anfitrião pede pelo painel Ações, dentro da sala; o cliente envia por um link seguro.</p>') +
       '<h3 class="portal-h2" style="margin-top:1.25rem">Participantes (' + ps.length + ')</h3>' + (ps.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Nome</th><th>Papel</th><th>Entrou</th><th>Tempo</th></tr></thead><tbody>' + ps.map(function (p) {
         return '<tr><td>' + esc(p.name || p.identity) + '</td><td>' + (p.role === 'host' ? 'Anfitrião' : 'Convidado') + '</td><td>' + esc(ctx.fmtDT(p.joined_at)) + '</td><td>' + dur(p.joined_at, p.left_at) + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<p class="portal-muted">Ninguém entrou ainda.</p>'));
     ov.querySelector('.drawer').classList.add('drawer--wide');
     if (ov.querySelector('#wm-dc')) ov.querySelector('#wm-dc').onclick = function () { copiar(link(r.slug), this, ov.querySelector('#wm-dm')); };
     ov.querySelectorAll('[data-sum]').forEach(function (b) { b.onclick = function () { var s = sums.find(function (x) { return x.id === b.dataset.sum; }); if (navigator.clipboard) navigator.clipboard.writeText(s.summary).then(function () { b.textContent = 'Copiado ✓'; }); }; });
+    ov.querySelectorAll('[data-task]').forEach(function (c) {
+      c.onchange = async function () {
+        var done = c.checked; c.disabled = true;
+        var u = await ctx.sb.from('meet_tasks').update({ status: done ? 'done' : 'open', done_at: done ? new Date().toISOString() : null }).eq('id', c.dataset.task);
+        if (u.error) c.checked = !done; else { var s = c.parentNode.querySelector('strong'); s.style.textDecoration = done ? 'line-through' : ''; }
+        c.disabled = false;
+      };
+    });
+    ov.querySelectorAll('[data-doc]').forEach(function (b) {
+      b.onclick = async function () {
+        b.disabled = true;
+        try { var j = await call(ctx, { acao: 'doc_arquivo_url', pedido_id: b.dataset.doc, path: b.dataset.path }); window.open(j.url, '_blank', 'noopener'); }
+        catch (e) { ctx.msg(ov.querySelector('#wm-docm'), e.message, 'error'); }
+        b.disabled = false;
+      };
+    });
     ov.querySelectorAll('[data-rec]').forEach(function (b) {
       b.onclick = async function () {
         b.disabled = true;

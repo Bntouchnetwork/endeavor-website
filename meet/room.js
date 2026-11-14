@@ -71,6 +71,9 @@
     rec: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/>'),
     encerrar: svg('<path d="M3 15c5-5 13-5 18 0l-2.5 2.5-3.5-1.5V13c-2-1-4-1-6 0v3l-3.5 1.5z" fill="currentColor"/>'),
     sair: svg('<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>'),
+    sol: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
+    lua: svg('<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>'),
+    ia: svg('<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>'),
     mais: svg('<circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/>'),
     cc: svg('<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M10 10.5a2.5 2.5 0 1 0 0 3M17 10.5a2.5 2.5 0 1 0 0 3"/>'),
     enquete: svg('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
@@ -149,7 +152,7 @@
 </section>
 <section class="sala-vivo">
   <header class="sala-topo">${LOGO}<div class="titulo-enc" id="sTitulo"></div>
-    <div class="meta"><span class="selo-demo" id="sSeloDemo">Demonstração</span><span class="selo-tx" id="sTx">${I.transmitir}<span>Ao vivo nas redes</span></span><span class="selo-rec" id="sRec"><i></i><span>Gravando</span></span><span class="dur" id="sDur">00:00</span><span id="sQtd"></span></div>
+    <div class="meta"><span class="selo-demo" id="sSeloDemo">Demonstração</span><span class="selo-tx" id="sTx">${I.transmitir}<span>Ao vivo nas redes</span></span><span class="selo-rec" id="sRec"><i></i><span>Gravando</span></span><span class="selo-ia" id="sIA" title="A IA acompanha a transcrição e o chat para preparar ações e a ata"><i></i><span>IA acompanhando</span></span><span class="dur" id="sDur">00:00</span><span id="sQtd"></span></div>
   </header>
   <button class="btn-sala aviso-audio" id="sAudio" type="button">Ativar o áudio</button>
   <div class="sala-corpo">
@@ -162,10 +165,11 @@
     </main>
     <div class="divisor" id="sDivisor" role="separator" aria-orientation="vertical" aria-label="Arraste para ajustar a largura do painel" tabindex="0"></div>
     <aside class="lateral" id="sLateral" aria-label="Chat e participantes">
-      <div class="abas" role="tablist"><button type="button" data-aba="chat" class="sel" role="tab">Chat</button><button type="button" data-aba="pessoas" role="tab">Participantes</button><button type="button" data-aba="slides" role="tab" class="aba-mentor">Slides</button><button type="button" class="fechar" id="sFecharLat" aria-label="Fechar painel">×</button></div>
+      <div class="abas" role="tablist"><button type="button" data-aba="chat" class="sel" role="tab">Chat</button><button type="button" data-aba="pessoas" role="tab">Participantes</button><button type="button" data-aba="slides" role="tab" class="aba-mentor">Slides</button><button type="button" data-aba="acoes" role="tab" class="aba-mentor">Ações<span class="badge" id="sAcoesBadge"></span></button><button type="button" class="fechar" id="sFecharLat" aria-label="Fechar painel">×</button></div>
       <div class="painel-l ativo" id="painelChat"><div class="msgs" id="sMsgs" aria-live="polite"><p class="vazio">As mensagens da reunião aparecem aqui.</p></div>
         <form class="enviar" id="sEnviar"><input id="sTexto" placeholder="Escreva uma mensagem" maxlength="500" autocomplete="off" aria-label="Mensagem"><button type="submit">Enviar</button></form></div>
       <div class="painel-l" id="painelPessoas"></div>
+      <div class="painel-l" id="painelAcoes" aria-label="Ações da reunião"></div>
       <div class="painel-l" id="painelSlides">
         <div class="ap-rolagem" id="apRolagem">
           <div class="ap-topo"><span class="ap-estado" id="apEstado">Rascunho</span><span class="ap-motor" id="apMotor"></span></div>
@@ -206,6 +210,7 @@ ${htmlFundos()}
     </div>
     <div class="menu-mentor">
       <p class="sub-l">Ferramentas do anfitrião</p>
+      <button type="button" role="menuitem" data-f="acoes">${I.ia}<span>Ações da reunião (IA)</span><em id="sEstIA"></em></button>
       <button type="button" role="menuitem" data-f="assistente">${I.slides}<span>Assistente de apresentação</span><em id="sEstAp"></em></button>
       <button type="button" role="menuitem" data-f="enquete">${I.enquete}<span>Nova enquete</span></button>
       <button type="button" role="menuitem" data-f="cronometro">${I.relogio}<span>Cronômetro</span></button>
@@ -217,7 +222,7 @@ ${htmlFundos()}
   <nav class="controles-sala" aria-label="Controles da reunião">
     ${ctl("sMic", "Microfone", I.mic)}${ctl("sCam", "Câmera", I.cam)}${ctl("sTela", "Tela", I.tela)}${ctl("sMao", "Mão", I.mao)}${ctl("sReagir", "Reagir", I.reacao)}
     <span class="sep-ctl"></span>
-    ${ctl("sChat", "Chat", I.chat)}${ctl("sPessoas", "Pessoas", I.pessoas)}${ctl("sMais", "Mais", I.mais)}
+    ${ctl("sChat", "Chat", I.chat)}${ctl("sPessoas", "Pessoas", I.pessoas)}${ctl("sTema", "Claro", I.sol)}${ctl("sMais", "Mais", I.mais)}
     <span class="sep-ctl so-mentor"></span>
     ${ctl("sGravar", "Gravar", I.rec, "so-mentor")}${ctl("sEncerrar", "Encerrar", I.encerrar, "so-mentor sair")}
     ${ctl("sSair", "Sair", I.sair)}
@@ -249,12 +254,20 @@ ${htmlFundos()}
     $("sChat").onclick = () => abrirLateral("chat");
     $("sPessoas").onclick = () => abrirLateral("pessoas");
     $("sMais").onclick = e => { e.stopPropagation(); alternarMenu(); };
+    $("sTema").onclick = () => aplicarTema(!el.classList.contains("tema-claro"), true);
+    aplicarTema(lerLocal("emeet-tema") === "claro", false);
     $("sFecharLat").onclick = fecharLateral;
     $("sFaixaFechar").onclick = () => alternarFaixa(false);
     $("sFaixaAbrir").onclick = () => alternarFaixa(true);
     ligarDivisor();
     el.querySelectorAll(".abas [data-aba]").forEach(b => b.onclick = () => abrirLateral(b.dataset.aba, true));
-    $("sEnviar").onsubmit = e => { e.preventDefault(); const t = $("sTexto").value.trim(); if (!t) return; enviar({ t: "chat", texto: t }); $("sTexto").value = ""; };
+    $("sEnviar").onsubmit = e => {
+      e.preventDefault(); const t = $("sTexto").value.trim(); if (!t) return;
+      $("sTexto").value = "";
+      // comando do organizador para a IA ("IA, envia a ata"): não vai para o chat da sala
+      if (S.papel === "mentor" && S.painelAcoes && window.EMeetAcoes && EMeetAcoes.ehComando(t)) { sistema("Comando para a IA: " + t); S.painelAcoes.linha({ nome: S.nome, texto: t, via: "chat", anfitriao: true }); return; }
+      enviar({ t: "chat", texto: t });
+    };
     $("sGravar").onclick = alternarGravacao;
     $("sEncerrar").onclick = encerrarParaTodos;
     $("sSair").onclick = () => sair();
@@ -483,6 +496,7 @@ ${htmlFundos()}
       return;
     }
     S.inicio = Date.now();
+    criarPainelAcoes();
     S.timers.push(setInterval(tique, 1000)); tique();
     S.timers.push(setInterval(tiqueRapido, 250));
     el.classList.add("no-ar");
@@ -793,7 +807,7 @@ ${htmlFundos()}
   }
   /* largura do painel lateral: arrastar a borda (ou setas do teclado); fica salva no navegador */
   const LARG_PADRAO = { slides: 420, outro: 340 };
-  const modoLarg = () => S.aba === "slides" ? "slides" : "outro";
+  const modoLarg = () => S.aba === "slides" || S.aba === "acoes" ? "slides" : "outro";
   function aplicarLargura(w, salvar) {
     const corpo = el.querySelector(".sala-corpo"), faixa = el.classList.contains("com-faixa") && !el.classList.contains("faixa-fechada") ? $("sFaixa").offsetWidth : 0;
     const max = Math.max(300, Math.min(960, corpo.clientWidth - faixa - 320));
@@ -834,11 +848,46 @@ ${htmlFundos()}
     $("painelChat").classList.toggle("ativo", aba === "chat");
     $("painelPessoas").classList.toggle("ativo", aba === "pessoas");
     $("painelSlides").classList.toggle("ativo", aba === "slides");
-    el.classList.toggle("aba-slides", aba === "slides");
+    $("painelAcoes").classList.toggle("ativo", aba === "acoes");
+    if (aba === "acoes" && S.painelAcoes) S.painelAcoes.aoAbrir();
+    el.classList.toggle("aba-slides", aba === "slides" || aba === "acoes");
     if (aba === "slides") { desenharPainelSlides(); setTimeout(() => $("apTexto").focus(), 50); }
     if (aba === "chat") { S.naoLidas = 0; marcarNaoLidas(); setTimeout(() => $("sTexto").focus(), 50); }
     aplicarLargura(larguraSalva(), false);
     render();
+  }
+  /* ---------------- painel de ações (IA) e tema ---------------- */
+  function criarPainelAcoes() {
+    if (S.papel !== "mentor" || !window.EMeetAcoesPainel || !window.EMeetAcoes) return;
+    S.painelAcoes = EMeetAcoesPainel.criar({
+      $, esc, toast,
+      sala: () => S.salaBase, titulo: () => S.op.titulo || "Reunião", meuNome: () => S.nome,
+      url: CFG.adminUrl, anonKey: CFG.supabaseAnonKey, token: () => S.token, sessao: () => S.op.accessToken || "",
+      demo: () => !!S.demo, participantes: () => pessoas().map(p => ({ nome: p.nome, papel: p.papel })),
+      ligarTranscricao: () => { if (!S.salaLegendas) enviar({ t: "legendas", ativo: true }); },
+      anunciar: st => enviar({ t: "ia", ativa: !!st.ativa, pausada: !!st.pausada }),
+      abrir: () => { if (!(el.classList.contains("lateral-on") && S.aba === "acoes")) abrirLateral("acoes", true); },
+      badge: n => { const b = $("sAcoesBadge"); b.textContent = n || ""; b.classList.toggle("on", n > 0); },
+    });
+    // quem entra depois também vê o aviso de que a IA está acompanhando
+    S.timers.push(setInterval(() => { const st = S.painelAcoes && S.painelAcoes.estado(); if (st && st.ativa) enviar({ t: "ia", ativa: true, pausada: st.pausada }); }, 20000));
+  }
+  function receberIA(m, deMim) {
+    const antes = S.iaSala || {};
+    S.iaSala = { ativa: !!m.ativa, pausada: !!m.pausada };
+    const selo = $("sIA");
+    selo.classList.toggle("on", S.iaSala.ativa);
+    selo.classList.toggle("pausada", S.iaSala.pausada);
+    selo.querySelector("span").textContent = S.iaSala.pausada ? "IA pausada" : "IA acompanhando";
+    const est = $("sEstIA"); if (est) est.textContent = S.iaSala.ativa ? (S.iaSala.pausada ? "Pausada" : "Ligada") : "";
+    if (!deMim && S.iaSala.ativa && !antes.ativa) toast("A IA da Endeavor está acompanhando esta reunião (transcrição e chat) para preparar a ata e as ações combinadas.");
+    if (!deMim && !S.iaSala.ativa && antes.ativa) toast("A IA parou de acompanhar a reunião.");
+  }
+  function aplicarTema(claro, salvar) {
+    el.classList.toggle("tema-claro", claro);
+    const b = $("sTema"); if (b) { b.querySelector(".bola").innerHTML = claro ? I.lua : I.sol; b.querySelector(".rt").textContent = claro ? "Escuro" : "Claro"; b.setAttribute("aria-label", claro ? "Usar tema escuro" : "Usar tema claro"); b.setAttribute("aria-pressed", String(claro)); }
+    el.querySelectorAll("img.noir").forEach(i => { i.src = i.src.replace(/logo-endeavor(-light)?\.svg/, claro ? "logo-endeavor.svg" : "logo-endeavor-light.svg"); });
+    if (salvar) gravarLocal("emeet-tema", claro ? "claro" : null);
   }
   function marcarNaoLidas() { const b = $("sChat").querySelector(".badge"); b.textContent = S.naoLidas; b.classList.toggle("on", S.naoLidas > 0); }
 
@@ -856,7 +905,7 @@ ${htmlFundos()}
     const b = e.target.closest("[data-f]"); if (!b) return;
     e.stopPropagation();
     $("sMenu").hidden = true;
-    ({ legendas: alternarLegendas, enquete: modalEnquete, cronometro: modalCronometro, grupos: modalGrupos, transmitir: modalTransmitir, resumo: modalResumo, assistente: () => abrirLateral("slides", true) })[b.dataset.f]();
+    ({ legendas: alternarLegendas, enquete: modalEnquete, cronometro: modalCronometro, grupos: modalGrupos, transmitir: modalTransmitir, resumo: modalResumo, assistente: () => abrirLateral("slides", true), acoes: () => abrirLateral("acoes", true) })[b.dataset.f]();
   }
 
   /* ---------------- modal genérico ---------------- */
@@ -890,6 +939,7 @@ ${htmlFundos()}
       case "reacao": if (REACOES.includes(m.e)) mostrarReacao(m.e, deMim ? "Você" : nome); break;
       case "chat": {
         adicionarMsg(nome + (deMim ? " (você)" : ""), String(m.texto || "").slice(0, 500));
+        if (S.painelAcoes) S.painelAcoes.linha({ nome, texto: String(m.texto || "").slice(0, 500), via: "chat", anfitriao: doMentor(id) });
         const vendo = el.classList.contains("lateral-on") && S.aba === "chat";
         if (!deMim && !vendo) { S.naoLidas++; marcarNaoLidas(); toast(`${nome}: ${String(m.texto).slice(0, 60)}`); }
         break;
@@ -923,6 +973,7 @@ ${htmlFundos()}
       case "apres_vivo":
         if (doMentor(id) && !deMim) { S.apres.aoVivo = !!m.ativo && !!S.apres.doc; if (!m.ativo) toast("O anfitrião parou de apresentar."); render(); }
         break;
+      case "ia": if (doMentor(id)) receberIA(m, deMim); break;
       case "tx": if (doMentor(id)) { S.txAtiva = !!m.ativo; $("sTx").classList.toggle("on", S.txAtiva); if (!deMim) toast(m.ativo ? "Esta reunião está sendo transmitida ao vivo nas redes." : "A transmissão nas redes terminou."); atualizarMenu(); } break;
     }
   }
@@ -1221,7 +1272,10 @@ ${htmlFundos()}
   function receberLegenda(m, id, nome) {
     const txt = String(m.txt || "").slice(0, 300); if (!txt) return;
     S.legendas.set(id, { nome, txt, at: Date.now(), fin: !!m.fin });
-    if (m.fin) S.transcricao.push({ nome, texto: txt, hora: hora(), papel: doMentor(id) ? "mentor" : "aluno" });
+    if (m.fin) {
+      S.transcricao.push({ nome, texto: txt, hora: hora(), papel: doMentor(id) ? "mentor" : "aluno" });
+      if (S.painelAcoes) S.painelAcoes.linha({ nome, texto: txt, via: "fala", anfitriao: doMentor(id) });
+    }
     desenharLegendas();
   }
   function desenharLegendas() {
@@ -1780,6 +1834,12 @@ ${htmlFundos()}
       if (d && S.salaLegendas) simularFala(d);
       render();
     }, 2600));
+    // para testes e demonstrações: falas e mensagens de participantes simulados
+    const idDe = nome => (S.demoPessoas.find(d => d.nome === nome) || S.demoPessoas[1]).id;
+    if (window.EMeetRoom) window.EMeetRoom.simular = {
+      fala: (nome, texto) => receberLegenda({ txt: texto, fin: true }, idDe(nome), nome),
+      chat: (nome, texto) => receber({ t: "chat", texto }, idDe(nome), nome),
+    };
     const outro = S.demoPessoas[2];
     S.timers.push(setTimeout(() => outro && receber({ t: "chat", texto: "Boa noite! Áudio e vídeo ok por aqui." }, outro.id, outro.nome), 3500));
     S.timers.push(setTimeout(() => { const m = S.demoPessoas[3]; if (m) receber({ t: "mao", ativa: true }, m.id, m.nome); }, 7000));
