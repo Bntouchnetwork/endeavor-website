@@ -37,7 +37,7 @@ Todos: fundo da câmera, ver legendas, votar nas enquetes.
 
 ## Fundo da câmera
 
-Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fundo virtual**. O Fundo virtual abre uma lista para escolher: Marca (logo da empresa, se cadastrado; senão a marca Endeavor), Escritório, Sala de reunião, Estante, Chicago, Estúdio ou **Sua foto**. As imagens prontas são fotos realistas em 1920×1080, com uma mesa embaixo (como se a pessoa estivesse sentada numa reunião). Trocar de imagem é instantâneo (o processador continua rodando, só a imagem muda).
+Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fundo virtual**. O Fundo virtual abre uma lista para escolher: Marca (logo da empresa, se cadastrado; senão a marca Endeavor), Escritório, Sala de reunião, Estante, Chicago, Escritório claro, Belo Horizonte, Biblioteca, Estúdio ou **Sua foto**. As imagens prontas são fotos realistas em 1920×1080, a maioria com uma mesa embaixo (como se a pessoa estivesse sentada numa reunião). Trocar de imagem é instantâneo (o processador continua rodando, só a imagem muda).
 
 - **Recorte suave e estável:** o processador próprio (`fundo-suave.js`) usa a máscara de confiança do MediaPipe (em vez da máscara binária), mistura cada máscara com a anterior (rápido onde a pessoa se mexe, lento onde é só ruído), suaviza a borda e, no desfoque, tira a pessoa da média para não formar halo. Isso acaba com o "pisca" e com o fundo real aparecendo na borda. Para não acumular atraso, quadros atrasados são descartados (a câmera mostra sempre o quadro mais recente).
 - **Sua foto:** a imagem é reduzida no navegador e guardada só naquele computador (localStorage). Nunca é enviada ao servidor. Dá para trocar ou remover.

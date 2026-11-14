@@ -29,7 +29,8 @@
   /** Fundos virtuais prontos. "Sua foto" fica só no computador da pessoa (nunca vai para o servidor). */
   const FUNDOS_PRONTOS = [
     ["marca", "Marca"], ["escritorio", "Escritório"], ["reuniao", "Sala de reunião"],
-    ["estante", "Estante"], ["janela", "Chicago"], ["estudio", "Estúdio"],
+    ["estante", "Estante"], ["janela", "Chicago"], ["claro", "Escritório claro"],
+    ["bh", "Belo Horizonte"], ["biblioteca", "Biblioteca"], ["estudio", "Estúdio"],
   ];
   const imgFundo = id => id === "marca" ? IMG_NOIR() : BASE + "img/fundo-" + id + ".jpg?v=2";
   const miniFundo = id => id === "marca" ? ((S && S.op.marcaImg) || IMG_MARCA_PADRAO.replace(".jpg", "-mini.jpg")) : BASE + "img/fundo-" + id + "-mini.jpg?v=2";
