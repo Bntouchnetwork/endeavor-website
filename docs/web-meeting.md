@@ -53,6 +53,7 @@ Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fu
 - **Coluna de participantes:** tem rolagem, destaca quem está falando e rola até a pessoa quando ela começa a falar. A seta no topo esconde a coluna (a apresentação cresce); a aba "Participantes" na borda direita mostra de novo. A escolha fica salva no navegador. No celular, as câmeras ficam numa faixa embaixo.
 - **Largura do painel:** arraste a borda entre a apresentação e o painel (ou use as setas do teclado com a borda selecionada). Duplo clique volta ao padrão. A largura fica salva no navegador.
 - **Pedido por voz:** um clique no microfone começa a gravar (o botão fica vermelho e vira "parar"); outro clique para e o texto transcrito fica na caixa. Você revisa, ajusta se quiser e clica em enviar. Esc descarta a gravação.
+- **Painel de controle:** a barra dos slides (navegar, desfazer, PDF, apagar), o botão Apresentar e as miniaturas ficam fixos no topo; só a conversa com o assistente rola. O botão **Assistente** (ícone de IA) na barra de baixo abre e fecha o painel.
 - **Sugestões:** ficam no botão **Sugestões**, que abre um menu com pedidos prontos (ex.: deixar o slide mais curto, mudar o título).
 - **Apagar apresentação:** botão da lixeira, com confirmação. Se estava ao vivo, para de aparecer para os participantes. Apaga também a cópia guardada no servidor; logo depois, Desfazer ainda recupera.
 

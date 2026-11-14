@@ -294,7 +294,9 @@
 .abas .aba-mentor{display:none}
 .sala.papel-mentor .abas .aba-mentor{display:block}
 #painelSlides.ativo{display:flex;flex-direction:column;padding:0;min-height:0}
-.ap-rolagem{flex:1;overflow:auto;padding:14px;min-height:0}
+/* controles dos slides fixos no topo; só a conversa com o assistente rola */
+.ap-fixo{flex:none;padding:14px 14px 10px;border-bottom:1px solid #16305a;max-height:72%;overflow:auto}
+.ap-rolagem{flex:1;overflow:auto;padding:10px 14px;min-height:72px}
 .ap-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
 .ap-estado{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:#aaa}
 .ap-estado.vivo{color:#fff;background:#b71c1c;padding:3px 9px;border-radius:20px;letter-spacing:.06em}
@@ -312,12 +314,12 @@
 .ap-ic.ativo{background:#e53935;color:#fff}
 .btn-sala.ap-vivo{width:100%;min-height:42px;font-size:13px}
 .ap-notas{margin-top:10px;font-size:13px;color:#cfcfcf;background:#0f2545;border-left:3px solid #c8a45d;padding:8px 10px;border-radius:0 4px 4px 0;line-height:1.45}
-.ap-minis{display:flex;gap:8px;overflow-x:auto;padding:12px 2px 6px;scroll-snap-type:x proximity}
-.ap-mini{flex:0 0 108px;padding:0;border:2px solid transparent;border-radius:4px;background:none;cursor:pointer;overflow:hidden;scroll-snap-align:start}
+.ap-minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;padding:12px 2px 4px;max-height:clamp(150px,32vh,330px);overflow-y:auto}
+.ap-mini{padding:0;border:2px solid transparent;border-radius:4px;background:none;cursor:pointer;overflow:hidden;scroll-snap-align:start}
 .ap-mini.sel{border-color:#fff}
 .ap-mini:hover:not(.sel){border-color:#4c6a96}
 .ap-mini .slide{pointer-events:none}
-.ap-conversa{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.ap-conversa{display:flex;flex-direction:column;gap:8px}
 .ap-msg{max-width:92%;font-size:14px;line-height:1.45}
 .ap-msg p{padding:8px 11px;border-radius:10px;white-space:pre-wrap;word-wrap:break-word}
 .ap-msg.voce{align-self:flex-end}
@@ -614,6 +616,7 @@
 .sala.tema-claro .legendas b{color:#7a5a17}
 .sala.tema-claro .faixa-grupo{background:#1a2a3f;border:1px solid #6b5a33}
 .sala.tema-claro .fg-nomes{color:#efe2c2}
+.sala.tema-claro .ap-fixo{border-bottom:1px solid #d3dce9}
 .sala.tema-claro .ap-estado{color:#5b6576}
 .sala.tema-claro .ap-estado.vivo{color:#fff;background:#b71c1c}
 .sala.tema-claro .ap-motor{color:#7a5a17;border:1px solid #6b5a33}

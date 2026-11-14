@@ -171,7 +171,7 @@
       <div class="painel-l" id="painelPessoas"></div>
       <div class="painel-l" id="painelAcoes" aria-label="Ações da reunião"></div>
       <div class="painel-l" id="painelSlides">
-        <div class="ap-rolagem" id="apRolagem">
+        <div class="ap-fixo">
           <div class="ap-topo"><span class="ap-estado" id="apEstado">Rascunho</span><span class="ap-motor" id="apMotor"></span></div>
           <div class="ap-previa" id="apPrevia"></div>
           <div class="ap-barra">
@@ -182,6 +182,8 @@
           <button type="button" class="btn-sala ap-vivo" id="apVivo">Apresentar para todos</button>
           <p class="ap-notas" id="apNotas" hidden></p>
           <div class="ap-minis" id="apMinis" role="listbox" aria-label="Slides"></div>
+        </div>
+        <div class="ap-rolagem" id="apRolagem" tabindex="0" aria-label="Conversa com o assistente">
           <div class="ap-conversa" id="apConversa" aria-live="polite"></div>
         </div>
         <div class="ap-sug">
@@ -224,7 +226,7 @@ ${htmlFundos()}
     <span class="sep-ctl"></span>
     ${ctl("sChat", "Chat", I.chat)}${ctl("sPessoas", "Pessoas", I.pessoas)}${ctl("sTema", "Claro", I.sol)}${ctl("sMais", "Mais", I.mais)}
     <span class="sep-ctl so-mentor"></span>
-    ${ctl("sGravar", "Gravar", I.rec, "so-mentor")}${ctl("sEncerrar", "Encerrar", I.encerrar, "so-mentor sair")}
+    ${ctl("sAssist", "Assistente", I.ia, "so-mentor")}${ctl("sGravar", "Gravar", I.rec, "so-mentor")}${ctl("sEncerrar", "Encerrar", I.encerrar, "so-mentor sair")}
     ${ctl("sSair", "Sair", I.sair)}
   </nav>
   <div class="modal-sala" id="sModal" hidden><div class="caixa-sala" role="dialog" aria-modal="true" aria-labelledby="sModalTit">
@@ -254,6 +256,7 @@ ${htmlFundos()}
     $("sChat").onclick = () => abrirLateral("chat");
     $("sPessoas").onclick = () => abrirLateral("pessoas");
     $("sMais").onclick = e => { e.stopPropagation(); alternarMenu(); };
+    $("sAssist").onclick = () => abrirLateral("slides");
     $("sTema").onclick = () => aplicarTema(!el.classList.contains("tema-claro"), true);
     aplicarTema(lerLocal("emeet-tema") === "claro", false);
     $("sFecharLat").onclick = fecharLateral;
@@ -786,7 +789,7 @@ ${htmlFundos()}
     toast(S.maoMinha ? "Você levantou a mão." : "Você abaixou a mão.");
     render();
   }
-  function fecharLateral() { el.classList.remove("lateral-on"); render(); }
+  function fecharLateral() { el.classList.remove("lateral-on"); $("sAssist").classList.remove("ativo"); render(); }
   /** A apresentação aparece no palco quando está ao vivo ou quando o anfitrião está com o painel de slides aberto. */
   function apresNoPalco() {
     const ap = S.apres;
@@ -851,6 +854,7 @@ ${htmlFundos()}
     $("painelAcoes").classList.toggle("ativo", aba === "acoes");
     if (aba === "acoes" && S.painelAcoes) S.painelAcoes.aoAbrir();
     el.classList.toggle("aba-slides", aba === "slides" || aba === "acoes");
+    $("sAssist").classList.toggle("ativo", aba === "slides");
     if (aba === "slides") { desenharPainelSlides(); setTimeout(() => $("apTexto").focus(), 50); }
     if (aba === "chat") { S.naoLidas = 0; marcarNaoLidas(); setTimeout(() => $("sTexto").focus(), 50); }
     aplicarLargura(larguraSalva(), false);
