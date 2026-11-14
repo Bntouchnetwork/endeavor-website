@@ -22,7 +22,7 @@
   const SCRIPT_SRC = (document.currentScript && document.currentScript.src) || new URL("meet/room.js", location.href).href;
   const BASE = SCRIPT_SRC.replace(/room\.js(\?.*)?$/, "");
   const SDK_SRC = BASE + "vendor/livekit-client.umd.js";
-  const FUNDOS_SRC = BASE + "vendor/fundo-suave.js";
+  const FUNDOS_SRC = BASE + "vendor/fundo-suave.js?v=3";
   const MEDIAPIPE = BASE + "vendor/mediapipe";
   const IMG_MARCA_PADRAO = BASE + "img/fundo-endeavor.jpg";
   const IMG_NOIR = () => (S && S.op.marcaImg) || IMG_MARCA_PADRAO;
@@ -210,6 +210,7 @@
         </form>
       </div>
     </aside>
+    <div class="divisor div-faixa" id="sDivFaixa" role="separator" aria-orientation="vertical" aria-label="Arraste para ajustar a largura da coluna de participantes" tabindex="0"></div>
     <aside class="faixa-pessoas" id="sFaixa" aria-label="Câmeras dos participantes">
       <div class="faixa-topo"><span>Participantes <b id="sFaixaQtd"></b></span><button type="button" id="sFaixaFechar" aria-label="Esconder a coluna de participantes" title="Esconder participantes">${I.prox}</button></div>
       <div class="faixa-lista" id="sFaixaLista"></div>
@@ -300,6 +301,10 @@ ${htmlFundos()}
     $("sFaixaFechar").onclick = () => alternarFaixa(false);
     $("sFaixaAbrir").onclick = () => alternarFaixa(true);
     ligarDivisor();
+    ligarDivFaixa();
+    document.addEventListener("fullscreenchange", telaCheiaMudou);
+    el.addEventListener("mousemove", mostrarControles);
+    el.addEventListener("touchstart", mostrarControles, { passive: true });
     el.querySelectorAll(".abas [data-aba]").forEach(b => b.onclick = () => abrirLateral(b.dataset.aba, true));
     $("sEnviar").onsubmit = e => {
       e.preventDefault(); const t = $("sTexto").value.trim(); if (!t) return;
@@ -813,6 +818,55 @@ ${htmlFundos()}
     const so = $("sSobreSlide"); so.classList.toggle("sel", S.vista.sobreSlide); so.setAttribute("aria-checked", String(S.vista.sobreSlide));
     $("sCheia").querySelector("span").textContent = document.fullscreenElement ? "Sair da tela cheia" : "Tela cheia";
   }
+  /* tela cheia limpa: só a reunião; a coluna de participantes fica recolhida na aba da direita e os controles aparecem ao mexer o mouse */
+  function telaCheiaMudou() {
+    const cheia = document.fullscreenElement === el;
+    el.classList.toggle("tela-cheia", cheia);
+    if (cheia) {
+      S._faixaAntes = S.faixaFechada; S.faixaFechada = true;
+      if (el.classList.contains("lateral-on")) fecharLateral();
+      mostrarControles();
+    } else {
+      if (S._faixaAntes !== undefined) { S.faixaFechada = S._faixaAntes; S._faixaAntes = undefined; }
+      el.classList.remove("ocultar-ctl"); clearTimeout(S._tCtl);
+    }
+    el.classList.toggle("faixa-fechada", !!S.faixaFechada);
+    marcarVista(); layout();
+  }
+  function mostrarControles() {
+    if (!S || !el.classList.contains("tela-cheia")) return;
+    el.classList.remove("ocultar-ctl"); clearTimeout(S._tCtl);
+    S._tCtl = setTimeout(() => { if (el.classList.contains("tela-cheia") && !el.querySelector(".controles-sala:hover, #sVistaPop:not([hidden]), #sReacoes:not([hidden]), #sMenu:not([hidden])")) el.classList.add("ocultar-ctl"); }, 2800);
+  }
+  /* largura da coluna de participantes: arrastar a borda esquerda dela (ou setas do teclado); fica salva */
+  function aplicarLargFaixa(w, salvar) {
+    const corpo = el.querySelector(".sala-corpo"), max = Math.max(200, Math.min(620, corpo.clientWidth * 0.5));
+    w = Math.round(Math.min(Math.max(w, 160), max));
+    el.style.setProperty("--faixa-w", w + "px");
+    if (salvar) gravarLocal("emeet-faixa-w", String(w));
+    layout();
+  }
+  function ligarDivFaixa() {
+    const dv = $("sDivFaixa"), salva = Number(lerLocal("emeet-faixa-w"));
+    if (salva) el.style.setProperty("--faixa-w", salva + "px");
+    dv.onpointerdown = e => {
+      if (e.button !== 0) return;
+      e.preventDefault(); dv.setPointerCapture(e.pointerId); el.classList.add("arrastando");
+      const dir = $("sFaixa").getBoundingClientRect().right;
+      dv.onpointermove = ev => aplicarLargFaixa(dir - ev.clientX, false);
+      dv.onpointerup = dv.onpointercancel = ev => {
+        dv.onpointermove = dv.onpointerup = dv.onpointercancel = null; el.classList.remove("arrastando");
+        try { dv.releasePointerCapture(ev.pointerId); } catch (_) { }
+        aplicarLargFaixa($("sFaixa").offsetWidth, true);
+      };
+    };
+    dv.ondblclick = () => { gravarLocal("emeet-faixa-w", null); el.style.removeProperty("--faixa-w"); layout(); };
+    dv.onkeydown = e => {
+      const passo = e.shiftKey ? 80 : 24;
+      if (e.key === "ArrowLeft") { e.preventDefault(); aplicarLargFaixa($("sFaixa").offsetWidth + passo, true); }
+      if (e.key === "ArrowRight") { e.preventDefault(); aplicarLargFaixa($("sFaixa").offsetWidth - passo, true); }
+    };
+  }
   function alternarTelaCheia() {
     try {
       if (document.fullscreenElement) document.exitFullscreen();
@@ -979,7 +1033,8 @@ ${htmlFundos()}
     return !!ap.doc && (ap.aoVivo || (S.papel === "mentor" && S.aba === "slides" && el.classList.contains("lateral-on")));
   }
   function alternarFaixa(abrir) {
-    S.faixaFechada = !abrir; gravarLocal("emeet-faixa", abrir ? null : "fechada");
+    S.faixaFechada = !abrir;
+    if (el.classList.contains("tela-cheia")) S._faixaAntes = S._faixaAntes; else gravarLocal("emeet-faixa", abrir ? null : "fechada");
     el.classList.toggle("faixa-fechada", !abrir);
     (abrir ? $("sFaixaFechar") : $("sFaixaAbrir")).focus();
     layout();

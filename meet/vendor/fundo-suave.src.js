@@ -239,8 +239,8 @@ class FundoSuave {
         const o = y * MW; // FLIP_Y também vale para dados brutos: a máscara fica alinhada com o vídeo
         for (let x = 0, i = y * MW; x < MW; x++, i++) {
           const v = nova[i], d = Math.abs(v - ant[i]);
-          // mistura adaptativa: diferença grande = movimento (segue rápido); pequena = ruído (segura)
-          const k = d > 0.3 ? 1 : d < 0.08 ? 0.5 : 0.5 + (d - 0.08) * 2.27;
+          // mistura adaptativa: movimento real segue na hora (sem rastro); só tremidas pequenas são suavizadas
+          const k = d >= 0.12 ? 1 : 0.6;
           const m = ant[i] + (v - ant[i]) * k;
           ant[i] = m; m8[o + x] = m * 255;
         }
@@ -337,7 +337,7 @@ function recortar(video, canvas, base, op) {
         dados = mctx.createImageData(mw, mh);
         for (let i = 0; i < n; i++) {
           const v = nova[i], d = Math.abs(v - mAnt[i]);
-          const k = d > 0.3 ? 1 : d < 0.08 ? 0.5 : 0.5 + (d - 0.08) * 2.27;
+          const k = d >= 0.12 ? 1 : 0.6;
           const m = mAnt[i] + (v - mAnt[i]) * k; mAnt[i] = m;
           const a = m <= 0.4 ? 0 : m >= 0.75 ? 1 : (m - 0.4) / 0.35; // transição suave na borda
           dados.data[i * 4 + 3] = a * 255;

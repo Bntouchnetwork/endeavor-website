@@ -13,14 +13,19 @@ INICIO, FIM = "/* ===== tema claro (gerado por gerar-tema-claro.py; não edite �
 # sobreposições em cima do vídeo continuam com as cores do tema escuro (fundo translúcido preto)
 EXTRAS = """.sala.tema-claro .tile .rot{color:#fff}
 .sala.tema-claro .legendas b{color:#e3cf9f}
-.sala.tema-claro .tile .rot .papel{background:#fff;color:#07162b}"""
+.sala.tema-claro .tile .rot .papel{background:#fff;color:#07162b}
+.sala.tema-claro .faixa-pessoas{background:transparent;border-left:0}
+.sala.tema-claro .faixa-lista .tile:not(.falando){border:1px solid #b3b9c2;box-shadow:0 1px 4px rgba(15,29,51,.12)}
+.sala.tema-claro .plateia .tile:not(.falando){border:1px solid #b3b9c2}
+.sala.tema-claro.tela-cheia .controles-sala{background:rgba(220,223,228,.92)}"""
 
 # fundos e bordas: azul-escuro -> tons claros
 FUNDO = {
-    "#07162b": "#eef2f8", "#061226": "#e4e9f2", "#081a33": "#ffffff", "#0a1c36": "#f5f7fb", "#0b1d38": "#ffffff", "#0e2443": "#f1f4f9",
-    "#0f2545": "#e6ecf5", "#13294b": "#e1e8f2", "#132c52": "#dfe7f2", "#15305a": "#d6deea", "#16305a": "#d3dce9", "#17325c": "#d9e1ed",
-    "#1a3660": "#d9e1ed", "#1d3a66": "#d4dded", "#213f6d": "#cbd6e6", "#244372": "#c6d2e4", "#2a4a7a": "#b8c5da", "#3a5d90": "#a3b4cf",
-    "#3f6398": "#9fb1cd", "#4c6a96": "#8b9db8", "#5c7fb3": "#7d94b8", "#0b1f3a": "#e6ecf5",
+    # cinza neutro (um tom mais escuro que branco), para não cansar a vista
+    "#07162b": "#dcdfe4", "#061226": "#d3d7dd", "#081a33": "#e9ebee", "#0a1c36": "#e6e8eb", "#0b1d38": "#eef0f2", "#0e2443": "#e3e6ea",
+    "#0f2545": "#d6dadf", "#13294b": "#d2d6dc", "#132c52": "#d0d5db", "#15305a": "#c9ced5", "#16305a": "#c6cbd3", "#17325c": "#cdd2d8",
+    "#1a3660": "#cdd2d8", "#1d3a66": "#c8cdd4", "#213f6d": "#bfc5cd", "#244372": "#bac1ca", "#2a4a7a": "#adb4be", "#3a5d90": "#9aa2ad",
+    "#3f6398": "#959eaa", "#4c6a96": "#868f9b", "#5c7fb3": "#7b8592", "#0b1f3a": "#d6dadf", "#061428": "transparent",
     "#fff": "#0f2545", "#ffffff": "#0f2545",
 }
 # texto: claro -> escuro; escuro (usado sobre fundo branco) -> branco

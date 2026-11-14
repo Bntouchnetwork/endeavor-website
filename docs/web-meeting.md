@@ -50,7 +50,9 @@ Botão **Exibir** na barra de baixo. Cada pessoa escolhe a sua; a escolha fica s
 - **Só o destaque:** a pessoa em destaque ocupa a tela toda, sem a coluna.
 - **Palco (oratória):** quem está em destaque (ou quem fala) aparece recortado sobre um palco virtual, e os outros ficam como plateia embaixo. Combina com o cronômetro e as reações. O recorte é feito no navegador de quem assiste.
 - **Minha câmera sobre o slide:** quando o organizador apresenta, a câmera dele aparece recortada no canto do slide (estilo telejornal), para todos. Liga e desliga no mesmo menu.
-- **Tela cheia** e, para o organizador, **Aplicar para todos**: a visualização e o destaque escolhidos passam a valer na tela de todos.
+- **Tela cheia** limpa: só a reunião; a coluna de participantes fica recolhida numa aba na borda direita e os controles aparecem ao mexer o mouse (Esc sai).
+- **Coluna de participantes:** arraste a borda esquerda dela para alargar ou estreitar (também na tela cheia). Duplo clique volta ao tamanho padrão.
+- Para o organizador, **Aplicar para todos**: a visualização e o destaque escolhidos passam a valer na tela de todos.
 - Com apresentação ou tela compartilhada, o conteúdo ocupa o palco e as câmeras ficam na coluna.
 
 ## Fundo da câmera
@@ -60,6 +62,7 @@ Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fu
 - **Recorte suave e estável:** o processador próprio (`fundo-suave.js`) usa a máscara de confiança do MediaPipe (em vez da máscara binária), mistura cada máscara com a anterior (rápido onde a pessoa se mexe, lento onde é só ruído), suaviza a borda e, no desfoque, tira a pessoa da média para não formar halo. Isso acaba com o "pisca" e com o fundo real aparecendo na borda. Para não acumular atraso, quadros atrasados são descartados (a câmera mostra sempre o quadro mais recente).
 - **Sua foto:** a imagem é reduzida no navegador e guardada só naquele computador (localStorage). Nunca é enviada ao servidor. Dá para trocar ou remover.
 - A última escolha fica lembrada no navegador e volta na próxima reunião.
+- Sem rastro: quando a pessoa se mexe, o recorte acompanha na hora; só tremidas pequenas na borda são suavizadas.
 - O fundo virtual aparece sem espelho para a própria pessoa, para textos e logos ficarem legíveis.
 
 ## Apresentação com IA (anfitrião)
