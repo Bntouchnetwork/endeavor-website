@@ -36,7 +36,7 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   await page.waitForSelector(".sala.no-ar", { timeout: 15000 });
   ok(true, `${rotulo}: entrou na sala`);
   await page.waitForTimeout(1500);
-  ok(await page.$$eval("#sGrade .tile", (t) => t.length) >= 2, `${rotulo}: grade com participantes`);
+  ok(await page.$$eval("#sGrade .tile", (t) => t.length) === 1 && await page.$$eval("#sGrade .tile, #sFaixaLista .tile", (t) => t.length) >= 2, `${rotulo}: destaque no palco e participantes na coluna`);
   // reação
   await page.click("#sReagir"); await page.click('#sReacoes [data-e="👏"]');
   ok(!!(await page.$(".reacao-voa")), `${rotulo}: reação aparece no palco`);
@@ -155,7 +155,7 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   await page.click("#apApagar");
   ok(await page.isVisible("#sModal") && (await page.textContent("#sModalTit")) === "Apagar apresentação", "anfitrião: pede confirmação para apagar");
   await page.click('#sModalAcoes button:has-text("Apagar")'); await page.waitForTimeout(300);
-  ok(!(await page.$("#sGrade .tile.apres")) && await page.isDisabled("#apApagar") && !(await page.isVisible("#sFaixa")), "anfitrião: apresentação apagada e o palco volta à grade");
+  ok(!(await page.$("#sGrade .tile.apres")) && await page.isDisabled("#apApagar") && (await page.$$eval("#sGrade .tile:not(.apres)", (t) => t.length)) === 1, "anfitrião: apresentação apagada e o palco volta ao destaque");
   await page.click("#apDesfazer"); await page.waitForTimeout(300);
   ok(!!(await page.$("#sGrade .tile.apres")), "anfitrião: Desfazer recupera a apresentação");
   await page.screenshot({ path: `${OUT}/meet-anfitriao.png` });

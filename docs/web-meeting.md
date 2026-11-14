@@ -20,7 +20,7 @@ Videoconferência da Endeavor Business Solutions com LiveKit. A própria Endeavo
 | Painel de ações (IA) | `meet/acoes-core.js` (regras, o mesmo arquivo na sala e no servidor), `meet/acoes-painel.js` (tela), `supabase/functions/meet/acoes.ts` (integrações) |
 | Envio de documentos pelo cliente | `enviar-documentos.html?t=TOKEN` (bucket privado `meet-documents`) |
 | Tema claro | `meet/gerar-tema-claro.py` gera o tema claro a partir das cores de `room.css` |
-| Testes | `tests/meet-parity.test.ts`, `tests/meet-room.e2e.mjs`, `tests/meet-actions.test.ts`, `tests/meet-actions.e2e.mjs` |
+| Testes | `tests/meet-parity.test.ts`, `tests/meet-room.e2e.mjs`, `tests/meet-views.e2e.mjs`, `tests/meet-actions.test.ts`, `tests/meet-actions.e2e.mjs` |
 
 ## Como funciona
 
@@ -37,6 +37,21 @@ Vídeo e áudio, escolha de câmera e microfone na pré-sala, compartilhamento d
 Anfitrião: silenciar, remover participante, encerrar a sala para todos, gravar, transmitir por RTMP (YouTube e Instagram), enquetes, cronômetro, salas em grupos, legendas ao vivo, resumo da reunião por IA e assistente de slides com IA (apresenta para todos, sincronizado em tempo real).
 
 Todos: fundo da câmera, ver legendas, votar nas enquetes.
+
+## Visualizações
+
+Botão **Exibir** na barra de baixo. Cada pessoa escolhe a sua; a escolha fica salva no navegador.
+
+- **Destaque** (padrão): ao entrar, o organizador aparece grande e os outros numa coluna ao lado (no celular, numa faixa embaixo).
+- **Trocar quem fica grande:** clique num quadro da coluna, ou arraste o quadro para o palco. Clique duas vezes no quadro grande (ou de novo no mesmo) para voltar ao organizador.
+- **Palco automático:** quem fala vai para o centro sozinho (depois de falar por um instante; volta quando a fala termina).
+- **Reunião de negócio:** organizador e cliente lado a lado; os outros na coluna.
+- **Grade de 4** (com páginas) e **Grade com todos**.
+- **Só o destaque:** a pessoa em destaque ocupa a tela toda, sem a coluna.
+- **Palco (oratória):** quem está em destaque (ou quem fala) aparece recortado sobre um palco virtual, e os outros ficam como plateia embaixo. Combina com o cronômetro e as reações. O recorte é feito no navegador de quem assiste.
+- **Minha câmera sobre o slide:** quando o organizador apresenta, a câmera dele aparece recortada no canto do slide (estilo telejornal), para todos. Liga e desliga no mesmo menu.
+- **Tela cheia** e, para o organizador, **Aplicar para todos**: a visualização e o destaque escolhidos passam a valer na tela de todos.
+- Com apresentação ou tela compartilhada, o conteúdo ocupa o palco e as câmeras ficam na coluna.
 
 ## Fundo da câmera
 

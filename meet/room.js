@@ -52,6 +52,16 @@
         <button type="button" role="option" class="fundo-op fundo-foto" data-fundo="foto"><img alt="" hidden data-mini="foto"><b aria-hidden="true">+</b><span class="ff-nome">Adicionar sua foto</span>${CHECK}</button>
         <p class="fundo-nota" hidden>Sua foto fica só neste computador. <button type="button" class="fundo-trocar">Trocar</button> · <button type="button" class="fundo-remover">Remover</button></p>
       </div>`;
+  const VISTAS = [
+    ["destaque", "Destaque", "Uma pessoa grande e as outras ao lado"],
+    ["auto", "Palco automático", "Quem fala vai para o centro"],
+    ["negocio", "Reunião de negócio", "Organizador e cliente lado a lado"],
+    ["grade4", "Grade de 4", "Quatro por vez, com páginas"],
+    ["grade", "Grade com todos", "Todos do mesmo tamanho"],
+    ["foco", "Só o destaque", "A pessoa em destaque ocupa tudo"],
+    ["palco", "Palco (oratória)", "Quem fala num palco; os outros como plateia"],
+  ];
+  const NOME_VISTA = Object.fromEntries(VISTAS.map(v => [v[0], v[1]]));
   const enc = new TextEncoder(), dec = new TextDecoder();
   const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
   let LK = null, el = null, S = null;
@@ -70,6 +80,8 @@
     rec: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/>'),
     encerrar: svg('<path d="M3 15c5-5 13-5 18 0l-2.5 2.5-3.5-1.5V13c-2-1-4-1-6 0v3l-3.5 1.5z" fill="currentColor"/>'),
     sair: svg('<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>'),
+    vista: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 15h18M9 15v5M15 15v5"/>'),
+    cheia: svg('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'),
     sol: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'),
     lua: svg('<path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/>'),
     ia: svg('<path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>'),
@@ -158,6 +170,8 @@
     <main class="palco" id="sPalco">
       <div class="faixa-grupo" id="sGrupo" hidden></div>
       <div class="grade" id="sGrade"></div>
+      <div class="pager" id="sPager" hidden><button type="button" data-pg="-1" aria-label="Página anterior">${I.ant}</button><span></span><button type="button" data-pg="1" aria-label="Próxima página">${I.prox}</button></div>
+      <div class="plateia" id="sPlateia" aria-label="Plateia"></div>
       <div class="crono" id="sCrono" hidden></div>
       <div class="cartao-enquete" id="sEnquete" hidden></div>
       <div class="legendas" id="sLegendas" aria-live="polite" hidden></div>
@@ -221,7 +235,7 @@ ${htmlFundos()}
     </div>
   </div>
   <nav class="controles-sala" aria-label="Controles da reunião">
-    ${ctl("sMic", "Microfone", I.mic)}${ctl("sCam", "Câmera", I.cam)}${ctl("sTela", "Tela", I.tela)}${ctl("sMao", "Mão", I.mao)}${ctl("sReagir", "Reagir", I.reacao)}
+    ${ctl("sMic", "Microfone", I.mic)}${ctl("sCam", "Câmera", I.cam)}${ctl("sTela", "Tela", I.tela)}${ctl("sMao", "Mão", I.mao)}${ctl("sReagir", "Reagir", I.reacao)}${ctl("sVista", "Exibir", I.vista)}
     <span class="sep-ctl"></span>
     ${ctl("sChat", "Chat", I.chat)}${ctl("sPessoas", "Pessoas", I.pessoas)}${ctl("sTema", "Claro", I.sol)}${ctl("sMais", "Mais", I.mais)}
     <span class="sep-ctl so-mentor"></span>
@@ -233,6 +247,15 @@ ${htmlFundos()}
     <div class="corpo-modal" id="sModalCorpo"></div><div class="acoes-modal" id="sModalAcoes"></div></div></div>
   <div class="sala-fim" id="sFim"><div><h2 id="sFimTit">Reunião encerrada</h2><p id="sFimTxt"></p><button class="btn-sala" id="sFimOk" type="button">Fechar</button></div></div>
   <div class="toast-sala" id="sToast" role="status"></div>
+  <div class="vista-pop" id="sVistaPop" role="menu" aria-label="Visualização" hidden>
+    <p class="sub-l">Visualização</p>
+    ${VISTAS.map(([k, n, d]) => `<button type="button" role="menuitemradio" data-modo="${k}"><b>${n}</b><small>${d}</small></button>`).join("")}
+    <div class="vista-opcoes">
+      <button type="button" role="menuitemcheckbox" id="sSobreSlide">Minha câmera sobre o slide</button>
+      <button type="button" id="sCheia">${I.cheia}<span>Tela cheia</span></button>
+      <label class="so-mentor vista-todos"><input type="checkbox" id="sParaTodos"> Aplicar para todos (organizador)</label>
+    </div>
+  </div>
   <div class="reacoes-pop" id="sReacoes" role="menu" aria-label="Reações" hidden>${REACOES.map(e => `<button type="button" role="menuitem" data-e="${e}" aria-label="Reagir com ${e}">${e}</button>`).join("")}</div>
 </section>
 <div id="sAudios" hidden></div>`;
@@ -256,6 +279,21 @@ ${htmlFundos()}
     $("sPessoas").onclick = () => abrirLateral("pessoas");
     $("sMais").onclick = e => { e.stopPropagation(); alternarMenu(); };
     $("sAssist").onclick = () => abrirLateral("slides");
+    $("sVista").onclick = e => { e.stopPropagation(); const p = $("sVistaPop"); p.hidden = !p.hidden; if (!p.hidden) { marcarVista(); (p.querySelector(".sel") || p.querySelector("button")).focus(); } };
+    $("sVistaPop").onclick = e => {
+      e.stopPropagation();
+      const b = e.target.closest("[data-modo]");
+      if (b) { mudarVista(b.dataset.modo); $("sVistaPop").hidden = true; }
+    };
+    $("sSobreSlide").onclick = e => { e.stopPropagation(); S.vista.sobreSlide = !S.vista.sobreSlide; gravarLocal("emeet-sobre-slide", S.vista.sobreSlide ? null : "nao"); marcarVista(); anunciarVista(); render(); };
+    $("sCheia").onclick = e => { e.stopPropagation(); $("sVistaPop").hidden = true; alternarTelaCheia(); };
+    document.addEventListener("click", e => { const p = $("sVistaPop"); if (p && !p.hidden && !p.contains(e.target)) p.hidden = true; });
+    $("sPager").onclick = e => { const b = e.target.closest("[data-pg]"); if (!b) return; S.vista.pagina += Number(b.dataset.pg); render(); };
+    // arrastar um quadro (da coluna ou da plateia) para o palco: vai para o destaque
+    const palco = $("sPalco");
+    palco.addEventListener("dragover", e => { if (e.dataTransfer.types.includes("text/emeet")) { e.preventDefault(); palco.classList.add("alvo-drop"); } });
+    palco.addEventListener("dragleave", e => { if (!palco.contains(e.relatedTarget)) palco.classList.remove("alvo-drop"); });
+    palco.addEventListener("drop", e => { const id = e.dataTransfer.getData("text/emeet"); palco.classList.remove("alvo-drop"); if (id) { e.preventDefault(); fixar(id); } });
     $("sTema").onclick = () => aplicarTema(!el.classList.contains("tema-claro"), true);
     aplicarTema(lerLocal("emeet-tema") === "claro", false);
     $("sFecharLat").onclick = fecharLateral;
@@ -343,7 +381,8 @@ ${htmlFundos()}
       op, papel: op.papel === "mentor" ? "mentor" : "aluno", salaBase: op.sala || "demo-reuniao", sala: op.sala || "demo-reuniao", nome: op.nome || "",
       micOn: true, camOn: true, camId: "", micId: "", preStream: null, telaStream: null, codigoMentor: "",
       room: null, token: "", demo: !!op.demo, tiles: new Map(), maos: new Map(), maoMinha: false,
-      gravando: false, egressId: "", inicioRec: 0, inicio: 0, timers: [], naoLidas: 0, aba: "chat", faixaFechada: lerLocal("emeet-faixa") === "fechada",
+      gravando: false, egressId: "", inicioRec: 0, inicio: 0, timers: [], naoLidas: 0, aba: "chat",
+      vista: { modo: VISTAS.some(v => v[0] === lerLocal("emeet-vista")) ? lerLocal("emeet-vista") : "destaque", fixo: "", pagina: 0, sobreSlide: lerLocal("emeet-sobre-slide") !== "nao", falante: "", desde: {}, ultimaFala: {} }, faixaFechada: lerLocal("emeet-faixa") === "fechada",
       demoPessoas: [], demoFiltro: null, demoFalando: "", nivelLocal: 0, encerrado: false, trocando: false,
       // ferramentas
       fundo: "nenhum", lkCam: null, fundoTrack: null,
@@ -626,25 +665,36 @@ ${htmlFundos()}
     if (apresNoPalco()) tiles.push({ chave: "apres", apres: true, tela: true, p: { id: "apres", nome: S.apres.doc.titulo, local: false } });
     ordem.forEach(p => { if (p.tela) tiles.push({ chave: p.id + ":tela", p, tela: true, video: p.tela }); });
     ordem.forEach(p => tiles.push({ chave: p.id, p, tela: false, video: p.cam }));
-    const grade = $("sGrade"), lista = $("sFaixaLista"), vistos = new Set();
-    // com apresentação ou tela compartilhada: o palco mostra só isso e as câmeras vão para a coluna da direita
+    const grade = $("sGrade"), lista = $("sFaixaLista"), plateia = $("sPlateia"), vistos = new Set();
+    // com apresentação ou tela compartilhada: o palco mostra só isso e as câmeras vão para a coluna da direita.
+    // Sem isso, vale a visualização escolhida (destaque, grade, palco...).
     const temTela = tiles.some(t => t.tela);
-    const pos = new Map([[grade, 0], [lista, 0]]);
-    tiles.forEach((t, i) => {
+    const modo = temTela ? "conteudo" : S.vista.modo;
+    const dist = distribuir(tiles, ps, modo);
+    const pos = new Map([[grade, 0], [lista, 0], [plateia, 0]]);
+    dist.forEach(({ t, alvo, papelPalco }, i) => {
       let d = S.tiles.get(t.chave);
       if (!d) { d = t.apres ? criarTileApres() : criarTile(); S.tiles.set(t.chave, d); }
       vistos.add(t.chave);
       const falava = d.classList.contains("falando");
-      if (t.apres) atualizarTileApres(d); else atualizarTile(d, t);
+      if (t.apres) { atualizarTileApres(d); camSobreSlide(d, ps); } else atualizarTile(d, t);
       d.classList.toggle("destaque", i === 0 && t.tela);
-      const alvo = temTela && !t.tela ? lista : grade, j = pos.get(alvo); pos.set(alvo, j + 1);
+      d.classList.toggle("principal", alvo === grade && !t.tela && ["destaque", "auto", "foco", "palco", "negocio"].includes(modo));
+      d.classList.toggle("fixado", !t.tela && S.vista.fixo === t.chave);
+      const naTira = alvo !== grade;
+      d.draggable = naTira && !t.tela;
+      d.dataset.id = t.chave;
+      if (!t.apres) atualizarPalco(d, papelPalco === "palco" && !!t.video, t);
+      const j = pos.get(alvo); pos.set(alvo, j + 1);
       if (alvo.children[j] !== d) alvo.insertBefore(d, alvo.children[j] || null);
       if (alvo === lista && !falava && d.classList.contains("falando")) mostrarNaFaixa(d);
     });
-    for (const [k, d] of S.tiles) if (!vistos.has(k)) { soltarVideo(d); d.remove(); S.tiles.delete(k); }
+    for (const [k, d] of S.tiles) if (!vistos.has(k)) { atualizarPalco(d, false); soltarVideo(d); d.remove(); S.tiles.delete(k); }
     const naFaixa = lista.children.length;
     $("sPalco").classList.toggle("com-tela", temTela);
-    el.classList.toggle("com-faixa", temTela && naFaixa > 0);
+    el.classList.toggle("com-faixa", naFaixa > 0);
+    el.classList.toggle("modo-palco", modo === "palco");
+    grade.classList.toggle("cena", modo === "palco");
     el.classList.toggle("faixa-fechada", !!S.faixaFechada);
     $("sFaixaQtd").textContent = naFaixa ? "(" + naFaixa + ")" : "";
     $("sFaixaAbrirQtd").textContent = naFaixa || "";
@@ -663,9 +713,143 @@ ${htmlFundos()}
     if (S.enqueteAtual) desenharEnquete();
   }
 
+  /* ---------------- visualizações ---------------- */
+  function idOrganizador(ps) {
+    const m = ps.filter(p => p.papel === "mentor");
+    const eu = m.find(p => p.local);
+    return (eu || m[0] || ps.find(p => p.local) || ps[0] || {}).id || "";
+  }
+  /** Quem está falando agora (ignora a própria pessoa e falas muito curtas; segura o destaque por 2,5 s depois da fala). */
+  function falanteAtual(ps) {
+    const v = S.vista, agora = Date.now();
+    ps.forEach(p => {
+      if (p.falando && !p.local) { v.desde[p.id] = v.desde[p.id] || agora; v.ultimaFala[p.id] = agora; }
+      else delete v.desde[p.id];
+    });
+    const candidato = ps.filter(p => !p.local && v.desde[p.id] && agora - v.desde[p.id] >= 700).sort((a, b) => v.desde[a.id] - v.desde[b.id])[0];
+    if (candidato && candidato.id !== v.falante) v.falante = candidato.id;
+    if (v.falante && (!ps.some(p => p.id === v.falante) || agora - (v.ultimaFala[v.falante] || 0) > 2500)) v.falante = "";
+    return v.falante;
+  }
+  /** Decide onde cada quadro vai: palco (grade), coluna/faixa, plateia, ou fica de fora (grade de 4, só o destaque). */
+  function distribuir(tiles, ps, modo) {
+    const grade = $("sGrade"), lista = $("sFaixaLista"), plateia = $("sPlateia");
+    const v = S.vista, existe = id => tiles.some(t => !t.tela && t.chave === id);
+    if (v.fixo && !existe(v.fixo)) v.fixo = "";
+    const falante = falanteAtual(ps), org = idOrganizador(ps);
+    const cams = tiles.filter(t => !t.tela), telas = tiles.filter(t => t.tela);
+    const pager = $("sPager");
+    pager.hidden = true;
+    if (modo === "conteudo") return [...telas.map(t => ({ t, alvo: grade })), ...cams.map(t => ({ t, alvo: lista }))];
+    if (modo === "grade") return cams.map(t => ({ t, alvo: grade }));
+    if (modo === "grade4") {
+      // fixado e quem fala primeiro; 4 por página
+      const ordem = [...cams].sort((a, b) => (b.chave === v.fixo) - (a.chave === v.fixo));
+      const paginas = Math.max(1, Math.ceil(ordem.length / 4));
+      v.pagina = Math.min(Math.max(v.pagina, 0), paginas - 1);
+      if (paginas > 1) { pager.hidden = false; pager.querySelector("span").textContent = `${v.pagina + 1} / ${paginas}`; }
+      return ordem.slice(v.pagina * 4, v.pagina * 4 + 4).map(t => ({ t, alvo: grade }));
+    }
+    let principal = v.fixo || ((modo === "auto" || modo === "palco") && falante) || org;
+    if (!existe(principal)) principal = (cams[0] || {}).chave;
+    if (modo === "negocio") {
+      const orgId = existe(org) ? org : principal;
+      const outro = [v.fixo, falante, ...cams.map(t => t.chave)].find(id => id && id !== orgId && existe(id) && (ps.find(p => p.id === id) || {}).papel !== "mentor")
+        || cams.map(t => t.chave).find(id => id !== orgId);
+      const dupla = [orgId, outro].filter(Boolean);
+      return [...dupla.map(id => ({ t: cams.find(t => t.chave === id), alvo: grade })), ...cams.filter(t => !dupla.includes(t.chave)).map(t => ({ t, alvo: lista }))];
+    }
+    const pt = cams.find(t => t.chave === principal);
+    const resto = cams.filter(t => t !== pt);
+    if (modo === "foco") return pt ? [{ t: pt, alvo: grade }] : [];
+    if (modo === "palco") return [...(pt ? [{ t: pt, alvo: grade, papelPalco: "palco" }] : []), ...resto.map(t => ({ t, alvo: plateia }))];
+    return [...(pt ? [{ t: pt, alvo: grade }] : []), ...resto.map(t => ({ t, alvo: lista }))]; // destaque e palco automático
+  }
+  /** Modo Palco: a pessoa recortada sobre o palco virtual (recorte feito no navegador de quem assiste). */
+  function atualizarPalco(d, ligar, t) {
+    if (!ligar) {
+      if (d._parar) { d._parar(); d._parar = null; }
+      d.classList.remove("em-palco", "recortando");
+      const c = d.querySelector("canvas.recorte"); if (c) c.remove();
+      return;
+    }
+    d.classList.add("em-palco");
+    if (d._parar) return;
+    const video = d.querySelector("video");
+    carregarFundos().then(() => {
+      if (d._parar || !d.classList.contains("em-palco") || !window.EndeavorFundo || !EndeavorFundo.suportado()) return;
+      const c = document.createElement("canvas"); c.className = "recorte"; d.appendChild(c);
+      d._parar = EndeavorFundo.recortar(video, c, MEDIAPIPE, { falha: () => d.classList.remove("recortando") });
+      d.classList.add("recortando");
+    }).catch(() => { });
+  }
+  function mudarVista(modo, deFora) {
+    if (!NOME_VISTA[modo]) return;
+    S.vista.modo = modo; S.vista.pagina = 0;
+    if (modo === "grade" || modo === "grade4") S.vista.fixo = S.vista.fixo; // fixado continua na frente
+    gravarLocal("emeet-vista", modo);
+    marcarVista();
+    if (!deFora) { toast("Visualização: " + NOME_VISTA[modo] + "."); anunciarVista(); }
+    if (modo === "palco") carregarFundos().catch(() => { });
+    render(); layout();
+  }
+  function fixar(id) {
+    S.vista.fixo = S.vista.fixo === id ? "" : id;
+    if (["grade", "grade4"].includes(S.vista.modo) && S.vista.fixo) S.vista.modo = "destaque";
+    marcarVista(); anunciarVista(); render();
+  }
+  function anunciarVista() {
+    if (S.papel !== "mentor" || !$("sParaTodos").checked) return;
+    enviar({ t: "vista", modo: S.vista.modo, fixo: S.vista.fixo, sobreSlide: S.vista.sobreSlide });
+  }
+  function receberVista(m, deMim, nome) {
+    if (deMim || !NOME_VISTA[m.modo]) return;
+    S.vista.fixo = String(m.fixo || ""); S.vista.sobreSlide = m.sobreSlide !== false;
+    mudarVista(m.modo, true);
+    toast(`${nome} mudou a visualização para todos: ${NOME_VISTA[m.modo]}.`);
+  }
+  function marcarVista() {
+    el.querySelectorAll("#sVistaPop [data-modo]").forEach(b => { const on = b.dataset.modo === S.vista.modo; b.classList.toggle("sel", on); b.setAttribute("aria-checked", String(on)); });
+    const so = $("sSobreSlide"); so.classList.toggle("sel", S.vista.sobreSlide); so.setAttribute("aria-checked", String(S.vista.sobreSlide));
+    $("sCheia").querySelector("span").textContent = document.fullscreenElement ? "Sair da tela cheia" : "Tela cheia";
+  }
+  function alternarTelaCheia() {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    } catch (e) { toast("Este navegador não permite tela cheia aqui."); }
+  }
+  /** Câmera do apresentador sobre o slide, recortada (ou num quadro arredondado, se o recorte não estiver disponível). */
+  function camSobreSlide(d, ps) {
+    let box = d._apCam;
+    const apresentador = S.vista.sobreSlide ? ps.find(p => p.papel === "mentor" && p.cam && (S.apres.aoVivo ? true : p.local)) : null;
+    if (!apresentador) { if (box) { if (box._parar) box._parar(); if (box._lk) box._lk.detach(box.querySelector("video")); box.remove(); d._apCam = null; } return; }
+    if (!box) {
+      box = d._apCam = document.createElement("div"); box.className = "ap-cam";
+      box.innerHTML = '<video autoplay playsinline muted></video><canvas class="recorte"></canvas>';
+    }
+    // fica dentro da área do slide (que é recriada a cada troca de slide)
+    const host = d.querySelector(".slide-host"); if (box.parentElement !== host) host.appendChild(box);
+    box.classList.toggle("local", apresentador.local && !ehImagem(S.fundo));
+    const v = box.querySelector("video"), src = apresentador.cam;
+    if (src.lk) { if (box._lk !== src.lk) { if (box._lk) box._lk.detach(v); src.lk.attach(v); box._lk = src.lk; } }
+    else if (src.ms && v.srcObject !== src.ms) { v.srcObject = src.ms; v.play().catch(() => { }); }
+    if (!box._parar) {
+      box._parar = () => { };
+      carregarFundos().then(() => {
+        if (!box.isConnected || !window.EndeavorFundo || !EndeavorFundo.suportado()) return;
+        box._parar = EndeavorFundo.recortar(v, box.querySelector("canvas"), MEDIAPIPE, { largura: 640 });
+        box.classList.add("recortando");
+      }).catch(() => { });
+    }
+  }
+
   function criarTile() {
     const d = document.createElement("div");
     d.className = "tile";
+    d.addEventListener("click", () => { if (d.parentElement && d.parentElement.id !== "sGrade") fixar(d.dataset.id); });
+    d.addEventListener("dblclick", () => { if (d.parentElement && d.parentElement.id === "sGrade" && !d.classList.contains("tela")) fixar(d.dataset.id); });
+    d.addEventListener("dragstart", e => { e.dataTransfer.setData("text/emeet", d.dataset.id); e.dataTransfer.effectAllowed = "move"; });
     d.innerHTML = `<video autoplay playsinline muted></video><div class="avatar"></div><div class="rot"></div><div class="mao" title="Mão levantada">${I.mao}</div>`;
     return d;
   }
@@ -704,7 +888,7 @@ ${htmlFundos()}
     const tiles = [...g.children];
     if (pal.classList.contains("com-tela")) { g.style.gridTemplateColumns = ""; g.style.gridAutoRows = ""; g.style.justifyContent = ""; return; }
     const cs = getComputedStyle(pal), gap = parseFloat(getComputedStyle(g).gap) || 10;
-    const faixa = $("sGrupo").hidden ? 0 : $("sGrupo").offsetHeight + 10;
+    const faixa = ($("sGrupo").hidden ? 0 : $("sGrupo").offsetHeight + 10) + (el.classList.contains("modo-palco") && $("sPlateia").children.length ? $("sPlateia").offsetHeight + 10 : 0) + ($("sPager").hidden ? 0 : $("sPager").offsetHeight + 8);
     const W = pal.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const H = pal.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - faixa;
     const n = Math.max(1, tiles.length);
@@ -977,6 +1161,7 @@ ${htmlFundos()}
         if (doMentor(id) && !deMim) { S.apres.aoVivo = !!m.ativo && !!S.apres.doc; if (!m.ativo) toast("O anfitrião parou de apresentar."); render(); }
         break;
       case "ia": if (doMentor(id)) receberIA(m, deMim); break;
+      case "vista": if (doMentor(id)) receberVista(m, deMim, nome); break;
       case "tx": if (doMentor(id)) { S.txAtiva = !!m.ativo; $("sTx").classList.toggle("on", S.txAtiva); if (!deMim) toast(m.ativo ? "Esta reunião está sendo transmitida ao vivo nas redes." : "A transmissão nas redes terminou."); atualizarMenu(); } break;
     }
   }
@@ -1911,6 +2096,7 @@ ${htmlFundos()}
   }
   function tiqueRapido() {
     if (!S || S.encerrado) return;
+    if ((S.vista.modo === "auto" || S.vista.modo === "palco") && S.inicio) { S._tv = (S._tv || 0) + 1; if (S._tv % 2 === 0) render(); }
     if (S.crono) desenharCrono();
     if (S.salaLegendas) desenharLegendas();
   }

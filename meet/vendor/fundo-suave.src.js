@@ -10,7 +10,7 @@
  *   - no desfoque, só o fundo entra na média: a pessoa não "vaza" como um halo em volta.
  * Tudo roda no navegador; nenhuma imagem sai do computador (a foto própria também não).
  *
- * window.EndeavorFundo = { criar({ modo: "desfoque" | "imagem", imagem, base }), suportado() }
+ * window.EndeavorFundo = { recortar(video, canvas, base), criar({ modo: "desfoque" | "imagem", imagem, base }), suportado() }
  * MediaPipe Tasks Vision 0.10.14 (Apache 2.0, Google), empacotado com esbuild.
  */
 import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
@@ -306,7 +306,60 @@ class FundoSuave {
   }
 }
 
+/**
+ * Recorte da pessoa (fundo transparente) a partir de um <video> qualquer, desenhado num <canvas>.
+ * Usado por quem assiste: modo Palco (pessoa sobre um palco virtual) e câmera sobre o slide.
+ * Devolve uma função para parar. Roda até ~20 quadros por segundo, com a mesma estabilização do fundo virtual.
+ */
+function recortar(video, canvas, base, op) {
+  op = op || {};
+  let vivo = true, seg = null, mAnt = null, raf = 0, ultimo = 0;
+  const mw = 256, peq = document.createElement("canvas"), mascara = document.createElement("canvas");
+  const pctx = peq.getContext("2d", { willReadFrequently: true }), mctx = mascara.getContext("2d"), ctx = canvas.getContext("2d");
+  obterSegmentador(base).then((s) => { seg = s; }, () => { vivo = false; op.falha && op.falha(); });
+  const passo = (agora) => {
+    if (!vivo) return;
+    raf = requestAnimationFrame(passo);
+    if (!seg || video.readyState < 2 || !video.videoWidth || agora - ultimo < 48) return;
+    ultimo = agora;
+    const vw = video.videoWidth, vh = video.videoHeight, mh = Math.max(64, Math.round(mw * vh / vw));
+    const esc = Math.min(1, (op.largura || 960) / vw), W = Math.round(vw * esc), H = Math.round(vh * esc);
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    if (peq.width !== mw || peq.height !== mh) { peq.width = mw; peq.height = mh; mascara.width = mw; mascara.height = mh; mAnt = null; }
+    pctx.drawImage(video, 0, 0, mw, mh);
+    let ts = performance.now(); if (ts <= ultimoTs) ts = ultimoTs + 0.01; ultimoTs = ts;
+    let dados = null;
+    try {
+      seg.segmentForVideo(peq, ts, (res) => {
+        const ms = res.confidenceMasks; if (!ms || !ms.length) return;
+        const nova = ms[ms.length - 1].getAsFloat32Array(), n = mw * mh;
+        if (!mAnt || mAnt.length !== n) mAnt = new Float32Array(nova);
+        dados = mctx.createImageData(mw, mh);
+        for (let i = 0; i < n; i++) {
+          const v = nova[i], d = Math.abs(v - mAnt[i]);
+          const k = d > 0.3 ? 1 : d < 0.08 ? 0.5 : 0.5 + (d - 0.08) * 2.27;
+          const m = mAnt[i] + (v - mAnt[i]) * k; mAnt[i] = m;
+          const a = m <= 0.4 ? 0 : m >= 0.75 ? 1 : (m - 0.4) / 0.35; // transição suave na borda
+          dados.data[i * 4 + 3] = a * 255;
+        }
+      });
+    } catch (e) { return; }
+    if (!dados) return;
+    mctx.putImageData(dados, 0, 0);
+    ctx.save();
+    ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(video, 0, 0, W, H);
+    ctx.globalCompositeOperation = "destination-in";
+    ctx.filter = "blur(" + Math.max(1, Math.round(W / 480)) + "px)";
+    ctx.drawImage(mascara, 0, 0, W, H);
+    ctx.restore();
+  };
+  raf = requestAnimationFrame(passo);
+  return () => { vivo = false; cancelAnimationFrame(raf); };
+}
+
 window.EndeavorFundo = {
+  recortar,
   criar: (op) => new FundoSuave(op),
   suportado: () => {
     try { return !!document.createElement("canvas").getContext("webgl2") && typeof WebAssembly !== "undefined"; } catch (e) { return false; }
