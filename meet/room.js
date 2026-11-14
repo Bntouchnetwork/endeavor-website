@@ -37,12 +37,21 @@
   const ehImagem = f => /^img:|^foto$/.test(f || "");
   const lerLocal = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const gravarLocal = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); return true; } catch (e) { return false; } };
+  const SETA = '<svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const CHECK = '<svg class="ok" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const nomeFundo = f => f === "foto" ? "Sua foto" : ((FUNDOS_PRONTOS.find(([id]) => "img:" + id === f) || [])[1] || "");
+  /** Botões Nenhum / Desfocado / Fundo virtual; o Fundo virtual abre a lista de imagens (com "Sua foto"). */
   const htmlFundos = () => `
-      <div class="fundos-linha"><button type="button" data-fundo="nenhum" class="sel">Nenhum</button><button type="button" data-fundo="desfoque">Desfocado</button></div>
-      <div class="fundos-grade">${FUNDOS_PRONTOS.map(([id, nome]) => `<button type="button" class="fundo-img" data-fundo="img:${id}" title="${nome}" aria-label="Fundo ${nome}"><img src="${miniFundo(id)}" alt="" loading="lazy" data-mini="${id}"><span>${nome}</span></button>`).join("")}
-        <button type="button" class="fundo-img fundo-foto" data-fundo="foto" title="Sua foto" aria-label="Fundo com sua foto"><img alt="" hidden data-mini="foto"><b>+</b><span>Sua foto</span></button>
+      <div class="fundos-linha">
+        <button type="button" data-fundo="nenhum" class="sel">Nenhum</button>
+        <button type="button" data-fundo="desfoque">Desfocado</button>
+        <button type="button" class="fundo-virtual" aria-haspopup="listbox" aria-expanded="false"><img alt="" hidden class="fv-mini"><span class="fv-nome">Fundo virtual</span>${SETA}</button>
       </div>
-      <p class="fundo-nota" hidden>Sua foto fica só neste computador. <button type="button" class="fundo-trocar">Trocar</button> · <button type="button" class="fundo-remover">Remover</button></p>`;
+      <div class="fundos-lista" role="listbox" aria-label="Fundos virtuais" hidden>
+        ${FUNDOS_PRONTOS.map(([id, nome]) => `<button type="button" role="option" class="fundo-op" data-fundo="img:${id}"><img src="${miniFundo(id)}" alt="" loading="lazy" data-mini="${id}"><span>${nome}</span>${CHECK}</button>`).join("")}
+        <button type="button" role="option" class="fundo-op fundo-foto" data-fundo="foto"><img alt="" hidden data-mini="foto"><b aria-hidden="true">+</b><span class="ff-nome">Adicionar sua foto</span>${CHECK}</button>
+        <p class="fundo-nota" hidden>Sua foto fica só neste computador. <button type="button" class="fundo-trocar">Trocar</button> · <button type="button" class="fundo-remover">Remover</button></p>
+      </div>`;
   const enc = new TextEncoder(), dec = new TextDecoder();
   const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
   let LK = null, el = null, S = null;
@@ -240,8 +249,21 @@ ${htmlFundos()}
     el.querySelectorAll("[data-fundo]").forEach(b => b.onclick = e => {
       e.stopPropagation();
       if (b.dataset.fundo === "foto" && !S.fotoFundo) return $("sFotoFundo").click();
+      if (b.classList.contains("fundo-op")) fecharListasFundo();
       escolherFundo(b.dataset.fundo);
     });
+    el.querySelectorAll(".fundo-virtual").forEach(b => b.onclick = e => {
+      e.stopPropagation();
+      const lista = b.closest(".pre-fundos,.menu-fundos").querySelector(".fundos-lista"), abrir = lista.hidden;
+      fecharListasFundo();
+      lista.hidden = !abrir; b.setAttribute("aria-expanded", String(abrir));
+      if (abrir) { const atual = lista.querySelector(".sel") || lista.querySelector(".fundo-op"); atual && atual.focus({ preventScroll: true }); carregarFundos().catch(() => { }); }
+    });
+    el.querySelectorAll(".fundos-lista").forEach(l => l.onkeydown = e => {
+      const ops = [...l.querySelectorAll(".fundo-op")], i = ops.indexOf(document.activeElement);
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const n = ops[(i + (e.key === "ArrowDown" ? 1 : -1) + ops.length) % ops.length]; n && n.focus(); }
+    });
+    document.addEventListener("click", e => { if (!e.target.closest || !e.target.closest(".fundos-lista,.fundo-virtual")) fecharListasFundo(); });
     el.querySelectorAll(".fundo-trocar").forEach(b => b.onclick = e => { e.stopPropagation(); $("sFotoFundo").click(); });
     el.querySelectorAll(".fundo-remover").forEach(b => b.onclick = e => { e.stopPropagation(); removerFoto(); });
     $("sFotoFundo").onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) usarFoto(f); };
@@ -270,6 +292,7 @@ ${htmlFundos()}
     document.addEventListener("click", e => { if (el && !$("sMenu").hidden && !e.target.closest("#sMenu")) $("sMenu").hidden = true; });
     document.addEventListener("keydown", e => {
       if (e.key !== "Escape" || !el.classList.contains("aberta")) return;
+      if ([...el.querySelectorAll(".fundos-lista")].some(l => !l.hidden)) { fecharListasFundo(true); return; }
       if (!$("sModal").hidden) fecharModal(); else if (!$("sMenu").hidden) $("sMenu").hidden = true; else el.classList.remove("lateral-on");
     });
     window.addEventListener("beforeunload", () => { if (S && S.room) S.room.disconnect(); });
@@ -1221,7 +1244,23 @@ ${htmlFundos()}
   }
 
   /* ================= FUNDO DA CÂMERA ================= */
-  function marcarFundo(tipo) { el.querySelectorAll("[data-fundo]").forEach(b => { const on = b.dataset.fundo === tipo; b.classList.toggle("sel", on); b.setAttribute("aria-checked", String(on)); b.setAttribute("role", "radio"); }); }
+  function marcarFundo(tipo) {
+    el.querySelectorAll(".fundos-linha [data-fundo]").forEach(b => { const on = b.dataset.fundo === tipo; b.classList.toggle("sel", on); b.setAttribute("aria-checked", String(on)); b.setAttribute("role", "radio"); });
+    el.querySelectorAll(".fundo-op").forEach(b => { const on = b.dataset.fundo === tipo; b.classList.toggle("sel", on); b.setAttribute("aria-selected", String(on)); });
+    const virtual = ehImagem(tipo), mini = virtual ? (tipo === "foto" ? S.fotoFundo : miniFundo(tipo.slice(4))) : "";
+    el.querySelectorAll(".fundo-virtual").forEach(b => {
+      b.classList.toggle("sel", virtual); b.setAttribute("aria-checked", String(virtual)); b.setAttribute("role", "radio");
+      const im = b.querySelector(".fv-mini"); if (mini) im.src = mini; im.hidden = !mini;
+      b.querySelector(".fv-nome").textContent = virtual ? nomeFundo(tipo) : "Fundo virtual";
+      b.setAttribute("aria-label", virtual ? "Fundo virtual: " + nomeFundo(tipo) : "Fundo virtual");
+    });
+  }
+  function fecharListasFundo(focar) {
+    el.querySelectorAll(".fundos-lista").forEach(l => {
+      if (l.hidden) return; l.hidden = true;
+      const b = l.parentElement.querySelector(".fundo-virtual"); b.setAttribute("aria-expanded", "false"); if (focar) b.focus();
+    });
+  }
   async function escolherFundo(tipo, forcar) {
     if (tipo === S.fundo && !forcar) return;
     const anterior = S.fundo;
@@ -1235,6 +1274,12 @@ ${htmlFundos()}
     const imagem = tipo === "foto" ? S.fotoFundo : imgFundo(tipo.slice(4));
     return EndeavorFundo.criar({ modo: "imagem", imagem, base });
   }
+  /** Troca o fundo no processador que já está rodando (sem reiniciar a câmera): troca instantânea. */
+  async function trocarNoProcessador(proc, tipo) {
+    if (!proc || proc.name !== "endeavor-fundo" || !proc.trocar) return false;
+    const op = tipo === "desfoque" ? { modo: "desfoque" } : { modo: "imagem", imagem: tipo === "foto" ? S.fotoFundo : imgFundo(tipo.slice(4)) };
+    try { await proc.trocar(op); return true; } catch (e) { console.error(e); return false; }
+  }
   /** Foto própria: reduzida no navegador e guardada só neste computador (localStorage). Nunca é enviada. */
   async function usarFoto(arquivo) {
     if (!/^image\//.test(arquivo.type)) return toast("Escolha uma imagem (JPG ou PNG).");
@@ -1242,7 +1287,7 @@ ${htmlFundos()}
     try {
       const url = URL.createObjectURL(arquivo), img = new Image();
       img.src = url; await img.decode();
-      const esc = Math.min(1, 1600 / img.naturalWidth, 1600 / img.naturalHeight);
+      const esc = Math.min(1, 1920 / img.naturalWidth, 1920 / img.naturalHeight);
       const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * esc); c.height = Math.round(img.naturalHeight * esc);
       c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
       URL.revokeObjectURL(url);
@@ -1260,6 +1305,8 @@ ${htmlFundos()}
     el.querySelectorAll('[data-mini="foto"]').forEach(i => { if (S.fotoFundo) i.src = S.fotoFundo; i.hidden = !S.fotoFundo; });
     el.querySelectorAll(".fundo-foto").forEach(b => b.classList.toggle("tem", !!S.fotoFundo));
     el.querySelectorAll(".fundo-nota").forEach(p => p.hidden = !S.fotoFundo);
+    el.querySelectorAll(".ff-nome").forEach(n => n.textContent = S.fotoFundo ? "Sua foto" : "Adicionar sua foto");
+    if (S.fundo === "foto") marcarFundo("foto");
   }
   /** Aplica o fundo na câmera: na sala real, na trilha publicada; antes de entrar e no demo, numa cópia local. */
   async function aplicarFundo(tipo) {
@@ -1272,7 +1319,8 @@ ${htmlFundos()}
     if (S.room) {
       const pub = S.room.localParticipant.getTrackPublication(LK.Track.Source.Camera), t = pub && pub.track;
       if (!t) return;
-      if (tipo === "nenhum") await t.stopProcessor(); else await t.setProcessor(criarProcessador(tipo));
+      if (tipo === "nenhum") await t.stopProcessor();
+      else if (!(await trocarNoProcessador(t.getProcessor ? t.getProcessor() : t.processor, tipo))) await t.setProcessor(criarProcessador(tipo));
       S.tiles.forEach(d => { if (d.classList.contains("local")) d.classList.toggle("sem-espelho", ehImagem(tipo)); });
       return render();
     }
@@ -1281,7 +1329,7 @@ ${htmlFundos()}
     if (tipo === "nenhum") { await soltarFundoLocal(); }
     else {
       if (!S.lkCam) S.lkCam = new LK.LocalVideoTrack(v, undefined, true);
-      await S.lkCam.setProcessor(criarProcessador(tipo));
+      if (!(await trocarNoProcessador(S.lkCam.processor, tipo))) await S.lkCam.setProcessor(criarProcessador(tipo));
       S.fundoTrack = S.lkCam.processor && S.lkCam.processor.processedTrack || null;
     }
     S.localVideo = null; aplicarPreview(); render();

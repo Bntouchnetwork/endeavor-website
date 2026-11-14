@@ -136,7 +136,8 @@ class FundoSuave {
     const temInsertable = typeof MediaStreamTrackProcessor !== "undefined" && typeof MediaStreamTrackGenerator !== "undefined" && typeof VideoFrame !== "undefined";
     if (temInsertable) {
       // Chrome/Edge: lê quadro a quadro (não para quando a aba fica em segundo plano)
-      this.leitor = new MediaStreamTrackProcessor({ track: this.fonte }).readable.getReader();
+      // maxBufferSize 1: se um quadro atrasar, o antigo é descartado (não acumula atraso)
+      this.leitor = new MediaStreamTrackProcessor({ track: this.fonte, maxBufferSize: 1 }).readable.getReader();
       this.gerador = new MediaStreamTrackGenerator({ kind: "video" });
       this.escritor = this.gerador.writable.getWriter();
       this.processedTrack = this.gerador;
@@ -185,6 +186,9 @@ class FundoSuave {
     const gl = this.gl, img = this.imgFundo;
     gl.bindTexture(gl.TEXTURE_2D, this.tImg);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    // mipmaps: a imagem em alta definição fica nítida e sem serrilhado quando reduzida
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     // "cover": preenche o quadro sem distorcer, cortando o excesso no centro
     const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
     const ri = iw / ih, rc = this.canvas.width / this.canvas.height;
@@ -202,7 +206,7 @@ class FundoSuave {
         this.processar(frame);
         const saida = new VideoFrame(this.canvas, { timestamp: frame.timestamp });
         frame.close();
-        if (this.vivo) await this.escritor.write(saida); else saida.close();
+        if (this.vivo) this.escritor.write(saida).catch(() => { }); else saida.close();
       } catch (e) { try { frame.close(); } catch (_) { } if (this.vivo) console.error(e); }
     }
   }
@@ -236,7 +240,7 @@ class FundoSuave {
         for (let x = 0, i = y * MW; x < MW; x++, i++) {
           const v = nova[i], d = Math.abs(v - ant[i]);
           // mistura adaptativa: diferença grande = movimento (segue rápido); pequena = ruído (segura)
-          const k = d > 0.5 ? 0.9 : d < 0.12 ? 0.3 : 0.3 + (d - 0.12) * 1.58;
+          const k = d > 0.3 ? 1 : d < 0.08 ? 0.5 : 0.5 + (d - 0.08) * 2.27;
           const m = ant[i] + (v - ant[i]) * k;
           ant[i] = m; m8[o + x] = m * 255;
         }
@@ -271,6 +275,14 @@ class FundoSuave {
     // no desfoque a borda pode ser mais generosa; no fundo virtual, um pouco mais justa (menos fundo real aparecendo)
     if (desfoque) { gl.uniform1f(c.u.lo, 0.3); gl.uniform1f(c.u.hi, 0.7); } else { gl.uniform1f(c.u.lo, 0.42); gl.uniform1f(c.u.hi, 0.78); }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  }
+
+  /** Troca o fundo sem reiniciar (instantâneo): { modo, imagem }. */
+  async trocar(op) {
+    const novo = Object.assign({}, this.op, op);
+    const img = novo.modo === "imagem" ? await carregarImagem(novo.imagem) : null;
+    this.op = novo; this.imgFundo = img; this.cover = null;
+    if (img && this.gl) this.enviarImagem();
   }
 
   async restart(opts) { await this.destroy(); await this.init(opts); }

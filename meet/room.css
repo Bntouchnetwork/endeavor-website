@@ -150,19 +150,27 @@
 .fundos-linha{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .pre-fundos .fundos-linha button,.menu-fundos .fundos-linha button{display:inline-flex;align-items:center;gap:6px;background:#0f2545;border:1px solid #2a4a7a;color:#ddd;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer}
 .fundos-linha button.sel{background:#fff;color:#07162b;border-color:#fff;font-weight:700}
-.fundos-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px}
-.menu-fundos .fundos-grade{grid-template-columns:repeat(4,1fr)}
-.fundo-img{position:relative;aspect-ratio:16/9;padding:0;border:2px solid transparent;border-radius:6px;overflow:hidden;background:#0f2545;cursor:pointer;color:#fff}
-.fundo-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.fundo-img span{position:absolute;left:0;right:0;bottom:0;padding:10px 4px 3px;font-size:10.5px;line-height:1.2;text-align:left;background:linear-gradient(transparent,rgba(0,0,0,.72));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fundo-img:hover{border-color:#5c7fb3}
-.fundo-img.sel{border-color:#e3cf9f;box-shadow:0 0 0 1px #e3cf9f}
-.fundo-img:focus-visible,.fundos-linha button:focus-visible{outline:2px solid #e3cf9f;outline-offset:2px}
-.fundo-foto{border:2px dashed #3a5d90;background:#0b1d38}
-.fundo-foto b{position:absolute;inset:0 0 14px;display:grid;place-items:center;font-size:22px;font-weight:400;color:#e3cf9f}
-.fundo-foto.tem{border-style:solid;border-color:transparent}
+.fundos-linha{margin-bottom:0}
+.fundo-virtual{display:inline-flex;align-items:center;gap:8px;background:#0f2545;border:1px solid #2a4a7a;color:#ddd;border-radius:20px;padding:5px 12px 5px 14px;min-height:34px;font-size:13px;cursor:pointer;max-width:100%}
+.fundo-virtual .fv-mini{width:34px;height:20px;object-fit:cover;border-radius:3px;margin-left:-6px}
+.fundo-virtual .fv-nome{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fundo-virtual .seta{width:16px;height:16px;flex:none;transition:transform .15s}
+.fundo-virtual[aria-expanded="true"] .seta{transform:rotate(180deg)}
+.fundo-virtual.sel{background:#fff;color:#07162b;border-color:#fff;font-weight:700}
+.fundos-lista{margin-top:8px;background:#0b1d38;border:1px solid #2a4a7a;border-radius:8px;padding:6px;box-shadow:0 14px 34px rgba(0,0,0,.45);max-height:min(360px,50vh);overflow:auto;display:grid;grid-template-columns:minmax(0,1fr);gap:2px;max-width:340px}
+.fundos-lista[hidden]{display:none}
+.menu-fundos .fundos-lista{max-width:none;box-shadow:none}
+.fundo-op{position:relative;display:flex;align-items:center;gap:10px;width:100%;background:none;border:1px solid transparent;border-radius:6px;padding:5px;color:#e6ecf5;font-size:13px;text-align:left;cursor:pointer}
+.fundo-op:hover,.fundo-op:focus-visible{background:#15305a}
+.fundo-op img,.fundo-op b{width:64px;height:36px;flex:none;border-radius:4px;object-fit:cover;background:#13294b}
+.fundo-op b{display:grid;place-items:center;border:1px dashed #3f6398;font-size:20px;font-weight:400;color:#e3cf9f}
 .fundo-foto.tem b{display:none}
-.fundo-foto.tem.sel{border-color:#e3cf9f}
+.fundo-op span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fundo-op .ok{width:16px;height:16px;flex:none;color:#e3cf9f;visibility:hidden}
+.fundo-op.sel{border-color:#e3cf9f;background:#132c52}
+.fundo-op.sel .ok{visibility:visible}
+.fundo-op:focus-visible{outline:2px solid #e3cf9f;outline-offset:1px}
+.fundos-lista .fundo-nota{grid-column:1/-1;margin:4px 6px 2px}
 .fundo-nota{margin:8px 0 0;font-size:12px;color:#a8b6cc}
 .fundo-nota button{background:none;border:0;padding:0;color:#e3cf9f;font-size:12px;cursor:pointer;text-decoration:underline}
 

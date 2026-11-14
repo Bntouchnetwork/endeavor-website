@@ -25,7 +25,11 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   await page.waitForSelector("#sNome", { state: "visible", timeout: 15000 });
   ok(await page.textContent("#sPreTitulo") === "Alinhamento semanal", `${rotulo}: pré-sala mostra o título`);
   ok((await page.textContent("#sAvisoDemo")).includes("demonstração"), `${rotulo}: aviso de modo demonstração`);
-  ok(await page.$$eval(".pre-fundos .fundo-img", (b) => b.length) === 7, `${rotulo}: pré-sala mostra os fundos virtuais`);
+  ok(await page.isVisible('.pre-fundos [data-fundo="desfoque"]') && await page.isVisible(".pre-fundos .fundo-virtual") && !(await page.isVisible(".pre-fundos .fundos-lista")), `${rotulo}: pré-sala mostra Nenhum, Desfocado e Fundo virtual`);
+  await page.click(".pre-fundos .fundo-virtual");
+  ok(await page.$$eval(".pre-fundos .fundos-lista .fundo-op", (b) => b.length) === 7 && await page.isVisible(".pre-fundos .fundos-lista"), `${rotulo}: Fundo virtual abre a lista (6 imagens + Sua foto)`);
+  await page.click("#sPreTitulo");
+  ok(!(await page.isVisible(".pre-fundos .fundos-lista")), `${rotulo}: lista fecha ao clicar fora`);
   await page.fill("#sNome", "Convidado Teste");
   await page.screenshot({ path: `${OUT}/meet-pre-${rotulo}.png` });
   await page.click("#sEntrar");
@@ -75,16 +79,21 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   await page.waitForTimeout(6000);
   ok(erros.length === 0, "anfitrião: fundo desfocado sem erro " + erros.join(" | "));
   ok(await page.evaluate(() => { const t = document.querySelector(".tile.local video"); return !!(t && t.srcObject && t.srcObject.getVideoTracks()[0]); }), "anfitrião: vídeo local com fundo");
-  ok(await page.$$eval("#sMenu .fundos-grade .fundo-img", (b) => b.length) === 7, "anfitrião: 6 fundos prontos + Sua foto no menu");
+  await page.click("#sMenu .fundo-virtual");
+  ok(await page.$$eval("#sMenu .fundos-lista .fundo-op", (b) => b.length) === 7, "anfitrião: 6 fundos prontos + Sua foto na lista");
   await page.click('#sMenu [data-fundo="img:escritorio"]');
   await page.waitForTimeout(2500);
-  ok((await page.getAttribute('#sMenu [data-fundo="img:escritorio"]', "class")).includes("sel") && erros.length === 0, "anfitrião: fundo virtual Escritório " + erros.join(" | "));
+  ok((await page.textContent("#sMenu .fundo-virtual")).includes("Escritório") && (await page.getAttribute("#sMenu .fundo-virtual", "class")).includes("sel") && erros.length === 0, "anfitrião: fundo virtual Escritório " + erros.join(" | "));
   ok(await page.evaluate(() => document.querySelector(".tile.local").classList.contains("sem-espelho")), "anfitrião: fundo virtual não espelhado");
+  await page.click("#sMenu .fundo-virtual"); await page.click('#sMenu [data-fundo="img:janela"]'); await page.waitForTimeout(600);
+  ok((await page.textContent("#sMenu .fundo-virtual")).includes("Janela") && erros.length === 0, "anfitrião: troca de imagem direto pela lista");
+  await page.click("#sMenu .fundo-virtual");
   // foto própria: fica só no navegador
   const foto = await page.evaluate(() => { const c = document.createElement("canvas"); c.width = 1200; c.height = 800; const g = c.getContext("2d"); const gr = g.createLinearGradient(0, 0, 1200, 800); gr.addColorStop(0, "#2a6"); gr.addColorStop(1, "#14a"); g.fillStyle = gr; g.fillRect(0, 0, 1200, 800); return c.toDataURL("image/jpeg", 0.9).split(",")[1]; });
   await page.setInputFiles("#sFotoFundo", { name: "minha-foto.jpg", mimeType: "image/jpeg", buffer: Buffer.from(foto, "base64") });
   await page.waitForTimeout(2500);
-  ok((await page.getAttribute('#sMenu [data-fundo="foto"]', "class")).includes("sel"), "anfitrião: fundo com a própria foto");
+  ok((await page.textContent("#sMenu .fundo-virtual")).includes("Sua foto"), "anfitrião: fundo com a própria foto");
+  if (!(await page.isVisible("#sMenu .fundos-lista"))) await page.click("#sMenu .fundo-virtual");
   ok(await page.evaluate(() => (localStorage.getItem("emeet-fundo-foto") || "").startsWith("data:image/jpeg")), "anfitrião: foto guardada só no navegador");
   ok(await page.isVisible("#sMenu .fundo-nota"), "anfitrião: aviso de que a foto fica no computador");
   await page.click("#sMenu .fundo-remover"); await page.waitForTimeout(800);
