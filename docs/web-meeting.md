@@ -49,7 +49,8 @@ Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fu
 - **Layout:** com o painel de Slides aberto, a apresentação aparece grande no palco (com o selo "Rascunho: só você vê" até clicar em Apresentar para todos). Da esquerda para a direita: apresentação, painel de controle dos slides e a coluna com as câmeras dos participantes.
 - **Coluna de participantes:** tem rolagem, destaca quem está falando e rola até a pessoa quando ela começa a falar. A seta no topo esconde a coluna (a apresentação cresce); a aba "Participantes" na borda direita mostra de novo. A escolha fica salva no navegador. No celular, as câmeras ficam numa faixa embaixo.
 - **Largura do painel:** arraste a borda entre a apresentação e o painel (ou use as setas do teclado com a borda selecionada). Duplo clique volta ao padrão. A largura fica salva no navegador.
-- **Pedido por voz:** um clique no microfone começa a gravar; outro clique para, transcreve e manda o pedido para o assistente criar a apresentação. "Cancelar" descarta a gravação.
+- **Pedido por voz:** um clique no microfone começa a gravar (o botão fica vermelho e vira "parar"); outro clique para e o texto transcrito fica na caixa. Você revisa, ajusta se quiser e clica em enviar. Esc descarta a gravação.
+- **Sugestões:** ficam no botão **Sugestões**, que abre um menu com pedidos prontos (ex.: deixar o slide mais curto, mudar o título).
 - **Apagar apresentação:** botão da lixeira, com confirmação. Se estava ao vivo, para de aparecer para os participantes. Apaga também a cópia guardada no servidor; logo depois, Desfazer ainda recupera.
 
 **Gravação:** todos os participantes veem o selo "Gravando" e um aviso quando a gravação começa. A Flórida exige o consentimento de todas as partes para gravar conversas: o aviso na tela ajuda, mas valide os termos de uso com um advogado.

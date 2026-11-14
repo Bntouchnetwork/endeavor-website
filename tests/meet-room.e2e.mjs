@@ -135,17 +135,22 @@ for (const [rotulo, viewport] of [["desktop", { width: 1366, height: 820 }], ["c
   ok((await page.$eval("#sPalco", (e) => e.offsetWidth)) > palco0, "anfitrião: palco cresce sem a coluna");
   await page.click("#sFaixaAbrir"); await page.waitForTimeout(150);
   ok(await page.isVisible("#sFaixa"), "anfitrião: mostra a coluna de novo");
-  // ditado: clica para gravar, clica de novo para parar e criar
+  // sugestões num menu suspenso
+  ok(!(await page.isVisible("#apSugestoes")) && await page.isVisible("#apSugBtn"), "anfitrião: sugestões ficam fechadas num botão");
+  await page.click("#apSugBtn");
+  ok(await page.isVisible("#apSugestoes") && (await page.$$eval("#apSugestoes [data-sug]", (b) => b.length)) >= 3, "anfitrião: botão Sugestões abre o menu");
+  await page.click('#apSugestoes [data-completar="1"]');
+  ok(!(await page.isVisible("#apSugestoes")) && (await page.inputValue("#apTexto")).startsWith("Mude o título"), "anfitrião: escolher sugestão fecha o menu e preenche o pedido");
+  await page.fill("#apTexto", "");
+  // ditado: um clique grava (botão vira parar), outro clique para e o texto fica na caixa, sem enviar
   const msgs0 = await page.$$eval("#apConversa .ap-msg", (m) => m.length);
   await page.click("#apDitar"); await page.waitForTimeout(500);
-  ok(await page.isVisible("#apGravando") && (await page.inputValue("#apTexto")).includes("plano de vendas"), "anfitrião: gravando e transcrevendo a fala");
-  ok(await page.evaluate(() => window.__ditadoAtivo === true), "anfitrião: continua gravando até clicar de novo");
-  await page.click("#apDitar"); await page.waitForTimeout(1500);
-  ok(!(await page.isVisible("#apGravando")) && (await page.textContent("#apConversa")).includes("plano de vendas") && (await page.$$eval("#apConversa .ap-msg", (m) => m.length)) > msgs0, "anfitrião: parar envia o pedido falado ao assistente");
-  // cancelar a gravação não envia nada
-  const msgs1 = await page.$$eval("#apConversa .ap-msg", (m) => m.length);
-  await page.click("#apDitar"); await page.waitForTimeout(400); await page.click("#apCancelarVoz"); await page.waitForTimeout(400);
-  ok((await page.$$eval("#apConversa .ap-msg", (m) => m.length)) === msgs1 && !(await page.isVisible("#apGravando")), "anfitrião: cancelar descarta a gravação");
+  ok((await page.getAttribute("#apDitar", "aria-label")) === "Parar a gravação" && (await page.inputValue("#apTexto")).includes("plano de vendas"), "anfitrião: gravando, botão vira parar e transcreve");
+  ok(!(await page.$("#apGravando")), "anfitrião: sem faixa de Gravando");
+  await page.click("#apDitar"); await page.waitForTimeout(800);
+  ok((await page.inputValue("#apTexto")).includes("plano de vendas") && (await page.$$eval("#apConversa .ap-msg", (m) => m.length)) === msgs0 && (await page.getAttribute("#apDitar", "aria-label")) === "Gravar o pedido por voz", "anfitrião: parar deixa o texto na caixa sem enviar");
+  await page.click("#apEnviar"); await page.waitForTimeout(1500);
+  ok((await page.textContent("#apConversa")).includes("plano de vendas") && (await page.$$eval("#apConversa .ap-msg", (m) => m.length)) > msgs0, "anfitrião: enviar manda o pedido revisado");
   // apagar a apresentação (com confirmação) e recuperar com Desfazer
   await page.click("#apApagar");
   ok(await page.isVisible("#sModal") && (await page.textContent("#sModalTit")) === "Apagar apresentação", "anfitrião: pede confirmação para apagar");

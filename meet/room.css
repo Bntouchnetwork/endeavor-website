@@ -325,9 +325,17 @@
 .ap-msg.ia p{background:#142c50;color:#e6e6e6;border-bottom-left-radius:3px}
 .ap-msg.erro p{background:#2a1414;color:#f3b3ad;border:1px solid #5c2a26}
 .ap-msg.carregando p{color:#e3cf9f;animation:pisca 1.2s infinite}
-.ap-sugestoes{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;border-top:1px solid #16305a}
-.ap-sugestoes button{flex:none;background:#0f2545;border:1px solid #2a4a7a;color:#ddd;border-radius:20px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap}
-.ap-sugestoes button:hover{border-color:#fff}
+.ap-sug{position:relative;padding:8px 12px 0;border-top:1px solid #16305a}
+.ap-sug-btn{display:inline-flex;align-items:center;gap:6px;background:#0f2545;border:1px solid #2a4a7a;color:#ddd;border-radius:20px;padding:6px 10px 6px 12px;font-size:12.5px;cursor:pointer}
+.ap-sug-btn svg{width:15px;height:15px}
+.ap-sug-btn .seta{width:14px;height:14px;transition:transform .15s}
+.ap-sug-btn[aria-expanded="true"]{border-color:#c8a45d;color:#fff}
+.ap-sug-btn[aria-expanded="true"] .seta{transform:rotate(180deg)}
+.ap-sug-btn:hover{border-color:#5c7fb3;color:#fff}
+.ap-sug-menu{position:absolute;left:12px;right:12px;bottom:calc(100% - 2px);z-index:5;background:#0b1d38;border:1px solid #2a4a7a;border-radius:8px;padding:6px;box-shadow:0 -12px 30px rgba(0,0,0,.45);display:flex;flex-direction:column;gap:2px}
+.ap-sug-menu[hidden]{display:none}
+.ap-sug-menu button{text-align:left;background:none;border:0;color:#e6ecf5;border-radius:6px;padding:9px 10px;font-size:13px;line-height:1.35;cursor:pointer}
+.ap-sug-menu button:hover,.ap-sug-menu button:focus-visible{background:#15305a;outline:none}
 .ap-form{display:flex;align-items:flex-end;gap:6px;padding:10px 12px 12px}
 .ap-form textarea{flex:1;min-width:0;resize:none;background:#0f2545;border:1px solid #2a4a7a;border-radius:8px;color:#fff;padding:9px 11px;font:14px inherit;font-family:inherit;line-height:1.4;max-height:120px}
 .ap-form textarea:focus{outline:2px solid #c8a45d;border-color:transparent}
@@ -396,17 +404,11 @@
   /* no computador a apresentação aparece grande no palco: a prévia pequena do painel some */
   .sala.lateral-on.aba-slides #apPrevia{display:none}
 }
-/* gravação de voz do pedido */
-.ap-gravando{display:flex;align-items:center;gap:8px;margin:0 12px;padding:8px 10px;border-radius:8px;background:#2a1216;border:1px solid #7a2b31;color:#ffd7d7;font-size:12.5px}
-.ap-gravando[hidden]{display:none}
-.ap-gravando i{width:9px;height:9px;border-radius:50%;background:#e53935;flex:none;animation:apPulso 1.2s ease-in-out infinite}
-.ap-gravando span{flex:1;min-width:0}
-.ap-gravando button{background:none;border:1px solid #7a2b31;color:#ffd7d7;border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer}
-.ap-gravando button:hover{background:#3a181d}
-@keyframes apPulso{50%{opacity:.35;transform:scale(.8)}}
-#apDitar.ativo{box-shadow:0 0 0 4px rgba(229,57,53,.28)}
+/* gravação de voz do pedido: o próprio botão vira "parar" */
+#apDitar.ativo{box-shadow:0 0 0 4px rgba(229,57,53,.28);animation:apPulso 1.4s ease-in-out infinite}
+@keyframes apPulso{50%{box-shadow:0 0 0 7px rgba(229,57,53,.12)}}
+@media (prefers-reduced-motion:reduce){#apDitar.ativo{animation:none}}
 .ap-ic.ap-apagar:hover:not(:disabled){background:#5a1d22;color:#ffb3b3}
-@media (prefers-reduced-motion:reduce){.ap-gravando i{animation:none}}
 @media (max-width:900px){
   /* celular e tablet: a coluna vira uma faixa horizontal embaixo da apresentação */
   .sala-corpo{flex-direction:column}

@@ -180,11 +180,13 @@
           <div class="ap-minis" id="apMinis" role="listbox" aria-label="Slides"></div>
           <div class="ap-conversa" id="apConversa" aria-live="polite"></div>
         </div>
-        <div class="ap-sugestoes" id="apSugestoes"></div>
-        <div class="ap-gravando" id="apGravando" hidden><i aria-hidden="true"></i><span id="apGravTxt">Gravando… clique em parar para criar a apresentação</span><button type="button" id="apCancelarVoz">Cancelar</button></div>
+        <div class="ap-sug">
+          <button type="button" class="ap-sug-btn" id="apSugBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="apSugestoes">${I.slides}<span>Sugestões</span>${SETA}</button>
+          <div class="ap-sug-menu" id="apSugestoes" role="menu" aria-label="Sugestões de pedido" hidden></div>
+        </div>
         <form class="ap-form" id="apForm">
           <textarea id="apTexto" rows="2" maxlength="2000" placeholder="Peça uma apresentação ou uma mudança" aria-label="Pedido ao assistente"></textarea>
-          <button type="button" class="ap-ic" id="apDitar" aria-label="Gravar o pedido por voz" title="Clique para falar; clique de novo para parar e criar">${I.mic}</button>
+          <button type="button" class="ap-ic" id="apDitar" aria-label="Gravar o pedido por voz" title="Clique para falar; clique de novo para parar">${I.mic}</button>
           <button type="submit" class="ap-ic ap-enviar" id="apEnviar" aria-label="Enviar pedido">${I.enviarIc}</button>
         </form>
       </div>
@@ -294,11 +296,17 @@ ${htmlFundos()}
     $("apRefazer").onclick = () => voltarVersao(1);
     $("apPdf").onclick = baixarPdf;
     $("apApagar").onclick = confirmarApagar;
-    $("apCancelarVoz").onclick = () => pararDitado(false);
+    $("apSugBtn").onclick = e => { e.stopPropagation(); alternarSugestoes(); };
+    $("apSugestoes").onkeydown = e => {
+      const itens = [...$("apSugestoes").querySelectorAll("[data-sug]")], i = itens.indexOf(document.activeElement);
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const n = itens[(i + (e.key === "ArrowDown" ? 1 : -1) + itens.length) % itens.length]; n && n.focus(); }
+      if (e.key === "Escape") { e.stopPropagation(); alternarSugestoes(false); $("apSugBtn").focus(); }
+    };
+    document.addEventListener("click", e => { if (!e.target.closest || !e.target.closest(".ap-sug")) alternarSugestoes(false); });
     $("apVivo").onclick = alternarApresentar;
     $("apDitar").onclick = ditarPedido;
     $("apMinis").onclick = e => { const b = e.target.closest("[data-slide]"); if (b) irParaSlide(+b.dataset.slide); };
-    $("apSugestoes").onclick = e => { const b = e.target.closest("[data-sug]"); if (!b) return; if (b.dataset.completar) { $("apTexto").value = b.dataset.sug; $("apTexto").focus(); } else pedirAssistente(b.dataset.sug); };
+    $("apSugestoes").onclick = e => { const b = e.target.closest("[data-sug]"); if (!b) return; alternarSugestoes(false); if (b.dataset.completar) { $("apTexto").value = b.dataset.sug; $("apTexto").focus(); } else pedirAssistente(b.dataset.sug); };
     document.addEventListener("keydown", e => {
       if (!S || !S.inicio || S.encerrado || S.papel !== "mentor" || !S.apres.aoVivo) return;
       if (e.target.closest && e.target.closest("input,textarea,select,[contenteditable]")) return;
@@ -1612,13 +1620,20 @@ ${htmlFundos()}
     const sugestoes = doc
       ? [["Deixe este slide mais curto"], ["Adicione um slide de próximos passos depois deste"], ["Transforme o que foi falado agora em um slide"], ["Mude o título deste slide para ", true]]
       : [["Crie 5 slides sobre o tema da reunião"], ["Transforme o que foi falado até agora em slides"], ["Monte um slide com o resultado da última enquete"]];
-    const sh = sugestoes.map(([t, c]) => `<button type="button" data-sug="${esc(t)}"${c ? ' data-completar="1"' : ""}>${esc(c ? t + "…" : t)}</button>`).join("");
+    const sh = sugestoes.map(([t, c]) => `<button type="button" role="menuitem" data-sug="${esc(t)}"${c ? ' data-completar="1"' : ""}>${esc(c ? t + "…" : t)}</button>`).join("");
     if ($("apSugestoes")._html !== sh) { $("apSugestoes")._html = sh; $("apSugestoes").innerHTML = sh; }
     $("apEnviar").disabled = ap.ocupado;
     $("apForm").classList.toggle("ocupado", ap.ocupado);
   }
 
-  /** Ditado do pedido, como no ChatGPT: um clique começa a gravar; outro clique para, e o texto vai direto para o assistente. */
+  function alternarSugestoes(abrir) {
+    const m = $("apSugestoes"), b = $("apSugBtn"); if (!m) return;
+    if (abrir === undefined) abrir = m.hidden;
+    if (abrir === !m.hidden) return;
+    m.hidden = !abrir; b.setAttribute("aria-expanded", String(abrir));
+    if (abrir) { const p = m.querySelector("[data-sug]"); p && p.focus(); }
+  }
+  /** Ditado do pedido: um clique começa a gravar (o botão vira "parar"); outro clique para e o texto fica na caixa para revisar e enviar. */
   function ditarPedido() {
     if (S.ditando) return pararDitado(true);
     if (!Reconhecimento) return toast("Seu navegador não permite ditar. Use Chrome, Edge ou Safari.");
@@ -1650,10 +1665,9 @@ ${htmlFundos()}
       try { r.start(); } catch (e) { dit.bloqueado = true; r.onend(); }
     };
     $("apDitar").classList.add("ativo"); $("apDitar").innerHTML = I.parar;
-    $("apDitar").setAttribute("aria-label", "Parar e criar a apresentação");
-    $("apGravando").hidden = false; campo.readOnly = true;
-    clearInterval(S._tDitado);
-    S._tDitado = setInterval(() => { const s = Math.floor((Date.now() - dit.inicio) / 1000); $("apGravTxt").textContent = `Gravando ${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}… clique em parar para criar a apresentação`; }, 500);
+    $("apDitar").setAttribute("aria-label", "Parar a gravação");
+    $("apDitar").title = "Gravando: clique para parar";
+    campo.readOnly = true;
     iniciar();
   }
   /** Para a gravação. enviar = true manda o texto para o assistente; false descarta o que foi gravado. */
@@ -1664,17 +1678,18 @@ ${htmlFundos()}
   }
   function concluirDitado(dit, antes) {
     if (S.ditado !== dit) return;
-    S.ditado = null; S.ditando = false; clearInterval(S._tDitado);
+    S.ditado = null; S.ditando = false;
     const campo = $("apTexto");
     campo.readOnly = false;
     $("apDitar").classList.remove("ativo"); $("apDitar").innerHTML = I.mic; $("apDitar").setAttribute("aria-label", "Gravar o pedido por voz");
-    $("apGravando").hidden = true;
+    $("apDitar").title = "Clique para falar; clique de novo para parar";
     const texto = [antes, dit.finais, dit.parcial].filter(Boolean).join(" ").trim();
     sincronizarReconhecimento();
     if (dit.cancelado) { campo.value = antes; campo.focus(); return; }
     campo.value = texto;
-    if (dit.enviar && texto) pedirAssistente(texto);
-    else { if (!texto) toast("Não ouvi nada. Tente de novo ou escreva o pedido."); campo.focus(); }
+    if (!texto) toast("Não ouvi nada. Tente de novo ou escreva o pedido.");
+    // não envia sozinho: a pessoa revisa o texto e clica em enviar
+    campo.focus(); campo.setSelectionRange(texto.length, texto.length);
   }
 
   function baixarPdf() {
