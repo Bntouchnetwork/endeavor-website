@@ -103,3 +103,37 @@ export function parseJsonLoose(t: string): unknown {
   try { return JSON.parse(s.slice(a, b + 1)); } catch { return undefined; }
 }
 export const hubKey = (...parts: unknown[]) => parts.map((p) => String(p ?? "")).join("-").slice(0, 180);
+
+// ---------------------------------------------------------------- voice (text-to-speech, authorized voices)
+// The HUB holds the speech provider (ElevenLabs) and its key. These calls never expose a key and never fake audio:
+// when no speech provider is connected the HUB answers 409 voice_provider_not_connected and we report it as such.
+export class HubVoiceError extends Error { constructor(public code: string, message: string, public status = 0) { super(message); } }
+async function hubCall(method: string, path: string, body?: unknown, timeoutMs = 60_000): Promise<any> {
+  if (!hubOn()) throw new HubVoiceError("hub_not_configured", "HUB_AI_API_KEY is not set");
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, { method, signal: AbortSignal.timeout(timeoutMs),
+      headers: { "Authorization": `Bearer ${KEY}`, "Content-Type": "application/json" }, ...(body ? { body: JSON.stringify(body) } : {}) });
+  } catch (e) { throw new HubVoiceError("network_error", String((e as Error)?.message || e)); }
+  const data = await res.json().catch(() => ({} as any));
+  if (res.status >= 400) throw new HubVoiceError(String(data?.error?.code || `http_${res.status}`), String(data?.error?.message || data?.detail || `HTTP ${res.status}`), res.status);
+  return data;
+}
+export const hubCapabilities = (): Promise<{ text: boolean; speech: boolean; voice_clone: boolean; speech_provider: string | null; images: boolean; video: boolean }> =>
+  hubCall("GET", "/api/v1/capabilities", undefined, 15_000);
+export async function hubSpeech(o: { text: string; voiceId: string; language?: string; speed?: number; userId: string; meter?: { client_id?: string | null } }) {
+  const d = await hubCall("POST", "/api/v1/speech", { text: o.text, voice_id: o.voiceId, language: o.language, speed: o.speed, agent: "presentation-voice", user_id: o.userId }, 100_000);
+  const bin = atob(String(d.audio_base64 || ""));
+  const audio = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) audio[i] = bin.charCodeAt(i);
+  try {
+    const { createClient } = await import("npm:@supabase/supabase-js@2");
+    meterDb ??= createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+    await meterDb.from("ai_usage").insert({ agent: "presentation-voice", model: String(d.model || "speech").slice(0, 120), input_tokens: Number(d.characters || 0), output_tokens: 0,
+      cost_usd: Number(d.billable_amount || 0), client_id: o.meter?.client_id || null, billable: false });
+  } catch (e) { console.error("hub meter voice", e); }
+  return { audio, mime: String(d.mime || "audio/mpeg"), seconds: Number(d.seconds || 0), characters: Number(d.characters || 0), requestId: String(d.request_id || "") };
+}
+export const hubVoiceCreate = (o: { name: string; mime: string; sampleBase64: string; consent: { statement: string; subject: string; accepted_at: string }; metadata?: Record<string, unknown> }) =>
+  hubCall("POST", "/api/v1/voices", { name: o.name, mime: o.mime, sample_base64: o.sampleBase64, consent: o.consent, metadata: o.metadata || {} }, 100_000) as Promise<{ voice_id: string; requires_verification: boolean }>;
+export const hubVoiceDelete = (voiceId: string) => hubCall("DELETE", `/api/v1/voices/${encodeURIComponent(voiceId)}`, undefined, 30_000);

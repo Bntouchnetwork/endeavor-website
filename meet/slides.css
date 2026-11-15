@@ -2,6 +2,8 @@
 
 .slide{position:relative;width:100%;aspect-ratio:16/9;container-type:inline-size;overflow:hidden;background:#0b1f3a;color:#f2f2f2;font-family:"Inter",system-ui,sans-serif;text-align:left;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .slide *{box-sizing:border-box;margin:0;padding:0}
+/* dentro do portal, os títulos do site (h2 escuro, serifa) não podem vazar para o slide; as classes abaixo definem as cores */
+.slide :where(h1,h2,h3,h4,p,li,blockquote,span){color:inherit;letter-spacing:inherit;text-wrap:wrap}
 .slide-in{position:absolute;inset:0;padding:6cqw 7cqw 8cqw;display:flex;flex-direction:column;justify-content:flex-start}
 
 .sl-titulo{font-family:"Source Serif 4",Georgia,serif;font-weight:700;letter-spacing:0;font-size:4.4cqw;line-height:1.14;max-width:88%}

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Studio (teste)</title>
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../portal.css">
+<link rel="stylesheet" href="../../meet/slides.css"><link rel="stylesheet" href="../../meet/studio.css">
+</head><body style="background:#f5f7fa;padding:24px">
+<!-- Página só para os testes automáticos do Studio: contexto do painel simulado; o servidor é interceptado pelo Playwright. -->
+<div id="view"></div><div id="ov"></div>
+<script src="../../meet/slides.js"></script>
+<script src="../../meet/studio.js"></script>
+<script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  window.ctx = {
+    sb: { auth: { getSession: async () => ({ data: { session: { access_token: 'sessao-teste' } } }) }, from: () => ({ select: () => ({ eq: () => [] }) }) },
+    CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, q: async (x) => x || [],
+    msg: (el, t) => { el.textContent = t; }, fmtDT: d => new Date(d).toLocaleString('pt-BR'),
+    openOverlay: h => { const o = document.getElementById('ov'); o.innerHTML = '<div class="drawer">' + h + '</div>'; o.querySelector('.close-x') && (o.querySelector('.close-x').onclick = () => o.innerHTML = ''); return o; },
+    closeOverlay: () => { document.getElementById('ov').innerHTML = ''; }
+  };
+</script>
+</body></html>

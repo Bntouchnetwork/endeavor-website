@@ -26,8 +26,16 @@
   }
   function quando(r, ctx) { return r.scheduled_at ? ctx.fmtDT(r.scheduled_at) : (r.started_at ? 'Iniciada ' + ctx.fmtDT(r.started_at) : 'Instantânea · criada ' + ctx.fmtDT(r.created_at)); }
 
+  function abas(atual) {
+    return '<nav class="subtabs wm-abas" aria-label="Web Meeting"><a href="#/webmeeting"' + (atual === 'salas' ? ' aria-current="page"' : '') + '>Salas</a><a href="#/webmeeting?aba=studio"' + (atual === 'studio' ? ' aria-current="page"' : '') + '>Apresentações (Studio)</a></nav>';
+  }
   async function render(view, ctx, o) {
     o = o || {};
+    if (/[?&]aba=studio/.test(location.hash) && window.EMeetStudio) {
+      await window.EMeetStudio.render(view, ctx, o);
+      view.insertAdjacentHTML('afterbegin', abas('studio'));
+      return;
+    }
     var esc = ctx.esc, admin = o.scope === 'admin', host = admin ? 'admin' : 'client';
     var filtro = (location.hash.match(/[?&]f=(abertas|encerradas)/) || [])[1] || 'abertas';
     var empresa = (location.hash.match(/[?&]empresa=([a-z0-9-]+)/) || [])[1] || '';
@@ -44,7 +52,7 @@
     var base = admin ? '#/webmeeting' : '#/webmeeting';
     function hrefF(f, e) { var p = []; if (f !== 'abertas') p.push('f=' + f); if (e) p.push('empresa=' + e); return base + (p.length ? '?' + p.join('&') : ''); }
 
-    view.innerHTML = '<div class="console__head"><div><h1>Web Meeting</h1><p class="portal-muted">' + (admin ? 'Videoconferência da Endeavor e das empresas clientes. Quem cria a sala é o anfitrião; os convidados entram pelo link só com o nome.' : 'Reuniões por vídeo da sua empresa. Crie a sala, entre como anfitrião e mande o link para os convidados: eles entram só com o nome.') + '</p></div>' +
+    view.innerHTML = abas('salas') + '<div class="console__head"><div><h1>Web Meeting</h1><p class="portal-muted">' + (admin ? 'Videoconferência da Endeavor e das empresas clientes. Quem cria a sala é o anfitrião; os convidados entram pelo link só com o nome.' : 'Reuniões por vídeo da sua empresa. Crie a sala, entre como anfitrião e mande o link para os convidados: eles entram só com o nome.') + '</p></div>' +
       '<button class="btn btn--navy btn--sm" type="button" id="wm-new">＋ Criar sala</button></div>' +
       (status.configurado === false ? '<div class="portal-alert portal-alert--info">O servidor de vídeo (LiveKit) ainda não foi configurado: as salas abrem em <strong>modo demonstração</strong>, com sua câmera e microfone reais e participantes simulados.</div>' : '') +
       (uso && lim ? '<p class="portal-muted">Neste mês: ' + uso.rooms_month + (lim.max_rooms_month != null ? ' de ' + lim.max_rooms_month : '') + ' salas · ' + uso.minutes_month + (lim.max_minutes_month != null ? ' de ' + lim.max_minutes_month : '') + ' minutos' + (lim.max_participants ? ' · até ' + lim.max_participants + ' participantes por sala' : '') + '</p>' : '') +

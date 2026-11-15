@@ -75,6 +75,43 @@ Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fu
 - **Sugestões:** ficam no botão **Sugestões**, que abre um menu com pedidos prontos (ex.: deixar o slide mais curto, mudar o título).
 - **Apagar apresentação:** botão da lixeira, com confirmação. Se estava ao vivo, para de aparecer para os participantes. Apaga também a cópia guardada no servidor; logo depois, Desfazer ainda recupera.
 
+## AI Presentation Studio (Apresentações)
+
+Fica em **Web Meeting › Apresentações (Studio)**, no admin e no Portal do Cliente. Ali a apresentação é preparada **antes** da reunião, e depois de publicada abre em qualquer sala da mesma empresa.
+
+- **Lista:** apresentações da empresa (o admin vê todas e filtra por empresa), com a situação (rascunho ou publicada vN) e as ações Editar, Duplicar e Apagar. No topo aparece o que está ligado no HUB AI: texto, voz, imagens e vídeo.
+- **Editor em tela cheia:**
+  - à esquerda, os slides. Arraste para reordenar ou use ↑ ↓; duplique, apague ou adicione (até 30);
+  - no centro, o slide grande e os campos do layout (capa, tópicos, passos, duas colunas, número, citação, gráfico e encerramento);
+  - à direita, quatro abas: Roteiro, Criar com IA, Configurações e Voz;
+  - embaixo, a **linha do tempo**, com o total planejado e um trecho por slide (verde quando a narração está pronta).
+- **Roteiro:** cada slide tem a fala completa, a duração e o tempo estimado (palavras ÷ ritmo). "Escrever com IA" cria o roteiro do slide.
+- **Criar com IA:** você descreve o assunto, e o agente `presentation-studio` do HUB cria os slides e o roteiro, de acordo com idioma, tom, duração e ritmo. Ele não inventa números nem promessas: o que falta aparece como [completar]. Também dá para refazer um slide só.
+- **Importar PDF ou PowerPoint (.pptx):**
+  - o arquivo é lido no navegador e não sai do computador;
+  - vai para a IA só o texto de cada página, além das anotações do PowerPoint, que viram o roteiro;
+  - é possível importar sem a IA (um slide por página);
+  - imagens, formatação e PDFs escaneados não são trazidos.
+- **Configurações:** idioma (português, inglês ou espanhol), tom, duração total, ritmo da fala, público, transição, abertura, legenda e o dicionário de **pronúncia** ("LLC = éle éle cê"). A pronúncia vale só para a voz.
+- **Voz (Minha voz):** cada pessoa grava de 1 a 2 minutos da **própria** voz, ou envia um arquivo, e aceita o termo de autorização (versão `voz-2026-11`).
+  - O HUB cria a voz no ElevenLabs e guarda o consentimento no audit log.
+  - A amostra não fica guardada na Endeavor.
+  - Cada pessoa pode ter até 3 vozes. Só o dono da apresentação pode narrá-la, e só com a própria voz.
+  - Apagar a voz remove a voz no provedor e todos os áudios gerados com ela.
+- **Narração:**
+  - "Gerar narração" cria um MP3 por slide, guardado no bucket privado `meet-media`;
+  - só os slides cujo roteiro, idioma, ritmo ou pronúncia mudaram são narrados de novo (hash do texto falado);
+  - erro de credencial, de limite ou de provedor aparece como aviso e para o lote.
+- **Prévia:**
+  - toca os slides em sequência, com a narração quando existe e com a legenda;
+  - sem narração, usa o tempo estimado. A voz do navegador só entra se você pedir, e fica marcada como prévia.
+- **Publicar:**
+  - exige a versão salva e a prévia completa dessa versão;
+  - congela uma cópia em `meet_studio_versions`.
+- **Na sala:** Assistente › **Do Studio** lista as apresentações publicadas da empresa da sala e abre a versão publicada no painel de slides. Os participantes nunca recebem as notas nem o roteiro.
+- **Concorrência:** cada gravação sobe a versão. Se outra janela salvou antes, o Studio avisa (409) em vez de sobrescrever.
+- **Sem a voz ligada no HUB:** o Studio funciona normalmente para slides e roteiro, os botões de voz ficam desligados com o motivo, e a prévia usa o tempo estimado. Nada é simulado.
+
 ## Painel de ações (IA)
 
 Só o organizador vê: aba **Ações** no painel lateral, ou menu **Mais › Ações da reunião (IA)**.
@@ -121,6 +158,15 @@ Na ficha do cliente › Web Meeting: salas por mês, participantes por sala (pad
 3. **Webhook:** no LiveKit Cloud, Settings › Webhooks, adicione `https://onaewjlozioderwlvgfm.supabase.co/functions/v1/meet-webhook`.
 4. **Gravação** (opcional): no Supabase, Storage › Settings › S3 Connection, gere um par de chaves e crie os segredos `MEET_S3_ENDPOINT` (`https://onaewjlozioderwlvgfm.supabase.co/storage/v1/s3`), `MEET_S3_REGION` (a região mostrada na tela), `MEET_S3_ACCESS_KEY` e `MEET_S3_SECRET`. O bucket privado `meet-recordings` já foi criado. Os vídeos são baixados por link assinado de 10 minutos, em Detalhes da sala.
 
+5. **Voz do Studio (ElevenLabs, pelo HUB AI):**
+   1. No console do HUB (hub.endeavorbiz.com), abra AI Providers › Add Provider e escolha o tipo *ElevenLabs (voice / text-to-speech)*.
+   2. Cole a API key do ElevenLabs. Ela vai para o Vault do HUB e não passa pelo Endeavor.
+   3. Em Advanced, opcional: `{"tts_model": "eleven_multilingual_v2", "usd_per_1k_chars": 0.30}`.
+   4. Clique em **Test Connection**. A voz liga quando o provedor aparece como *connected*.
+   5. Para a clonagem da própria voz, o plano do ElevenLabs precisa incluir *Instant Voice Cloning*.
+
+   Não é preciso nenhum segredo novo no Endeavor: a função usa o `HUB_AI_API_KEY`. Os agentes `presentation-studio` e `presentation-voice` já existem no HUB.
+
 Sem o passo 2, as salas abrem em **modo demonstração**: câmera, microfone e tela reais, outros participantes simulados.
 
 ## Testes
@@ -128,5 +174,15 @@ Sem o passo 2, as salas abrem em **modo demonstração**: câmera, microfone e t
 - `deno test --allow-read tests/meet-actions.test.ts` testa as regras do painel de ações com integrações simuladas: o roteiro completo (e-mail no chat, serviços e valores, proposta, documentos, tarefa, agendar, remarcar, ata) e os casos de destinatário ambíguo, informação ausente, falta de permissão, integração desconectada, falha de envio, comando repetido, agenda ocupada e anti-invenção.
 - `node tests/meet-actions.e2e.mjs http://localhost:8092` faz o mesmo roteiro na sala, no navegador, em modo demonstração, e confere o selo da IA, a pausa, o comando de convidado recusado e o tema claro.
 
+- `node tests/meet-studio.e2e.mjs http://localhost:8092` testa o Studio no navegador, com a função simulada. Confere:
+  - criar com IA, editar, reordenar (botões e arrasto), duplicar e apagar;
+  - roteiro e linha do tempo, configurações e pronúncia;
+  - salvar e o conflito de versão;
+  - publicar só depois da prévia;
+  - a voz desligada com aviso;
+  - criar a voz com o termo, narrar e tocar na prévia;
+  - importar PowerPoint (ordem e anotações) e PDF;
+  - o botão "Do Studio" na sala.
+- `deno test --allow-read --allow-env tests/meet-studio.test.ts` testa as regras do servidor do Studio: configuração, pronúncia, hash da fala, tempo estimado e o termo de voz.
 - `deno run --allow-read tests/meet-parity.test.ts` confere que o navegador e o servidor validam os slides do mesmo jeito.
 - `python3 -m http.server 8092` e `node tests/meet-room.e2e.mjs http://localhost:8092` abrem a sala no Chromium com câmera e microfone falsos, como convidado (computador e celular) e como anfitrião, e conferem entrada, grade, chat, reações, mão levantada, enquete, gravação, menu do anfitrião, fundo desfocado, fundos virtuais, foto própria (confere que fica só no navegador), assistente de slides, layout com a coluna de participantes, arrasto do painel, pedido por voz e apagar apresentação.

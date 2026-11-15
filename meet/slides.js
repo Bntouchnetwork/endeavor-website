@@ -18,7 +18,7 @@
 
   const FORMATO = "noir.apresentacao", VERSAO = 1;
   const LAYOUTS = ["capa", "topicos", "duas-colunas", "numero", "citacao", "grafico", "passos", "encerramento"];
-  const LIMITES = { slides: 30, titulo: 120, subtitulo: 200, itens: 8, item: 160, colItens: 6, colItem: 120, colTitulo: 60, valor: 16, legenda: 140, citacao: 280, autor: 80, dados: 8, rotulo: 40, unidade: 12, notas: 600 };
+  const LIMITES = { slides: 30, titulo: 120, subtitulo: 200, itens: 8, item: 160, colItens: 6, colItem: 120, colTitulo: 60, valor: 16, legenda: 140, citacao: 280, autor: 80, dados: 8, rotulo: 40, unidade: 12, notas: 600, roteiro: 3000, duracaoMin: 3, duracaoMax: 900 };
 
   /* ---------------- validação ---------------- */
   const txt = (v, max) => typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : (typeof v === "number" && isFinite(v) ? String(v).slice(0, max) : "");
@@ -55,6 +55,8 @@
         if (dados.length) o.grafico = { tipo: "barras", unidade: txt(s.grafico.unidade, LIMITES.unidade), dados };
       }
       const n = txt(s.notas, LIMITES.notas); if (n) o.notas = n;
+      const ro = txt(s.roteiro, LIMITES.roteiro); if (ro) o.roteiro = ro;
+      const du = Math.round(Number(s.duracao)); if (isFinite(du) && du > 0) o.duracao = Math.min(Math.max(du, LIMITES.duracaoMin), LIMITES.duracaoMax);
       // um layout sem o conteúdo que ele precisa vira tópicos
       const falta = { "duas-colunas": !o.colunas, numero: !o.numero, citacao: !o.citacao, grafico: !o.grafico }[o.layout];
       if (falta) o.layout = "topicos";
@@ -66,7 +68,7 @@
   }
 
   /** Cópia sem as anotações do anfitrião, para enviar aos participantes. */
-  const semNotas = ap => ({ ...ap, slides: ap.slides.map(({ notas, ...s }) => s) });
+  const semNotas = ap => ({ ...ap, slides: ap.slides.map(({ notas, roteiro, ...s }) => s) });
 
   /* ---------------- renderização ---------------- */
   const MARCA = '<span class="sl-marca" aria-hidden="true">Endeavor Business Solutions</span>';
@@ -300,7 +302,10 @@
         return j.apresentacao ? validar(j.apresentacao) : null;
       },
       /** Apaga as apresentações desta sala guardadas no servidor (só o anfitrião). */
-      async apagar() { await chamar({ acao: "apagar_apresentacao" }); return true; }
+      async apagar() { await chamar({ acao: "apagar_apresentacao" }); return true; },
+      /** AI Presentation Studio: apresentações publicadas da mesma empresa, e abrir uma delas na sala. */
+      async studioLista() { return (await chamar({ acao: "studio_sala_lista" })).apresentacoes || []; },
+      async studioAbrir(id) { const j = await chamar({ acao: "studio_sala_abrir", studio_id: id }); return { apresentacao: validar(j.apresentacao), mensagem: String(j.mensagem || "") }; }
     };
   }
 

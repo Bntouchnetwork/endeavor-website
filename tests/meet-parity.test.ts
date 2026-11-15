@@ -19,6 +19,7 @@ const fixos: unknown[] = [
   { slides: [{ layout: "duas-colunas", colunas: [{ titulo: "A", itens: ["1"] }] }, { layout: "duas-colunas", colunas: [{ titulo: "A" }, { itens: ["x", 2, null] }] }] },
   { slides: [{ layout: "citacao", citacao: { texto: "" } }, { layout: "inventado", id: "<b>", titulo: "<img src=x>" }] },
   { slides: [{}] },
+  { slides: [{ titulo: "Roteiro", roteiro: "  Olá,\n\n bem-vindos  ", duracao: "45.6" }, { titulo: "x", duracao: 1 }, { titulo: "y", duracao: 5000, roteiro: "r".repeat(4000) }, { titulo: "z", duracao: "abc", roteiro: 7 }] },
   { slides: Array.from({ length: 40 }, (_, i) => ({ id: "x" + i, titulo: "t".repeat(300), itens: Array(20).fill("i".repeat(400)) })) },
 ];
 
@@ -38,6 +39,7 @@ for (let n = 0; n < 400; n++) {
     colunas: escolha([undefined, [{ titulo: valorQualquer(), itens: [valorQualquer()] }, { titulo: valorQualquer(), itens: valorQualquer() }], valorQualquer()]),
     numero: escolha([undefined, { valor: valorQualquer(), legenda: valorQualquer() }]),
     citacao: escolha([undefined, { texto: valorQualquer(), autor: valorQualquer() }]),
+    roteiro: valorQualquer(), duracao: escolha([undefined, 30, "12", -4, 99999, NaN, 7.6]),
     grafico: escolha([undefined, { unidade: valorQualquer(), dados: Array.from({ length: 10 }, () => ({ rotulo: valorQualquer(), valor: valorQualquer() })) }]),
     notas: valorQualquer(),
   }));

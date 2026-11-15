@@ -10,7 +10,7 @@ export type Layout = typeof LAYOUTS[number];
 
 export const LIMITES = {
   slides: 30, titulo: 120, subtitulo: 200, itens: 8, item: 160, colItens: 6, colItem: 120, colTitulo: 60,
-  valor: 16, legenda: 140, citacao: 280, autor: 80, dados: 8, rotulo: 40, unidade: 12, notas: 600,
+  valor: 16, legenda: 140, citacao: 280, autor: 80, dados: 8, rotulo: 40, unidade: 12, notas: 600, roteiro: 3000, duracaoMin: 3, duracaoMax: 900,
 } as const;
 
 export interface Slide {
@@ -24,6 +24,10 @@ export interface Slide {
   citacao?: { texto: string; autor: string };
   grafico?: { tipo: "barras"; unidade: string; dados: { rotulo: string; valor: number }[] };
   notas?: string;
+  /** Roteiro de narração (Studio): o texto falado neste slide. */
+  roteiro?: string;
+  /** Duração do slide em segundos (Studio). */
+  duracao?: number;
 }
 export interface Apresentacao { formato: typeof FORMATO; versao: typeof VERSAO; titulo: string; slides: Slide[] }
 
@@ -71,6 +75,8 @@ export function validar(e: Qualquer): Apresentacao {
       if (dados.length) o.grafico = { tipo: "barras", unidade: txt(s.grafico.unidade, LIMITES.unidade), dados };
     }
     const n = txt(s.notas, LIMITES.notas); if (n) o.notas = n;
+    const ro = txt(s.roteiro, LIMITES.roteiro); if (ro) o.roteiro = ro;
+    const du = Math.round(Number(s.duracao)); if (isFinite(du) && du > 0) o.duracao = Math.min(Math.max(du, LIMITES.duracaoMin), LIMITES.duracaoMax);
     const falta = ({ "duas-colunas": !o.colunas, numero: !o.numero, citacao: !o.citacao, grafico: !o.grafico } as Record<string, boolean>)[o.layout];
     if (falta) o.layout = "topicos";
     if (!o.titulo && !o.itens && !o.numero && !o.citacao && !o.grafico && !o.colunas && !o.subtitulo) o.titulo = "Slide " + (i + 1);
@@ -136,6 +142,8 @@ export const ESQUEMA_APRESENTACAO = {
             },
           },
           notas: { type: "string", maxLength: LIMITES.notas, description: "Anotações só para o anfitrião." },
+          roteiro: { type: "string", maxLength: LIMITES.roteiro, description: "Texto falado neste slide (narração do Studio)." },
+          duracao: { type: "integer", minimum: LIMITES.duracaoMin, maximum: LIMITES.duracaoMax, description: "Duração do slide em segundos." },
         },
       },
     },

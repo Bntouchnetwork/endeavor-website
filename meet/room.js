@@ -202,6 +202,8 @@
         <div class="ap-sug">
           <button type="button" class="ap-sug-btn" id="apSugBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="apSugestoes">${I.slides}<span>Sugestões</span>${SETA}</button>
           <div class="ap-sug-menu" id="apSugestoes" role="menu" aria-label="Sugestões de pedido" hidden></div>
+          <button type="button" class="ap-sug-btn" id="apStudioBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="apStudioMenu" title="Abrir uma apresentação publicada no Studio">${I.slides}<span>Do Studio</span>${SETA}</button>
+          <div class="ap-sug-menu" id="apStudioMenu" role="menu" aria-label="Apresentações publicadas no Studio" hidden></div>
         </div>
         <form class="ap-form" id="apForm">
           <textarea id="apTexto" rows="2" maxlength="2000" placeholder="Peça uma apresentação ou uma mudança" aria-label="Pedido ao assistente"></textarea>
@@ -354,13 +356,20 @@ ${htmlFundos()}
     $("apRefazer").onclick = () => voltarVersao(1);
     $("apPdf").onclick = baixarPdf;
     $("apApagar").onclick = confirmarApagar;
-    $("apSugBtn").onclick = e => { e.stopPropagation(); alternarSugestoes(); };
+    $("apSugBtn").onclick = e => { e.stopPropagation(); alternarStudio(false); alternarSugestoes(); };
+    $("apStudioBtn").onclick = e => { e.stopPropagation(); alternarSugestoes(false); alternarStudio(); };
+    $("apStudioMenu").onclick = e => { const b = e.target.closest("[data-studio]"); if (b) { alternarStudio(false); abrirDoStudio(b.dataset.studio, b.textContent); } };
+    $("apStudioMenu").onkeydown = e => {
+      const itens = [...$("apStudioMenu").querySelectorAll("button")], i = itens.indexOf(document.activeElement);
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const n = itens[(i + (e.key === "ArrowDown" ? 1 : -1) + itens.length) % itens.length]; n && n.focus(); }
+      if (e.key === "Escape") { e.stopPropagation(); alternarStudio(false); $("apStudioBtn").focus(); }
+    };
     $("apSugestoes").onkeydown = e => {
       const itens = [...$("apSugestoes").querySelectorAll("[data-sug]")], i = itens.indexOf(document.activeElement);
       if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); const n = itens[(i + (e.key === "ArrowDown" ? 1 : -1) + itens.length) % itens.length]; n && n.focus(); }
       if (e.key === "Escape") { e.stopPropagation(); alternarSugestoes(false); $("apSugBtn").focus(); }
     };
-    document.addEventListener("click", e => { if (!e.target.closest || !e.target.closest(".ap-sug")) alternarSugestoes(false); });
+    document.addEventListener("click", e => { if (!e.target.closest || !e.target.closest(".ap-sug")) { alternarSugestoes(false); alternarStudio(false); } });
     $("apVivo").onclick = alternarApresentar;
     $("apDitar").onclick = ditarPedido;
     $("apMinis").onclick = e => { const b = e.target.closest("[data-slide]"); if (b) irParaSlide(+b.dataset.slide); };
@@ -1923,6 +1932,37 @@ ${htmlFundos()}
     $("apForm").classList.toggle("ocupado", ap.ocupado);
   }
 
+  /** Apresentações publicadas no AI Presentation Studio da mesma empresa (só a versão publicada abre na sala). */
+  async function alternarStudio(abrir) {
+    const m = $("apStudioMenu"), b = $("apStudioBtn"); if (!m) return;
+    if (abrir === undefined) abrir = m.hidden;
+    if (abrir === !m.hidden) return;
+    m.hidden = !abrir; b.setAttribute("aria-expanded", String(abrir));
+    if (!abrir) return;
+    m.innerHTML = '<p class="ap-sug-vazio">Carregando…</p>';
+    const motor = motorIA();
+    if (!motor.studioLista) { m.innerHTML = '<p class="ap-sug-vazio">No modo demonstração o Studio não está disponível. Prepare a apresentação no painel, em Web Meeting › Apresentações.</p>'; return; }
+    try {
+      const lista = await motor.studioLista();
+      m.innerHTML = lista.length ? lista.map(a => `<button type="button" role="menuitem" data-studio="${esc(a.id)}">${esc(a.titulo)}</button>`).join("")
+        : '<p class="ap-sug-vazio">Nenhuma apresentação publicada no Studio desta empresa. Crie em Web Meeting › Apresentações e publique.</p>';
+      const p = m.querySelector("button"); p && p.focus();
+    } catch (e) { m.innerHTML = `<p class="ap-sug-vazio">${esc(e.message)}</p>`; }
+  }
+  async function abrirDoStudio(id, titulo) {
+    const ap = S.apres;
+    if (ap.ocupado) return;
+    ap.ocupado = true; ap.conversa.push({ quem: "voce", texto: "Abrir do Studio: " + titulo }); desenharPainelSlides();
+    const estado = S;
+    try {
+      const r = await motorIA().studioAbrir(id);
+      if (S !== estado || S.encerrado) return;
+      ap.motor = "studio";
+      aplicarApresentacao(NoirApresentacao.validar(r.apresentacao), true, 0);
+      ap.conversa.push({ quem: "ia", texto: r.mensagem || "Apresentação aberta do Studio." });
+    } catch (e) { if (S === estado) ap.conversa.push({ quem: "erro", texto: e.message }); }
+    ap.ocupado = false; salvarLocal(); desenharPainelSlides();
+  }
   function alternarSugestoes(abrir) {
     const m = $("apSugestoes"), b = $("apSugBtn"); if (!m) return;
     if (abrir === undefined) abrir = m.hidden;

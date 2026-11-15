@@ -24,6 +24,8 @@
 //   Página pública de envio de documentos (enviar-documentos.html?t=TOKEN)
 //     docs_info { t } | docs_upload_url { t, item, nome, tipo, tamanho } | docs_confirmar { t, item, path }
 //   Painel (admin e portal): doc_arquivo_url { pedido_id, path }  link de 10 minutos para um arquivo recebido
+//   AI Presentation Studio (painel; detalhes em studio.ts): studio_* | voz_* | narrar | narracoes
+//   Anfitrião dentro da sala: studio_sala_lista | studio_sala_abrir { studio_id }   abre uma apresentação publicada do Studio
 //
 // Segredos: LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET, HUB_AI_API_KEY (motor de IA).
 // Gravação: MEET_S3_ENDPOINT, MEET_S3_REGION, MEET_S3_ACCESS_KEY, MEET_S3_SECRET (S3 do Supabase Storage, bucket meet-recordings).
@@ -36,6 +38,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { hubAsk, hubJson, hubKey, hubOn, HubFail } from "../_shared/hub-ai.ts";
 import { ApresentacaoInvalida, montarPedido, validar } from "./presentation.ts";
 import { A as Acoes, docArquivoUrl, docsPublico, integracoes } from "./acoes.ts";
+import { studio, studioNaSala } from "./studio.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -277,6 +280,8 @@ async function acaoAnfitriao(req: Request, b: Any) {
     }
     case "acoes_status": case "acao_executar": case "acoes_analisar": case "acoes_listar":
       return await painelAcoes(req, b, r, quem);
+    case "studio_sala_lista": case "studio_sala_abrir":
+      return await studioNaSala(b, r, db, Erro);
     case "ultima": {
       const { data } = await db.from("meet_presentations").select("content").eq("room_id", r.id).order("created_at", { ascending: false }).limit(1).maybeSingle();
       return { apresentacao: data?.content ?? null };
@@ -408,6 +413,10 @@ Deno.serve(async (req) => {
       case "docs_info": case "docs_upload_url": case "docs_confirmar":
         try { return json(await docsPublico(db, b)); } catch (e) { return json({ erro: (e as Error).message }, (e as Any).status || 400); }
       case "doc_arquivo_url": return json(await arquivoPedido(req, b));
+      case "studio_status": case "studio_listar": case "studio_criar": case "studio_obter": case "studio_salvar": case "studio_ia":
+      case "studio_publicar": case "studio_duplicar": case "studio_apagar": case "voz_listar": case "voz_criar": case "voz_apagar":
+      case "narrar": case "narracoes":
+        return json(await studio(req, b, { db, usuario, papelNoCliente, acesso, Erro }));
       default: return json(await acaoAnfitriao(req, b));
     }
   } catch (e) {
