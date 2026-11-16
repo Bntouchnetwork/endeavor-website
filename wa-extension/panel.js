@@ -15,7 +15,7 @@
 
   var S = {
     conectado: false, ajustes: C.limparAjustes({}), version: 0, conversas: {}, usuario: '', pausado: false, aberto: true, largura: 380,
-    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], ultGrupo: {}, analiseGrupo: {}, humanoEm: 0, teclouEm: 0, acao: null
+    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, ultGrupo: {}, analiseGrupo: {}, humanoEm: 0, teclouEm: 0, acao: null
   };
 
   /* ---------------- servidor ---------------- */
@@ -64,7 +64,7 @@
         '<section class="grupo" id="grupo" hidden></section>' +
         '<details class="tempos" id="tempos"><summary>Tempos humanos do Takeover</summary><div class="grade" id="tempos-campos"></div><small class="mut">Cada resposta sorteia um tempo entre o mínimo e o máximo.</small></details>' +
         '<footer class="rodape"><p class="risco">Automação no WhatsApp Web vai contra os termos do WhatsApp e pode bloquear o número. Use o número de teste. Respostas automáticas se identificam como assistente virtual.</p>' +
-        '<p><a href="' + ADMIN + '" target="_blank" rel="noopener">Admin · registro e ajustes</a> · <span id="quem"></span> · <button class="lk" id="sair">Desconectar</button></p></footer>' +
+        '<p><a href="' + ADMIN + '" target="_blank" rel="noopener">Admin · registro e ajustes</a> · <span id="quem"></span> · <button class="lk" id="sair">Desconectar</button> · <button class="lk" id="diag" title="Copia só a estrutura da página, sem o texto das mensagens">Copiar diagnóstico</button></p></footer>' +
       '</div>' +
     '</div></aside>' +
     '<button class="aba" id="aba" hidden aria-label="Abrir o My WhatsApp Manager"><img src="' + ICONE + '" alt=""><span class="pt"></span></button>';
@@ -226,7 +226,11 @@
     finally { S.ocupado = false; S.acao = null; $('#parar').hidden = true; }
   }
   function precisaConversa() { var c = W.conversaAberta(); if (!c) { res('<p class="erro">Abra uma conversa no WhatsApp Web primeiro.</p>'); return null; } return c; }
-  function ia(ferramenta, c, extra) { return api(Object.assign({ acao: 'ext_ia', ferramenta: ferramenta, conversa: ref(c), mensagens: c.mensagens }, extra || {})); }
+  function ia(ferramenta, c, extra) {
+    if (!(c.mensagens || []).length && ['comando', 'traduzir'].indexOf(ferramenta) < 0)
+      return Promise.reject(new Error('Não consegui ler as mensagens desta conversa. Clique em "Copiar diagnóstico", no rodapé do painel, e cole no chat com o Claude.'));
+    return api(Object.assign({ acao: 'ext_ia', ferramenta: ferramenta, conversa: ref(c), mensagens: c.mensagens }, extra || {}));
+  }
   function falhou(e) { res('<p class="erro">' + esc(e.message) + '</p>'); agora(e.message, 'erro'); }
 
   var FERR = {
@@ -466,7 +470,7 @@
       S.vistas[c.chave] = true;
       if (ult && !forcar && !S.abertaPelaIA[c.nome] && !C.recente(ult.hora, new Date(), 2)) S.tratadas[c.chave] = ult.id;
     }
-    delete S.abertaPelaIA[c.nome];
+    delete S.abertaPelaIA[c.nome]; delete S.tentativas[c.nome];
     if (S.ocupado || S.pausado) return;
     var st = estado(c);
     if (ult && S.tratadas[c.chave] !== ult.id) {
@@ -483,6 +487,12 @@
       return st ? st.takeover && st.seguir : S.ajustes.takeover_individual;
     });
     if (!alvo) return;
+    // não insiste: se a conversa não abrir, espera 10 min antes de tentar de novo a mesma
+    var t = S.tentativas[alvo.nome] || { n: 0, em: 0, ate: 0 };
+    if (Date.now() < t.ate || Date.now() - t.em < 6000) return;
+    t.n++; t.em = Date.now();
+    if (t.n > 2) { t.ate = Date.now() + 600000; t.n = 0; S.tentativas[alvo.nome] = t; agora('Takeover · não consegui abrir a conversa com ' + alvo.nome + '. Abra a conversa para a IA responder.', 'alerta'); return; }
+    S.tentativas[alvo.nome] = t;
     S.abertaPelaIA[alvo.nome] = true;
     agora('Takeover · abrindo a conversa com ' + alvo.nome + '…', 'pensando');
     W.abrir(alvo.linha);
@@ -530,6 +540,12 @@
     var r = await msgBg({ tipo: 'conectar', token: $('#cod').value });
     if (!r.ok) { $('#cod-erro').textContent = 'Código inválido. Copie de novo o código do admin.'; return; }
     $('#cod').value = ''; iniciar();
+  };
+  $('#diag').onclick = function () {
+    var d; try { d = W.diagnostico(); } catch (e) { d = { erro: String(e && e.message) }; }
+    d.extensao = VERSAO; d.navegador = navigator.userAgent.replace(/\d+\.\d+\.\d+(\.\d+)?/g, 'x');
+    var txt = 'Diagnóstico My WhatsApp Manager (sem texto das mensagens):\n' + JSON.stringify(d);
+    navigator.clipboard.writeText(txt).then(function () { agora('Diagnóstico copiado. Cole no chat com o Claude.', 'ok'); }, function () { agora('Não consegui copiar. Tente de novo.', 'erro'); });
   };
   $('#sair').onclick = async function () { await msgBg({ tipo: 'desconectar' }); S.conectado = false; $('#app').hidden = true; $('#conectar').hidden = false; };
   async function ping(forcar) {

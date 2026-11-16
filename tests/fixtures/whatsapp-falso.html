@@ -15,7 +15,7 @@ var conversas = {
   '120363000000000001@g.us': { nome: 'Grupo Empreendedores', grupo: true, msgs: [{ eu: false, t: 'Alguém sabe como tirar EIN?', autor: 'João' }, { eu: false, t: 'Também quero saber', autor: 'Ana' }], naoLidas: 0 },
   '15559990000@c.us': { nome: 'Carlos Novo', grupo: false, msgs: [], naoLidas: 0 }
 };
-var aberta = null, seq = 1;
+var aberta = null, seq = 1, MODERNO = /moderno/.test(location.search);
 function hora() { var d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
 conversas['15551230000@c.us'].msgs[0].h = '08:00'; conversas['120363000000000001@g.us'].msgs.forEach(function (m) { m.h = '08:00'; });
 function lista() {
@@ -25,14 +25,17 @@ function lista() {
     return '<div role="listitem" data-k="' + k + '"><div role="gridcell" tabindex="0"><span dir="auto" title="' + c.nome + '">' + c.nome + '</span>' +
       (c.naoLidas ? ' <span aria-label="' + c.naoLidas + ' unread message">' + c.naoLidas + '</span>' : '') + '</div></div>';
   }).join('');
-  g.querySelectorAll('[role="gridcell"]').forEach(function (el) { el.addEventListener('mousedown', function () { abrir(el.parentElement.dataset.k); }); });
+  if (MODERNO) g.innerHTML = Object.keys(conversas).map(function (k) { var c = conversas[k];
+    return '<div role="listitem" data-k="' + k + '"><div role="button" tabindex="-1"><div><span dir="auto" title="' + c.nome + '">' + c.nome + '</span></div>' +
+      (c.naoLidas ? '<span aria-label="' + c.naoLidas + ' unread message">' + c.naoLidas + '</span>' : '') + '</div></div>'; }).join('');
+  g.querySelectorAll(MODERNO ? '[role="button"]' : '[role="gridcell"]').forEach(function (el) { el.addEventListener(MODERNO ? 'click' : 'mousedown', function () { abrir(el.parentElement.dataset.k); }); });
 }
 function abrir(k) {
   aberta = k; conversas[k].naoLidas = 0; lista();
   var c = conversas[k], v = document.getElementById('vazio'); if (v) v.remove();
   var m = document.getElementById('main');
   if (!m) { m = document.createElement('div'); m.id = 'main'; document.getElementById('app').appendChild(m); }
-  m.innerHTML = '<header><span dir="auto" title="' + c.nome + '">' + c.nome + '</span></header><div class="msgs"></div>' +
+  m.innerHTML = '<header><span dir="auto" title="' + c.nome + '">' + c.nome + '</span>' + (MODERNO && c.grupo ? '<span title="Ana, João, Pedro, You">Ana, João, Pedro, You</span>' : '') + '</header><div class="msgs"></div>' +
     '<footer><div contenteditable="true" role="textbox" data-tab="10"></div><button aria-label="Send">Enviar</button></footer>';
   desenhar();
   m.querySelector('footer button').onclick = function () {
@@ -42,6 +45,16 @@ function abrir(k) {
 }
 function desenhar() {
   var c = conversas[aberta], box = document.querySelector('#main .msgs');
+  if (MODERNO) {
+    // estrutura parecida com o WhatsApp Web atual: role="row", sem data-id e sem as classes antigas; minhas mensagens com os vistos
+    box.innerHTML = '<div role="row"><div><span>Today</span></div></div><div role="row"><div class="perfil"><span>' + c.nome + '</span><span>Business account</span><button>Block</button></div></div>' +
+      c.msgs.map(function (x) {
+        return '<div role="row"><div style="display:flex' + (x.eu ? ';justify-content:flex-end' : '') + '"><div class="bolha" style="max-width:60%;padding:4px 8px;background:' + (x.eu ? '#d9fdd3' : '#eee') + '">' +
+          (c.grupo && !x.eu ? '<div><span dir="auto">' + x.autor + '</span></div>' : '') + '<div><span dir="ltr"><span>' + x.t + '</span></span></div>' +
+          '<div><span>' + (x.h || hora()) + '</span>' + (x.eu ? '<span data-icon="msg-dblcheck"></span>' : '') + '</div><button aria-label="Menu" hidden></button></div></div></div>';
+      }).join('');
+    return;
+  }
   box.innerHTML = c.msgs.map(function (x, i) {
     var id = (x.eu ? 'true_' : 'false_') + aberta + '_ID' + (x.id || (x.id = seq++));
     return '<div data-id="' + id + '" class="' + (x.eu ? 'message-out' : 'message-in') + '"><div class="copyable-text" data-pre-plain-text="[' + (x.h || hora()) + ', 11/16/2026] ' + (x.eu ? 'Eu' : x.autor) + ': "><span class="selectable-text"><span>' + x.t + '</span></span></div></div>';

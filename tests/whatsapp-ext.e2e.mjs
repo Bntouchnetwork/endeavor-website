@@ -69,7 +69,7 @@ await sw.evaluate((u) => new Promise((r) => chrome.storage.local.set({ api_base:
 await ctx.route("https://web.whatsapp.com/**", (r) => r.fulfill({ status: 200, contentType: "text/html", body: FAKE }));
 const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("pageerror:", e.message));
-await page.goto("https://web.whatsapp.com/");
+await page.goto("https://web.whatsapp.com/" + (process.env.MODERNO ? "?moderno=1" : ""));
 const P = (s) => page.locator("#emgr-host " + s);
 const ia = (f) => chamadas.filter((c) => c.acao === "ext_ia" && c.ferramenta === f);
 const enviadas = () => page.evaluate(() => window.__enviadas || []);
@@ -154,7 +154,8 @@ try {
   /* lead no CRM com confirmação */
   await P('[data-f="lead"]').click();
   await P("#f-lead").waitFor({ timeout: 5000 });
-  ok(await P('#f-lead [name="telefone"]').inputValue() === "+15551230000", "lead: telefone vem da conversa");
+  if (process.env.MODERNO) { ok(await P('#f-lead [name="telefone"]').inputValue() === "", "lead: contato salvo por nome, sem número na página: telefone fica para digitar"); await P('#f-lead [name="telefone"]').fill("+15551230000"); }
+  else ok(await P('#f-lead [name="telefone"]').inputValue() === "+15551230000", "lead: telefone vem da conversa");
   ok(!chamadas.some((c) => c.acao === "ext_lead"), "lead: nada é criado antes de confirmar");
   await P("#f-lead button").click();
   await P(".bloco.ok").waitFor({ timeout: 5000 });
@@ -166,6 +167,7 @@ try {
   await P("#f-ag").waitFor({ timeout: 5000 });
   ok((await P(".cartao textarea").first().inputValue()).includes("Dia 1 10:00"), "agenda: mensagem com horários livres reais");
   await P('#f-ag [name="email"]').fill("maria@exemplo.com");
+  if (process.env.MODERNO) await P('#f-ag [name="telefone"]').fill("+15551230000");
   await P("#f-ag button").click();
   await P(".bloco.ok").waitFor({ timeout: 5000 });
   ok(chamadas.some((c) => c.acao === "ext_agendar" && c.telefone === "+15551230000"), "agenda: marcou com os dados confirmados");
