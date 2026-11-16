@@ -80,7 +80,7 @@ async function webinarDoPainel(u: U, id: unknown) {
 const acao = (w: Any, tipo: string, detalhes: Any = {}, regId: string | null = null, status = "ok") =>
   db.from("lw_actions").insert({ webinar_id: w.id, registration_id: regId, tipo, status, detalhes }).then(() => { }, () => { });
 
-const linhaDe = (w: Any) => C.linhaDoTempo(w.content?.slides || [], w.narration || {}, w.ritmo || "normal");
+const linhaDe = (w: Any) => C.linhaDoTempo(w.content?.slides || [], w.narration || {}, w.ritmo || "normal", w.intro?.duracao_ms || 0);
 
 /* ================================================================ painel ================================================================ */
 async function painel(req: Request, b: Any) {
@@ -88,7 +88,7 @@ async function painel(req: Request, b: Any) {
   if (!u) throw new Erro("Entre no painel para usar o Live Webinar.", 401);
   switch (b.acao) {
     case "lw_listar": {
-      let q = db.from("lw_webinars").select("id, client_id, slug, title, starts_at, timezone, status, playback, content->slides, narration, ritmo, studio_version, clients(name)").is("deleted_at", null).order("starts_at", { ascending: false }).limit(200);
+      let q = db.from("lw_webinars").select("id, client_id, slug, title, starts_at, timezone, status, playback, content->slides, narration, ritmo, intro, studio_version, clients(name)").is("deleted_at", null).order("starts_at", { ascending: false }).limit(200);
       const c = String(b.client_id || "");
       if (!u.admin) { if (!uuid(c) || !await podeEmpresa(u, c)) throw new Erro("Sem acesso ao Live Webinar desta empresa.", 403); q = q.eq("client_id", c); }
       else if (c === "endeavor") q = q.is("client_id", null);
@@ -100,7 +100,7 @@ async function painel(req: Request, b: Any) {
       if (ids.length) { const { data: r } = await db.from("lw_registrations").select("webinar_id").in("webinar_id", ids); (r || []).forEach((x: Any) => { regs[x.webinar_id] = (regs[x.webinar_id] || 0) + 1; }); }
       const agora = Date.now();
       return { webinars: (data || []).map((w: Any) => {
-        const linha = C.linhaDoTempo(w.slides || [], w.narration || {}, w.ritmo);
+        const linha = C.linhaDoTempo(w.slides || [], w.narration || {}, w.ritmo, w.intro?.duracao_ms || 0);
         const p = w.status === "scheduled" ? C.posicao(w, linha, agora) : { estado: w.status };
         return { id: w.id, slug: w.slug, titulo: w.title, empresa: w.client_id ? w.clients?.name : "Endeavor", client_id: w.client_id, starts_at: w.starts_at, timezone: w.timezone,
           status: w.status, estado: p.estado, duracao_ms: C.total(linha), inscritos: regs[w.id] || 0, link: `${SITE}/webinar.html?w=${w.slug}` };
@@ -202,14 +202,17 @@ async function painel(req: Request, b: Any) {
           if (n?.audio_path) narration[sl.id] = { path: n.audio_path, duracao_ms: n.duration_ms || 0 };
         }
       }
-      const { data, error } = await db.from("lw_webinars").update({ status: "scheduled", content, narration, ritmo: cfg.ritmo, studio_version: s.published_version,
-        settings: limparSettings({ ...w.settings, idioma: w.settings?.idioma || cfg.idioma, legendas: cfg.legendas }), playback: {}, version: w.version + 1, updated_at: new Date().toISOString() })
+      // vídeo de abertura gravado no Studio (toca antes do primeiro slide)
+      const intro = cfg.abertura === "video" && cfg.abertura_video ? { path: cfg.abertura_video.path, duracao_ms: cfg.abertura_video.duracao_ms, mime: cfg.abertura_video.mime } : null;
+      const { data, error } = await db.from("lw_webinars").update({ status: "scheduled", content, narration, intro, ritmo: cfg.ritmo, studio_version: s.published_version,
+        settings: limparSettings({ ...w.settings, idioma: w.settings?.idioma || cfg.idioma, legendas: cfg.legendas, voz_teste: cfg.voz_teste || w.settings?.voz_teste === true }), playback: {}, version: w.version + 1, updated_at: new Date().toISOString() })
         .eq("id", w.id).eq("version", w.version).select("*").maybeSingle();
       if (error) throw new Erro("Não foi possível agendar: " + error.message, 500);
       if (!data) throw new Erro("Este webinar foi alterado em outra janela. Recarregue.", 409);
       await acao(w, "agendar", { studio_version: s.published_version, narracoes: Object.keys(narration).length, slides: content.slides.length });
-      return { webinar: painelW(data), aviso: Object.keys(narration).length < content.slides.filter((x: Any) => x.roteiro).length
-        ? "Alguns slides não têm narração pronta com a sua voz: eles passam no tempo do roteiro, com legenda." : "" };
+      const faltam = Object.keys(narration).length < content.slides.filter((x: Any) => x.roteiro).length;
+      const vt = limparSettings(data.settings).voz_teste;
+      return { webinar: painelW(data), aviso: faltam ? (vt ? "Os slides sem narração com a sua voz usam a voz de teste do navegador (avisada ao público como voz de teste)." : "Alguns slides não têm narração pronta com a sua voz: eles passam no tempo do roteiro, com legenda.") : "" };
     }
     case "lw_cancelar": {
       const w = await webinarDoPainel(u, b.id);
@@ -286,7 +289,7 @@ function painelW(w: Any) {
   const linha = linhaDe(w);
   return { id: w.id, slug: w.slug, client_id: w.client_id, titulo: w.title, descricao: w.description, studio_id: w.studio_id, studio_version: w.studio_version, starts_at: w.starts_at,
     timezone: w.timezone, status: w.status, settings: limparSettings(w.settings), faq: w.ai_plan?.faq || [], version: w.version, slides: (w.content?.slides || []).map((s: Any) => ({ id: s.id, titulo: s.titulo })),
-    narracoes: Object.keys(w.narration || {}).length, duracao_ms: C.total(linha), estado: w.status === "scheduled" ? C.posicao(w, linha, Date.now()).estado : w.status, link: `${SITE}/webinar.html?w=${w.slug}` };
+    narracoes: Object.keys(w.narration || {}).length, intro: !!w.intro, intro_ms: w.intro?.duracao_ms || 0, duracao_ms: C.total(linha), estado: w.status === "scheduled" ? C.posicao(w, linha, Date.now()).estado : w.status, link: `${SITE}/webinar.html?w=${w.slug}` };
 }
 async function publicadas(clientId: string | null) {
   let q = db.from("meet_studio").select("id, title, published_version, published_at, content->slides").is("deleted_at", null).not("published_version", "is", null).order("published_at", { ascending: false }).limit(100);
@@ -388,10 +391,12 @@ async function publico(req: Request, b: Any) {
         if (data?.signedUrl) audios[sid] = data.signedUrl;
       }
       const legendas = cfg.legendas;
+      let intro = null;
+      if (w.intro?.path) { const { data } = await db.storage.from("meet-media").createSignedUrl(w.intro.path, Math.min(expira, 7 * 86400)); if (data?.signedUrl) intro = { url: data.signedUrl, duracao_ms: w.intro.duracao_ms }; }
       return { titulo: w.title, descricao: w.description, empresa: empresaNome(w), nome: r.name, starts_at: w.starts_at, timezone: w.timezone, agora,
         slides: (w.content?.slides || []).map((s: Any) => { const { notas: _n, ...resto } = s; return legendas ? resto : (({ roteiro: _r, ...x }) => x)(resto); }),
         narracao: Object.fromEntries(Object.entries(w.narration || {}).map(([k, v]: [string, Any]) => [k, { duracao_ms: v.duracao_ms }])), audios, ritmo: w.ritmo,
-        playback: w.playback, estado: pos.estado, chat_abre_min: cfg.chat_abre_min, agendamento: cfg.agendamento, idioma: cfg.idioma,
+        intro, voz_teste: cfg.voz_teste, playback: w.playback, estado: pos.estado, chat_abre_min: cfg.chat_abre_min, agendamento: cfg.agendamento, idioma: cfg.idioma,
         ia: cfg.chat_ia && hubOn(), contato_ok: !!(r.lead_id || r.contact_id) };
     }
 
@@ -510,7 +515,7 @@ async function responderIA(w: Any, r: Any, linha: Any[], pos: Any, canal: string
   // limite do assistente: 30 respostas por minuto por webinar (o resto fica para a equipe)
   const { count } = await db.from("lw_messages").select("id", { count: "exact", head: true }).eq("webinar_id", w.id).eq("autor", "ia").gte("created_at", new Date(Date.now() - 60_000).toISOString());
   if ((count || 0) >= 30) return;
-  const atual = C.slideNa(linha, pos.pos).i;
+  const atual = Math.max(0, C.slideNa(linha, pos.pos).i);
   const slides = (w.content?.slides || []).map((s: Any, i: number) => ({ i, atual: i === atual || undefined, titulo: s.titulo, itens: s.itens, roteiro: String(s.roteiro || "").slice(0, 700) }));
   const faq = (w.ai_plan?.faq || []).filter((f: Any) => f.aprovada !== false).map((f: Any) => ({ pergunta: f.pergunta, resposta: f.resposta }));
   const { data: hist } = await db.from("lw_messages").select("autor, texto").eq("webinar_id", w.id).eq("canal", canal).eq("oculto", false)

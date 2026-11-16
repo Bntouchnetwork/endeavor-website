@@ -38,3 +38,13 @@ Deno.test("formato do slide guarda roteiro e duração (3 a 900 s)", () => {
 Deno.test("o termo de voz fala de voz própria e de não imitar outra pessoa", () => {
   eq(/minha própria voz/.test(TERMO_VOZ) && /imitar outra pessoa/.test(TERMO_VOZ) && /apagar/.test(TERMO_VOZ), true);
 });
+
+Deno.test("abertura: só vídeo do próprio Studio, texto do teleprompter com parágrafos, voz de teste", () => {
+  const id = "11111111-2222-4333-8444-555555555555";
+  const c = limparConfig({ abertura: "video", abertura_texto: "Olá!\n\n\n\nSou eu.  <b>", voz_teste: true,
+    abertura_video: { path: `abertura/${id}/abc123.webm`, duracao_ms: 999999999, mime: "video/webm" } });
+  eq(c.abertura, "video"); eq(c.voz_teste, true); eq(c.abertura_texto, "Olá!\n\nSou eu. b");
+  eq(c.abertura_video, { path: `abertura/${id}/abc123.webm`, duracao_ms: 900000, mime: "video/webm" }, "duração limitada a 15 min");
+  eq(limparConfig({ abertura_video: { path: "narracoes/x/../../segredo.mp3" } }).abertura_video, null, "caminho fora da pasta de abertura é recusado");
+  eq(limparConfig({ abertura: "outra" }).abertura, "ao_vivo");
+});

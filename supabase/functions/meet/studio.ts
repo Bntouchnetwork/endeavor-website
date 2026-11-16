@@ -14,6 +14,8 @@
 //   studio_publicar { id, version }                 congela a versão (meet_studio_versions)
 //   studio_duplicar { id } | studio_apagar { id }
 //   voz_listar | voz_criar { nome, mime, amostra_base64, segundos, consentimento: true, termo_versao } | voz_apagar { id }
+//   abertura_upload_url { id, mime, tamanho } | abertura_confirmar { id, path, duracao_ms, mime } | abertura_url { id } | abertura_apagar { id }
+//                                                   vídeo de abertura gravado pela câmera (com teleprompter) ou enviado
 //   narrar { id, voz_id, slide_ids? }               gera o áudio dos slides cujo roteiro mudou (até 6 por chamada)
 //   narracoes { id }                                links assinados (1 h) dos áudios prontos para a prévia
 // Anfitrião dentro da sala (token LiveKit): studio_sala_lista | studio_sala_abrir { studio_id }
@@ -54,11 +56,20 @@ export function limparConfig(c: Any) {
     publico: txt(c.publico, 160),
     transicao: ["corte", "suave"].includes(c.transicao) ? c.transicao : "suave",
     legendas: c.legendas !== false,
-    abertura: ["ao_vivo", "nenhuma"].includes(c.abertura) ? c.abertura : "ao_vivo",
+    abertura: ["ao_vivo", "video", "nenhuma"].includes(c.abertura) ? c.abertura : "ao_vivo",
+    abertura_texto: String(c.abertura_texto ?? "").replace(/[\u0000-\u0008\u000b-\u001f<>]/g, " ").replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim().slice(0, 4000),
+    abertura_video: videoValido(c.abertura_video),
+    voz_teste: c.voz_teste === true,
     voz_id: uuid(c.voz_id) || null,
     pronuncia: pron,
   };
 }
+/** Vídeo de abertura guardado no bucket meet-media (o caminho é sempre do próprio Studio; o servidor é quem grava). */
+function videoValido(v: Any) {
+  if (!v || typeof v !== "object" || !/^abertura\/[0-9a-f-]{36}\/[A-Za-z0-9._-]{4,80}$/.test(String(v.path || ""))) return null;
+  return { path: String(v.path), duracao_ms: Math.min(Math.max(Math.round(Number(v.duracao_ms) || 0), 1000), 15 * 60_000), mime: /^video\/(webm|mp4)$/.test(String(v.mime)) ? String(v.mime) : "video/webm" };
+}
+const VIDEO_MAX = 100 * 1024 * 1024;
 /** Roteiro final que vai para a voz: aplica o dicionário de pronúncia (palavra inteira, sem diferenciar maiúsculas). */
 export function textoFalado(roteiro: string, pron: { de: string; para: string }[]) {
   let t = roteiro;
@@ -158,6 +169,8 @@ export async function studio(req: Request, b: Any, d: Deps) {
       const titulo = txt(b.titulo, 120) || content.titulo;
       content.titulo = titulo;
       const settings = limparConfig(b.settings);
+      settings.abertura_video = limparConfig(s.settings).abertura_video; // só as ações de abertura mudam o vídeo
+      if (settings.abertura === "video" && !settings.abertura_video) settings.abertura = "ao_vivo";
       if (settings.voz_id) {
         const { data: v } = await db.from("meet_voice_profiles").select("id").eq("id", settings.voz_id).eq("owner_id", s.owner_id).is("deleted_at", null).maybeSingle();
         if (!v) settings.voz_id = null; // só a voz do dono da apresentação
@@ -185,7 +198,7 @@ export async function studio(req: Request, b: Any, d: Deps) {
 
     case "studio_duplicar": {
       const s = await carregar(b.id);
-      const { data, error } = await db.from("meet_studio").insert({ client_id: s.client_id, owner_id: u.id, title: txt("Cópia de " + s.title, 120), settings: { ...s.settings, voz_id: s.owner_id === u.id ? s.settings?.voz_id ?? null : null },
+      const { data, error } = await db.from("meet_studio").insert({ client_id: s.client_id, owner_id: u.id, title: txt("Cópia de " + s.title, 120), settings: { ...s.settings, voz_id: s.owner_id === u.id ? s.settings?.voz_id ?? null : null, abertura_video: null, abertura: s.settings?.abertura === "video" ? "ao_vivo" : s.settings?.abertura },
         content: { ...s.content, titulo: txt("Cópia de " + s.title, 120) } }).select("id").single();
       if (error) throw new Erro("Não foi possível duplicar: " + error.message, 500);
       await audit(data.id, "duplicate", { de: s.id });
@@ -196,6 +209,8 @@ export async function studio(req: Request, b: Any, d: Deps) {
       const s = await carregar(b.id);
       const { data: ns } = await db.from("meet_narrations").select("audio_path").eq("studio_id", s.id);
       const paths = (ns || []).map((n: Any) => n.audio_path).filter(Boolean);
+      const vid = limparConfig(s.settings).abertura_video;
+      if (vid && !await videoEmUso(s.id, vid.path)) paths.push(vid.path);
       if (paths.length) await db.storage.from("meet-media").remove(paths);
       await db.from("meet_narrations").delete().eq("studio_id", s.id);
       await db.from("meet_studio").update({ deleted_at: new Date().toISOString() }).eq("id", s.id);
@@ -255,12 +270,63 @@ export async function studio(req: Request, b: Any, d: Deps) {
       return { ok: true, vozes: await minhasVozes() };
     }
 
+    case "abertura_upload_url": {
+      const s = await carregar(b.id);
+      const mime = String(b.mime || "").split(";")[0].trim().toLowerCase();
+      if (!/^video\/(webm|mp4)$/.test(mime)) throw new Erro("Formato de vídeo não aceito. Grave pelo Studio ou envie MP4/WebM.");
+      if (!(Number(b.tamanho) > 10_000)) throw new Erro("O vídeo está vazio.");
+      if (Number(b.tamanho) > VIDEO_MAX) throw new Erro("O vídeo passou de 100 MB. Grave uma introdução mais curta (até 5 minutos).");
+      const path = `abertura/${s.id}/${crypto.randomUUID()}.${mime === "video/mp4" ? "mp4" : "webm"}`;
+      const { data, error } = await db.storage.from("meet-media").createSignedUploadUrl(path);
+      if (error || !data) throw new Erro("Não foi possível preparar o envio: " + (error?.message || ""), 500);
+      return { path, url: data.signedUrl, token: data.token };
+    }
+    case "abertura_confirmar": {
+      const s = await carregar(b.id);
+      const v = videoValido({ path: b.path, duracao_ms: b.duracao_ms, mime: b.mime });
+      if (!v || !v.path.startsWith(`abertura/${s.id}/`)) throw new Erro("Envio inválido.");
+      const pasta = v.path.split("/").slice(0, 2).join("/"), nome = v.path.split("/")[2];
+      const { data: arq } = await db.storage.from("meet-media").list(pasta, { search: nome, limit: 1 });
+      if (!arq?.length) throw new Erro("O vídeo não chegou ao servidor. Tente enviar de novo.", 409);
+      const antigo = limparConfig(s.settings).abertura_video;
+      const settings = { ...s.settings, abertura_video: v, abertura: "video" };
+      const { data, error } = await db.from("meet_studio").update({ settings, version: s.version + 1, updated_at: new Date().toISOString() }).eq("id", s.id).eq("version", s.version).select("*").maybeSingle();
+      if (error || !data) { await db.storage.from("meet-media").remove([v.path]); throw new Erro("A apresentação mudou enquanto o vídeo era enviado. Envie de novo.", 409); }
+      if (antigo && antigo.path !== v.path && !await videoEmUso(s.id, antigo.path)) await db.storage.from("meet-media").remove([antigo.path]);
+      await audit(s.id, "intro_video", { duracao_ms: v.duracao_ms });
+      return { version: data.version, abertura_video: v };
+    }
+    case "abertura_url": {
+      const s = await carregar(b.id);
+      const v = limparConfig(s.settings).abertura_video;
+      if (!v) return { url: null };
+      const { data } = await db.storage.from("meet-media").createSignedUrl(v.path, 3600);
+      return { url: data?.signedUrl || null, duracao_ms: v.duracao_ms, mime: v.mime };
+    }
+    case "abertura_apagar": {
+      const s = await carregar(b.id);
+      const v = limparConfig(s.settings).abertura_video;
+      const settings = { ...s.settings, abertura_video: null, abertura: s.settings?.abertura === "video" ? "ao_vivo" : s.settings?.abertura };
+      const { data } = await db.from("meet_studio").update({ settings, version: s.version + 1 }).eq("id", s.id).eq("version", s.version).select("version").maybeSingle();
+      if (!data) throw new Erro("A apresentação mudou em outra janela. Recarregue.", 409);
+      if (v && !await videoEmUso(s.id, v.path)) await db.storage.from("meet-media").remove([v.path]);
+      await audit(s.id, "intro_delete", {});
+      return { version: data.version };
+    }
+
     case "narrar": return await narrar(await carregar(b.id));
     case "narracoes": { const s = await carregar(b.id); return { narracoes: await narracoesAtuais(s, true) }; }
   }
   throw new Erro("Ação desconhecida.");
 
   /* ---------------- helpers que usam o contexto ---------------- */
+  /** O vídeo continua em uso se uma versão publicada ou um webinar agendado ainda aponta para ele. */
+  async function videoEmUso(studioId: string, path: string) {
+    const [{ data: vs }, { data: ws }] = await Promise.all([
+      db.from("meet_studio_versions").select("id").eq("studio_id", studioId).eq("settings->abertura_video->>path", path).limit(1),
+      db.from("lw_webinars").select("id").eq("intro->>path", path).is("deleted_at", null).limit(1)]);
+    return !!(vs?.length || ws?.length);
+  }
   function publico(s: Any) {
     return { id: s.id, client_id: s.client_id, titulo: s.title, settings: limparConfig(s.settings), content: s.content, version: s.version, status: s.status,
       published_version: s.published_version, published_at: s.published_at, updated_at: s.updated_at, dono: s.owner_id === u.id };
@@ -339,7 +405,7 @@ export async function studio(req: Request, b: Any, d: Deps) {
 
   async function ia(s: Any) {
     if (!hubOn()) throw new Erro("A IA da Endeavor (HUB AI) não está configurada no servidor.", 503);
-    const modo = ["criar", "importar", "slide", "roteiro"].includes(b.modo) ? b.modo : "criar";
+    const modo = ["criar", "importar", "slide", "roteiro", "abertura"].includes(b.modo) ? b.modo : "criar";
     const cfg = limparConfig(b.settings ?? s.settings);
     let atual: Any = null;
     try { atual = validar(b.content ?? s.content); } catch { atual = null; }
@@ -350,6 +416,10 @@ export async function studio(req: Request, b: Any, d: Deps) {
       if (pedido.length < 5) throw new Erro("Descreva o assunto da apresentação.");
       partes.push(`<pedido>${pedido}</pedido>`);
       if (atual && atual.slides.length > 1) partes.push(`<apresentacao_atual>${JSON.stringify(atual)}</apresentacao_atual>`);
+    } else if (modo === "abertura") {
+      if (!atual) throw new Erro("Apresentação inválida.");
+      partes.push(`<apresentacao_atual>${JSON.stringify({ titulo: atual.titulo, slides: atual.slides.map((x: Any) => ({ titulo: x.titulo, itens: x.itens })) })}</apresentacao_atual>`,
+        `<pedido>${pedido || "Escreva a introdução que eu vou gravar na câmera."}</pedido>`);
     } else if (modo === "importar") {
       const paginas = (Array.isArray(b.paginas) ? b.paginas : []).slice(0, 30).map((p: Any, i: number) => ({ n: i + 1, texto: txt(p?.texto, 2500), notas: txt(p?.notas, 1500) })).filter((p: Any) => p.texto || p.notas);
       if (!paginas.length) throw new Erro("Não encontrei texto no arquivo. PDFs escaneados (só imagem) ainda não são lidos.");
@@ -364,13 +434,18 @@ export async function studio(req: Request, b: Any, d: Deps) {
     let j: Any;
     try {
       j = await hubJson({ agent: "presentation-studio", input: partes.join("\n"), userId: `meet-studio:${u.id}`, idempotencyKey: hubKey("studio", s.id, modo, Date.now()),
-        maxOutputTokens: modo === "roteiro" ? 2000 : modo === "slide" ? 3000 : 12000, timeoutMs: 140_000, meter: { agent: "presentation-studio", client_id: s.client_id } });
+        maxOutputTokens: modo === "roteiro" || modo === "abertura" ? 2000 : modo === "slide" ? 3000 : 12000, timeoutMs: 140_000, meter: { agent: "presentation-studio", client_id: s.client_id } });
     } catch (e) {
       console.error("studio ia", e);
       throw new Erro(e instanceof HubFail && e.kind === "limit" ? "O limite de uso da IA foi atingido. Fale com a Endeavor." : "A IA não conseguiu responder agora. Tente de novo em instantes.", 502);
     }
     await audit(s.id, "ai_" + modo, { pedido: pedido.slice(0, 200) });
     const mensagem = txt(j?.mensagem, 400) || "Pronto. Revise antes de salvar.";
+    if (modo === "abertura") {
+      const texto = String(j?.roteiro ?? j?.abertura ?? "").replace(/[<>]/g, " ").trim().slice(0, 4000);
+      if (!texto) throw new Erro("A IA não devolveu o texto. Tente de novo.", 502);
+      return { mensagem, texto, estimado_s: estimarSegundos(texto, cfg.ritmo) };
+    }
     if (modo === "roteiro") {
       const roteiro = txt(j?.roteiro, 3000);
       if (!roteiro) throw new Erro("A IA não devolveu um roteiro. Tente de novo.", 502);

@@ -79,3 +79,19 @@ Deno.test("core.js do servidor é cópia do navegador", async () => {
   const b = await Deno.readTextFile(new URL("../supabase/functions/webinar/core.js", import.meta.url)).catch(() => Deno.readTextFile(new URL("../supabase/webinar/core.js", import.meta.url)));
   eq(a === b, true, "supabase/webinar/core.js precisa ser cópia de webinar/core.js");
 });
+
+Deno.test("abertura gravada: os slides começam depois dela, e durante ela o slide é -1", () => {
+  const l = C.linhaDoTempo([{ id: "a", duracao: 10 }, { id: "b", duracao: 20 }], {}, "normal", 45000);
+  eq(l.map((x: { ini: number }) => x.ini), [45000, 55000]);
+  eq(C.total(l), 75000);
+  eq(C.slideNa(l, 12000), { i: -1, offset: 12000 }, "durante a abertura");
+  eq(C.slideNa(l, 50000), { i: 0, offset: 5000 });
+  eq(C.slideNa(linha, 0), { i: 0, offset: 0 }, "sem abertura, continua igual");
+});
+
+Deno.test("voz de teste: quem entra no meio do slide ouve o resto do roteiro", () => {
+  eq(C.restoDoRoteiro("um dois três quatro", 0, 4000), "um dois três quatro");
+  eq(C.restoDoRoteiro("um dois três quatro", 2000, 4000), "três quatro");
+  eq(C.restoDoRoteiro("um dois três quatro", 9000, 4000), "");
+  eq(limparSettings({ voz_teste: true }).voz_teste, true); eq(limparSettings({}).voz_teste, false);
+});

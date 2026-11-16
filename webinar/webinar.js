@@ -22,7 +22,7 @@
       assistindo: 'assistindo', chat: 'Chat', particular: 'Falar em particular', escreva: 'Escreva sua pergunta…', mandar: 'Enviar', chatFechado: 'O chat abre {n} minutos antes do início.',
       ia: 'IA', equipe: 'Equipe', faq: 'Pergunta frequente', iaResponde: 'Assistente (IA)', semIA: 'O assistente de IA está pausado; a equipe responde por aqui.',
       rodape: 'Apresentação pré-gravada com a voz autorizada do organizador · As respostas do chat são de um assistente de IA, acompanhado pela equipe.',
-      som: 'Clique para ativar o som', privIntro: 'Aqui a conversa é só entre você e a equipe (com a ajuda do assistente de IA). Para falar do seu caso ou marcar um horário, deixe seus contatos.',
+      som: 'Clique para ativar o som', rodapeTeste: 'Apresentação pré-gravada · Narração com voz sintética de TESTE do navegador (não é a voz do organizador) · As respostas do chat são de um assistente de IA, acompanhado pela equipe.', vozTeste: 'Voz de teste', abertura: 'Abertura', privIntro: 'Aqui a conversa é só entre você e a equipe (com a ajuda do assistente de IA). Para falar do seu caso ou marcar um horário, deixe seus contatos.',
       assunto: 'Sobre o que você quer conversar?', autorizo: 'Autorizo {empresa} a me contatar sobre este assunto e a guardar estes dados no seu CRM.', salvarContato: 'Enviar contatos',
       verHorarios: 'Escolher um horário', soLink: 'Prefiro receber o link por e-mail', tipo: 'Como prefere a conversa?', video: 'Vídeo', fone: 'Telefone', whatsapp: 'WhatsApp',
       foneObrig: 'Telefone com código do país (ex.: +1 407 555 0100)', confirmar: 'Confirmar horário', semHorarios: 'Não há horários livres nos próximos dias. Peça o link e escolha depois.',
@@ -35,7 +35,7 @@
       assistindo: 'watching', chat: 'Chat', particular: 'Talk privately', escreva: 'Type your question…', mandar: 'Send', chatFechado: 'Chat opens {n} minutes before the start.',
       ia: 'AI', equipe: 'Team', faq: 'Frequently asked', iaResponde: 'Assistant (AI)', semIA: 'The AI assistant is paused; the team answers here.',
       rodape: 'Pre-recorded presentation with the organizer\'s authorized voice · Chat answers come from an AI assistant, monitored by the team.',
-      som: 'Click to turn on the sound', privIntro: 'This conversation is only between you and the team (helped by the AI assistant). To talk about your case or book a time, leave your contact details.',
+      som: 'Click to turn on the sound', rodapeTeste: 'Pre-recorded presentation · Narration uses a synthetic TEST voice from your browser (not the organizer\'s voice) · Chat answers come from an AI assistant, monitored by the team.', vozTeste: 'Test voice', abertura: 'Opening', privIntro: 'This conversation is only between you and the team (helped by the AI assistant). To talk about your case or book a time, leave your contact details.',
       assunto: 'What would you like to talk about?', autorizo: 'I authorize {empresa} to contact me about this and to keep these details in its CRM.', salvarContato: 'Send details',
       verHorarios: 'Choose a time', soLink: 'Email me the booking link instead', tipo: 'How would you like to meet?', video: 'Video', fone: 'Phone', whatsapp: 'WhatsApp',
       foneObrig: 'Phone with country code (e.g. +1 407 555 0100)', confirmar: 'Confirm time', semHorarios: 'No open times in the next days. Ask for the link and pick later.',
@@ -48,7 +48,7 @@
       assistindo: 'mirando', chat: 'Chat', particular: 'Hablar en privado', escreva: 'Escriba su pregunta…', mandar: 'Enviar', chatFechado: 'El chat abre {n} minutos antes del inicio.',
       ia: 'IA', equipe: 'Equipo', faq: 'Pregunta frecuente', iaResponde: 'Asistente (IA)', semIA: 'El asistente de IA está en pausa; el equipo responde aquí.',
       rodape: 'Presentación pregrabada con la voz autorizada del organizador · Las respuestas del chat son de un asistente de IA, supervisado por el equipo.',
-      som: 'Haga clic para activar el sonido', privIntro: 'Esta conversación es solo entre usted y el equipo (con ayuda del asistente de IA). Para hablar de su caso o agendar, deje sus datos.',
+      som: 'Haga clic para activar el sonido', rodapeTeste: 'Presentación pregrabada · La narración usa una voz sintética de PRUEBA del navegador (no es la voz del organizador) · Las respuestas del chat son de un asistente de IA, supervisado por el equipo.', vozTeste: 'Voz de prueba', abertura: 'Apertura', privIntro: 'Esta conversación es solo entre usted y el equipo (con ayuda del asistente de IA). Para hablar de su caso o agendar, deje sus datos.',
       assunto: '¿De qué quiere hablar?', autorizo: 'Autorizo a {empresa} a contactarme sobre este tema y a guardar estos datos en su CRM.', salvarContato: 'Enviar datos',
       verHorarios: 'Elegir un horario', soLink: 'Prefiero recibir el enlace por correo', tipo: '¿Cómo prefiere la reunión?', video: 'Video', fone: 'Teléfono', whatsapp: 'WhatsApp',
       foneObrig: 'Teléfono con código de país (ej.: +1 407 555 0100)', confirmar: 'Confirmar horario', semHorarios: 'No hay horarios libres en los próximos días. Pida el enlace y elija después.',
@@ -135,15 +135,17 @@
     catch (e) { idiomaDe(); main.innerHTML = ''; main.appendChild(el('div', { class: 'portal-card lw-msg' }, [el('p', { text: e.status === 404 ? t('naoEncontrado') : e.message }), el('a', { class: 'btn btn--navy', href: 'webinar.html?w=' + encodeURIComponent(SLUG), text: t('inscrever') })])); return; }
     idiomaDe(E.idioma); document.title = E.titulo; document.body.classList.add('lw-escuro');
     if (E.cancelado) { main.innerHTML = ''; main.appendChild(el('div', { class: 'lw-msg', text: t('cancelado') })); return; }
-    var S = { offset: E.agora - Date.now(), w: { starts_at: E.starts_at, playback: E.playback || {} }, linha: C.linhaDoTempo(E.slides, E.narracao, E.ritmo),
-      estado: E.estado, desde: 0, desdePriv: 0, slide: -1, audio: null, somOk: false, ia: E.ia, contato: E.contato_ok, aba: 'chat', vistas: {}, n: 0,
+    var S = { offset: E.agora - Date.now(), w: { starts_at: E.starts_at, playback: E.playback || {} }, linha: C.linhaDoTempo(E.slides, E.narracao, E.ritmo, E.intro ? E.intro.duracao_ms : 0), video: null, falando: null,
+      estado: E.estado, desde: 0, desdePriv: 0, slide: null, audio: null, somOk: false, ia: E.ia, contato: E.contato_ok, aba: 'chat', vistas: {}, n: 0,
       sessao: (crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2) + Date.now()).replace(/-/g, '').slice(0, 32) };
     var abre = Date.parse(E.starts_at) - E.chat_abre_min * 60000;
 
     main.innerHTML = '';
     var selo = el('span', { class: 'lw-selo', id: 'lwSelo' }), conta = el('span', { class: 'lw-conta', id: 'lwConta', hidden: true });
     var palco = el('div', { class: 'lw-palco', id: 'lwPalco' }), leg = el('p', { class: 'lw-legenda', 'aria-live': 'off' });
-    var somBtn = el('button', { class: 'lw-som', type: 'button', hidden: true, onclick: function () { S.somOk = true; somBtn.hidden = true; sincronizar(true); } }, ['🔊 ' + t('som')]);
+    var somBtn = el('button', { class: 'lw-som', type: 'button', hidden: true, onclick: function () { S.somOk = true; somBtn.hidden = true; if (S.video) S.video.muted = false; S.falando = null; sincronizar(true); } }, ['🔊 ' + t('som')]);
+    var seloVoz = el('span', { class: 'lw-selo-voz', hidden: true, text: t('vozTeste') });
+    var temTeste = E.voz_teste && 'speechSynthesis' in window && E.slides.some(function (x) { return x.roteiro && !E.audios[x.id]; });
     var espera = el('div', { class: 'lw-espera', hidden: true });
     var abaChat = el('button', { type: 'button', role: 'tab', 'aria-selected': 'true', onclick: function () { trocarAba('chat'); } }, [t('chat')]);
     var abaPriv = el('button', { type: 'button', role: 'tab', 'aria-selected': 'false', onclick: function () { trocarAba('priv'); } }, [t('particular')]);
@@ -152,9 +154,9 @@
     var painelPub = el('div', { class: 'lw-painel' }, [listaPub, formPub]), painelPriv = el('div', { class: 'lw-painel', hidden: true }, [el('p', { class: 'lw-priv-intro', text: t('privIntro') }), listaPriv, el('div', { id: 'lwContato' }), formPriv]);
     main.appendChild(el('div', { class: 'lw-sala' }, [
       el('header', { class: 'lw-topo' }, [el('div', {}, [el('p', { class: 'lw-empresa', text: E.empresa }), el('h1', { text: E.titulo })]), el('div', { class: 'lw-topo-dir' }, [conta, selo])]),
-      el('section', { class: 'lw-video', 'aria-label': E.titulo }, [palco, espera, somBtn, leg]),
+      el('section', { class: 'lw-video', 'aria-label': E.titulo }, [palco, espera, somBtn, seloVoz, leg]),
       el('aside', { class: 'lw-chat' }, [el('div', { class: 'lw-abas', role: 'tablist' }, [abaChat, abaPriv]), painelPub, painelPriv]),
-      el('footer', { class: 'lw-rodape', text: t('rodape') })]));
+      el('footer', { class: 'lw-rodape', text: t(temTeste ? 'rodapeTeste' : 'rodape') })]));
     desenharContato();
 
     function trocarAba(a) {
@@ -269,21 +271,24 @@
         mostrarSlide(0, 0, false); espera.hidden = false; espera.textContent = t('comeca') + ' ' + falta(p.faltam); return;
       }
       espera.hidden = p.estado !== 'encerrado';
-      if (p.estado === 'encerrado') { espera.textContent = t('encerrado'); pararAudio(); leg.textContent = ''; return; }
+      if (p.estado === 'encerrado') { espera.textContent = t('encerrado'); pararAudio(); if (S.video) S.video.pause(); leg.textContent = ''; return; }
       var s = C.slideNa(S.linha, p.pos);
       mostrarSlide(s.i, s.offset, p.estado === 'ao_vivo', forcar);
     }
     function mostrarSlide(i, offset, tocando, forcar) {
+      if (i < 0) return mostrarAbertura(offset, tocando, forcar);
+      if (S.video) { S.video.pause(); S.video.removeAttribute('src'); S.video = null; }
       var sl = E.slides[i];
       if (S.slide !== i) {
-        S.slide = i; palco.innerHTML = '';
+        S.slide = i; palco.innerHTML = ''; calar();
         var no = NA.renderizar(NA.validar({ titulo: E.titulo, slides: [sl] }).slides[0], { numero: i + 1, total: E.slides.length });
         no.classList.add('lw-entra'); palco.appendChild(no);
         leg.textContent = sl.roteiro || '';
         pararAudio();
         if (E.audios[sl.id]) { S.audio = new Audio(E.audios[sl.id]); S.audio.preload = 'auto'; }
       }
-      var a = S.audio; if (!a) return;
+      var a = S.audio;
+      if (!a) { falarTeste(sl, i, offset, tocando); return; }
       if (!tocando) { if (!a.paused) a.pause(); return; }
       var alvo = offset / 1000;
       if (isFinite(a.duration) && alvo >= a.duration) { if (!a.paused) a.pause(); return; }
@@ -292,7 +297,43 @@
         if (a.paused) a.play().then(function () { somBtn.hidden = true; }).catch(function () { somBtn.hidden = false; });
       }
     }
-    function pararAudio() { if (S.audio) { S.audio.pause(); S.audio.removeAttribute('src'); S.audio = null; } }
+    function pararAudio() { if (S.audio) { S.audio.pause(); S.audio.removeAttribute('src'); S.audio = null; } calar(); }
+    /* vídeo de abertura gravado pelo organizador, sincronizado como o resto */
+    function mostrarAbertura(offset, tocando, forcar) {
+      if (S.slide !== -1) {
+        S.slide = -1; palco.innerHTML = ''; pararAudio(); leg.textContent = '';
+        S.video = el('video', { class: 'lw-intro', playsinline: true, preload: 'auto', src: E.intro.url });
+        palco.appendChild(S.video);
+      }
+      var v = S.video, alvo = offset / 1000;
+      if (!tocando) { if (!v.paused) v.pause(); return; }
+      if (isFinite(v.duration) && alvo >= v.duration) return;
+      if (forcar || v.paused || Math.abs(v.currentTime - alvo) > 1.5) {
+        try { v.currentTime = alvo; } catch (e) { }
+        if (v.paused) v.play().then(function () { if (!v.muted) somBtn.hidden = true; }).catch(function () {
+          // sem clique ainda: toca sem som e mostra o botão para ativar
+          v.muted = true; v.play().catch(function () { }); somBtn.hidden = false;
+        });
+      }
+    }
+    /* voz de teste do navegador (só quando o organizador ligou e o slide não tem narração gravada) */
+    function calar() { if (S.falando != null) { try { speechSynthesis.cancel(); } catch (e) { } S.falando = null; } seloVoz.hidden = true; }
+    function falarTeste(sl, i, offset, tocando) {
+      if (!temTeste || !sl.roteiro || E.audios[sl.id]) return;
+      if (!tocando) { calar(); return; }
+      if (!S.somOk) { somBtn.hidden = false; return; }
+      if (S.falando === i) return;
+      var it = S.linha[i], resto = C.restoDoRoteiro(sl.roteiro, offset, it ? it.dur : 0);
+      if (!resto) return;
+      try {
+        speechSynthesis.cancel();
+        var u = new SpeechSynthesisUtterance(resto); u.lang = document.documentElement.lang === 'en' ? 'en-US' : document.documentElement.lang === 'es' ? 'es-ES' : 'pt-BR';
+        u.rate = E.ritmo === 'rapido' ? 1.1 : E.ritmo === 'calmo' ? 0.9 : 1;
+        var vs = speechSynthesis.getVoices() || [], vz = vs.find(function (v) { return v.lang.toLowerCase() === u.lang.toLowerCase(); }) || vs.find(function (v) { return v.lang.toLowerCase().indexOf(u.lang.slice(0, 2)) === 0; });
+        if (vz) u.voice = vz;
+        speechSynthesis.speak(u); S.falando = i; seloVoz.hidden = false;
+      } catch (e) { }
+    }
 
     /* ----- servidor: estado, chat e presença ----- */
     async function estado() {

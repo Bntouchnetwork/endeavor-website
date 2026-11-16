@@ -15,9 +15,10 @@
     return n ? Math.max(3, Math.round(n / (PPM[ritmo] || 150) * 60)) : 0;
   }
 
-  /** slides: [{id, duracao?, roteiro?}]; narr: {slide_id: {duracao_ms}} -> [{i, id, ini, dur}] em ms */
-  function linhaDoTempo(slides, narr, ritmo) {
-    var t = 0;
+  /** slides: [{id, duracao?, roteiro?}]; narr: {slide_id: {duracao_ms}}; introMs: vídeo de abertura antes do 1º slide
+   *  -> [{i, id, ini, dur}] em ms (com abertura, o primeiro slide começa depois dela) */
+  function linhaDoTempo(slides, narr, ritmo, introMs) {
+    var t = Math.max(0, Math.round(Number(introMs) || 0));
     return (slides || []).map(function (s, i) {
       var n = narr && narr[s.id];
       var dur = n && n.duracao_ms ? Math.max(n.duracao_ms + 600, 3000)
@@ -39,9 +40,17 @@
     if (pos >= tot) return { estado: 'encerrado', pos: tot };
     return { estado: pb.pausado_em ? 'pausado' : 'ao_vivo', pos: pos };
   }
+  /** Slide no ponto pos. i = -1 enquanto toca o vídeo de abertura (offset = posição dentro do vídeo). */
   function slideNa(linha, pos) {
     for (var k = linha.length - 1; k >= 0; k--) if (pos >= linha[k].ini) return { i: k, offset: pos - linha[k].ini };
-    return { i: 0, offset: 0 };
+    return linha.length && linha[0].ini > 0 ? { i: -1, offset: Math.max(0, pos) } : { i: 0, offset: 0 };
+  }
+  /** Voz de teste do navegador: a parte do roteiro que ainda falta falar, para quem entra no meio do slide. */
+  function restoDoRoteiro(roteiro, offsetMs, durMs) {
+    var p = String(roteiro || '').split(/\s+/).filter(Boolean);
+    if (!p.length || !durMs || offsetMs <= 0) return p.join(' ');
+    var k = Math.floor(p.length * Math.min(offsetMs / durMs, 1));
+    return p.slice(k).join(' ');
   }
 
   /** Contador real: só aparece quando o número de pessoas assistindo chega ao mínimo escolhido. */
@@ -81,7 +90,7 @@
     return out.sort(function (a, b) { return a.em - b.em; });
   }
 
-  var api = { estimarSegundos: estimarSegundos, linhaDoTempo: linhaDoTempo, total: total, posicao: posicao, slideNa: slideNa,
+  var api = { estimarSegundos: estimarSegundos, linhaDoTempo: linhaDoTempo, total: total, posicao: posicao, slideNa: slideNa, restoDoRoteiro: restoDoRoteiro,
     contadorVisivel: contadorVisivel, mascararDados: mascararDados, programadas: programadas };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   raiz.EWebinarCore = api;

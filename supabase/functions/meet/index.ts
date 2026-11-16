@@ -415,7 +415,7 @@ Deno.serve(async (req) => {
       case "doc_arquivo_url": return json(await arquivoPedido(req, b));
       case "studio_status": case "studio_listar": case "studio_criar": case "studio_obter": case "studio_salvar": case "studio_ia":
       case "studio_publicar": case "studio_duplicar": case "studio_apagar": case "voz_listar": case "voz_criar": case "voz_apagar":
-      case "narrar": case "narracoes":
+      case "narrar": case "narracoes": case "abertura_upload_url": case "abertura_confirmar": case "abertura_url": case "abertura_apagar":
         return json(await studio(req, b, { db, usuario, papelNoCliente, acesso, Erro }));
       default: return json(await acaoAnfitriao(req, b));
     }

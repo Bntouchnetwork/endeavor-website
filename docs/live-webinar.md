@@ -33,6 +33,8 @@ Ferramenta separada do Web Meeting, com menu próprio (**Live Webinar**) no admi
   - a narração de cada slide toca a partir desse ponto, com legenda do roteiro;
   - os slides sem narração passam no tempo do roteiro;
   - se o navegador bloquear o som, aparece o botão "Clique para ativar o som".
+- **Abertura:** se a apresentação tem uma introdução gravada no Studio (câmera com teleprompter), ela toca antes do primeiro slide, sincronizada como o resto. Quem chega atrasado entra no ponto certo do vídeo.
+- **Voz de teste:** se estiver ligada (no Studio ou em Configurar › Abertura e voz), os slides sem narração gravada são lidos pela voz do navegador. O público vê o selo "Voz de teste", e o rodapé avisa que é uma voz sintética de teste, que não é a do organizador. O navegador pede um clique em "Ativar o som" antes de falar.
 - **Contador:** mostra sempre o número **real** de pessoas assistindo, e só a partir do mínimo que você escolher. Abaixo disso, fica escondido.
 - **Chat aberto:**
   - só pessoas reais escrevem como participantes;

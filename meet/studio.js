@@ -135,7 +135,7 @@
     window.addEventListener('beforeunload', antesSair);
     function fechar() {
       if (S.sujo && !confirm('Há alterações não salvas. Sair mesmo assim?')) return;
-      pararPrevia(); pararGravacao();
+      pararPrevia(); pararGravacao(); fecharGravador();
       window.removeEventListener('beforeunload', antesSair); document.removeEventListener('keydown', teclas);
       raiz.remove(); document.body.classList.remove('std-aberto');
       if (op.aoFechar) op.aoFechar();
@@ -190,7 +190,7 @@
       var lista = el('nav', { class: 'std-lista', id: 'stdLista', 'aria-label': 'Slides' });
       var centro = el('main', { class: 'std-centro' }, [el('div', { class: 'std-palco', id: 'stdPalco' }), el('section', { class: 'std-form', id: 'stdForm', 'aria-label': 'Conteúdo do slide' })]);
       var lado = el('aside', { class: 'std-lado' }, [
-        el('div', { class: 'std-abas', role: 'tablist' }, [['roteiro', 'Roteiro'], ['ia', 'Criar com IA'], ['config', 'Configurações'], ['voz', 'Voz']].map(function (a) {
+        el('div', { class: 'std-abas', role: 'tablist' }, [['roteiro', 'Roteiro'], ['ia', 'Criar com IA'], ['abertura', 'Abertura'], ['config', 'Configurações'], ['voz', 'Voz']].map(function (a) {
           return el('button', { type: 'button', role: 'tab', 'data-aba': a[0], 'aria-selected': S.aba === a[0] ? 'true' : 'false', onclick: function () { S.aba = a[0]; desenharLado(); } }, [a[1]]);
         })),
         el('div', { class: 'std-lado-corpo', id: 'stdLado', role: 'tabpanel' })]);
@@ -319,7 +319,7 @@
     function desenharLado() {
       raiz.querySelectorAll('.std-abas [data-aba]').forEach(function (b) { b.setAttribute('aria-selected', b.dataset.aba === S.aba ? 'true' : 'false'); });
       var c = raiz.querySelector('#stdLado'); c.innerHTML = '';
-      ({ roteiro: ladoRoteiro, ia: ladoIA, config: ladoConfig, voz: ladoVoz })[S.aba](c);
+      ({ roteiro: ladoRoteiro, ia: ladoIA, abertura: ladoAbertura, config: ladoConfig, voz: ladoVoz })[S.aba](c);
     }
     function ladoRoteiro(c) {
       var sl = slideAtual(), n = S.narr[sl.id] || {};
@@ -376,7 +376,7 @@
       c.appendChild(campo('Público', el('input', { value: cfg.publico || '', maxlength: '160', placeholder: 'Ex.: empreendedores brasileiros', oninput: muda('publico') })));
       c.appendChild(el('div', { class: 'std-duas' }, [
         campo('Transição', el('select', { onchange: muda('transicao') }, [['suave', 'Suave'], ['corte', 'Corte seco']].map(function (x) { return el('option', { value: x[0], selected: cfg.transicao === x[0] }, [x[1]]); }))),
-        campo('Abertura', el('select', { onchange: muda('abertura') }, [['ao_vivo', 'Eu abro ao vivo'], ['nenhuma', 'Sem abertura']].map(function (x) { return el('option', { value: x[0], selected: cfg.abertura === x[0] }, [x[1]]); })))]));
+        campo('Abertura', el('button', { type: 'button', class: 'btn btn--ghost btn--sm', onclick: function () { S.aba = 'abertura'; desenharLado(); } }, ['Ver a aba Abertura']))]));
       var leg = el('input', { type: 'checkbox', checked: cfg.legendas, onchange: function () { cfg.legendas = this.checked; mudou(); } });
       c.appendChild(el('label', { class: 'std-check' }, [leg, ' Mostrar legenda do roteiro durante a narração']));
       var pr = el('textarea', { rows: '4', placeholder: 'LLC = éle éle cê\nEIN = í ai én', oninput: function () { cfg.pronuncia = linhas(this.value, 50, 200).map(function (x) { var m = x.split('='); return m.length > 1 ? { de: m[0].trim().slice(0, 60), para: m.slice(1).join('=').trim().slice(0, 120) } : null; }).filter(function (x) { return x && x.de && x.para; }); mudou(); } },
@@ -391,6 +391,10 @@
     }
     function ladoVoz(c) {
       c.appendChild(el('h3', { text: 'Minha voz' }));
+      var vt = el('input', { type: 'checkbox', checked: S.settings.voz_teste, onchange: function () { S.settings.voz_teste = this.checked; mudou(); } });
+      c.appendChild(el('div', { class: 'std-caixa' }, [el('h4', { text: 'Voz de teste' }),
+        el('label', { class: 'std-check' }, [vt, ' Usar a voz do navegador nos slides sem narração, na prévia e no webinar']),
+        el('p', { class: 'std-dica', text: 'Serve para ouvir o tom e o ritmo antes de gravar a sua voz. É uma voz sintética do próprio navegador (muda de computador para computador), e o público vê o aviso “voz de teste”. Quando a sua narração estiver pronta, ela tem prioridade.' })]));
       if (!S.cap.voz) c.appendChild(el('p', { class: 'std-aviso erro', text: 'A voz ainda não está ligada no HUB AI. Um administrador precisa conectar o ElevenLabs em AI Providers e testar a conexão. Você pode preparar o roteiro normalmente enquanto isso.' }));
       if (!S.dono) c.appendChild(el('p', { class: 'std-dica', text: 'Esta apresentação é de outra pessoa da equipe: só ela pode narrá-la com a própria voz.' }));
       var sel = el('select', { disabled: !S.dono, onchange: function () { S.settings.voz_id = this.value || null; mudou(); desenharLado(); } }, [el('option', { value: '', text: 'Nenhuma (sem narração)' })].concat(S.vozes.filter(function (v) { return v.status === 'ready'; }).map(function (v) { return el('option', { value: v.id, selected: S.settings.voz_id === v.id }, [v.name]); })));
@@ -595,6 +599,7 @@
       if (!P) return;
       P.parado = true; clearTimeout(P.t); clearInterval(P.tick);
       if (P.audio) { P.audio.onerror = P.audio.onended = null; P.audio.pause(); P.audio.removeAttribute('src'); }
+      if (P.video) { P.video.onended = null; P.video.pause(); P.video.removeAttribute('src'); }
       try { speechSynthesis.cancel(); } catch (e) { }
       if (P.no && P.no.isConnected) P.no.remove();
       P = null;
@@ -603,17 +608,19 @@
       pararPrevia();
       var links = {};
       if (!S.sujo) { try { var j = await call({ acao: 'narracoes', id: S.id }); j.narracoes.forEach(function (n) { S.narr[n.slide_id] = n; if (n.url) links[n.slide_id] = n.url; }); } catch (e) { } }
-      P = { i: inicio || 0, parado: false, pausa: false, navegador: false, viuTudo: false, inicio: inicio || 0 };
+      var intro = null;
+      if (!soUm && !inicio && S.settings.abertura === 'video' && S.settings.abertura_video) { try { var ja = await call({ acao: 'abertura_url', id: S.id }); if (ja.url) intro = ja.url; } catch (e) { } }
+      P = { i: intro ? -1 : (inicio || 0), parado: false, pausa: false, navegador: !!S.settings.voz_teste, viuTudo: false, inicio: inicio || 0 };
       var tela = el('div', { class: 'std-tela' }), leg = el('div', { class: 'std-legenda', 'aria-live': 'off' }), barra = el('div', { class: 'std-prog' }, [el('i')]);
       var rot = el('span', { class: 'std-previa-info' });
-      var voz = el('label', { class: 'std-check claro' }, [el('input', { type: 'checkbox', onchange: function () { P.navegador = this.checked; tocar(); } }), ' Ler sem narração com a voz do navegador (só para a prévia; não é a sua voz)']);
+      var voz = el('label', { class: 'std-check claro' }, [el('input', { type: 'checkbox', checked: P.navegador, onchange: function () { P.navegador = this.checked; if (P.i >= 0) tocar(); } }), ' Voz de teste do navegador nos slides sem narração (não é a sua voz)']);
       var semAudio = slides().some(function (sl) { return sl.roteiro && !links[sl.id]; });
       P.no = el('div', { class: 'std-previa', role: 'dialog', 'aria-label': 'Prévia da apresentação' }, [
         el('div', { class: 'std-previa-topo' }, [rot, semAudio && 'speechSynthesis' in window ? voz : null, el('button', { class: 'std-fechar', type: 'button', 'aria-label': 'Fechar prévia', onclick: pararPrevia }, ['×'])]),
         tela, leg, barra,
         el('div', { class: 'std-previa-ctl' }, [
           el('button', { type: 'button', 'aria-label': 'Slide anterior', onclick: function () { ir(P.i - 1); } }, ['⏮']),
-          el('button', { type: 'button', id: 'stdPlay', 'aria-label': 'Pausar', onclick: function () { P.pausa = !P.pausa; this.textContent = P.pausa ? '▶' : '⏸'; this.setAttribute('aria-label', P.pausa ? 'Continuar' : 'Pausar'); if (P.audio) { if (P.pausa) P.audio.pause(); else P.audio.play().catch(function () { }); } if (P.pausa) { try { speechSynthesis.pause(); } catch (e) { } } else { try { speechSynthesis.resume(); } catch (e) { } } } }, ['⏸']),
+          el('button', { type: 'button', id: 'stdPlay', 'aria-label': 'Pausar', onclick: function () { P.pausa = !P.pausa; this.textContent = P.pausa ? '▶' : '⏸'; this.setAttribute('aria-label', P.pausa ? 'Continuar' : 'Pausar'); if (P.video) { if (P.pausa) P.video.pause(); else P.video.play().catch(function () { }); } if (P.audio) { if (P.pausa) P.audio.pause(); else P.audio.play().catch(function () { }); } if (P.pausa) { try { speechSynthesis.pause(); } catch (e) { } } else { try { speechSynthesis.resume(); } catch (e) { } } } }, ['⏸']),
           el('button', { type: 'button', 'aria-label': 'Próximo slide', onclick: function () { ir(P.i + 1); } }, ['⏭'])])]);
       raiz.appendChild(P.no);
       P.no.querySelector('.std-fechar').focus();
@@ -630,15 +637,27 @@
         if (!P || P.parado) return;
         clearTimeout(P.t); clearInterval(P.tick);
         if (P.audio) { P.audio.onerror = P.audio.onended = null; P.audio.pause(); P.audio = null; }
+        if (P.video) { P.video.onended = null; P.video.pause(); P.video = null; }
         try { speechSynthesis.cancel(); } catch (e) { }
-        var sl = slides()[P.i];
         tela.innerHTML = '';
+        if (P.i < 0) {
+          // vídeo de abertura gravado: toca antes do primeiro slide
+          P.video = el('video', { class: 'std-intro', playsinline: true, src: intro });
+          P.video.onended = function () { if (P) ir(0); };
+          P.video.onerror = function () { if (P) { rot.textContent = 'O vídeo de abertura não carregou'; ir(0); } };
+          P.video.ontimeupdate = function () { if (P && P.video && isFinite(P.video.duration)) barra.firstChild.style.width = Math.min(100, (P.video.currentTime / P.video.duration) / (slides().length + 1) * 100) + '%'; };
+          tela.appendChild(P.video); leg.textContent = '';
+          rot.textContent = 'Abertura · vídeo gravado';
+          P.video.play().catch(function () { rot.textContent += ' · clique em ▶ para tocar'; P.pausa = true; });
+          return;
+        }
+        var sl = slides()[P.i];
         var no = NA.renderizar(NA.validar({ titulo: S.titulo, slides: [sl] }).slides[0], { numero: P.i + 1, total: slides().length });
         if (S.settings.transicao === 'suave') no.classList.add('std-entra');
         tela.appendChild(no);
         leg.textContent = S.settings.legendas ? (sl.roteiro || '') : '';
         var url = links[sl.id];
-        rot.textContent = 'Slide ' + (P.i + 1) + ' de ' + slides().length + ' · ' + (url ? 'narração com a sua voz' : P.navegador && sl.roteiro ? 'voz do navegador (prévia)' : sl.roteiro ? 'sem narração: tempo estimado' : 'sem roteiro');
+        rot.textContent = 'Slide ' + (P.i + 1) + ' de ' + slides().length + ' · ' + (url ? 'narração com a sua voz' : P.navegador && sl.roteiro ? 'voz de teste do navegador (não é a sua voz)' : sl.roteiro ? 'sem narração: tempo estimado' : 'sem roteiro');
         var dur = (sl.duracao || estimar(sl.roteiro, S.settings.ritmo) || 6) * 1000, t0 = Date.now();
         var prog = function (fr) { barra.firstChild.style.width = Math.min(100, ((P.i + Math.min(fr, 1)) / slides().length) * 100) + '%'; };
         if (url) {
@@ -649,6 +668,7 @@
           P.audio.play().catch(function () { rot.textContent += ' · clique em ▶ para tocar'; P.pausa = true; });
         } else if (P.navegador && sl.roteiro && 'speechSynthesis' in window) {
           var u = new SpeechSynthesisUtterance(sl.roteiro); u.lang = S.settings.idioma; u.rate = S.settings.ritmo === 'rapido' ? 1.1 : S.settings.ritmo === 'calmo' ? 0.9 : 1;
+          var vz = vozDoNavegador(S.settings.idioma); if (vz) u.voice = vz;
           u.onend = function () { if (P && !P.parado) ir(P.i + 1); };
           speechSynthesis.speak(u);
           P.tick = setInterval(function () { prog((Date.now() - t0) / dur); }, 200);
@@ -659,6 +679,140 @@
       }
       tocar();
     }
+    /* ---------- abertura: texto do teleprompter, gravação pela câmera e vídeo ---------- */
+    function ladoAbertura(c) {
+      var cfg = S.settings;
+      c.appendChild(el('h3', { text: 'Abertura' }));
+      c.appendChild(el('p', { class: 'std-dica', text: 'Grave uma introdução com a sua câmera, lendo o texto no teleprompter. Ela toca antes do primeiro slide, na prévia e no webinar.' }));
+      c.appendChild(campo('Como o webinar começa', el('select', { onchange: function () { cfg.abertura = this.value; mudou(); desenharLado(); } },
+        [['video', 'Com a minha introdução gravada'], ['ao_vivo', 'Eu abro ao vivo'], ['nenhuma', 'Direto nos slides']].map(function (x) { return el('option', { value: x[0], selected: cfg.abertura === x[0], disabled: x[0] === 'video' && !cfg.abertura_video }, [x[1] + (x[0] === 'video' && !cfg.abertura_video ? ' (grave primeiro)' : '')]); }))));
+      var info = el('p', { class: 'std-dica' });
+      var conta = function () { info.textContent = palavras(cfg.abertura_texto) + ' palavras · cerca de ' + mmss(estimar(cfg.abertura_texto, cfg.ritmo)) + ' de fala.'; };
+      var ta = el('textarea', { rows: '9', maxlength: '4000', class: 'std-roteiro', placeholder: 'Escreva, cole ou gere com IA o texto que você vai ler. Ele aparece rolando na tela durante a gravação.',
+        oninput: function () { cfg.abertura_texto = this.value; conta(); mudou(); } }, [cfg.abertura_texto || '']);
+      c.appendChild(campo('Texto do teleprompter', ta)); c.appendChild(info); conta();
+      c.appendChild(el('div', { class: 'std-linha-botoes' }, [
+        el('button', { class: 'btn btn--ghost btn--sm', type: 'button', disabled: !S.cap.texto, onclick: function () { escreverAbertura(ta, this); } }, ['✦ Escrever com IA']),
+        el('button', { class: 'btn btn--navy btn--sm', type: 'button', onclick: gravarIntro }, ['● Gravar introdução'])]));
+      var box = el('div', { class: 'std-caixa' }, [el('h4', { text: 'Vídeo de abertura' })]);
+      if (cfg.abertura_video) {
+        var v = el('video', { controls: true, playsinline: true, class: 'std-intro-mini', preload: 'metadata' });
+        call({ acao: 'abertura_url', id: S.id }).then(function (j) { if (j.url) v.src = j.url; }, function () { });
+        box.appendChild(v);
+        box.appendChild(el('p', { class: 'std-dica', text: 'Duração: ' + mmss(cfg.abertura_video.duracao_ms / 1000) + (cfg.abertura === 'video' ? ' · toca antes do primeiro slide' : ' · não está em uso (escolha “Com a minha introdução gravada”)') }));
+        box.appendChild(el('div', { class: 'std-linha-botoes' }, [el('button', { class: 'btn btn--ghost btn--xs', type: 'button', onclick: gravarIntro }, ['Regravar']),
+          el('button', { class: 'btn btn--ghost btn--xs', type: 'button', onclick: function () { apagarIntro(this); } }, ['Apagar vídeo'])]));
+      } else box.appendChild(el('p', { class: 'std-dica', text: 'Nenhum vídeo ainda.' }));
+      var arq = el('input', { type: 'file', accept: 'video/mp4,video/webm' });
+      arq.onchange = async function () {
+        var f = arq.files[0]; if (!f) return;
+        var ms = await duracaoVideo(f);
+        enviarIntro(f, ms, f.type || 'video/mp4');
+      };
+      box.appendChild(campo('Ou envie um vídeo seu (MP4 ou WebM, até 100 MB)', arq));
+      c.appendChild(box);
+    }
+    function escreverAbertura(ta, btn) {
+      if (S.settings.abertura_texto && !confirm('Substituir o texto atual do teleprompter?')) return;
+      ocupar(async function () {
+        var j = await call({ acao: 'studio_ia', id: S.id, modo: 'abertura', settings: S.settings, content: S.content });
+        S.settings.abertura_texto = j.texto; mudou(); desenharLado(); aviso('Texto da abertura pronto. Revise antes de gravar.', 'ok');
+      }, btn, 'Escrevendo…');
+    }
+    async function apagarIntro(btn) {
+      if (!confirm('Apagar o vídeo de abertura?')) return;
+      btn.disabled = true;
+      try { var j = await call({ acao: 'abertura_apagar', id: S.id }); S.version = j.version; S.settings.abertura_video = null; if (S.settings.abertura === 'video') S.settings.abertura = 'ao_vivo'; atualizarBarra(); desenharLado(); aviso('Vídeo apagado.', 'ok'); }
+      catch (e) { btn.disabled = false; aviso(e.message, 'erro'); }
+    }
+    async function enviarIntro(blob, ms, mime) {
+      mime = String(mime || 'video/webm').split(';')[0];
+      if (blob.size > 100 * 1024 * 1024) return aviso('O vídeo passou de 100 MB. Grave uma introdução mais curta.', 'erro');
+      aviso('Enviando o vídeo… não feche esta janela.', 'ok');
+      try {
+        var u = await call({ acao: 'abertura_upload_url', id: S.id, mime: mime, tamanho: blob.size });
+        var up = await ctx.sb.storage.from('meet-media').uploadToSignedUrl(u.path, u.token, blob, { contentType: mime });
+        if (up.error) throw new Error('O envio falhou: ' + up.error.message);
+        var j = await call({ acao: 'abertura_confirmar', id: S.id, path: u.path, duracao_ms: Math.round(ms), mime: mime });
+        S.version = j.version; S.settings.abertura_video = j.abertura_video; S.settings.abertura = 'video';
+        S.aba = 'abertura'; atualizarBarra(); desenharLado(); desenharLinha(); aviso('Introdução salva. Ela toca antes do primeiro slide.', 'ok');
+        return true;
+      } catch (e) { aviso(e.message, 'erro'); return false; }
+    }
+
+    var R = null; // gravador da introdução
+    function pararCamera() { if (R) { cancelAnimationFrame(R.raf); clearInterval(R.timer); clearInterval(R.contagem); try { if (R.rec && R.rec.state !== 'inactive') R.rec.stop(); } catch (e) { } if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); }); } }
+    function fecharGravador() { pararCamera(); if (R && R.no) R.no.remove(); R = null; }
+    async function gravarIntro() {
+      fecharGravador();
+      var cfg = S.settings, vel = 40, fonte = 40;
+      try { var pref = JSON.parse(localStorage.getItem('std-prompter') || '{}'); vel = pref.vel || vel; fonte = pref.fonte || fonte; } catch (e) { }
+      R = { estado: 'pronto', partes: [], blob: null, ms: 0 };
+      var cam = el('video', { class: 'std-grav-cam', autoplay: true, muted: true, playsinline: true });
+      var texto = el('div', { class: 'std-prompter-texto', style: 'font-size:' + fonte + 'px' }, [cfg.abertura_texto || 'Escreva o texto do teleprompter na aba Abertura (ou gere com IA) e ele aparece aqui.']);
+      var prompter = el('div', { class: 'std-prompter', 'aria-live': 'off' }, [el('div', { class: 'std-prompter-guia' }), texto]);
+      var contagem = el('div', { class: 'std-contagem', hidden: true });
+      var tempo = el('span', { class: 'std-grav-tempo', text: '0:00' });
+      var rev = el('video', { class: 'std-grav-rev', controls: true, playsinline: true, hidden: true });
+      var msg = el('p', { class: 'std-grav-msg', role: 'status' });
+      var sVel = el('input', { type: 'range', min: '10', max: '140', step: '5', value: String(vel), 'aria-label': 'Velocidade do texto', oninput: function () { vel = Number(this.value); salvarPref(); } });
+      var sFonte = el('input', { type: 'range', min: '22', max: '72', step: '2', value: String(fonte), 'aria-label': 'Tamanho da letra', oninput: function () { fonte = Number(this.value); texto.style.fontSize = fonte + 'px'; salvarPref(); } });
+      function salvarPref() { try { localStorage.setItem('std-prompter', JSON.stringify({ vel: vel, fonte: fonte })); } catch (e) { } }
+      var bGravar = el('button', { class: 'std-grav-rec', type: 'button', onclick: comecar }, ['● Gravar']);
+      var bParar = el('button', { class: 'std-grav-rec parar', type: 'button', hidden: true, onclick: parar }, ['■ Parar']);
+      var bTexto = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { R.pausaTexto = !R.pausaTexto; this.textContent = R.pausaTexto ? '▶ Rolar texto' : '❚❚ Pausar texto'; } }, ['❚❚ Pausar texto']);
+      var bTopo = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { prompter.scrollTop = 0; } }, ['↑ Início do texto']);
+      var bRegravar = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', hidden: true, onclick: function () { rev.hidden = true; rev.removeAttribute('src'); cam.hidden = false; prompter.hidden = false; bUsar.hidden = bRegravar.hidden = true; bGravar.hidden = false; prompter.scrollTop = 0; tempo.textContent = '0:00'; msg.textContent = ''; ligarCamera(); } }, ['↺ Regravar']);
+      var bUsar = el('button', { class: 'btn btn--gold btn--sm', type: 'button', hidden: true, onclick: async function () { bUsar.disabled = bRegravar.disabled = true; msg.textContent = 'Enviando…'; var ok = await enviarIntro(R.blob, R.ms, R.blob.type); if (ok) fecharGravador(); else { bUsar.disabled = bRegravar.disabled = false; msg.textContent = 'Não foi possível enviar. Tente de novo.'; } } }, ['Usar esta gravação']);
+      R.no = el('div', { class: 'std-grav', role: 'dialog', 'aria-label': 'Gravar introdução' }, [
+        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), tempo, el('button', { class: 'std-fechar', type: 'button', 'aria-label': 'Fechar', onclick: function () { if (R && R.estado === 'gravando' && !confirm('Parar e descartar a gravação?')) return; fecharGravador(); } }, ['×'])]),
+        el('div', { class: 'std-grav-palco' }, [cam, prompter, contagem, rev]),
+        msg,
+        el('div', { class: 'std-grav-ctl' }, [
+          el('label', { class: 'std-grav-ajuste' }, ['Velocidade', sVel]), el('label', { class: 'std-grav-ajuste' }, ['Letra', sFonte]),
+          bTopo, bTexto, bGravar, bParar, bRegravar, bUsar])]);
+      raiz.appendChild(R.no);
+      R.no.addEventListener('keydown', function (e) { if (e.key === ' ' && e.target === R.no) { e.preventDefault(); bTexto.click(); } });
+      async function ligarCamera() {
+        try {
+          R.stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: { echoCancellation: true, noiseSuppression: true } });
+          cam.srcObject = R.stream; msg.textContent = 'Ajuste a velocidade e o tamanho da letra. Clique em Gravar: depois de 3 segundos o texto começa a rolar.';
+        } catch (e) { msg.textContent = 'Não foi possível usar a câmera e o microfone: ' + e.message; bGravar.disabled = true; }
+      }
+      await ligarCamera();
+      function rolar() {
+        var ult = performance.now();
+        (function passo(agora) {
+          if (!R || R.estado !== 'gravando') return;
+          if (!R.pausaTexto) prompter.scrollTop += vel * (agora - ult) / 1000;
+          ult = agora; R.raf = requestAnimationFrame(passo);
+        })(ult);
+      }
+      function comecar() {
+        if (!R.stream) return;
+        bGravar.hidden = true; contagem.hidden = false; var n = 3; contagem.textContent = n; prompter.scrollTop = 0;
+        R.contagem = setInterval(function () {
+          n--; if (n > 0) { contagem.textContent = n; return; }
+          clearInterval(R.contagem); contagem.hidden = true;
+          var mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'].find(function (m) { return window.MediaRecorder && MediaRecorder.isTypeSupported(m); }) || '';
+          R.partes = [];
+          R.rec = new MediaRecorder(R.stream, mime ? { mimeType: mime, videoBitsPerSecond: 1200000, audioBitsPerSecond: 96000 } : undefined);
+          R.rec.ondataavailable = function (e) { if (e.data.size) R.partes.push(e.data); };
+          R.rec.onstop = function () {
+            R.ms = Date.now() - R.ini; R.estado = 'revisar';
+            R.blob = new Blob(R.partes, { type: (R.rec.mimeType || mime || 'video/webm').split(';')[0] });
+            if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); }); R.stream = null;
+            cam.hidden = true; prompter.hidden = true; rev.hidden = false; rev.src = URL.createObjectURL(R.blob);
+            bParar.hidden = true; bRegravar.hidden = false; bUsar.hidden = R.ms < 3000;
+            msg.textContent = R.ms < 3000 ? 'A gravação ficou curta demais. Regrave.' : 'Assista à gravação. Se gostou, clique em “Usar esta gravação”; senão, regrave.';
+          };
+          R.rec.start(1000); R.ini = Date.now(); R.estado = 'gravando'; bParar.hidden = false; msg.textContent = 'Gravando… (até 5 minutos). Espaço pausa o texto.';
+          R.timer = setInterval(function () { var s = (Date.now() - R.ini) / 1000; tempo.textContent = '● ' + mmss(s); if (s >= 300) parar(); }, 250);
+          rolar(); R.no.focus && R.no.setAttribute('tabindex', '-1'); R.no.focus();
+        }, 1000);
+      }
+      function parar() { clearInterval(R.timer); cancelAnimationFrame(R.raf); if (R.rec && R.rec.state !== 'inactive') R.rec.stop(); }
+    }
     async function ouvir(slideId, btn) {
       try {
         var j = await call({ acao: 'narracoes', id: S.id });
@@ -667,6 +821,25 @@
         var a = new Audio(n.url); a.play(); btn.textContent = 'Tocando…'; a.onended = function () { btn.textContent = 'Ouvir'; };
       } catch (e) { aviso(e.message, 'erro'); }
     }
+  }
+
+  /** Voz do navegador para o idioma (a melhor disponível); null deixa o navegador escolher. */
+  function vozDoNavegador(lang) {
+    try {
+      var vs = speechSynthesis.getVoices() || [], l = String(lang || 'pt-BR').toLowerCase(), base = l.slice(0, 2);
+      return vs.find(function (v) { return v.lang.toLowerCase() === l && /google|natural|premium|enhanced/i.test(v.name); }) || vs.find(function (v) { return v.lang.toLowerCase() === l; }) || vs.find(function (v) { return v.lang.toLowerCase().indexOf(base) === 0; }) || null;
+    } catch (e) { return null; }
+  }
+  /** Duração de um vídeo do computador (WebM gravado às vezes não traz a duração: força a leitura até o fim). */
+  function duracaoVideo(blob) {
+    return new Promise(function (ok) {
+      var v = document.createElement('video'), u = URL.createObjectURL(blob), feito = false;
+      var fim = function (ms) { if (feito) return; feito = true; URL.revokeObjectURL(u); ok(Math.max(1000, Math.round(ms || 0))); };
+      v.preload = 'metadata'; v.muted = true;
+      v.onloadedmetadata = function () { if (isFinite(v.duration) && v.duration > 0) return fim(v.duration * 1000); v.currentTime = 1e7; v.ontimeupdate = function () { v.ontimeupdate = null; fim(v.duration * 1000); }; };
+      v.onerror = function () { fim(0); }; setTimeout(function () { fim(0); }, 8000);
+      v.src = u;
+    });
   }
 
   /* ---------------- leitura de arquivos (no navegador; o arquivo não sai do computador) ---------------- */

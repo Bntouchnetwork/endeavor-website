@@ -149,6 +149,8 @@
         '<div class="field-row"><div class="field"><label for="lw-dt">Data e hora</label><input id="lw-dt" type="datetime-local" value="' + localInput(W.starts_at, W.timezone) + '"' + (bloqueado ? ' disabled' : '') + '></div>' +
         '<div class="field"><label for="lw-z">Fuso horário</label><select id="lw-z"' + (bloqueado ? ' disabled' : '') + '>' + tzs.map(function (z) { return '<option' + (z === W.timezone ? ' selected' : '') + '>' + esc(z) + '</option>'; }).join('') + '</select></div>' +
         '<div class="field"><label for="lw-i">Idioma da página e do assistente</label><select id="lw-i">' + [['pt-BR', 'Português'], ['en-US', 'Inglês'], ['es-ES', 'Espanhol']].map(function (x) { return '<option value="' + x[0] + '"' + (s.idioma === x[0] ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div></div>' +
+        '<fieldset><legend>Abertura e voz</legend><p class="portal-muted" style="font-size:.88rem;margin:0">' + (W.intro ? 'Introdução gravada: ' + mmss(W.intro_ms) + ', toca antes do primeiro slide.' : 'Sem introdução gravada. Grave no Studio, aba Abertura (câmera com teleprompter), publique e agende de novo.') + '</p>' +
+        chk('lw-vt', s.voz_teste, 'Usar a voz de teste do navegador nos slides sem narração (o público vê o aviso “voz de teste”)') + '</fieldset>' +
         '<fieldset><legend>Público</legend><div class="field-row"><div class="field"><label for="lw-cm">Mostrar o contador a partir de</label><input id="lw-cm" type="number" min="0" max="100000" value="' + s.contador_minimo + '"><p class="portal-muted" style="font-size:.82rem">O contador mostra sempre o número real de pessoas assistindo. Abaixo desse número, ele fica escondido.</p></div>' +
         '<div class="field"><label for="lw-ca">O chat abre (minutos antes)</label><input id="lw-ca" type="number" min="0" max="120" value="' + s.chat_abre_min + '"></div></div></fieldset>' +
         '<fieldset><legend>Assistente de IA no chat</legend>' +
@@ -170,7 +172,7 @@
           settings: { idioma: f.querySelector('#lw-i').value, contador_minimo: Number(f.querySelector('#lw-cm').value), chat_abre_min: Number(f.querySelector('#lw-ca').value),
             chat_ia: f.querySelector('#lw-ia').checked, boas_vindas: f.querySelector('#lw-bv').checked, faq: f.querySelector('#lw-fq').checked, cta_final: f.querySelector('#lw-ct').checked,
             convites: Array.prototype.map.call(f.querySelectorAll('.lw-slides-chk input:checked'), function (x) { return Number(x.value); }),
-            texto_boas_vindas: f.querySelector('#lw-tb').value, texto_convite: f.querySelector('#lw-tc').value, texto_cta: f.querySelector('#lw-tf').value, agendamento: f.querySelector('#lw-ag').value } };
+            texto_boas_vindas: f.querySelector('#lw-tb').value, texto_convite: f.querySelector('#lw-tc').value, texto_cta: f.querySelector('#lw-tf').value, agendamento: f.querySelector('#lw-ag').value, voz_teste: f.querySelector('#lw-vt').checked } };
       }
       async function salvar() { var r = await call(dados()); W = r.webinar; return W; }
       f.onsubmit = async function (e) { e.preventDefault(); try { await salvar(); ctx.msg(cm, 'Salvo.', 'ok'); } catch (err) { ctx.msg(cm, err.message, 'error'); } };
@@ -250,7 +252,7 @@
         try {
           var r = await call({ acao: 'lw_aovivo', id: W.id, desde: desde }); versao = r.version;
           corpo.querySelector('#lw-k').innerHTML = kpi('Situação', (ESTADOS[r.estado] || [r.estado])[0]) + kpi('Assistindo agora', r.ao_vivo + (r.ao_vivo < r.contador_minimo ? ' <small>(contador escondido até ' + r.contador_minimo + ')</small>' : '')) +
-            kpi('Slide', r.estado === 'antes' ? '—' : (r.slide + 1) + ' de ' + W.slides.length) + kpi('Tempo', mmss(r.pos) + ' / ' + mmss(r.total)) + kpi('Assistente', r.ia_pausada ? 'pausado' : 'ligado');
+            kpi('Slide', r.estado === 'antes' ? '—' : r.slide < 0 ? 'Abertura' : (r.slide + 1) + ' de ' + W.slides.length) + kpi('Tempo', mmss(r.pos) + ' / ' + mmss(r.total)) + kpi('Assistente', r.ia_pausada ? 'pausado' : 'ligado');
           controles(r);
           r.mensagens.forEach(function (x) {
             if (x.autor === 'participante' && x.registration_id && x.canal === 'privado') regsNome[x.registration_id] = x.nome;

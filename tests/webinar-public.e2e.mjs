@@ -16,9 +16,9 @@ const slides = [{ id: "s1", layout: "capa", titulo: "Como abrir sua LLC", roteir
   { id: "s3", layout: "encerramento", titulo: "Obrigado", roteiro: "Obrigado por assistir.", duracao: 30 }];
 const M = {
   w: { starts_at: new Date(Date.now() + 3600_000).toISOString(), playback: {}, settings: { contador_minimo: 3, convites: [1] }, ai_plan: { faq: [{ slide: 1, pergunta: "Preciso morar nos EUA para abrir a LLC?", resposta: "Não. A LLC pode ser aberta por quem mora fora." }] } },
-  regs: {}, msgs: [], vivos: 1, contato: false, agendado: null, link: false, chamadas: [],
+  regs: {}, msgs: [], vivos: 1, intro: 0, voz_teste: false, contato: false, agendado: null, link: false, chamadas: [],
 };
-const linha = () => C.linhaDoTempo(slides, { s1: { duracao_ms: 1000 } }, "normal");
+const linha = () => C.linhaDoTempo(slides, { s1: { duracao_ms: 1000 } }, "normal", M.intro);
 function servidor(b) {
   M.chamadas.push(b.acao);
   const agora = Date.now(), p = C.posicao(M.w, linha(), agora);
@@ -33,7 +33,7 @@ function servidor(b) {
     case "pub_entrar":
       if (!reg) return erro(403, "Inscrição não encontrada.");
       return { j: { titulo: "Como abrir sua LLC nos EUA", empresa: "Endeavor Business Solutions", nome: reg.nome, starts_at: M.w.starts_at, timezone: "America/New_York", agora, slides, narracao: { s1: { duracao_ms: 1000 } },
-        audios: { s1: BASE + "/audio-teste.wav" }, ritmo: "normal", playback: M.w.playback, estado: p.estado, chat_abre_min: 15, agendamento: "calendario", idioma: "pt-BR", ia: true, contato_ok: M.contato } };
+        audios: { s1: BASE + "/audio-teste.wav" }, ritmo: "normal", intro: M.intro ? { url: BASE + "/tests/fixtures/intro-teste.webm", duracao_ms: M.intro } : null, voz_teste: M.voz_teste, playback: M.w.playback, estado: p.estado, chat_abre_min: 15, agendamento: "calendario", idioma: "pt-BR", ia: true, contato_ok: M.contato } };
     case "pub_estado": {
       if (!reg) return erro(403, "x");
       if (p.estado !== "antes") for (const m of C.programadas(M.w, linha())) if (m.em <= p.pos && !M.msgs.some((x) => x.chave === m.chave))
@@ -139,6 +139,21 @@ M.w.playback = { pausado_em: new Date().toISOString() }; await page.waitForTimeo
 ok(/PAUSADO/.test(await page.textContent("#lwSelo")), "pausa do organizador aparece para o público");
 M.w.playback = { encerrado_em: new Date().toISOString() }; await page.waitForTimeout(3500);
 ok(/terminou/.test(await page.textContent(".lw-espera")), "encerramento aparece para o público");
+
+// abertura gravada e voz de teste
+M.intro = 4000; M.voz_teste = true; M.w.playback = {}; M.w.starts_at = new Date(Date.now() - 1000).toISOString();
+await page.reload(); await page.waitForSelector(".lw-sala"); await page.waitForTimeout(1200);
+ok(!!(await page.$(".lw-palco video.lw-intro")) && await page.evaluate(() => { const v = document.querySelector(".lw-intro"); return v && v.currentTime > 0; }), "abertura gravada toca antes do primeiro slide, sincronizada");
+ok(/voz sintética de TESTE/.test(await page.textContent(".lw-rodape")), "rodapé avisa que a narração é voz de teste (não é a do organizador)");
+await page.waitForTimeout(3800);
+ok(!(await page.$(".lw-palco video")) && /Como abrir sua LLC/.test(await page.textContent("#lwPalco")), "depois da abertura, entram os slides");
+await page.waitForTimeout(3200);
+ok(/Etapas/.test(await page.textContent("#lwPalco")), "slide sem narração gravada");
+if (await page.isVisible(".lw-som")) await page.click(".lw-som");
+await page.waitForTimeout(500);
+ok(await page.isVisible(".lw-selo-voz") && /Voz de teste/.test(await page.textContent(".lw-selo-voz")), "voz de teste falando, com o selo “Voz de teste” na tela");
+await page.screenshot({ path: `${OUT}/webinar-voz-teste.png` });
+M.intro = 0; M.voz_teste = false;
 
 // celular
 const cel = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true })).newPage();

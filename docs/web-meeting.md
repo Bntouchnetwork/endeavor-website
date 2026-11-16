@@ -93,6 +93,16 @@ Fica em **Live Webinar › Apresentações (Studio)**, no admin e no Portal do C
   - é possível importar sem a IA (um slide por página);
   - imagens, formatação e PDFs escaneados não são trazidos.
 - **Configurações:** idioma (português, inglês ou espanhol), tom, duração total, ritmo da fala, público, transição, abertura, legenda e o dicionário de **pronúncia** ("LLC = éle éle cê"). A pronúncia vale só para a voz.
+- **Abertura (introdução gravada):** na aba Abertura você prepara uma introdução gravada pela câmera do computador.
+  - **Texto do teleprompter:** escreva, cole ou gere com IA (de 45 a 90 segundos, avisando que a apresentação segue pré-gravada e que o chat tem um assistente de IA).
+  - **Gravar introdução:** abre a câmera com o teleprompter por cima. Você ajusta a velocidade e o tamanho da letra. Depois de uma contagem de 3 segundos, o texto rola sozinho; a barra de espaço ou o botão pausam o texto.
+  - **Depois de parar:** você assiste e escolhe Regravar ou Usar esta gravação. A gravação tem até 5 minutos.
+  - **Vídeo pronto:** também dá para enviar um vídeo seu (MP4 ou WebM, até 100 MB). O vídeo fica no bucket privado `meet-media`.
+  - **Onde toca:** antes do primeiro slide, na prévia e no Live Webinar, quando "Como o webinar começa" está em "Com a minha introdução gravada".
+- **Voz de teste:** na aba Voz há a opção de usar a voz do navegador nos slides sem narração, na prévia e no webinar.
+  - Serve para ouvir o tom e o ritmo antes de gravar a sua voz.
+  - No webinar, o público vê o selo "Voz de teste", e o rodapé avisa que é uma voz sintética de teste, que não é a voz do organizador.
+  - Quando a narração com a sua voz existe, ela tem prioridade.
 - **Voz (Minha voz):** cada pessoa grava de 1 a 2 minutos da **própria** voz, ou envia um arquivo, e aceita o termo de autorização (versão `voz-2026-11`).
   - O HUB cria a voz no ElevenLabs e guarda o consentimento no audit log.
   - A amostra não fica guardada na Endeavor.

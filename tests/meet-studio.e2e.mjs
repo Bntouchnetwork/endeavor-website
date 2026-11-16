@@ -37,6 +37,7 @@ function servidor(b) {
     case "studio_ia":
       if (b.modo === "criar") return { j: { mensagem: "Criei 5 slides com roteiro.", content: { formato: "noir.apresentacao", versao: 1, titulo: "Como abrir sua LLC", slides: ["Como abrir sua LLC", "Etapas", "Documentos", "Erros comuns", "Próximos passos"].map((t, i) => ({ id: "s" + (i + 1), layout: i === 0 ? "capa" : i === 4 ? "encerramento" : "topicos", titulo: t, itens: i && i < 4 ? ["Ponto um", "Ponto dois"] : undefined, roteiro: `Neste slide eu falo sobre ${t.toLowerCase()} com calma e exemplos simples para todos.`, duracao: 5 })) } } };
       if (b.modo === "importar") return { j: { mensagem: "Organizei o arquivo.", content: { formato: "noir.apresentacao", versao: 1, titulo: "Importada", slides: b.paginas.map((p, i) => ({ id: "s" + (i + 1), layout: "topicos", titulo: p.texto.split("\n")[0], roteiro: p.notas || "Roteiro da página " + (i + 1) })) } } };
+      if (b.modo === "abertura") return { j: { mensagem: "Pronto.", texto: "Olá! Eu sou o Christiano.\n\nHoje vou mostrar como abrir sua LLC.\n\nDepois desta abertura, a apresentação continua pré-gravada e o chat tem um assistente de IA.", estimado_s: 12 } };
       if (b.modo === "roteiro") return { j: { mensagem: "Roteiro pronto.", roteiro: "Roteiro escrito pela IA para este slide, curto e natural." } };
       return { j: { mensagem: "Slide refeito.", slide: { id: b.slide_id, layout: "topicos", titulo: "Slide refeito pela IA", itens: ["Novo ponto"] } } };
     case "studio_publicar": if (b.version !== s.version) return erro(409, "Salve as últimas alterações antes de publicar."); s.status = "published"; s.pv = s.version; return { j: { ok: true, published_version: s.version, published_at: new Date().toISOString() } };
@@ -54,6 +55,10 @@ function servidor(b) {
       s.content.slides.forEach((sl) => { if (sl.roteiro) M.narr[s.id + sl.id + sl.roteiro + s.settings.voz_id] = 1; });
       return { j: { feitos: s.content.slides.filter((x) => x.roteiro).map((x) => ({ slide_id: x.id, ok: true })), restantes: 0, narracoes: narracoes(s) } };
     case "narracoes": return { j: { narracoes: narracoes(s) } };
+    case "abertura_upload_url": M.upload = b; return { j: { path: `abertura/${s.id}/novo.webm`, url: "https://x/assinada", token: "tok" } };
+    case "abertura_confirmar": s.version++; s.settings = { ...s.settings, abertura_video: { path: b.path, duracao_ms: b.duracao_ms, mime: b.mime }, abertura: "video" }; return { j: { version: s.version, abertura_video: s.settings.abertura_video } };
+    case "abertura_url": return { j: s.settings.abertura_video ? { url: BASE + "/tests/fixtures/intro-teste.webm", duracao_ms: s.settings.abertura_video.duracao_ms } : { url: null } };
+    case "abertura_apagar": s.version++; s.settings = { ...s.settings, abertura_video: null, abertura: "ao_vivo" }; return { j: { version: s.version } };
   }
   return erro(400, "Ação desconhecida.");
 }
@@ -96,7 +101,7 @@ function pdf(paginas) {
 
 /* ---------------- testes ---------------- */
 const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
-const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ["microphone"] })).newPage();
+const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ["microphone", "camera"] })).newPage();
 const erros = []; page.on("pageerror", (e) => erros.push(e.message));
 page.on("dialog", (d) => d.type() === "prompt" ? d.accept("") : d.accept());
 await page.route("**/fn/meet", async (r) => { const b = JSON.parse(r.request().postData() || "{}"); const res = servidor(b); await r.fulfill({ status: res.st || 200, json: res.j }); });
@@ -160,7 +165,7 @@ await page.click("#stdSalvar"); await page.waitForTimeout(300);
 // publicar exige prévia
 await page.click("#stdPublicar"); await page.waitForTimeout(400);
 ok(!!(await page.$(".std-previa")) && /sem narração: tempo estimado/.test(await page.textContent(".std-previa-info")), "publicar sem prévia abre a prévia (tempo estimado, sem voz)");
-ok(/Ler sem narração com a voz do navegador/.test(await page.textContent(".std-previa")), "prévia oferece a voz do navegador, marcada como prévia");
+ok(/Voz de teste do navegador nos slides sem narração \(não é a sua voz\)/.test(await page.textContent(".std-previa")), "prévia oferece a voz de teste do navegador, avisando que não é a sua voz");
 await page.screenshot({ path: `${OUT}/studio-previa.png` });
 for (let i = 0; i < 5; i++) { await page.click('.std-previa-ctl [aria-label="Próximo slide"]'); await page.waitForTimeout(80); }
 await page.click("text=Publicar agora"); await page.waitForTimeout(400);
@@ -186,6 +191,55 @@ ok(await page.$$eval(".std-ponto.pronta", (x) => x.length) === 5 && /5 de 5/.tes
 await page.click("#stdPrevia"); await page.waitForTimeout(500);
 ok(/narração com a sua voz/.test(await page.textContent(".std-previa-info")), "prévia toca a narração");
 await page.keyboard.press("Escape");
+// abertura: texto do teleprompter com IA, gravar pela câmera, prévia, regravar, usar; prévia começa pela abertura
+await page.click('.std-abas [data-aba="abertura"]');
+await page.click("text=✦ Escrever com IA"); await page.waitForTimeout(400);
+ok(/Sou o Christiano|Eu sou o Christiano/.test(await page.inputValue(".std-lado-corpo textarea")) && /palavras · cerca de/.test(await page.textContent(".std-lado-corpo")), "texto do teleprompter gerado com IA (dá para colar ou digitar)");
+await page.fill(".std-lado-corpo textarea", "Olá! Eu sou o Christiano.\n\nHoje vou mostrar como abrir a sua LLC.\n\n" + "Esta é uma linha comprida do teleprompter para rolar. ".repeat(30));
+await page.click("text=● Gravar introdução"); await page.waitForSelector(".std-grav video.std-grav-cam");
+await page.waitForFunction(() => { const v = document.querySelector(".std-grav-cam"); return v && v.readyState >= 2; });
+ok(/Olá! Eu sou o Christiano/.test(await page.textContent(".std-prompter")), "teleprompter mostra o texto sobre a câmera");
+await page.locator('.std-grav-ajuste input').nth(1).fill("60");
+ok(await page.$eval(".std-prompter-texto", (x) => x.style.fontSize) === "60px", "tamanho da letra ajustável");
+await page.locator('.std-grav-ajuste input').nth(0).fill("120");
+await page.click(".std-grav-rec"); await page.waitForTimeout(400);
+ok(/^[123]$/.test((await page.textContent(".std-contagem")).trim()), "contagem regressiva antes de gravar");
+await page.waitForTimeout(5200);
+const rolou = await page.$eval(".std-prompter", (x) => x.scrollTop);
+ok(rolou > 100 && /● 0:0[1-3]/.test(await page.textContent(".std-grav-tempo")), "gravando: tempo correndo e o texto rolando sozinho");
+ok(await page.isHidden(".std-contagem") && await page.isHidden("text=↺ Regravar") && await page.isHidden('button:has-text("Usar esta gravação")'), "durante a gravação: contagem some e só aparece Parar");
+await page.screenshot({ path: `${OUT}/studio-teleprompter.png` });
+await page.waitForTimeout(1500);
+await page.click(".std-grav-rec.parar"); await page.waitForSelector(".std-grav-rev:not([hidden])");
+ok(await page.isVisible("text=↺ Regravar") && await page.isVisible("button:has-text(\"Usar esta gravação\")"), "depois de parar: assistir, regravar ou usar");
+await page.click("text=↺ Regravar"); await page.waitForTimeout(800);
+ok(await page.isVisible(".std-grav-cam") && await page.$eval(".std-prompter", (x) => x.scrollTop) === 0, "regravar volta para a câmera e o texto ao início");
+await page.click(".std-grav-rec"); await page.waitForTimeout(6500); await page.click(".std-grav-rec.parar"); await page.waitForSelector("button:has-text(\"Usar esta gravação\"):visible");
+await page.click("button:has-text(\"Usar esta gravação\")"); await page.waitForTimeout(800);
+const envio = await page.evaluate(() => window.__envio);
+if (!envio || !M.upload) console.log("   (aviso: " + (await page.textContent("#stdAviso").catch(() => "?")) + " | msg: " + (await page.textContent(".std-grav-msg").catch(() => "-")) + ")");
+ok(envio && envio.size > 1000 && /^video\/(webm|mp4)$/.test(envio.tipo) && M.studios[st.id].settings.abertura === "video" && M.studios[st.id].settings.abertura_video.duracao_ms >= 2500, "gravação enviada e marcada como abertura do webinar");
+ok(!(await page.$(".std-grav")) && /Duração: 0:0/.test(await page.textContent(".std-lado-corpo")), "vídeo de abertura aparece na aba, com a duração");
+await page.click("#stdSalvar"); await page.waitForTimeout(300);
+ok(st.settings.abertura_texto.startsWith("Olá! Eu sou o Christiano.\n\n"), "texto do teleprompter salvo com os parágrafos");
+await page.click("#stdPrevia"); await page.waitForTimeout(900);
+ok(/Abertura · vídeo gravado/.test(await page.textContent(".std-previa-info")) && !!(await page.$(".std-previa video.std-intro")), "prévia começa pela abertura gravada");
+await page.waitForTimeout(4500);
+const infoPrev = await page.textContent(".std-previa-info");
+if (!/Slide [12] de/.test(infoPrev)) console.log("   (info: " + infoPrev + " | " + await page.evaluate(() => { const v = document.querySelector(".std-previa video"); return v ? [v.currentTime, v.duration, v.paused, v.error && v.error.code, v.readyState].join(",") : "sem vídeo"; }) + ")");
+ok(/Slide [12] de/.test(infoPrev), "depois da abertura, entram os slides");
+await page.keyboard.press("Escape");
+// voz de teste do navegador
+M.narr = {};
+await page.click('.std-abas [data-aba="voz"]');
+await page.check(".std-lado-corpo .std-caixa .std-check input");
+await page.click("#stdSalvar"); await page.waitForTimeout(300);
+ok(st.settings.voz_teste === true, "voz de teste ligada e salva");
+await page.click('.std-abas [data-aba="abertura"]'); await page.selectOption(".std-lado-corpo select", "nenhuma"); await page.click("#stdSalvar"); await page.waitForTimeout(300);
+await page.click("#stdPrevia"); await page.waitForTimeout(900);
+ok(/voz de teste do navegador \(não é a sua voz\)/.test(await page.textContent(".std-previa-info")), "prévia usa a voz de teste nos slides sem narração, avisando que não é a sua voz");
+await page.keyboard.press("Escape");
+
 // importar PowerPoint (sem IA): ordem do presentation.xml e notas viram roteiro
 await page.click('.std-abas [data-aba="ia"]');
 await page.setInputFiles('.std-lado-corpo input[type=file]', { name: "deck.pptx", mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation", buffer: await pptx() });

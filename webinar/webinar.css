@@ -94,3 +94,5 @@ body.lw-escuro .lw-main{max-width:none;padding:0}
   .lw-palco .slide{width:100%}
   .lw-topo{flex-wrap:wrap}
 }
+.lw-intro{width:min(100%,calc((100dvh - 230px) * 16 / 9));aspect-ratio:16/9;background:#000;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.45);object-fit:cover}
+.lw-selo-voz{position:absolute;top:1.5rem;right:1.75rem;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:rgba(200,164,93,.18);color:#e3cf9f;border:1px solid rgba(200,164,93,.45);border-radius:999px;padding:.2rem .6rem}

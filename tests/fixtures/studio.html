@@ -11,7 +11,8 @@
 <script>
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   window.ctx = {
-    sb: { auth: { getSession: async () => ({ data: { session: { access_token: 'sessao-teste' } } }) }, from: () => ({ select: () => ({ eq: () => [] }) }) },
+    sb: { auth: { getSession: async () => ({ data: { session: { access_token: 'sessao-teste' } } }) }, from: () => ({ select: () => ({ eq: () => [] }) }),
+      storage: { from: () => ({ uploadToSignedUrl: async (path, token, blob, o) => { window.__envio = { path, token, size: blob.size, tipo: o && o.contentType }; return { error: null }; } }) } },
     CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, q: async (x) => x || [],
     msg: (el, t) => { el.textContent = t; }, fmtDT: d => new Date(d).toLocaleString('pt-BR'),
     openOverlay: h => { const o = document.getElementById('ov'); o.innerHTML = '<div class="drawer">' + h + '</div>'; o.querySelector('.close-x') && (o.querySelector('.close-x').onclick = () => o.innerHTML = ''); return o; },

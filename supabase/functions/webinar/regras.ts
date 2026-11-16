@@ -26,6 +26,7 @@ export function limparSettings(s: Any) {
     retencao_dias: n(s.retencao_dias, 30, 365, 90),
     idioma: ["pt-BR", "en-US", "es-ES"].includes(s.idioma) ? s.idioma : "pt-BR",
     legendas: s.legendas !== false,
+    voz_teste: s.voz_teste === true,
   };
 }
 export function limparFaq(f: unknown, nSlides: number) {
