@@ -88,3 +88,21 @@ details summary { cursor: pointer; font-weight: 600; }
 .aba img { width: 26px; height: 26px; border-radius: 6px; }
 .aba .pt { position: absolute; top: 6px; left: 6px; width: 9px; height: 9px; border-radius: 50%; background: #9fb3c8; }
 .aba .pt.on { background: var(--verde); }
+
+/* modo escuro (no fim, para valer sobre as regras acima) */
+@media (prefers-color-scheme: dark) {
+  .bt { background: #2a3942; border-color: #3b4a54; color: #e9edef; }
+  .bt:hover { border-color: #8696a0; background: #33454f; }
+  .bt.pri { background: #128c4a; border-color: #128c4a; color: #fff; }
+  .bt.pri:hover { background: #15a058; }
+  .ferr .bt[aria-current] { border-color: #25d366; box-shadow: inset 0 0 0 1px #25d366; }
+  .mic.gravando { background: var(--erro); border-color: var(--erro); color: #fff; }
+  a, .lk { color: #25d366; }
+  .bloco.ok { color: #25d366; }
+  .tag { background: #103529; color: #7ee2a8; }
+  .tag.rel { background: #3d2e0f; color: #f6c76b; }
+  .alerta { color: #f6c76b; background: rgba(246,199,107,.1); }
+  .erro { color: #ff8a80; }
+  .chave .tr { background: #3b4a54; }
+  input::placeholder, textarea::placeholder { color: #8696a0; }
+}

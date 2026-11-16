@@ -209,6 +209,16 @@ try {
   await dorme(1200);
   ok(chamadas.some((c) => c.acao === "ext_ajustes" && c.ajustes.velocidade === 300), "tempos: velocidade salva");
 
+  /* modo escuro: botões legíveis (texto claro sobre fundo escuro) */
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.waitForTimeout(300);
+  const cor = await P('[data-f="resumo"]').evaluate((b) => { const s = getComputedStyle(b); return { fundo: s.backgroundColor, texto: s.color }; });
+  const lum = (c) => { const [r, g, b] = c.match(/\d+/g).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const L1 = lum(cor.texto), L2 = lum(cor.fundo), contraste = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+  ok(contraste >= 4.5, "modo escuro: botões com contraste legível (" + contraste.toFixed(1) + ":1)");
+  await page.screenshot({ path: path.join(OUT, "wa-escuro.png") });
+  await page.emulateMedia({ colorScheme: "light" });
+
   /* recolher e abrir */
   await P("#recolher").click();
   ok(await P("#aba").isVisible() && !(await page.evaluate(() => document.documentElement.classList.contains("emgr-aberto"))), "recolhido: só a aba fica e o WhatsApp volta à largura toda");
