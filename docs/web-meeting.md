@@ -107,6 +107,10 @@ Fica em **Live Webinar › Apresentações (Studio)**, no admin e no Portal do C
     7. Mudo do microfone
     8. Mudo do alto-falante, para não dar microfonia
   - **Contagem:** Ensaiar e Gravar começam com a contagem 3, 2, 1.
+  - **Olhar para a câmera:**
+    - **Texto perto da câmera** (já vem ligado) põe o teleprompter numa coluna estreita colada no topo da tela, logo abaixo da lente, para os olhos quase não se mexerem.
+    - **Tela cheia** esconde a barra do navegador e deixa o texto ainda mais perto da câmera. Esc ou "Sair da tela cheia" voltam ao normal.
+    - Também ajuda: a câmera na altura dos olhos, ficar a uns 70 cm da tela, a letra grande e ensaiar antes.
   - **Depois de parar:** você assiste e escolhe Regravar ou **Usar esta gravação**, que envia o vídeo e o marca como abertura. A gravação tem até 5 minutos.
   - **Vídeo pronto:** também dá para enviar um vídeo seu (MP4 ou WebM, até 100 MB). O vídeo fica no bucket privado `meet-media` e toca antes do primeiro slide, na prévia e no Live Webinar.
   - **A prévia do Studio mostra só a apresentação:** abertura, slides, narração e legenda. O chat, o contador e a caixa privada aparecem na sala do webinar.

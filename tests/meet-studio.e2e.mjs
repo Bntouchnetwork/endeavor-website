@@ -221,6 +221,16 @@ await page.click('.std-grav-ic[aria-label="Ligar o microfone"]');
 await page.click('.std-grav-ic[aria-label="Desligar o alto-falante"]');
 ok(await page.isVisible('.std-grav-ic[aria-label="Ligar o alto-falante"]'), "mudo do alto-falante (evita microfonia)");
 await page.click('.std-grav-ic[aria-label="Ligar o alto-falante"]');
+// texto perto da câmera e tela cheia
+const topoPrompter = await page.$eval(".std-prompter", (x) => { const r = x.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.width)]; });
+ok(topoPrompter[0] === 0 && topoPrompter[1] <= 560 && await page.$eval('.std-grav-aba:has-text("Texto perto da câmera")', (b) => b.getAttribute("aria-pressed")) === "true", "teleprompter numa coluna estreita colada no topo, perto da câmera");
+await page.click('.std-grav-aba:has-text("Tela cheia")'); await page.waitForTimeout(500);
+ok(await page.evaluate(() => document.fullscreenElement && document.fullscreenElement.classList.contains("std-grav")) && /Sair da tela cheia/.test(await page.textContent(".std-grav-topo")), "Tela cheia abre o gravador sem a barra do navegador");
+await page.click('.std-grav-aba:has-text("Sair da tela cheia")'); await page.waitForTimeout(400);
+ok(!(await page.evaluate(() => !!document.fullscreenElement)), "sair da tela cheia");
+await page.click('.std-grav-aba:has-text("Texto perto da câmera")');
+ok(await page.$eval(".std-prompter", (x) => Math.round(x.getBoundingClientRect().width)) > 560, "dá para voltar ao texto largo sobre o vídeo");
+await page.click('.std-grav-aba:has-text("Texto perto da câmera")');
 // tamanho e velocidade
 await page.locator('.std-grav-ajuste input').nth(1).fill("60");
 ok(await page.$eval(".std-prompter-texto", (x) => x.style.fontSize) === "60px", "tamanho da letra ajustável");

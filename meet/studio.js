@@ -747,7 +747,11 @@
       if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); }); R.stream = null;
       if (R.audioCtx) { try { R.audioCtx.close(); } catch (e) { } R.audioCtx = null; }
     }
-    function fecharGravador() { pararCamera(); if (R && R.no) R.no.remove(); R = null; }
+    function fecharGravador() {
+      if (R && R.telaCheia) document.removeEventListener('fullscreenchange', R.telaCheia);
+      if (R && document.fullscreenElement === R.no) document.exitFullscreen().catch(function () { });
+      pararCamera(); if (R && R.no) R.no.remove(); R = null;
+    }
     async function gravarIntro() {
       fecharGravador();
       var cfg = S.settings, vel = Number(lerPref('std-prompter-vel', 40)) || 40, fonte = Number(lerPref('std-prompter-fonte', 40)) || 40;
@@ -891,8 +895,22 @@
       } });
       bMic.innerHTML = SVG(ICO.mic); bSom.innerHTML = SVG(ICO.som);
 
-      R.no = el('div', { class: 'std-grav', role: 'dialog', 'aria-label': 'Gravar introdução', tabindex: '-1' }, [
-        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), selo, tempo, el('span', { class: 'std-grav-espaco' }), bTextoP, bCamP, bFundoP,
+      /* texto perto da câmera: coluna estreita colada no topo da tela (o olhar fica quase na lente) */
+      var perto = lerPref('std-prompter-perto', '1') === '1';
+      var bPerto = el('button', { type: 'button', class: 'std-grav-aba', 'aria-pressed': String(perto), title: 'Coluna estreita colada no topo, logo abaixo da câmera', onclick: function () {
+        perto = !perto; gravarPref('std-prompter-perto', perto ? '1' : '0'); R.no.classList.toggle('perto', perto); this.setAttribute('aria-pressed', String(perto)); } }, ['Texto perto da câmera']);
+      var bTela = el('button', { type: 'button', class: 'std-grav-aba', 'aria-pressed': 'false', onclick: function () {
+        if (document.fullscreenElement) { document.exitFullscreen().catch(function () { }); return; }
+        if (R.no.requestFullscreen) R.no.requestFullscreen({ navigationUI: 'hide' }).catch(function () { msg.textContent = 'O navegador não deixou abrir em tela cheia. Tente F11.'; });
+      } }, ['⛶ Tela cheia']);
+      R.telaCheia = function () {
+        var on = !!R && document.fullscreenElement === R.no;
+        bTela.setAttribute('aria-pressed', String(on)); bTela.textContent = on ? '✕ Sair da tela cheia' : '⛶ Tela cheia';
+        if (R) R.no.classList.toggle('tela-cheia', on);
+      };
+      document.addEventListener('fullscreenchange', R.telaCheia);
+      R.no = el('div', { class: 'std-grav' + (perto ? ' perto' : ''), role: 'dialog', 'aria-label': 'Gravar introdução', tabindex: '-1' }, [
+        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), selo, tempo, el('span', { class: 'std-grav-espaco' }), bPerto, bTela, bTextoP, bCamP, bFundoP,
           el('button', { class: 'std-fechar', type: 'button', 'aria-label': 'Fechar', onclick: function () { if (R && R.estado === 'gravando' && !confirm('Parar e descartar a gravação?')) return; fecharGravador(); } }, ['×'])]),
         el('div', { class: 'std-grav-meio' }, [el('div', { class: 'std-grav-palco' }, [cam, prompter, contagem, rev]), painel]),
         msg,
@@ -970,7 +988,7 @@
         R.rec = new MediaRecorder(new MediaStream(trilhas), mime ? { mimeType: mime, videoBitsPerSecond: 1200000, audioBitsPerSecond: 96000 } : undefined);
         R.rec.ondataavailable = function (e) { if (e.data.size) R.partes.push(e.data); };
         R.rec.onstop = function () {
-          R.ms = Date.now() - R.ini; R.estado = 'revisar'; selo.hidden = true;
+          R.ms = Date.now() - R.ini; R.estado = 'revisar'; selo.hidden = true; R.no.classList.add('revisando');
           R.blob = new Blob(R.partes, { type: (R.rec.mimeType || mime || 'video/webm').split(';')[0] });
           pararCamera();
           cam.hidden = true; prompter.hidden = true; rev.hidden = false; rev.muted = R.somMudo; rev.src = URL.createObjectURL(R.blob);
@@ -985,7 +1003,7 @@
       }
       function parar() { clearInterval(R.timer); cancelAnimationFrame(R.raf); if (R.rec && R.rec.state !== 'inactive') R.rec.stop(); }
       async function regravar() {
-        rev.hidden = true; rev.removeAttribute('src'); cam.hidden = false; prompter.hidden = false;
+        rev.hidden = true; rev.removeAttribute('src'); cam.hidden = false; prompter.hidden = false; R.no.classList.remove('revisando');
         bUsar.hidden = bRegravar.hidden = true; bGravar.hidden = false; bEnsaio.disabled = bTopo.disabled = bPausa.disabled = false;
         prompter.scrollTop = 0; tempo.textContent = '0:00'; msg.textContent = ''; R.estado = 'pronto';
         await ligarCamera();

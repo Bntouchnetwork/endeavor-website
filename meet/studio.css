@@ -175,3 +175,15 @@ body.std-aberto{overflow:hidden}
 .std-grav-selo.ensaio{background:rgba(200,164,93,.2);color:#e3cf9f;border:1px solid rgba(200,164,93,.5)}
 .std-grav-topo{flex-wrap:wrap}
 @media (max-width:900px){.std-grav-meio{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.std-grav-painel{width:auto;max-height:40vh;border-left:0;border-top:1px solid rgba(255,255,255,.08)}}
+
+/* texto perto da câmera: coluna estreita colada no topo da tela */
+.std-grav.perto .std-prompter{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(560px,72vw);height:34vh;z-index:5;border-radius:0 0 14px 14px;background:rgba(0,0,0,.78);box-shadow:0 8px 30px rgba(0,0,0,.45)}
+.std-grav.perto .std-prompter-texto{text-align:left;padding-top:12vh}
+.std-grav.perto .std-prompter-guia{top:12vh}
+.std-grav.perto:not(.revisando) .std-grav-topo{padding-top:calc(34vh + .4rem)}
+.std-grav.perto .std-grav-palco{padding-top:.25rem}
+.std-grav.tela-cheia{background:#000}
+/* o vídeo cabe sempre no espaço que sobra (nunca cobre a barra de botões) */
+.std-grav-meio{overflow:hidden}
+.std-grav-palco{height:100%;overflow:hidden;grid-template-rows:minmax(0,1fr)}
+.std-grav-cam,.std-grav-rev{width:auto!important;height:100%;max-width:100%;max-height:100%;aspect-ratio:16/9}
