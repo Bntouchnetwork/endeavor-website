@@ -93,12 +93,23 @@ Fica em **Live Webinar › Apresentações (Studio)**, no admin e no Portal do C
   - é possível importar sem a IA (um slide por página);
   - imagens, formatação e PDFs escaneados não são trazidos.
 - **Configurações:** idioma (português, inglês ou espanhol), tom, duração total, ritmo da fala, público, transição, abertura, legenda e o dicionário de **pronúncia** ("LLC = éle éle cê"). A pronúncia vale só para a voz.
-- **Abertura (introdução gravada):** na aba Abertura você prepara uma introdução gravada pela câmera do computador.
-  - **Texto do teleprompter:** escreva, cole ou gere com IA (de 45 a 90 segundos, avisando que a apresentação segue pré-gravada e que o chat tem um assistente de IA).
-  - **Gravar introdução:** abre a câmera com o teleprompter por cima. Você ajusta a velocidade e o tamanho da letra. Depois de uma contagem de 3 segundos, o texto rola sozinho; a barra de espaço ou o botão pausam o texto.
-  - **Depois de parar:** você assiste e escolhe Regravar ou Usar esta gravação. A gravação tem até 5 minutos.
-  - **Vídeo pronto:** também dá para enviar um vídeo seu (MP4 ou WebM, até 100 MB). O vídeo fica no bucket privado `meet-media`.
-  - **Onde toca:** antes do primeiro slide, na prévia e no Live Webinar, quando "Como o webinar começa" está em "Com a minha introdução gravada".
+- **Abertura (introdução gravada):** a aba Abertura escolhe como o webinar começa e tem o botão **Gravar introdução**. Tudo da gravação fica dentro dessa tela:
+  - **Texto:** escreva, cole ou gere com IA (com um pedido opcional) e edite ali mesmo. O teleprompter atualiza na hora, e o texto fica salvo com a apresentação.
+  - **Câmera e microfone:** escolha a câmera e o microfone do computador ou externos (USB, Bluetooth). Uma barra mostra o volume do microfone.
+  - **Fundo virtual:** os mesmos do Web Meeting (desfocado, os 6 fundos prontos e a sua foto, que fica só neste computador).
+  - **Barra de baixo, nesta ordem:**
+    1. Velocidade
+    2. Letra
+    3. **Ensaiar:** rola o texto sem gravar, com o selo "ENSAIO".
+    4. Início do texto
+    5. Pausar texto (ou a barra de espaço)
+    6. Gravar
+    7. Mudo do microfone
+    8. Mudo do alto-falante, para não dar microfonia
+  - **Contagem:** Ensaiar e Gravar começam com a contagem 3, 2, 1.
+  - **Depois de parar:** você assiste e escolhe Regravar ou **Usar esta gravação**, que envia o vídeo e o marca como abertura. A gravação tem até 5 minutos.
+  - **Vídeo pronto:** também dá para enviar um vídeo seu (MP4 ou WebM, até 100 MB). O vídeo fica no bucket privado `meet-media` e toca antes do primeiro slide, na prévia e no Live Webinar.
+  - **A prévia do Studio mostra só a apresentação:** abertura, slides, narração e legenda. O chat, o contador e a caixa privada aparecem na sala do webinar.
 - **Voz de teste:** na aba Voz há a opção de usar a voz do navegador nos slides sem narração, na prévia e no webinar.
   - Serve para ouvir o tom e o ritmo antes de gravar a sua voz.
   - No webinar, o público vê o selo "Voz de teste", e o rodapé avisa que é uma voz sintética de teste, que não é a voz do organizador.

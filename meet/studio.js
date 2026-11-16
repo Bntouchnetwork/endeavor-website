@@ -683,17 +683,11 @@
     function ladoAbertura(c) {
       var cfg = S.settings;
       c.appendChild(el('h3', { text: 'Abertura' }));
-      c.appendChild(el('p', { class: 'std-dica', text: 'Grave uma introdução com a sua câmera, lendo o texto no teleprompter. Ela toca antes do primeiro slide, na prévia e no webinar.' }));
+      c.appendChild(el('p', { class: 'std-dica', text: 'Grave uma introdução com a sua câmera. Na tela de gravação você escreve (ou gera com IA) o texto do teleprompter, ensaia, escolhe câmera, microfone e fundo virtual, e grava. Ela toca antes do primeiro slide, na prévia e no webinar.' }));
       c.appendChild(campo('Como o webinar começa', el('select', { onchange: function () { cfg.abertura = this.value; mudou(); desenharLado(); } },
         [['video', 'Com a minha introdução gravada'], ['ao_vivo', 'Eu abro ao vivo'], ['nenhuma', 'Direto nos slides']].map(function (x) { return el('option', { value: x[0], selected: cfg.abertura === x[0], disabled: x[0] === 'video' && !cfg.abertura_video }, [x[1] + (x[0] === 'video' && !cfg.abertura_video ? ' (grave primeiro)' : '')]); }))));
-      var info = el('p', { class: 'std-dica' });
-      var conta = function () { info.textContent = palavras(cfg.abertura_texto) + ' palavras · cerca de ' + mmss(estimar(cfg.abertura_texto, cfg.ritmo)) + ' de fala.'; };
-      var ta = el('textarea', { rows: '9', maxlength: '4000', class: 'std-roteiro', placeholder: 'Escreva, cole ou gere com IA o texto que você vai ler. Ele aparece rolando na tela durante a gravação.',
-        oninput: function () { cfg.abertura_texto = this.value; conta(); mudou(); } }, [cfg.abertura_texto || '']);
-      c.appendChild(campo('Texto do teleprompter', ta)); c.appendChild(info); conta();
-      c.appendChild(el('div', { class: 'std-linha-botoes' }, [
-        el('button', { class: 'btn btn--ghost btn--sm', type: 'button', disabled: !S.cap.texto, onclick: function () { escreverAbertura(ta, this); } }, ['✦ Escrever com IA']),
-        el('button', { class: 'btn btn--navy btn--sm', type: 'button', onclick: gravarIntro }, ['● Gravar introdução'])]));
+      c.appendChild(el('button', { class: 'btn btn--navy btn--sm', type: 'button', onclick: gravarIntro }, ['● Gravar introdução']));
+      if (cfg.abertura_texto) c.appendChild(el('p', { class: 'std-dica', text: 'Texto do teleprompter: ' + palavras(cfg.abertura_texto) + ' palavras · cerca de ' + mmss(estimar(cfg.abertura_texto, cfg.ritmo)) + ' de fala.' }));
       var box = el('div', { class: 'std-caixa' }, [el('h4', { text: 'Vídeo de abertura' })]);
       if (cfg.abertura_video) {
         var v = el('video', { controls: true, playsinline: true, class: 'std-intro-mini', preload: 'metadata' });
@@ -712,12 +706,10 @@
       box.appendChild(campo('Ou envie um vídeo seu (MP4 ou WebM, até 100 MB)', arq));
       c.appendChild(box);
     }
-    function escreverAbertura(ta, btn) {
-      if (S.settings.abertura_texto && !confirm('Substituir o texto atual do teleprompter?')) return;
-      ocupar(async function () {
-        var j = await call({ acao: 'studio_ia', id: S.id, modo: 'abertura', settings: S.settings, content: S.content });
-        S.settings.abertura_texto = j.texto; mudou(); desenharLado(); aviso('Texto da abertura pronto. Revise antes de gravar.', 'ok');
-      }, btn, 'Escrevendo…');
+    async function escreverAbertura(pedido) {
+      var j = await call({ acao: 'studio_ia', id: S.id, modo: 'abertura', pedido: pedido || '', settings: S.settings, content: S.content });
+      S.settings.abertura_texto = j.texto; mudou();
+      return j.texto;
     }
     async function apagarIntro(btn) {
       if (!confirm('Apagar o vídeo de abertura?')) return;
@@ -740,78 +732,264 @@
       } catch (e) { aviso(e.message, 'erro'); return false; }
     }
 
-    var R = null; // gravador da introdução
-    function pararCamera() { if (R) { cancelAnimationFrame(R.raf); clearInterval(R.timer); clearInterval(R.contagem); try { if (R.rec && R.rec.state !== 'inactive') R.rec.stop(); } catch (e) { } if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); }); } }
+    /* ---------- gravador da introdução: texto, câmera, microfone, fundo, ensaio e gravação ---------- */
+    var R = null;
+    var FUNDOS = [['marca', 'Marca'], ['reuniao', 'Sala de reunião'], ['claro', 'Escritório claro'], ['chicago', 'Chicago'], ['bh', 'Belo Horizonte'], ['biblioteca', 'Biblioteca']];
+    var imgFundo = function (id) { return BASE + (id === 'marca' ? 'meet/img/fundo-endeavor.jpg' : 'meet/img/fundo-' + id + '.jpg?v=3'); };
+    var miniFundo = function (id) { return BASE + (id === 'marca' ? 'meet/img/fundo-endeavor-mini.jpg' : 'meet/img/fundo-' + id + '-mini.jpg?v=3'); };
+    function lerPref(k, d) { try { var v = localStorage.getItem(k); return v == null ? d : v; } catch (e) { return d; } }
+    function gravarPref(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); return true; } catch (e) { return false; } }
+    function pararCamera() {
+      if (!R) return;
+      cancelAnimationFrame(R.raf); cancelAnimationFrame(R.rafNivel); clearInterval(R.timer); clearInterval(R.contagem);
+      try { if (R.rec && R.rec.state !== 'inactive') R.rec.stop(); } catch (e) { }
+      if (R.proc) { try { R.proc.destroy(); } catch (e) { } R.proc = null; }
+      if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); }); R.stream = null;
+      if (R.audioCtx) { try { R.audioCtx.close(); } catch (e) { } R.audioCtx = null; }
+    }
     function fecharGravador() { pararCamera(); if (R && R.no) R.no.remove(); R = null; }
     async function gravarIntro() {
       fecharGravador();
-      var cfg = S.settings, vel = 40, fonte = 40;
-      try { var pref = JSON.parse(localStorage.getItem('std-prompter') || '{}'); vel = pref.vel || vel; fonte = pref.fonte || fonte; } catch (e) { }
-      R = { estado: 'pronto', partes: [], blob: null, ms: 0 };
+      var cfg = S.settings, vel = Number(lerPref('std-prompter-vel', 40)) || 40, fonte = Number(lerPref('std-prompter-fonte', 40)) || 40;
+      R = { estado: 'pronto', partes: [], blob: null, ms: 0, micMudo: false, somMudo: false, fundo: lerPref('std-grav-fundo', 'nenhum'), foto: lerPref('emeet-fundo-foto', null), painel: cfg.abertura_texto ? '' : 'texto' };
+      var SVG = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; };
+      var ICO = { mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3', micOff: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 4.5 2.6M15 9V6a3 3 0 0 0-5.7-1.3M5 11a7 7 0 0 0 11.3 5.5M19 11a7 7 0 0 1-.6 2.8M12 18v3M3 3l18 18',
+        som: 'M4 9v6h4l5 4V5L8 9H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11', somOff: 'M4 9v6h4l5 4V5L8 9H4zM17 9l5 6M22 9l-5 6' };
+
+      /* --- palco --- */
       var cam = el('video', { class: 'std-grav-cam', autoplay: true, muted: true, playsinline: true });
-      var texto = el('div', { class: 'std-prompter-texto', style: 'font-size:' + fonte + 'px' }, [cfg.abertura_texto || 'Escreva o texto do teleprompter na aba Abertura (ou gere com IA) e ele aparece aqui.']);
+      var texto = el('div', { class: 'std-prompter-texto', style: 'font-size:' + fonte + 'px' });
       var prompter = el('div', { class: 'std-prompter', 'aria-live': 'off' }, [el('div', { class: 'std-prompter-guia' }), texto]);
       var contagem = el('div', { class: 'std-contagem', hidden: true });
-      var tempo = el('span', { class: 'std-grav-tempo', text: '0:00' });
       var rev = el('video', { class: 'std-grav-rev', controls: true, playsinline: true, hidden: true });
+      var selo = el('span', { class: 'std-grav-selo', hidden: true });
+      var tempo = el('span', { class: 'std-grav-tempo', text: '0:00' });
       var msg = el('p', { class: 'std-grav-msg', role: 'status' });
-      var sVel = el('input', { type: 'range', min: '10', max: '140', step: '5', value: String(vel), 'aria-label': 'Velocidade do texto', oninput: function () { vel = Number(this.value); salvarPref(); } });
-      var sFonte = el('input', { type: 'range', min: '22', max: '72', step: '2', value: String(fonte), 'aria-label': 'Tamanho da letra', oninput: function () { fonte = Number(this.value); texto.style.fontSize = fonte + 'px'; salvarPref(); } });
-      function salvarPref() { try { localStorage.setItem('std-prompter', JSON.stringify({ vel: vel, fonte: fonte })); } catch (e) { } }
-      var bGravar = el('button', { class: 'std-grav-rec', type: 'button', onclick: comecar }, ['● Gravar']);
-      var bParar = el('button', { class: 'std-grav-rec parar', type: 'button', hidden: true, onclick: parar }, ['■ Parar']);
-      var bTexto = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { R.pausaTexto = !R.pausaTexto; this.textContent = R.pausaTexto ? '▶ Rolar texto' : '❚❚ Pausar texto'; } }, ['❚❚ Pausar texto']);
+      function mostrarTexto() { texto.textContent = cfg.abertura_texto || 'Escreva o texto do teleprompter em “Texto” (ou gere com IA). Ele aparece aqui.'; }
+      mostrarTexto();
+
+      /* --- painel lateral: Texto | Câmera e microfone | Fundo virtual --- */
+      var painel = el('aside', { class: 'std-grav-painel', hidden: true, 'aria-label': 'Ajustes da gravação' });
+      var bTextoP = el('button', { type: 'button', class: 'std-grav-aba', 'data-p': 'texto', onclick: function () { abrirPainel('texto'); } }, ['✎ Texto']);
+      var bCamP = el('button', { type: 'button', class: 'std-grav-aba', 'data-p': 'dispositivos', onclick: function () { abrirPainel('dispositivos'); } }, ['Câmera e microfone']);
+      var bFundoP = el('button', { type: 'button', class: 'std-grav-aba', 'data-p': 'fundo', onclick: function () { abrirPainel('fundo'); } }, ['Fundo virtual']);
+      function abrirPainel(p) {
+        R.painel = R.painel === p ? '' : p;
+        [bTextoP, bCamP, bFundoP].forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.p === R.painel)); });
+        painel.hidden = !R.painel; painel.innerHTML = '';
+        if (R.painel === 'texto') painelTexto(); else if (R.painel === 'dispositivos') painelDispositivos(); else if (R.painel === 'fundo') painelFundo();
+      }
+      function painelTexto() {
+        var info = el('p', { class: 'std-dica claro' });
+        var conta = function () { info.textContent = palavras(cfg.abertura_texto) + ' palavras · cerca de ' + mmss(estimar(cfg.abertura_texto, cfg.ritmo)) + ' de fala.'; };
+        var ta = el('textarea', { rows: '12', maxlength: '4000', class: 'std-grav-ta', 'aria-label': 'Texto do teleprompter', placeholder: 'Escreva ou cole aqui o texto que você vai ler. Um parágrafo por ideia.',
+          oninput: function () { cfg.abertura_texto = this.value; conta(); mostrarTexto(); mudou(); } }, [cfg.abertura_texto || '']);
+        var pedido = el('input', { maxlength: '300', class: 'std-grav-in', placeholder: 'Opcional: o que a IA deve dizer (ex.: mais curto, falar do meu nome)', 'aria-label': 'Pedido para a IA' });
+        var bIA = el('button', { class: 'btn btn--gold btn--sm', type: 'button', disabled: !S.cap.texto, onclick: async function () {
+          if (cfg.abertura_texto && !confirm('Substituir o texto atual do teleprompter?')) return;
+          bIA.disabled = true; bIA.textContent = 'Escrevendo…';
+          try { ta.value = await escreverAbertura(pedido.value); conta(); mostrarTexto(); msg.textContent = 'Texto pronto. Revise, ensaie e grave.'; }
+          catch (e) { msg.textContent = e.message; }
+          bIA.disabled = false; bIA.textContent = '✦ Escrever com IA';
+        } }, ['✦ Escrever com IA']);
+        painel.appendChild(el('h3', { text: 'Texto do teleprompter' }));
+        painel.appendChild(ta); painel.appendChild(info); conta();
+        painel.appendChild(pedido); painel.appendChild(bIA);
+        painel.appendChild(el('p', { class: 'std-dica claro', text: 'O texto fica salvo junto com a apresentação (clique em Salvar no Studio).' }));
+      }
+      async function painelDispositivos() {
+        painel.appendChild(el('h3', { text: 'Câmera e microfone' }));
+        var lista = [];
+        try { lista = await navigator.mediaDevices.enumerateDevices(); } catch (e) { }
+        if (!R || R.painel !== 'dispositivos') return;
+        var opc = function (tipo, atual) { return lista.filter(function (d) { return d.kind === tipo; }).map(function (d, i) { return el('option', { value: d.deviceId, selected: d.deviceId === atual, text: d.label || (tipo === 'videoinput' ? 'Câmera ' : 'Microfone ') + (i + 1) }); }); };
+        var trilha = function (k) { var t = R.stream && (k === 'v' ? R.stream.getVideoTracks()[0] : R.stream.getAudioTracks()[0]); return t && t.getSettings ? t.getSettings().deviceId : ''; };
+        var sCam = el('select', { class: 'std-grav-in', disabled: R.estado === 'gravando', onchange: function () { gravarPref('std-grav-cam', this.value); ligarCamera(); } }, opc('videoinput', trilha('v')));
+        var sMic = el('select', { class: 'std-grav-in', disabled: R.estado === 'gravando', onchange: function () { gravarPref('std-grav-mic', this.value); ligarCamera(); } }, opc('audioinput', trilha('a')));
+        painel.appendChild(el('label', { class: 'std-grav-campo' }, ['Câmera', sCam]));
+        painel.appendChild(el('label', { class: 'std-grav-campo' }, ['Microfone', sMic]));
+        painel.appendChild(el('div', { class: 'std-grav-nivel', 'aria-hidden': 'true' }, [el('i', { id: 'stdNivel' })]));
+        painel.appendChild(el('p', { class: 'std-dica claro', text: 'Câmeras e microfones externos (USB, Bluetooth) aparecem aqui depois de conectados. A barra acima mostra o volume do microfone: fale para conferir.' }));
+      }
+      function painelFundo() {
+        painel.appendChild(el('h3', { text: 'Fundo virtual' }));
+        var grade = el('div', { class: 'std-grav-fundos', role: 'radiogroup', 'aria-label': 'Fundo virtual' });
+        var item = function (id, rot, mini) {
+          return el('button', { type: 'button', role: 'radio', class: 'std-grav-fundo', 'aria-checked': String(R.fundo === id), disabled: R.estado === 'gravando' && (R.fundo === 'nenhum') !== (id === 'nenhum'), onclick: function () { escolherFundo(id); } },
+            [mini ? el('img', { src: mini, alt: '' }) : el('span', { class: 'std-grav-fundo-ic', text: id === 'nenhum' ? '∅' : '◌' }), el('span', { text: rot })]);
+        };
+        grade.appendChild(item('nenhum', 'Nenhum')); grade.appendChild(item('desfoque', 'Desfocado'));
+        FUNDOS.forEach(function (f) { grade.appendChild(item('img:' + f[0], f[1], miniFundo(f[0]))); });
+        if (R.foto) grade.appendChild(item('foto', 'Sua foto', R.foto));
+        painel.appendChild(grade);
+        var arq = el('input', { type: 'file', accept: 'image/*', class: 'std-grav-in', onchange: function () { if (this.files[0]) usarFoto(this.files[0]); } });
+        painel.appendChild(el('label', { class: 'std-grav-campo' }, [R.foto ? 'Trocar a sua foto' : 'Adicionar a sua foto', arq]));
+        painel.appendChild(el('p', { class: 'std-dica claro', text: 'Os mesmos fundos do Web Meeting. A sua foto fica só neste computador. Durante a gravação dá para trocar de imagem, mas não ligar ou desligar o fundo.' }));
+      }
+      async function usarFoto(f) {
+        if (!/^image\//.test(f.type)) { msg.textContent = 'Escolha uma imagem (JPG ou PNG).'; return; }
+        try {
+          var u = URL.createObjectURL(f), img = new Image(); img.src = u; await img.decode();
+          var esc = Math.min(1, 1920 / img.naturalWidth, 1920 / img.naturalHeight), cv = document.createElement('canvas');
+          cv.width = Math.round(img.naturalWidth * esc); cv.height = Math.round(img.naturalHeight * esc); cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(u);
+          var d = cv.toDataURL('image/jpeg', 0.85); if (!gravarPref('emeet-fundo-foto', d)) { d = cv.toDataURL('image/jpeg', 0.6); gravarPref('emeet-fundo-foto', d); }
+          R.foto = d; await escolherFundo('foto'); if (R.painel === 'fundo') { R.painel = ''; abrirPainel('fundo'); }
+        } catch (e) { msg.textContent = 'Não foi possível abrir essa imagem.'; }
+      }
+      function opFundo(id) { return id === 'desfoque' ? { modo: 'desfoque' } : { modo: 'imagem', imagem: id === 'foto' ? R.foto : imgFundo(id.slice(4)) }; }
+      async function carregarFundo() {
+        if (window.EndeavorFundo) return;
+        await carregarScript('meet/vendor/fundo-suave.js?v=3');
+      }
+      async function escolherFundo(id) {
+        var antes = R.fundo; R.fundo = id; gravarPref('std-grav-fundo', id);
+        if (R.painel === 'fundo') { R.painel = ''; abrirPainel('fundo'); }
+        try { await aplicarFundo(antes); }
+        catch (e) { R.fundo = antes; gravarPref('std-grav-fundo', antes); msg.textContent = e.message || 'Não foi possível aplicar o fundo.'; await aplicarFundo('x').catch(function () { }); }
+      }
+      /** Liga o processador do fundo (o mesmo do Web Meeting) sobre a trilha da câmera; troca de imagem sem reiniciar. */
+      async function aplicarFundo(antes) {
+        var v = R.stream && R.stream.getVideoTracks()[0]; if (!v) return;
+        if (R.fundo === 'nenhum') {
+          if (R.proc) { try { R.proc.destroy(); } catch (e) { } R.proc = null; }
+          R.saida = v; cam.srcObject = new MediaStream([v]); cam.classList.remove('sem-espelho'); return;
+        }
+        if (R.proc && R.proc.trocar && antes !== 'nenhum') { await R.proc.trocar(opFundo(R.fundo)); }
+        else {
+          msg.textContent = 'Preparando o fundo…';
+          await carregarFundo();
+          if (!window.EndeavorFundo || !EndeavorFundo.suportado()) throw new Error('Este navegador não suporta fundo virtual.');
+          var p = EndeavorFundo.criar(Object.assign({ base: BASE + 'meet/vendor/mediapipe' }, opFundo(R.fundo)));
+          await p.init({ track: v });
+          if (R.proc) { try { R.proc.destroy(); } catch (e) { } }
+          R.proc = p; R.saida = p.processedTrack; cam.srcObject = new MediaStream([p.processedTrack]);
+          msg.textContent = '';
+        }
+        cam.classList.toggle('sem-espelho', R.fundo !== 'desfoque');
+      }
+
+      /* --- barra: Velocidade, Letra, Ensaiar, Início do texto, Pausar texto, Gravar, microfone, alto-falante --- */
+      var sVel = el('input', { type: 'range', min: '10', max: '140', step: '5', value: String(vel), 'aria-label': 'Velocidade do texto', oninput: function () { vel = Number(this.value); gravarPref('std-prompter-vel', vel); } });
+      var sFonte = el('input', { type: 'range', min: '22', max: '72', step: '2', value: String(fonte), 'aria-label': 'Tamanho da letra', oninput: function () { fonte = Number(this.value); texto.style.fontSize = fonte + 'px'; gravarPref('std-prompter-fonte', fonte); } });
+      var bEnsaio = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { if (R.estado === 'ensaiando' || R.estado === 'contando-ensaio') pararEnsaio(); else contar('ensaio'); } }, ['▶ Ensaiar']);
       var bTopo = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { prompter.scrollTop = 0; } }, ['↑ Início do texto']);
-      var bRegravar = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', hidden: true, onclick: function () { rev.hidden = true; rev.removeAttribute('src'); cam.hidden = false; prompter.hidden = false; bUsar.hidden = bRegravar.hidden = true; bGravar.hidden = false; prompter.scrollTop = 0; tempo.textContent = '0:00'; msg.textContent = ''; ligarCamera(); } }, ['↺ Regravar']);
+      var bPausa = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { R.pausaTexto = !R.pausaTexto; this.textContent = R.pausaTexto ? '▶ Rolar texto' : '❚❚ Pausar texto'; } }, ['❚❚ Pausar texto']);
+      var bGravar = el('button', { class: 'std-grav-rec', type: 'button', onclick: function () { if (R.estado === 'ensaiando' || R.estado === 'contando-ensaio') pararEnsaio(); contar('gravar'); } }, ['● Gravar']);
+      var bParar = el('button', { class: 'std-grav-rec parar', type: 'button', hidden: true, onclick: parar }, ['■ Parar']);
+      var bRegravar = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', hidden: true, onclick: regravar }, ['↺ Regravar']);
       var bUsar = el('button', { class: 'btn btn--gold btn--sm', type: 'button', hidden: true, onclick: async function () { bUsar.disabled = bRegravar.disabled = true; msg.textContent = 'Enviando…'; var ok = await enviarIntro(R.blob, R.ms, R.blob.type); if (ok) fecharGravador(); else { bUsar.disabled = bRegravar.disabled = false; msg.textContent = 'Não foi possível enviar. Tente de novo.'; } } }, ['Usar esta gravação']);
-      R.no = el('div', { class: 'std-grav', role: 'dialog', 'aria-label': 'Gravar introdução' }, [
-        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), tempo, el('button', { class: 'std-fechar', type: 'button', 'aria-label': 'Fechar', onclick: function () { if (R && R.estado === 'gravando' && !confirm('Parar e descartar a gravação?')) return; fecharGravador(); } }, ['×'])]),
-        el('div', { class: 'std-grav-palco' }, [cam, prompter, contagem, rev]),
+      var bMic = el('button', { class: 'std-grav-ic', type: 'button', 'aria-pressed': 'false', title: 'Desligar o microfone', 'aria-label': 'Desligar o microfone', onclick: function () {
+        R.micMudo = !R.micMudo; if (R.stream) R.stream.getAudioTracks().forEach(function (t) { t.enabled = !R.micMudo; });
+        this.setAttribute('aria-pressed', String(R.micMudo)); this.innerHTML = SVG(R.micMudo ? ICO.micOff : ICO.mic); this.classList.toggle('off', R.micMudo);
+        this.setAttribute('aria-label', R.micMudo ? 'Ligar o microfone' : 'Desligar o microfone'); this.title = this.getAttribute('aria-label');
+        if (R.micMudo && R.estado === 'gravando') msg.textContent = 'Microfone desligado: a gravação está sem som.';
+      } });
+      var bSom = el('button', { class: 'std-grav-ic', type: 'button', 'aria-pressed': 'false', title: 'Desligar o alto-falante', 'aria-label': 'Desligar o alto-falante', onclick: function () {
+        R.somMudo = !R.somMudo; rev.muted = R.somMudo;
+        this.setAttribute('aria-pressed', String(R.somMudo)); this.innerHTML = SVG(R.somMudo ? ICO.somOff : ICO.som); this.classList.toggle('off', R.somMudo);
+        this.setAttribute('aria-label', R.somMudo ? 'Ligar o alto-falante' : 'Desligar o alto-falante'); this.title = this.getAttribute('aria-label');
+      } });
+      bMic.innerHTML = SVG(ICO.mic); bSom.innerHTML = SVG(ICO.som);
+
+      R.no = el('div', { class: 'std-grav', role: 'dialog', 'aria-label': 'Gravar introdução', tabindex: '-1' }, [
+        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), selo, tempo, el('span', { class: 'std-grav-espaco' }), bTextoP, bCamP, bFundoP,
+          el('button', { class: 'std-fechar', type: 'button', 'aria-label': 'Fechar', onclick: function () { if (R && R.estado === 'gravando' && !confirm('Parar e descartar a gravação?')) return; fecharGravador(); } }, ['×'])]),
+        el('div', { class: 'std-grav-meio' }, [el('div', { class: 'std-grav-palco' }, [cam, prompter, contagem, rev]), painel]),
         msg,
         el('div', { class: 'std-grav-ctl' }, [
           el('label', { class: 'std-grav-ajuste' }, ['Velocidade', sVel]), el('label', { class: 'std-grav-ajuste' }, ['Letra', sFonte]),
-          bTopo, bTexto, bGravar, bParar, bRegravar, bUsar])]);
+          bEnsaio, bTopo, bPausa, bGravar, bParar, bRegravar, bUsar, bMic, bSom])]);
       raiz.appendChild(R.no);
-      R.no.addEventListener('keydown', function (e) { if (e.key === ' ' && e.target === R.no) { e.preventDefault(); bTexto.click(); } });
+      R.no.addEventListener('keydown', function (e) { if (e.key === ' ' && !/^(TEXTAREA|INPUT|SELECT|BUTTON)$/.test(e.target.tagName)) { e.preventDefault(); bPausa.click(); } });
+      if (R.painel) { var p0 = R.painel; R.painel = ''; abrirPainel(p0); }
+      R.no.focus();
+
       async function ligarCamera() {
+        var gravando = R.estado === 'gravando'; if (gravando) return;
+        if (R.proc) { try { R.proc.destroy(); } catch (e) { } R.proc = null; }
+        if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); });
+        var camId = lerPref('std-grav-cam', ''), micId = lerPref('std-grav-mic', '');
+        var pedir = function (exato) { return navigator.mediaDevices.getUserMedia({
+          video: Object.assign({ width: { ideal: 1280 }, height: { ideal: 720 } }, exato && camId ? { deviceId: { exact: camId } } : { facingMode: 'user' }),
+          audio: Object.assign({ echoCancellation: true, noiseSuppression: true }, exato && micId ? { deviceId: { exact: micId } } : {}) }); };
         try {
-          R.stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: { echoCancellation: true, noiseSuppression: true } });
-          cam.srcObject = R.stream; msg.textContent = 'Ajuste a velocidade e o tamanho da letra. Clique em Gravar: depois de 3 segundos o texto começa a rolar.';
-        } catch (e) { msg.textContent = 'Não foi possível usar a câmera e o microfone: ' + e.message; bGravar.disabled = true; }
+          try { R.stream = await pedir(true); } catch (e) { if (camId || micId) { R.stream = await pedir(false); } else throw e; }
+          R.stream.getAudioTracks().forEach(function (t) { t.enabled = !R.micMudo; });
+          R.saida = R.stream.getVideoTracks()[0]; cam.srcObject = new MediaStream([R.saida]); cam.classList.remove('sem-espelho');
+          bGravar.disabled = bEnsaio.disabled = false;
+          medirNivel();
+          if (R.fundo !== 'nenhum') await aplicarFundo('nenhum').catch(function (e) { msg.textContent = e.message; R.fundo = 'nenhum'; });
+          if (!msg.textContent) msg.textContent = 'Escreva ou gere o texto em “Texto”, ensaie com Ensaiar e grave quando estiver pronto.';
+          if (R.painel === 'dispositivos') { R.painel = ''; abrirPainel('dispositivos'); }
+        } catch (e) { msg.textContent = 'Não foi possível usar a câmera e o microfone: ' + e.message; bGravar.disabled = bEnsaio.disabled = true; }
+      }
+      function medirNivel() {
+        try {
+          if (R.audioCtx) R.audioCtx.close();
+          var a = R.stream.getAudioTracks()[0]; if (!a || !window.AudioContext) return;
+          R.audioCtx = new AudioContext(); var an = R.audioCtx.createAnalyser(); an.fftSize = 512;
+          R.audioCtx.createMediaStreamSource(new MediaStream([a])).connect(an);
+          var buf = new Uint8Array(an.fftSize);
+          (function passo() { if (!R || !R.audioCtx) return; an.getByteTimeDomainData(buf); var m = 0; for (var i = 0; i < buf.length; i++) m = Math.max(m, Math.abs(buf[i] - 128)); var n = document.getElementById('stdNivel'); if (n) n.style.width = Math.min(100, m / 64 * 100) + '%'; R.rafNivel = requestAnimationFrame(passo); })();
+        } catch (e) { }
       }
       await ligarCamera();
+      if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) navigator.mediaDevices.addEventListener('devicechange', function () { if (R && R.painel === 'dispositivos') { R.painel = ''; abrirPainel('dispositivos'); } });
+
       function rolar() {
         var ult = performance.now();
         (function passo(agora) {
-          if (!R || R.estado !== 'gravando') return;
+          if (!R || (R.estado !== 'gravando' && R.estado !== 'ensaiando')) return;
           if (!R.pausaTexto) prompter.scrollTop += vel * (agora - ult) / 1000;
           ult = agora; R.raf = requestAnimationFrame(passo);
         })(ult);
       }
-      function comecar() {
+      /** Contagem 3, 2, 1 antes de ensaiar e antes de gravar. */
+      function contar(modo) {
         if (!R.stream) return;
-        bGravar.hidden = true; contagem.hidden = false; var n = 3; contagem.textContent = n; prompter.scrollTop = 0;
+        clearInterval(R.contagem); R.pausaTexto = false; bPausa.textContent = '❚❚ Pausar texto';
+        R.estado = modo === 'ensaio' ? 'contando-ensaio' : 'contando'; prompter.scrollTop = 0;
+        bGravar.hidden = modo !== 'ensaio'; bEnsaio.textContent = modo === 'ensaio' ? '■ Parar ensaio' : '▶ Ensaiar'; bEnsaio.disabled = modo !== 'ensaio';
+        contagem.hidden = false; var n = 3; contagem.textContent = n;
         R.contagem = setInterval(function () {
           n--; if (n > 0) { contagem.textContent = n; return; }
           clearInterval(R.contagem); contagem.hidden = true;
-          var mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'].find(function (m) { return window.MediaRecorder && MediaRecorder.isTypeSupported(m); }) || '';
-          R.partes = [];
-          R.rec = new MediaRecorder(R.stream, mime ? { mimeType: mime, videoBitsPerSecond: 1200000, audioBitsPerSecond: 96000 } : undefined);
-          R.rec.ondataavailable = function (e) { if (e.data.size) R.partes.push(e.data); };
-          R.rec.onstop = function () {
-            R.ms = Date.now() - R.ini; R.estado = 'revisar';
-            R.blob = new Blob(R.partes, { type: (R.rec.mimeType || mime || 'video/webm').split(';')[0] });
-            if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); }); R.stream = null;
-            cam.hidden = true; prompter.hidden = true; rev.hidden = false; rev.src = URL.createObjectURL(R.blob);
-            bParar.hidden = true; bRegravar.hidden = false; bUsar.hidden = R.ms < 3000;
-            msg.textContent = R.ms < 3000 ? 'A gravação ficou curta demais. Regrave.' : 'Assista à gravação. Se gostou, clique em “Usar esta gravação”; senão, regrave.';
-          };
-          R.rec.start(1000); R.ini = Date.now(); R.estado = 'gravando'; bParar.hidden = false; msg.textContent = 'Gravando… (até 5 minutos). Espaço pausa o texto.';
-          R.timer = setInterval(function () { var s = (Date.now() - R.ini) / 1000; tempo.textContent = '● ' + mmss(s); if (s >= 300) parar(); }, 250);
-          rolar(); R.no.focus && R.no.setAttribute('tabindex', '-1'); R.no.focus();
+          if (modo === 'ensaio') { R.estado = 'ensaiando'; selo.hidden = false; selo.textContent = 'ENSAIO · não está gravando'; selo.className = 'std-grav-selo ensaio'; msg.textContent = 'Ensaio: o texto rola sem gravar. Depois clique em Início do texto e em Gravar.'; rolar(); }
+          else comecarGravacao();
         }, 1000);
       }
+      function pararEnsaio() {
+        clearInterval(R.contagem); cancelAnimationFrame(R.raf); contagem.hidden = true; selo.hidden = true;
+        R.estado = 'pronto'; bEnsaio.textContent = '▶ Ensaiar'; bEnsaio.disabled = false; bGravar.hidden = false;
+        msg.textContent = 'Ensaio parado. Clique em Início do texto e em Gravar quando estiver pronto.';
+      }
+      function comecarGravacao() {
+        var mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4'].find(function (m) { return window.MediaRecorder && MediaRecorder.isTypeSupported(m); }) || '';
+        R.partes = [];
+        var trilhas = [R.saida].concat(R.stream.getAudioTracks());
+        R.rec = new MediaRecorder(new MediaStream(trilhas), mime ? { mimeType: mime, videoBitsPerSecond: 1200000, audioBitsPerSecond: 96000 } : undefined);
+        R.rec.ondataavailable = function (e) { if (e.data.size) R.partes.push(e.data); };
+        R.rec.onstop = function () {
+          R.ms = Date.now() - R.ini; R.estado = 'revisar'; selo.hidden = true;
+          R.blob = new Blob(R.partes, { type: (R.rec.mimeType || mime || 'video/webm').split(';')[0] });
+          pararCamera();
+          cam.hidden = true; prompter.hidden = true; rev.hidden = false; rev.muted = R.somMudo; rev.src = URL.createObjectURL(R.blob);
+          bParar.hidden = true; bRegravar.hidden = false; bUsar.hidden = R.ms < 3000; bEnsaio.disabled = bTopo.disabled = bPausa.disabled = true;
+          msg.textContent = R.ms < 3000 ? 'A gravação ficou curta demais. Regrave.' : 'Assista à gravação. Se gostou, clique em “Usar esta gravação”; senão, regrave.';
+        };
+        R.rec.start(1000); R.ini = Date.now(); R.estado = 'gravando'; bParar.hidden = false;
+        selo.hidden = false; selo.textContent = '● GRAVANDO'; selo.className = 'std-grav-selo gravando';
+        msg.textContent = R.micMudo ? 'Gravando com o microfone desligado.' : 'Gravando… (até 5 minutos). Espaço pausa o texto.';
+        R.timer = setInterval(function () { var s = (Date.now() - R.ini) / 1000; tempo.textContent = '● ' + mmss(s); if (s >= 300) parar(); }, 250);
+        rolar();
+      }
       function parar() { clearInterval(R.timer); cancelAnimationFrame(R.raf); if (R.rec && R.rec.state !== 'inactive') R.rec.stop(); }
+      async function regravar() {
+        rev.hidden = true; rev.removeAttribute('src'); cam.hidden = false; prompter.hidden = false;
+        bUsar.hidden = bRegravar.hidden = true; bGravar.hidden = false; bEnsaio.disabled = bTopo.disabled = bPausa.disabled = false;
+        prompter.scrollTop = 0; tempo.textContent = '0:00'; msg.textContent = ''; R.estado = 'pronto';
+        await ligarCamera();
+      }
     }
     async function ouvir(slideId, btn) {
       try {

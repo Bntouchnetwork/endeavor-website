@@ -191,33 +191,62 @@ ok(await page.$$eval(".std-ponto.pronta", (x) => x.length) === 5 && /5 de 5/.tes
 await page.click("#stdPrevia"); await page.waitForTimeout(500);
 ok(/narração com a sua voz/.test(await page.textContent(".std-previa-info")), "prévia toca a narração");
 await page.keyboard.press("Escape");
-// abertura: texto do teleprompter com IA, gravar pela câmera, prévia, regravar, usar; prévia começa pela abertura
+// abertura: gravador com texto/IA, câmera e microfone, fundo virtual, ensaio, contagem, mudo; prévia começa pela abertura
 await page.click('.std-abas [data-aba="abertura"]');
-await page.click("text=✦ Escrever com IA"); await page.waitForTimeout(400);
-ok(/Sou o Christiano|Eu sou o Christiano/.test(await page.inputValue(".std-lado-corpo textarea")) && /palavras · cerca de/.test(await page.textContent(".std-lado-corpo")), "texto do teleprompter gerado com IA (dá para colar ou digitar)");
-await page.fill(".std-lado-corpo textarea", "Olá! Eu sou o Christiano.\n\nHoje vou mostrar como abrir a sua LLC.\n\n" + "Esta é uma linha comprida do teleprompter para rolar. ".repeat(30));
+ok(!(await page.$(".std-lado-corpo textarea")) && await page.isVisible("text=● Gravar introdução"), "aba Abertura só com o essencial (o texto fica no gravador)");
 await page.click("text=● Gravar introdução"); await page.waitForSelector(".std-grav video.std-grav-cam");
 await page.waitForFunction(() => { const v = document.querySelector(".std-grav-cam"); return v && v.readyState >= 2; });
-ok(/Olá! Eu sou o Christiano/.test(await page.textContent(".std-prompter")), "teleprompter mostra o texto sobre a câmera");
+ok(await page.isVisible(".std-grav-ta"), "sem texto ainda: o gravador abre com o painel Texto");
+const barra = await page.$$eval(".std-grav-ctl > *", (x) => x.filter((e) => !e.hidden).map((e) => (e.getAttribute("aria-label") || e.textContent).trim()));
+ok(JSON.stringify(barra) === JSON.stringify(["Velocidade", "Letra", "▶ Ensaiar", "↑ Início do texto", "❚❚ Pausar texto", "● Gravar", "Desligar o microfone", "Desligar o alto-falante"]), "barra na ordem: Velocidade, Letra, Ensaiar, Início, Pausar, Gravar, microfone, alto-falante " + JSON.stringify(barra));
+await page.click("text=✦ Escrever com IA"); await page.waitForTimeout(500);
+ok(/Eu sou o Christiano/.test(await page.inputValue(".std-grav-ta")) && /Eu sou o Christiano/.test(await page.textContent(".std-prompter")), "Escrever com IA dentro do gravador, e o teleprompter atualiza");
+await page.fill(".std-grav-ta", "Olá! Eu sou o Christiano.\n\nHoje vou mostrar como abrir a sua LLC.\n\n" + "Esta é uma linha comprida do teleprompter para rolar. ".repeat(30));
+ok(/Hoje vou mostrar/.test(await page.textContent(".std-prompter")), "editar o texto ali mesmo atualiza o teleprompter");
+// câmera e microfone
+await page.click('.std-grav-aba[data-p="dispositivos"]'); await page.waitForTimeout(400);
+ok(await page.$$eval(".std-grav-painel select", (x) => x.length) === 2 && await page.$$eval(".std-grav-painel select:first-of-type option", (x) => x.length) >= 1, "escolher câmera e microfone (inclui externos conectados)");
+// fundo virtual
+await page.click('.std-grav-aba[data-p="fundo"]'); await page.waitForTimeout(300);
+ok(await page.$$eval(".std-grav-fundo", (x) => x.length) === 8 && /Desfocado/.test(await page.textContent(".std-grav-painel")) && /Adicionar a sua foto/.test(await page.textContent(".std-grav-painel")), "fundo virtual: nenhum, desfocado, os 6 fundos do Web Meeting e a sua foto");
+await page.click('.std-grav-fundo:has-text("Chicago")');
+let comFundo = false;
+for (let i = 0; i < 40 && !comFundo; i++) { await page.waitForTimeout(500); comFundo = await page.evaluate(() => { const v = document.querySelector(".std-grav-cam"); const t = v && v.srcObject && v.srcObject.getVideoTracks()[0]; return !!t && v.classList.contains("sem-espelho") && t.kind === "video" && !!window.EndeavorFundo; }); }
+ok(comFundo && await page.$eval('.std-grav-fundo:has-text("Chicago")', (b) => b.getAttribute("aria-checked")) === "true", "fundo aplicado na câmera (mesmo processador do Web Meeting)");
+await page.click('.std-grav-aba[data-p="fundo"]'); // fecha o painel
+// mudo
+await page.click('.std-grav-ic[aria-label="Desligar o microfone"]');
+ok(await page.evaluate(() => document.querySelector(".std-grav-cam") && true) && await page.$eval(".std-grav-ic", (b) => b.getAttribute("aria-pressed")) === "true", "mudo do microfone");
+await page.click('.std-grav-ic[aria-label="Ligar o microfone"]');
+await page.click('.std-grav-ic[aria-label="Desligar o alto-falante"]');
+ok(await page.isVisible('.std-grav-ic[aria-label="Ligar o alto-falante"]'), "mudo do alto-falante (evita microfonia)");
+await page.click('.std-grav-ic[aria-label="Ligar o alto-falante"]');
+// tamanho e velocidade
 await page.locator('.std-grav-ajuste input').nth(1).fill("60");
 ok(await page.$eval(".std-prompter-texto", (x) => x.style.fontSize) === "60px", "tamanho da letra ajustável");
 await page.locator('.std-grav-ajuste input').nth(0).fill("120");
+// ensaiar
+await page.click("text=▶ Ensaiar"); await page.waitForTimeout(400);
+ok(/^[123]$/.test((await page.textContent(".std-contagem")).trim()), "Ensaiar começa com a contagem 3, 2, 1");
+await page.waitForTimeout(4200);
+ok(await page.$eval(".std-prompter", (x) => x.scrollTop) > 100 && /ENSAIO/.test(await page.textContent(".std-grav-selo")) && !M.upload, "ensaio rola o texto sem gravar");
+await page.click("text=■ Parar ensaio"); await page.click("text=↑ Início do texto");
+ok(await page.$eval(".std-prompter", (x) => x.scrollTop) === 0, "Início do texto volta ao começo");
+// gravar
 await page.click(".std-grav-rec"); await page.waitForTimeout(400);
-ok(/^[123]$/.test((await page.textContent(".std-contagem")).trim()), "contagem regressiva antes de gravar");
-await page.waitForTimeout(5200);
-const rolou = await page.$eval(".std-prompter", (x) => x.scrollTop);
-ok(rolou > 100 && /● 0:0[1-3]/.test(await page.textContent(".std-grav-tempo")), "gravando: tempo correndo e o texto rolando sozinho");
+ok(/^[123]$/.test((await page.textContent(".std-contagem")).trim()), "Gravar começa com a contagem 3, 2, 1");
+await page.waitForTimeout(4800);
+ok(await page.$eval(".std-prompter", (x) => x.scrollTop) > 100 && /● 0:0[1-3]/.test(await page.textContent(".std-grav-tempo")) && /GRAVANDO/.test(await page.textContent(".std-grav-selo")), "gravando: tempo correndo, selo e texto rolando");
 ok(await page.isHidden(".std-contagem") && await page.isHidden("text=↺ Regravar") && await page.isHidden('button:has-text("Usar esta gravação")'), "durante a gravação: contagem some e só aparece Parar");
 await page.screenshot({ path: `${OUT}/studio-teleprompter.png` });
 await page.waitForTimeout(1500);
 await page.click(".std-grav-rec.parar"); await page.waitForSelector(".std-grav-rev:not([hidden])");
-ok(await page.isVisible("text=↺ Regravar") && await page.isVisible("button:has-text(\"Usar esta gravação\")"), "depois de parar: assistir, regravar ou usar");
-await page.click("text=↺ Regravar"); await page.waitForTimeout(800);
+ok(await page.isVisible("text=↺ Regravar") && await page.isVisible('button:has-text("Usar esta gravação")'), "depois de parar: assistir, regravar ou usar");
+await page.click("text=↺ Regravar"); await page.waitForTimeout(1500);
 ok(await page.isVisible(".std-grav-cam") && await page.$eval(".std-prompter", (x) => x.scrollTop) === 0, "regravar volta para a câmera e o texto ao início");
-await page.click(".std-grav-rec"); await page.waitForTimeout(6500); await page.click(".std-grav-rec.parar"); await page.waitForSelector("button:has-text(\"Usar esta gravação\"):visible");
-await page.click("button:has-text(\"Usar esta gravação\")"); await page.waitForTimeout(800);
+await page.click(".std-grav-rec"); await page.waitForTimeout(6500); await page.click(".std-grav-rec.parar"); await page.waitForSelector('button:has-text("Usar esta gravação"):visible');
+await page.click('button:has-text("Usar esta gravação")'); await page.waitForTimeout(800);
 const envio = await page.evaluate(() => window.__envio);
-if (!envio || !M.upload) console.log("   (aviso: " + (await page.textContent("#stdAviso").catch(() => "?")) + " | msg: " + (await page.textContent(".std-grav-msg").catch(() => "-")) + ")");
 ok(envio && envio.size > 1000 && /^video\/(webm|mp4)$/.test(envio.tipo) && M.studios[st.id].settings.abertura === "video" && M.studios[st.id].settings.abertura_video.duracao_ms >= 2500, "gravação enviada e marcada como abertura do webinar");
 ok(!(await page.$(".std-grav")) && /Duração: 0:0/.test(await page.textContent(".std-lado-corpo")), "vídeo de abertura aparece na aba, com a duração");
 await page.click("#stdSalvar"); await page.waitForTimeout(300);
@@ -226,7 +255,6 @@ await page.click("#stdPrevia"); await page.waitForTimeout(900);
 ok(/Abertura · vídeo gravado/.test(await page.textContent(".std-previa-info")) && !!(await page.$(".std-previa video.std-intro")), "prévia começa pela abertura gravada");
 await page.waitForTimeout(4500);
 const infoPrev = await page.textContent(".std-previa-info");
-if (!/Slide [12] de/.test(infoPrev)) console.log("   (info: " + infoPrev + " | " + await page.evaluate(() => { const v = document.querySelector(".std-previa video"); return v ? [v.currentTime, v.duration, v.paused, v.error && v.error.code, v.readyState].join(",") : "sem vídeo"; }) + ")");
 ok(/Slide [12] de/.test(infoPrev), "depois da abertura, entram os slides");
 await page.keyboard.press("Escape");
 // voz de teste do navegador

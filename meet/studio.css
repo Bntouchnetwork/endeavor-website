@@ -130,12 +130,14 @@ body.std-aberto{overflow:hidden}
 .std-intro-mini{width:100%;border-radius:6px;background:#000;aspect-ratio:16/9}
 .std-tela .std-intro{width:min(100%,calc((100vh - 220px) * 16 / 9));aspect-ratio:16/9;background:#000;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 .std-grav{position:fixed;inset:0;z-index:2200;background:#030a16;color:#e8edf5;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;outline:none}
+.std-grav [hidden]{display:none!important}
 .std-grav-topo{display:flex;align-items:center;gap:1rem;padding:.6rem 1rem}
-.std-grav-topo strong{margin-right:auto}
+.std-grav-espaco{flex:1}
 .std-grav-tempo{font-variant-numeric:tabular-nums;color:#ff8a80;font-weight:600}
 .std-grav-palco{position:relative;display:grid;place-items:center;min-height:0;padding:0 1rem}
 .std-grav-cam,.std-grav-rev{width:min(100%,calc((100vh - 190px) * 16 / 9));aspect-ratio:16/9;background:#000;border-radius:8px;object-fit:cover}
 .std-grav-cam{transform:scaleX(-1)}
+.std-grav-cam.sem-espelho{transform:none}
 .std-prompter{position:absolute;left:50%;top:0;transform:translateX(-50%);width:min(92%,980px);height:42%;overflow:hidden;background:rgba(0,0,0,.62);border-radius:0 0 12px 12px;padding:0 1.5rem;scrollbar-width:none}
 .std-prompter::-webkit-scrollbar{display:none}
 .std-prompter-texto{white-space:pre-wrap;line-height:1.4;font-weight:600;color:#fff;padding:32% 0 120%;text-align:center}
@@ -149,3 +151,27 @@ body.std-aberto{overflow:hidden}
 .std-grav-rec{background:#c62828;color:#fff;border:0;border-radius:999px;padding:.6rem 1.3rem;font-weight:700;cursor:pointer}
 .std-grav-rec.parar{background:#fff;color:#c62828}
 .std-grav-rec:disabled{opacity:.5}
+
+.std-grav-meio{display:grid;grid-template-columns:minmax(0,1fr) auto;min-height:0}
+.std-grav-palco{position:relative;display:grid;place-items:center;min-height:0;padding:0 1rem}
+.std-grav-painel{width:340px;overflow:auto;background:#0a1830;border-left:1px solid rgba(255,255,255,.08);padding:1rem;display:grid;gap:.6rem;align-content:start}
+.std-grav-painel h3{margin:0;font-size:1rem;color:#fff}
+.std-grav-aba{background:transparent;color:#c7d2e3;border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:.35rem .8rem;font:600 .82rem "Inter",sans-serif;cursor:pointer;white-space:nowrap}
+.std-grav-aba[aria-pressed=true]{background:#c8a45d;border-color:#c8a45d;color:#07162b}
+.std-grav-ta,.std-grav-in{width:100%;background:#06142a!important;border:1px solid #2a4a7a!important;color:#fff!important;border-radius:6px;padding:.5rem .6rem;font:inherit;font-size:.9rem}
+.std-grav-ta{min-height:16rem;line-height:1.5;resize:vertical}
+.std-grav-campo{display:grid;gap:.3rem;font-size:.82rem;color:#c7d2e3}
+.std-grav-nivel{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.std-grav-nivel i{display:block;height:100%;width:0;background:#8fe0b0;transition:width .08s linear}
+.std-grav-fundos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+.std-grav-fundo{display:grid;gap:.25rem;background:transparent;border:2px solid rgba(255,255,255,.12);border-radius:8px;padding:.3rem;color:#e8edf5;font-size:.78rem;cursor:pointer;text-align:center}
+.std-grav-fundo img,.std-grav-fundo-ic{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:5px;display:grid;place-items:center;background:#06142a;font-size:1.4rem;color:#a8b6cc}
+.std-grav-fundo[aria-checked=true]{border-color:#c8a45d}
+.std-grav-fundo:disabled{opacity:.4;cursor:default}
+.std-grav-ic{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;display:grid;place-items:center;cursor:pointer}
+.std-grav-ic.off{background:#c62828;border-color:#c62828}
+.std-grav-selo{font-size:.72rem;font-weight:700;letter-spacing:.05em;padding:.2rem .6rem;border-radius:999px}
+.std-grav-selo.gravando{background:#c62828;color:#fff}
+.std-grav-selo.ensaio{background:rgba(200,164,93,.2);color:#e3cf9f;border:1px solid rgba(200,164,93,.5)}
+.std-grav-topo{flex-wrap:wrap}
+@media (max-width:900px){.std-grav-meio{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.std-grav-painel{width:auto;max-height:40vh;border-left:0;border-top:1px solid rgba(255,255,255,.08)}}
