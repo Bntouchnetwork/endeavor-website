@@ -741,7 +741,7 @@
     function gravarPref(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); return true; } catch (e) { return false; } }
     function pararCamera() {
       if (!R) return;
-      cancelAnimationFrame(R.raf); cancelAnimationFrame(R.rafNivel); clearInterval(R.timer); clearInterval(R.contagem);
+      cancelAnimationFrame(R.raf); cancelAnimationFrame(R.rafNivel); clearInterval(R.timer); clearInterval(R.contagem); clearInterval(R.cronoTimer);
       try { if (R.rec && R.rec.state !== 'inactive') R.rec.stop(); } catch (e) { }
       if (R.proc) { try { R.proc.destroy(); } catch (e) { } R.proc = null; }
       if (R.stream) R.stream.getTracks().forEach(function (t) { t.stop(); }); R.stream = null;
@@ -754,7 +754,7 @@
     }
     async function gravarIntro() {
       fecharGravador();
-      var cfg = S.settings, vel = Number(lerPref('std-prompter-vel', 40)) || 40, fonte = Number(lerPref('std-prompter-fonte', 40)) || 40;
+      var cfg = S.settings, vel = Number(lerPref('std-prompter-vel2', 18)) || 18, fonte = Number(lerPref('std-prompter-fonte', 40)) || 40;
       R = { estado: 'pronto', partes: [], blob: null, ms: 0, micMudo: false, somMudo: false, fundo: lerPref('std-grav-fundo', 'nenhum'), foto: lerPref('emeet-fundo-foto', null), painel: cfg.abertura_texto ? '' : 'texto' };
       var SVG = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>'; };
       var ICO = { mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3', micOff: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 4.5 2.6M15 9V6a3 3 0 0 0-5.7-1.3M5 11a7 7 0 0 0 11.3 5.5M19 11a7 7 0 0 1-.6 2.8M12 18v3M3 3l18 18',
@@ -769,6 +769,7 @@
       var selo = el('span', { class: 'std-grav-selo', hidden: true });
       var tempo = el('span', { class: 'std-grav-tempo', text: '0:00' });
       var msg = el('p', { class: 'std-grav-msg', role: 'status' });
+      var crono = el('div', { class: 'std-grav-crono', 'aria-live': 'off' }, [el('span', { class: 'std-grav-crono-rot', text: 'Tempo' }), el('strong', { text: '0:00' })]);
       function mostrarTexto() { texto.textContent = cfg.abertura_texto || 'Escreva o texto do teleprompter em “Texto” (ou gere com IA). Ele aparece aqui.'; }
       mostrarTexto();
 
@@ -782,19 +783,32 @@
         if (document.fullscreenElement) { document.exitFullscreen().catch(function () { }); return; }
         if (R.no.requestFullscreen) R.no.requestFullscreen({ navigationUI: 'hide' }).catch(function () { msg.textContent = 'O navegador não deixou abrir em tela cheia. Tente F11 (Windows) ou Ctrl+Cmd+F (Mac).'; });
       } }, ['⛶ Tela cheia']);
-      var gaveta = el('aside', { class: 'std-grav-gaveta', 'aria-label': 'Ajustes da gravação', 'aria-hidden': 'true' }, [
+      var blocoVel = el('div', { class: 'std-grav-vel' });
+      var borda = el('div', { class: 'std-grav-borda', role: 'separator', 'aria-orientation': 'vertical', tabindex: '0', 'aria-label': 'Arraste para mudar a largura dos ajustes (setas do teclado também)' });
+      var gaveta = el('aside', { class: 'std-grav-gaveta', 'aria-label': 'Ajustes da gravação', 'aria-hidden': 'true' }, [borda,
         el('div', { class: 'std-grav-gaveta-topo' }, [el('strong', { text: 'Ajustes' }), el('button', { type: 'button', class: 'std-fechar', 'aria-label': 'Fechar ajustes', onclick: function () { fecharGaveta(); } }, ['›'])]),
-        el('div', { class: 'std-grav-secoes' }, secoes.concat([bTela])), painel]);
+        blocoVel, el('div', { class: 'std-grav-secoes' }, secoes.concat([bTela])), painel, crono]);
+      /* largura da aba: arrastar a borda (ou setas); a imagem se acomoda ao lado */
+      var largGav = Math.min(Math.max(Number(lerPref('std-grav-gav-w', 380)) || 380, 280), 760);
+      function aplicarLarg(w) { largGav = Math.round(Math.min(Math.max(w, 280), Math.min(760, innerWidth * 0.6))); R.no && R.no.style.setProperty('--gav-w', largGav + 'px'); gravarPref('std-grav-gav-w', largGav); }
+      borda.addEventListener('pointerdown', function (e) {
+        e.preventDefault(); borda.setPointerCapture(e.pointerId); R.no.classList.add('arrastando');
+        var x0 = e.clientX, w0 = largGav;
+        var mover = function (ev) { aplicarLarg(w0 + (x0 - ev.clientX)); };
+        var soltar = function () { R.no.classList.remove('arrastando'); borda.removeEventListener('pointermove', mover); borda.removeEventListener('pointerup', soltar); borda.removeEventListener('pointercancel', soltar); };
+        borda.addEventListener('pointermove', mover); borda.addEventListener('pointerup', soltar); borda.addEventListener('pointercancel', soltar);
+      });
+      borda.addEventListener('keydown', function (e) { if (e.key === 'ArrowLeft') { e.preventDefault(); aplicarLarg(largGav + 20); } if (e.key === 'ArrowRight') { e.preventDefault(); aplicarLarg(largGav - 20); } });
       var alca = el('button', { type: 'button', class: 'std-grav-alca', 'aria-expanded': 'false', 'aria-label': 'Abrir ajustes: texto, câmera e microfone, fundo virtual e tela cheia', onclick: function () { if (R.painel) fecharGaveta(); else abrirPainel(R.ultimoPainel || 'texto'); } }, [el('span', { text: 'Ajustes' })]);
       function abrirPainel(p) {
         R.painel = p; R.ultimoPainel = p;
         secoes.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.p === p)); });
-        gaveta.classList.add('aberta'); gaveta.setAttribute('aria-hidden', 'false'); alca.setAttribute('aria-expanded', 'true');
+        gaveta.classList.add('aberta'); gaveta.setAttribute('aria-hidden', 'false'); alca.setAttribute('aria-expanded', 'true'); if (R.no) R.no.classList.add('gaveta-aberta');
         painel.innerHTML = '';
         if (p === 'texto') painelTexto(); else if (p === 'dispositivos') painelDispositivos(); else if (p === 'fundo') painelFundo();
       }
       function fecharGaveta() {
-        R.painel = ''; gaveta.classList.remove('aberta'); gaveta.setAttribute('aria-hidden', 'true'); alca.setAttribute('aria-expanded', 'false'); alca.focus();
+        R.painel = ''; gaveta.classList.remove('aberta'); gaveta.setAttribute('aria-hidden', 'true'); alca.setAttribute('aria-expanded', 'false'); R.no.classList.remove('gaveta-aberta'); alca.focus();
       }
       function painelTexto() {
         var info = el('p', { class: 'std-dica claro' });
@@ -886,7 +900,13 @@
       }
 
       /* --- barra: Velocidade, Letra, Ensaiar, Início do texto, Pausar texto, Gravar, microfone, alto-falante --- */
-      var sVel = el('input', { type: 'range', min: '10', max: '140', step: '5', value: String(vel), 'aria-label': 'Velocidade do texto', oninput: function () { vel = Number(this.value); gravarPref('std-prompter-vel', vel); } });
+      var velTxt = el('output', { class: 'std-grav-vel-n', text: String(vel) });
+      var mudaVel = function (v) { vel = Math.min(Math.max(Math.round(v), 2), 80); sVel.value = String(vel); velTxt.textContent = String(vel); gravarPref('std-prompter-vel2', vel); };
+      var sVel = el('input', { type: 'range', min: '2', max: '80', step: '1', value: String(vel), 'aria-label': 'Velocidade do texto', oninput: function () { mudaVel(Number(this.value)); } });
+      blocoVel.appendChild(el('span', { class: 'std-grav-vel-rot', text: 'Velocidade do texto' }));
+      blocoVel.appendChild(el('div', { class: 'std-grav-vel-linha' }, [
+        el('button', { type: 'button', class: 'std-grav-ic pequeno', 'aria-label': 'Mais devagar', onclick: function () { mudaVel(vel - 1); } }, ['−']), sVel,
+        el('button', { type: 'button', class: 'std-grav-ic pequeno', 'aria-label': 'Mais rápido', onclick: function () { mudaVel(vel + 1); } }, ['+']), velTxt]));
       var sFonte = el('input', { type: 'range', min: '22', max: '72', step: '2', value: String(fonte), 'aria-label': 'Tamanho da letra', oninput: function () { fonte = Number(this.value); texto.style.fontSize = fonte + 'px'; gravarPref('std-prompter-fonte', fonte); } });
       var bEnsaio = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { if (R.estado === 'ensaiando' || R.estado === 'contando-ensaio') pararEnsaio(); else contar('ensaio'); } }, ['▶ Ensaiar']);
       var bTopo = el('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { prompter.scrollTop = 0; } }, ['↑ Início do texto']);
@@ -914,17 +934,16 @@
         if (R) R.no.classList.toggle('tela-cheia', on);
       };
       document.addEventListener('fullscreenchange', R.telaCheia);
-      R.no = el('div', { class: 'std-grav', role: 'dialog', 'aria-label': 'Gravar introdução', tabindex: '-1' }, [
-        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), selo, tempo, el('span', { class: 'std-grav-espaco' }),
-          el('button', { class: 'std-fechar', type: 'button', 'aria-label': 'Fechar', onclick: function () { if (R && R.estado === 'gravando' && !confirm('Parar e descartar a gravação?')) return; fecharGravador(); } }, ['×'])]),
-        el('div', { class: 'std-grav-meio' }, [el('div', { class: 'std-grav-palco' }, [el('div', { class: 'std-grav-quadro' }, [cam, prompter, contagem, rev])]), alca, gaveta]),
-        msg,
+      var bSair = el('button', { class: 'btn btn--ghost btn--sm std-grav-sair', type: 'button', onclick: function () { if (R && R.estado === 'gravando' && !confirm('Parar e descartar a gravação?')) return; fecharGravador(); } }, ['Sair']);
+      R.no = el('div', { class: 'std-grav', role: 'dialog', 'aria-label': 'Gravar introdução', tabindex: '-1', style: '--gav-w:' + largGav + 'px' }, [
+        el('div', { class: 'std-grav-meio' }, [el('div', { class: 'std-grav-palco' }, [el('div', { class: 'std-grav-quadro' }, [cam, prompter, contagem, rev, el('div', { class: 'std-grav-status' }, [selo, tempo]), msg])]), alca, gaveta]),
         el('div', { class: 'std-grav-ctl' }, [
-          el('label', { class: 'std-grav-ajuste' }, ['Velocidade', sVel]), el('label', { class: 'std-grav-ajuste' }, ['Letra', sFonte]),
-          bEnsaio, bTopo, bPausa, bGravar, bParar, bRegravar, bUsar, bMic, bSom])]);
+          el('label', { class: 'std-grav-ajuste' }, ['Letra', sFonte]),
+          bEnsaio, bTopo, bPausa, bGravar, bParar, bRegravar, bUsar, bMic, bSom, bSair])]);
       raiz.appendChild(R.no);
       R.no.addEventListener('keydown', function (e) { if (e.key === ' ' && !/^(TEXTAREA|INPUT|SELECT|BUTTON)$/.test(e.target.tagName)) { e.preventDefault(); bPausa.click(); } });
       if (R.painel) { var p0 = R.painel; R.painel = ''; abrirPainel(p0); }
+      window.addEventListener('resize', function () { if (R) aplicarLarg(largGav); });
       R.no.addEventListener('keydown', function (e) { if (e.key === 'Escape' && R && R.painel && !document.fullscreenElement) { e.stopPropagation(); fecharGaveta(); } });
       R.no.focus();
 
@@ -978,11 +997,18 @@
         R.contagem = setInterval(function () {
           n--; if (n > 0) { contagem.textContent = n; return; }
           clearInterval(R.contagem); contagem.hidden = true;
-          if (modo === 'ensaio') { R.estado = 'ensaiando'; selo.hidden = false; selo.textContent = 'ENSAIO · não está gravando'; selo.className = 'std-grav-selo ensaio'; msg.textContent = 'Ensaio: o texto rola sem gravar. Depois clique em Início do texto e em Gravar.'; rolar(); }
+          if (modo === 'ensaio') { iniciarCrono('Ensaio'); R.estado = 'ensaiando'; selo.hidden = false; selo.textContent = 'ENSAIO · não está gravando'; selo.className = 'std-grav-selo ensaio'; msg.textContent = 'Ensaio: o texto rola sem gravar. Depois clique em Início do texto e em Gravar.'; rolar(); }
           else comecarGravacao();
         }, 1000);
       }
+      function iniciarCrono(rot) {
+        clearInterval(R.cronoTimer); var ini = Date.now();
+        crono.className = 'std-grav-crono ' + (rot === 'Gravando' ? 'gravando' : 'ensaio'); crono.firstChild.textContent = rot;
+        R.cronoTimer = setInterval(function () { crono.lastChild.textContent = mmss((Date.now() - ini) / 1000); }, 250);
+      }
+      function pararCrono() { clearInterval(R.cronoTimer); crono.className = 'std-grav-crono'; crono.firstChild.textContent = 'Tempo'; }
       function pararEnsaio() {
+        pararCrono();
         clearInterval(R.contagem); cancelAnimationFrame(R.raf); contagem.hidden = true; selo.hidden = true;
         R.estado = 'pronto'; bEnsaio.textContent = '▶ Ensaiar'; bEnsaio.disabled = false; bGravar.hidden = false;
         msg.textContent = 'Ensaio parado. Clique em Início do texto e em Gravar quando estiver pronto.';
@@ -994,14 +1020,14 @@
         R.rec = new MediaRecorder(new MediaStream(trilhas), mime ? { mimeType: mime, videoBitsPerSecond: 1200000, audioBitsPerSecond: 96000 } : undefined);
         R.rec.ondataavailable = function (e) { if (e.data.size) R.partes.push(e.data); };
         R.rec.onstop = function () {
-          R.ms = Date.now() - R.ini; R.estado = 'revisar'; selo.hidden = true; R.no.classList.add('revisando');
+          R.ms = Date.now() - R.ini; R.estado = 'revisar'; selo.hidden = true; R.no.classList.add('revisando'); pararCrono(); crono.lastChild.textContent = mmss(R.ms / 1000);
           R.blob = new Blob(R.partes, { type: (R.rec.mimeType || mime || 'video/webm').split(';')[0] });
           pararCamera();
           cam.hidden = true; prompter.hidden = true; rev.hidden = false; rev.muted = R.somMudo; rev.src = URL.createObjectURL(R.blob);
           bParar.hidden = true; bRegravar.hidden = false; bUsar.hidden = R.ms < 3000; bEnsaio.disabled = bTopo.disabled = bPausa.disabled = true;
           msg.textContent = R.ms < 3000 ? 'A gravação ficou curta demais. Regrave.' : 'Assista à gravação. Se gostou, clique em “Usar esta gravação”; senão, regrave.';
         };
-        R.rec.start(1000); R.ini = Date.now(); R.estado = 'gravando'; bParar.hidden = false;
+        R.rec.start(1000); R.ini = Date.now(); R.estado = 'gravando'; bParar.hidden = false; iniciarCrono('Gravando');
         selo.hidden = false; selo.textContent = '● GRAVANDO'; selo.className = 'std-grav-selo gravando';
         msg.textContent = R.micMudo ? 'Gravando com o microfone desligado.' : 'Gravando… (até 5 minutos). Espaço pausa o texto.';
         R.timer = setInterval(function () { var s = (Date.now() - R.ini) / 1000; tempo.textContent = '● ' + mmss(s); if (s >= 300) parar(); }, 250);
@@ -1011,7 +1037,7 @@
       async function regravar() {
         rev.hidden = true; rev.removeAttribute('src'); cam.hidden = false; prompter.hidden = false; R.no.classList.remove('revisando');
         bUsar.hidden = bRegravar.hidden = true; bGravar.hidden = false; bEnsaio.disabled = bTopo.disabled = bPausa.disabled = false;
-        prompter.scrollTop = 0; tempo.textContent = '0:00'; msg.textContent = ''; R.estado = 'pronto';
+        prompter.scrollTop = 0; tempo.textContent = '0:00'; crono.lastChild.textContent = '0:00'; msg.textContent = ''; R.estado = 'pronto';
         await ligarCamera();
       }
     }

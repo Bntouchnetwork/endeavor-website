@@ -93,21 +93,28 @@ Fica em **Live Webinar › Apresentações (Studio)**, no admin e no Portal do C
   - é possível importar sem a IA (um slide por página);
   - imagens, formatação e PDFs escaneados não são trazidos.
 - **Configurações:** idioma (português, inglês ou espanhol), tom, duração total, ritmo da fala, público, transição, abertura, legenda e o dicionário de **pronúncia** ("LLC = éle éle cê"). A pronúncia vale só para a voz.
-- **Abertura (introdução gravada):** a aba Abertura escolhe como o webinar começa e tem o botão **Gravar introdução**. A tela de gravação fica limpa: a imagem da câmera, com o teleprompter rolando no topo da própria imagem.
-  - **Aba lateral "Ajustes":** a alça dourada na borda direita abre uma janela que desliza por cima da tela, sem apertar a imagem. Fecha com "›" ou Esc. Lá ficam:
-    - **Texto:** escreva, cole ou gere com IA (com um pedido opcional) e edite. O teleprompter atualiza na hora, e o texto fica salvo com a apresentação. Se ainda não há texto, a aba já abre aqui.
-    - **Câmera e microfone:** do computador ou externos (USB, Bluetooth), com a barra de volume do microfone.
-    - **Fundo virtual:** os mesmos do Web Meeting (desfocado, os 6 fundos prontos e a sua foto, que fica só neste computador).
-    - **Tela cheia:** esconde a barra do navegador. Esc ou "Sair da tela cheia" voltam ao normal.
-  - **Barra de baixo, nesta ordem:**
-    1. Velocidade
-    2. Letra
-    3. **Ensaiar:** rola o texto sem gravar, com o selo "ENSAIO".
-    4. Início do texto
-    5. Pausar texto (ou a barra de espaço)
-    6. Gravar
-    7. Mudo do microfone
-    8. Mudo do alto-falante
+- **Abertura (introdução gravada):** a aba Abertura escolhe como o webinar começa e tem o botão **Gravar introdução**.
+  - **Tela de gravação:** sem faixa no topo. A imagem da câmera ocupa o máximo da tela (16:9, encostada em cima, perto da câmera), com o teleprompter rolando no topo da própria imagem. O tempo e o selo GRAVANDO/ENSAIO ficam no canto da imagem.
+  - **Aba lateral "Ajustes":** a alça dourada na borda direita abre a aba ao lado da imagem.
+    - A imagem encolhe e se acomoda; não fica coberta.
+    - Arraste a borda esquerda da aba (ou use as setas) para aumentar ou diminuir. A largura fica salva.
+    - Fecha com "›" ou Esc.
+  - **Na aba:**
+    - **Velocidade do texto:** começa devagar (18) e vai de 2 a 80, com ajuste fino pelos botões − e +.
+    - **Texto:** escrever, colar ou gerar com IA, e editar.
+    - **Câmera e microfone:** do computador ou externos.
+    - **Fundo virtual:** os mesmos do Web Meeting.
+    - **Tela cheia.**
+    - **Cronômetro grande** embaixo, que conta o ensaio e a gravação.
+  - **Barra de baixo:**
+    1. Letra
+    2. **Ensaiar:** rola o texto sem gravar.
+    3. Início do texto
+    4. Pausar texto (ou a barra de espaço)
+    5. Gravar
+    6. Mudo do microfone
+    7. Mudo do alto-falante
+    8. **Sair**
   - **Contagem:** Ensaiar e Gravar começam com a contagem 3, 2, 1.
   - **Depois de parar:** você assiste e escolhe Regravar ou **Usar esta gravação**, que envia o vídeo e o marca como abertura. A gravação tem até 5 minutos.
   - **Vídeo pronto:** também dá para enviar um vídeo seu (MP4 ou WebM, até 100 MB). O vídeo fica no bucket privado `meet-media` e toca antes do primeiro slide, na prévia e no Live Webinar.

@@ -198,7 +198,22 @@ await page.click("text=● Gravar introdução"); await page.waitForSelector(".s
 await page.waitForFunction(() => { const v = document.querySelector(".std-grav-cam"); return v && v.readyState >= 2; });
 ok(await page.isVisible(".std-grav-ta") && await page.$eval(".std-grav-gaveta", (g) => g.classList.contains("aberta")), "sem texto ainda: a aba lateral abre sozinha em Texto");
 const barra = await page.$$eval(".std-grav-ctl > *", (x) => x.filter((e) => !e.hidden).map((e) => (e.getAttribute("aria-label") || e.textContent).trim()));
-ok(JSON.stringify(barra) === JSON.stringify(["Velocidade", "Letra", "▶ Ensaiar", "↑ Início do texto", "❚❚ Pausar texto", "● Gravar", "Desligar o microfone", "Desligar o alto-falante"]), "barra na ordem: Velocidade, Letra, Ensaiar, Início, Pausar, Gravar, microfone, alto-falante " + JSON.stringify(barra));
+ok(JSON.stringify(barra) === JSON.stringify(["Letra", "▶ Ensaiar", "↑ Início do texto", "❚❚ Pausar texto", "● Gravar", "Desligar o microfone", "Desligar o alto-falante", "Sair"]), "barra de baixo: Letra, Ensaiar, Início, Pausar, Gravar, microfone, alto-falante, Sair " + JSON.stringify(barra));
+ok(!(await page.$(".std-grav-topo")), "sem faixa de cima: a imagem ganha a tela");
+// a aba empurra a imagem (não cobre)
+const lado = await page.evaluate(() => { const q = document.querySelector(".std-grav-quadro").getBoundingClientRect(), g = document.querySelector(".std-grav-gaveta").getBoundingClientRect(); return [Math.round(q.right), Math.round(g.left), Math.round(q.width / q.height * 100)]; });
+ok(lado[0] <= lado[1] + 1 && Math.abs(lado[2] - 178) <= 2, "aba aberta empurra a imagem para o lado, que continua 16:9 " + JSON.stringify(lado));
+// arrastar a borda
+const w0 = await page.$eval(".std-grav-gaveta", (g) => g.getBoundingClientRect().width);
+const bb = await page.$eval(".std-grav-borda", (b) => { const r = b.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
+await page.mouse.move(bb[0], bb[1]); await page.mouse.down(); await page.mouse.move(bb[0] - 150, bb[1], { steps: 6 }); await page.mouse.up(); await page.waitForTimeout(400);
+const w1 = await page.$eval(".std-grav-gaveta", (g) => g.getBoundingClientRect().width);
+ok(w1 > w0 + 100, "arrastar a beirada aumenta a aba " + Math.round(w0) + " → " + Math.round(w1));
+ok(await page.$eval(".std-grav-quadro", (q) => q.getBoundingClientRect().right) <= await page.$eval(".std-grav-gaveta", (g) => g.getBoundingClientRect().left) + 1, "a imagem se acomoda ao novo tamanho");
+// velocidade na aba, começando devagar, ajuste fino
+ok(await page.$eval(".std-grav-vel input", (i) => [i.min, i.max, i.step, i.value].join()) === "2,80,1,18", "velocidade dentro da aba: começa em 18, de 2 a 80, de 1 em 1");
+await page.click('.std-grav-vel [aria-label="Mais devagar"]');
+ok(await page.textContent(".std-grav-vel-n") === "17", "botões − e + ajustam de 1 em 1");
 await page.click("text=✦ Escrever com IA"); await page.waitForTimeout(500);
 ok(/Eu sou o Christiano/.test(await page.inputValue(".std-grav-ta")) && /Eu sou o Christiano/.test(await page.textContent(".std-prompter")), "Escrever com IA dentro do gravador, e o teleprompter atualiza");
 await page.fill(".std-grav-ta", "Olá! Eu sou o Christiano.\n\nHoje vou mostrar como abrir a sua LLC.\n\n" + "Esta é uma linha comprida do teleprompter para rolar. ".repeat(30));
@@ -217,7 +232,7 @@ await page.click('.std-grav-gaveta .std-fechar'); await page.waitForTimeout(400)
 ok(!(await page.$eval(".std-grav-gaveta", (g) => g.classList.contains("aberta"))) && await page.isVisible(".std-grav-alca"), "a aba lateral fecha deslizando e fica só a alça “Ajustes”");
 // mudo
 await page.click('.std-grav-ic[aria-label="Desligar o microfone"]');
-ok(await page.evaluate(() => document.querySelector(".std-grav-cam") && true) && await page.$eval(".std-grav-ic", (b) => b.getAttribute("aria-pressed")) === "true", "mudo do microfone");
+ok(await page.evaluate(() => document.querySelector(".std-grav-cam") && true) && await page.$eval(".std-grav-ctl .std-grav-ic", (b) => b.getAttribute("aria-pressed")) === "true", "mudo do microfone");
 await page.click('.std-grav-ic[aria-label="Ligar o microfone"]');
 await page.click('.std-grav-ic[aria-label="Desligar o alto-falante"]');
 ok(await page.isVisible('.std-grav-ic[aria-label="Ligar o alto-falante"]'), "mudo do alto-falante (evita microfonia)");
@@ -235,9 +250,9 @@ await page.click('.std-grav-aba[data-p="tela"]'); await page.waitForTimeout(500)
 ok(!(await page.evaluate(() => !!document.fullscreenElement)), "sair da tela cheia");
 await page.click('.std-grav-gaveta .std-fechar'); await page.waitForTimeout(400);
 // tamanho e velocidade
-await page.locator('.std-grav-ajuste input').nth(1).fill("60");
+await page.locator('.std-grav-ajuste input').nth(0).fill("60");
 ok(await page.$eval(".std-prompter-texto", (x) => x.style.fontSize) === "60px", "tamanho da letra ajustável");
-await page.locator('.std-grav-ajuste input').nth(0).fill("120");
+await page.click(".std-grav-alca"); await page.waitForTimeout(350); await page.locator('.std-grav-vel input').fill("80"); await page.click('.std-grav-gaveta .std-fechar'); await page.waitForTimeout(350);
 // ensaiar
 await page.click("text=▶ Ensaiar"); await page.waitForTimeout(400);
 ok(/^[123]$/.test((await page.textContent(".std-contagem")).trim()), "Ensaiar começa com a contagem 3, 2, 1");
@@ -250,6 +265,7 @@ await page.click(".std-grav-rec"); await page.waitForTimeout(400);
 ok(/^[123]$/.test((await page.textContent(".std-contagem")).trim()), "Gravar começa com a contagem 3, 2, 1");
 await page.waitForTimeout(4800);
 ok(await page.$eval(".std-prompter", (x) => x.scrollTop) > 100 && /● 0:0[1-3]/.test(await page.textContent(".std-grav-tempo")) && /GRAVANDO/.test(await page.textContent(".std-grav-selo")), "gravando: tempo correndo, selo e texto rolando");
+const cr = await page.textContent(".std-grav-crono"); ok(/Gravando\s*0:0[1-4]/.test(cr), "cronômetro grande da aba contando a gravação " + cr);
 ok(await page.isHidden(".std-contagem") && await page.isHidden("text=↺ Regravar") && await page.isHidden('button:has-text("Usar esta gravação")'), "durante a gravação: contagem some e só aparece Parar");
 await page.screenshot({ path: `${OUT}/studio-teleprompter.png` });
 await page.waitForTimeout(1500);

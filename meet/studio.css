@@ -200,3 +200,39 @@ body.std-aberto{overflow:hidden}
 .std-grav-gaveta .std-grav-painel{width:auto;border-left:0;overflow:auto}
 .std-grav.tela-cheia{background:#000}
 .std-grav-quadro .std-prompter{-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+
+/* gravador v3: sem faixa de cima, a aba empurra a imagem, borda arrastável, cronômetro e velocidade na aba */
+.std-grav{grid-template-rows:minmax(0,1fr) auto!important}
+.std-grav-meio{display:grid;grid-template-columns:minmax(0,1fr) 0px!important;transition:grid-template-columns .25s ease}
+.std-grav.gaveta-aberta .std-grav-meio{grid-template-columns:minmax(0,1fr) var(--gav-w,380px)!important}
+.std-grav.arrastando .std-grav-meio{transition:none;cursor:col-resize;user-select:none}
+@media (prefers-reduced-motion:reduce){.std-grav-meio{transition:none}}
+.std-grav-palco{padding:.5rem .5rem 0!important}
+.std-grav-gaveta{position:relative!important;transform:none!important;width:auto!important;top:auto;right:auto;bottom:auto;grid-template-rows:auto auto auto minmax(0,1fr) auto!important;overflow:hidden;box-shadow:none}
+.std-grav:not(.gaveta-aberta) .std-grav-gaveta{visibility:hidden}
+.std-grav-alca{right:0}
+.std-grav.gaveta-aberta .std-grav-alca{display:none}
+.std-grav-borda{position:absolute;left:-4px;top:0;bottom:0;width:9px;cursor:col-resize;z-index:2;touch-action:none}
+.std-grav-borda::after{content:"";position:absolute;left:3px;top:50%;width:3px;height:48px;margin-top:-24px;border-radius:2px;background:rgba(255,255,255,.3)}
+.std-grav-borda:hover::after,.std-grav-borda:focus-visible::after{background:#c8a45d}
+.std-grav-vel{padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);display:grid;gap:.35rem}
+.std-grav-vel-rot{font-size:.8rem;color:#c7d2e3}
+.std-grav-vel-linha{display:flex;align-items:center;gap:.5rem}
+.std-grav-vel-linha input{flex:1;min-width:0}
+.std-grav-vel-n{min-width:2ch;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:#e3cf9f}
+.std-grav-ic.pequeno{width:32px;height:32px;font-size:1.1rem;font-weight:700}
+.std-grav-crono{border-top:1px solid rgba(255,255,255,.1);padding:.75rem 1rem 1rem;text-align:center;background:#071226}
+.std-grav-crono-rot{display:block;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:#a8b6cc}
+.std-grav-crono strong{display:block;font-size:3.2rem;line-height:1.1;font-variant-numeric:tabular-nums;color:#fff}
+.std-grav-crono.gravando strong{color:#ff6b6b}
+.std-grav-crono.ensaio strong{color:#e3cf9f}
+.std-grav-status{position:absolute;left:.75rem;bottom:.75rem;display:flex;gap:.5rem;align-items:center;z-index:3;background:rgba(0,0,0,.55);border-radius:999px;padding:.2rem .6rem}
+.std-grav-status .std-grav-tempo:not(:empty){font-size:.85rem}
+.std-grav-quadro .std-grav-msg{position:absolute;left:50%;bottom:.75rem;transform:translateX(-50%);z-index:3;margin:0;max-width:70%;background:rgba(0,0,0,.6);border-radius:8px;padding:.35rem .75rem;font-size:.82rem}
+.std-grav-quadro .std-grav-msg:empty{display:none}
+.std-grav-ctl{padding:.5rem 1rem .65rem!important}
+.std-grav-sair{margin-left:.5rem}
+/* o quadro do vídeo cresce o máximo possível sem sair do 16:9 (com a aba aberta ou fechada) */
+.std-grav-palco{container-type:size;display:grid;place-items:center}
+.std-grav-quadro{height:auto!important;width:min(100cqw,100cqh * 16 / 9)!important;max-width:none!important;aspect-ratio:16/9}
+.std-grav-palco{place-items:start center}
