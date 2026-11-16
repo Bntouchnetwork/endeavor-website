@@ -773,15 +773,28 @@
       mostrarTexto();
 
       /* --- painel lateral: Texto | Câmera e microfone | Fundo virtual --- */
-      var painel = el('aside', { class: 'std-grav-painel', hidden: true, 'aria-label': 'Ajustes da gravação' });
-      var bTextoP = el('button', { type: 'button', class: 'std-grav-aba', 'data-p': 'texto', onclick: function () { abrirPainel('texto'); } }, ['✎ Texto']);
-      var bCamP = el('button', { type: 'button', class: 'std-grav-aba', 'data-p': 'dispositivos', onclick: function () { abrirPainel('dispositivos'); } }, ['Câmera e microfone']);
-      var bFundoP = el('button', { type: 'button', class: 'std-grav-aba', 'data-p': 'fundo', onclick: function () { abrirPainel('fundo'); } }, ['Fundo virtual']);
+      /* aba na lateral: desliza por cima (não aperta a tela). Seções: Texto, Câmera e microfone, Fundo virtual, Tela cheia */
+      var painel = el('div', { class: 'std-grav-painel' });
+      var secoes = [['texto', '✎ Texto'], ['dispositivos', 'Câmera e microfone'], ['fundo', 'Fundo virtual']].map(function (x) {
+        return el('button', { type: 'button', class: 'std-grav-aba', 'data-p': x[0], 'aria-pressed': 'false', onclick: function () { abrirPainel(x[0]); } }, [x[1]]);
+      });
+      var bTela = el('button', { type: 'button', class: 'std-grav-aba', 'data-p': 'tela', 'aria-pressed': 'false', onclick: function () {
+        if (document.fullscreenElement) { document.exitFullscreen().catch(function () { }); return; }
+        if (R.no.requestFullscreen) R.no.requestFullscreen({ navigationUI: 'hide' }).catch(function () { msg.textContent = 'O navegador não deixou abrir em tela cheia. Tente F11 (Windows) ou Ctrl+Cmd+F (Mac).'; });
+      } }, ['⛶ Tela cheia']);
+      var gaveta = el('aside', { class: 'std-grav-gaveta', 'aria-label': 'Ajustes da gravação', 'aria-hidden': 'true' }, [
+        el('div', { class: 'std-grav-gaveta-topo' }, [el('strong', { text: 'Ajustes' }), el('button', { type: 'button', class: 'std-fechar', 'aria-label': 'Fechar ajustes', onclick: function () { fecharGaveta(); } }, ['›'])]),
+        el('div', { class: 'std-grav-secoes' }, secoes.concat([bTela])), painel]);
+      var alca = el('button', { type: 'button', class: 'std-grav-alca', 'aria-expanded': 'false', 'aria-label': 'Abrir ajustes: texto, câmera e microfone, fundo virtual e tela cheia', onclick: function () { if (R.painel) fecharGaveta(); else abrirPainel(R.ultimoPainel || 'texto'); } }, [el('span', { text: 'Ajustes' })]);
       function abrirPainel(p) {
-        R.painel = R.painel === p ? '' : p;
-        [bTextoP, bCamP, bFundoP].forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.p === R.painel)); });
-        painel.hidden = !R.painel; painel.innerHTML = '';
-        if (R.painel === 'texto') painelTexto(); else if (R.painel === 'dispositivos') painelDispositivos(); else if (R.painel === 'fundo') painelFundo();
+        R.painel = p; R.ultimoPainel = p;
+        secoes.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.p === p)); });
+        gaveta.classList.add('aberta'); gaveta.setAttribute('aria-hidden', 'false'); alca.setAttribute('aria-expanded', 'true');
+        painel.innerHTML = '';
+        if (p === 'texto') painelTexto(); else if (p === 'dispositivos') painelDispositivos(); else if (p === 'fundo') painelFundo();
+      }
+      function fecharGaveta() {
+        R.painel = ''; gaveta.classList.remove('aberta'); gaveta.setAttribute('aria-hidden', 'true'); alca.setAttribute('aria-expanded', 'false'); alca.focus();
       }
       function painelTexto() {
         var info = el('p', { class: 'std-dica claro' });
@@ -895,24 +908,16 @@
       } });
       bMic.innerHTML = SVG(ICO.mic); bSom.innerHTML = SVG(ICO.som);
 
-      /* texto perto da câmera: coluna estreita colada no topo da tela (o olhar fica quase na lente) */
-      var perto = lerPref('std-prompter-perto', '1') === '1';
-      var bPerto = el('button', { type: 'button', class: 'std-grav-aba', 'aria-pressed': String(perto), title: 'Coluna estreita colada no topo, logo abaixo da câmera', onclick: function () {
-        perto = !perto; gravarPref('std-prompter-perto', perto ? '1' : '0'); R.no.classList.toggle('perto', perto); this.setAttribute('aria-pressed', String(perto)); } }, ['Texto perto da câmera']);
-      var bTela = el('button', { type: 'button', class: 'std-grav-aba', 'aria-pressed': 'false', onclick: function () {
-        if (document.fullscreenElement) { document.exitFullscreen().catch(function () { }); return; }
-        if (R.no.requestFullscreen) R.no.requestFullscreen({ navigationUI: 'hide' }).catch(function () { msg.textContent = 'O navegador não deixou abrir em tela cheia. Tente F11.'; });
-      } }, ['⛶ Tela cheia']);
       R.telaCheia = function () {
         var on = !!R && document.fullscreenElement === R.no;
         bTela.setAttribute('aria-pressed', String(on)); bTela.textContent = on ? '✕ Sair da tela cheia' : '⛶ Tela cheia';
         if (R) R.no.classList.toggle('tela-cheia', on);
       };
       document.addEventListener('fullscreenchange', R.telaCheia);
-      R.no = el('div', { class: 'std-grav' + (perto ? ' perto' : ''), role: 'dialog', 'aria-label': 'Gravar introdução', tabindex: '-1' }, [
-        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), selo, tempo, el('span', { class: 'std-grav-espaco' }), bPerto, bTela, bTextoP, bCamP, bFundoP,
+      R.no = el('div', { class: 'std-grav', role: 'dialog', 'aria-label': 'Gravar introdução', tabindex: '-1' }, [
+        el('div', { class: 'std-grav-topo' }, [el('strong', { text: 'Gravar introdução' }), selo, tempo, el('span', { class: 'std-grav-espaco' }),
           el('button', { class: 'std-fechar', type: 'button', 'aria-label': 'Fechar', onclick: function () { if (R && R.estado === 'gravando' && !confirm('Parar e descartar a gravação?')) return; fecharGravador(); } }, ['×'])]),
-        el('div', { class: 'std-grav-meio' }, [el('div', { class: 'std-grav-palco' }, [cam, prompter, contagem, rev]), painel]),
+        el('div', { class: 'std-grav-meio' }, [el('div', { class: 'std-grav-palco' }, [el('div', { class: 'std-grav-quadro' }, [cam, prompter, contagem, rev])]), alca, gaveta]),
         msg,
         el('div', { class: 'std-grav-ctl' }, [
           el('label', { class: 'std-grav-ajuste' }, ['Velocidade', sVel]), el('label', { class: 'std-grav-ajuste' }, ['Letra', sFonte]),
@@ -920,6 +925,7 @@
       raiz.appendChild(R.no);
       R.no.addEventListener('keydown', function (e) { if (e.key === ' ' && !/^(TEXTAREA|INPUT|SELECT|BUTTON)$/.test(e.target.tagName)) { e.preventDefault(); bPausa.click(); } });
       if (R.painel) { var p0 = R.painel; R.painel = ''; abrirPainel(p0); }
+      R.no.addEventListener('keydown', function (e) { if (e.key === 'Escape' && R && R.painel && !document.fullscreenElement) { e.stopPropagation(); fecharGaveta(); } });
       R.no.focus();
 
       async function ligarCamera() {

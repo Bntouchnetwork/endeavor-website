@@ -176,14 +176,27 @@ body.std-aberto{overflow:hidden}
 .std-grav-topo{flex-wrap:wrap}
 @media (max-width:900px){.std-grav-meio{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.std-grav-painel{width:auto;max-height:40vh;border-left:0;border-top:1px solid rgba(255,255,255,.08)}}
 
-/* texto perto da câmera: coluna estreita colada no topo da tela */
-.std-grav.perto .std-prompter{position:fixed;top:0;left:50%;transform:translateX(-50%);width:min(560px,72vw);height:34vh;z-index:5;border-radius:0 0 14px 14px;background:rgba(0,0,0,.78);box-shadow:0 8px 30px rgba(0,0,0,.45)}
-.std-grav.perto .std-prompter-texto{text-align:left;padding-top:12vh}
-.std-grav.perto .std-prompter-guia{top:12vh}
-.std-grav.perto:not(.revisando) .std-grav-topo{padding-top:calc(34vh + .4rem)}
-.std-grav.perto .std-grav-palco{padding-top:.25rem}
-.std-grav.tela-cheia{background:#000}
 /* o vídeo cabe sempre no espaço que sobra (nunca cobre a barra de botões) */
 .std-grav-meio{overflow:hidden}
 .std-grav-palco{height:100%;overflow:hidden;grid-template-rows:minmax(0,1fr)}
 .std-grav-cam,.std-grav-rev{width:auto!important;height:100%;max-width:100%;max-height:100%;aspect-ratio:16/9}
+
+/* quadro do vídeo: o teleprompter fica por cima, no topo da própria imagem */
+.std-grav-meio{position:relative;grid-template-columns:minmax(0,1fr)!important}
+.std-grav-quadro{position:relative;height:100%;max-width:100%;aspect-ratio:16/9;margin:0 auto;border-radius:8px;overflow:hidden;background:#000}
+.std-grav-quadro .std-grav-cam,.std-grav-quadro .std-grav-rev{width:100%!important;height:100%;max-height:none;border-radius:0;display:block}
+.std-grav-quadro .std-prompter{position:absolute;left:0;right:0;top:0;transform:none;width:100%;height:40%;border-radius:0;background:linear-gradient(rgba(0,0,0,.72),rgba(0,0,0,.6) 85%,rgba(0,0,0,0));padding:0 6%}
+.std-grav-quadro .std-prompter-texto{padding:14% 0 120%}
+.std-grav-quadro .std-prompter-guia{top:30%}
+/* aba lateral deslizante */
+.std-grav-alca{position:absolute;right:0;top:50%;transform:translateY(-50%);z-index:6;background:#c8a45d;color:#07162b;border:0;border-radius:10px 0 0 10px;padding:1rem .45rem;cursor:pointer;font:700 .8rem "Inter",sans-serif;box-shadow:-4px 0 14px rgba(0,0,0,.35)}
+.std-grav-alca span{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.06em;display:block}
+.std-grav-alca[aria-expanded=true]{opacity:0;pointer-events:none}
+.std-grav-gaveta{position:absolute;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:7;background:#0a1830;border-left:1px solid rgba(255,255,255,.1);box-shadow:-10px 0 30px rgba(0,0,0,.45);transform:translateX(105%);transition:transform .28s ease;display:grid;grid-template-rows:auto auto minmax(0,1fr)}
+.std-grav-gaveta.aberta{transform:none}
+@media (prefers-reduced-motion:reduce){.std-grav-gaveta{transition:none}}
+.std-grav-gaveta-topo{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.08)}
+.std-grav-secoes{display:flex;flex-wrap:wrap;gap:.4rem;padding:.6rem 1rem;border-bottom:1px solid rgba(255,255,255,.08)}
+.std-grav-gaveta .std-grav-painel{width:auto;border-left:0;overflow:auto}
+.std-grav.tela-cheia{background:#000}
+.std-grav-quadro .std-prompter{-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}

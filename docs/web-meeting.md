@@ -93,10 +93,12 @@ Fica em **Live Webinar › Apresentações (Studio)**, no admin e no Portal do C
   - é possível importar sem a IA (um slide por página);
   - imagens, formatação e PDFs escaneados não são trazidos.
 - **Configurações:** idioma (português, inglês ou espanhol), tom, duração total, ritmo da fala, público, transição, abertura, legenda e o dicionário de **pronúncia** ("LLC = éle éle cê"). A pronúncia vale só para a voz.
-- **Abertura (introdução gravada):** a aba Abertura escolhe como o webinar começa e tem o botão **Gravar introdução**. Tudo da gravação fica dentro dessa tela:
-  - **Texto:** escreva, cole ou gere com IA (com um pedido opcional) e edite ali mesmo. O teleprompter atualiza na hora, e o texto fica salvo com a apresentação.
-  - **Câmera e microfone:** escolha a câmera e o microfone do computador ou externos (USB, Bluetooth). Uma barra mostra o volume do microfone.
-  - **Fundo virtual:** os mesmos do Web Meeting (desfocado, os 6 fundos prontos e a sua foto, que fica só neste computador).
+- **Abertura (introdução gravada):** a aba Abertura escolhe como o webinar começa e tem o botão **Gravar introdução**. A tela de gravação fica limpa: a imagem da câmera, com o teleprompter rolando no topo da própria imagem.
+  - **Aba lateral "Ajustes":** a alça dourada na borda direita abre uma janela que desliza por cima da tela, sem apertar a imagem. Fecha com "›" ou Esc. Lá ficam:
+    - **Texto:** escreva, cole ou gere com IA (com um pedido opcional) e edite. O teleprompter atualiza na hora, e o texto fica salvo com a apresentação. Se ainda não há texto, a aba já abre aqui.
+    - **Câmera e microfone:** do computador ou externos (USB, Bluetooth), com a barra de volume do microfone.
+    - **Fundo virtual:** os mesmos do Web Meeting (desfocado, os 6 fundos prontos e a sua foto, que fica só neste computador).
+    - **Tela cheia:** esconde a barra do navegador. Esc ou "Sair da tela cheia" voltam ao normal.
   - **Barra de baixo, nesta ordem:**
     1. Velocidade
     2. Letra
@@ -105,14 +107,11 @@ Fica em **Live Webinar › Apresentações (Studio)**, no admin e no Portal do C
     5. Pausar texto (ou a barra de espaço)
     6. Gravar
     7. Mudo do microfone
-    8. Mudo do alto-falante, para não dar microfonia
+    8. Mudo do alto-falante
   - **Contagem:** Ensaiar e Gravar começam com a contagem 3, 2, 1.
-  - **Olhar para a câmera:**
-    - **Texto perto da câmera** (já vem ligado) põe o teleprompter numa coluna estreita colada no topo da tela, logo abaixo da lente, para os olhos quase não se mexerem.
-    - **Tela cheia** esconde a barra do navegador e deixa o texto ainda mais perto da câmera. Esc ou "Sair da tela cheia" voltam ao normal.
-    - Também ajuda: a câmera na altura dos olhos, ficar a uns 70 cm da tela, a letra grande e ensaiar antes.
   - **Depois de parar:** você assiste e escolhe Regravar ou **Usar esta gravação**, que envia o vídeo e o marca como abertura. A gravação tem até 5 minutos.
   - **Vídeo pronto:** também dá para enviar um vídeo seu (MP4 ou WebM, até 100 MB). O vídeo fica no bucket privado `meet-media` e toca antes do primeiro slide, na prévia e no Live Webinar.
+  - **Para olhar para a câmera:** deixe a câmera na altura dos olhos, fique a uns 70 cm da tela, use letra grande, ensaie antes e grave em tela cheia.
   - **A prévia do Studio mostra só a apresentação:** abertura, slides, narração e legenda. O chat, o contador e a caixa privada aparecem na sala do webinar.
 - **Voz de teste:** na aba Voz há a opção de usar a voz do navegador nos slides sem narração, na prévia e no webinar.
   - Serve para ouvir o tom e o ritmo antes de gravar a sua voz.

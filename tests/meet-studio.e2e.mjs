@@ -196,14 +196,14 @@ await page.click('.std-abas [data-aba="abertura"]');
 ok(!(await page.$(".std-lado-corpo textarea")) && await page.isVisible("text=● Gravar introdução"), "aba Abertura só com o essencial (o texto fica no gravador)");
 await page.click("text=● Gravar introdução"); await page.waitForSelector(".std-grav video.std-grav-cam");
 await page.waitForFunction(() => { const v = document.querySelector(".std-grav-cam"); return v && v.readyState >= 2; });
-ok(await page.isVisible(".std-grav-ta"), "sem texto ainda: o gravador abre com o painel Texto");
+ok(await page.isVisible(".std-grav-ta") && await page.$eval(".std-grav-gaveta", (g) => g.classList.contains("aberta")), "sem texto ainda: a aba lateral abre sozinha em Texto");
 const barra = await page.$$eval(".std-grav-ctl > *", (x) => x.filter((e) => !e.hidden).map((e) => (e.getAttribute("aria-label") || e.textContent).trim()));
 ok(JSON.stringify(barra) === JSON.stringify(["Velocidade", "Letra", "▶ Ensaiar", "↑ Início do texto", "❚❚ Pausar texto", "● Gravar", "Desligar o microfone", "Desligar o alto-falante"]), "barra na ordem: Velocidade, Letra, Ensaiar, Início, Pausar, Gravar, microfone, alto-falante " + JSON.stringify(barra));
 await page.click("text=✦ Escrever com IA"); await page.waitForTimeout(500);
 ok(/Eu sou o Christiano/.test(await page.inputValue(".std-grav-ta")) && /Eu sou o Christiano/.test(await page.textContent(".std-prompter")), "Escrever com IA dentro do gravador, e o teleprompter atualiza");
 await page.fill(".std-grav-ta", "Olá! Eu sou o Christiano.\n\nHoje vou mostrar como abrir a sua LLC.\n\n" + "Esta é uma linha comprida do teleprompter para rolar. ".repeat(30));
 ok(/Hoje vou mostrar/.test(await page.textContent(".std-prompter")), "editar o texto ali mesmo atualiza o teleprompter");
-// câmera e microfone
+// câmera e microfone (na aba lateral)
 await page.click('.std-grav-aba[data-p="dispositivos"]'); await page.waitForTimeout(400);
 ok(await page.$$eval(".std-grav-painel select", (x) => x.length) === 2 && await page.$$eval(".std-grav-painel select:first-of-type option", (x) => x.length) >= 1, "escolher câmera e microfone (inclui externos conectados)");
 // fundo virtual
@@ -213,7 +213,8 @@ await page.click('.std-grav-fundo:has-text("Chicago")');
 let comFundo = false;
 for (let i = 0; i < 40 && !comFundo; i++) { await page.waitForTimeout(500); comFundo = await page.evaluate(() => { const v = document.querySelector(".std-grav-cam"); const t = v && v.srcObject && v.srcObject.getVideoTracks()[0]; return !!t && v.classList.contains("sem-espelho") && t.kind === "video" && !!window.EndeavorFundo; }); }
 ok(comFundo && await page.$eval('.std-grav-fundo:has-text("Chicago")', (b) => b.getAttribute("aria-checked")) === "true", "fundo aplicado na câmera (mesmo processador do Web Meeting)");
-await page.click('.std-grav-aba[data-p="fundo"]'); // fecha o painel
+await page.click('.std-grav-gaveta .std-fechar'); await page.waitForTimeout(400); // fecha a aba lateral
+ok(!(await page.$eval(".std-grav-gaveta", (g) => g.classList.contains("aberta"))) && await page.isVisible(".std-grav-alca"), "a aba lateral fecha deslizando e fica só a alça “Ajustes”");
 // mudo
 await page.click('.std-grav-ic[aria-label="Desligar o microfone"]');
 ok(await page.evaluate(() => document.querySelector(".std-grav-cam") && true) && await page.$eval(".std-grav-ic", (b) => b.getAttribute("aria-pressed")) === "true", "mudo do microfone");
@@ -221,16 +222,18 @@ await page.click('.std-grav-ic[aria-label="Ligar o microfone"]');
 await page.click('.std-grav-ic[aria-label="Desligar o alto-falante"]');
 ok(await page.isVisible('.std-grav-ic[aria-label="Ligar o alto-falante"]'), "mudo do alto-falante (evita microfonia)");
 await page.click('.std-grav-ic[aria-label="Ligar o alto-falante"]');
-// texto perto da câmera e tela cheia
-const topoPrompter = await page.$eval(".std-prompter", (x) => { const r = x.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.width)]; });
-ok(topoPrompter[0] === 0 && topoPrompter[1] <= 560 && await page.$eval('.std-grav-aba:has-text("Texto perto da câmera")', (b) => b.getAttribute("aria-pressed")) === "true", "teleprompter numa coluna estreita colada no topo, perto da câmera");
-await page.click('.std-grav-aba:has-text("Tela cheia")'); await page.waitForTimeout(500);
-ok(await page.evaluate(() => document.fullscreenElement && document.fullscreenElement.classList.contains("std-grav")) && /Sair da tela cheia/.test(await page.textContent(".std-grav-topo")), "Tela cheia abre o gravador sem a barra do navegador");
-await page.click('.std-grav-aba:has-text("Sair da tela cheia")'); await page.waitForTimeout(400);
+// teleprompter no topo da própria imagem; tela cheia pela aba lateral
+const q = await page.evaluate(() => { const a = document.querySelector(".std-prompter").getBoundingClientRect(), b = document.querySelector(".std-grav-cam").getBoundingClientRect(); return [Math.round(a.top - b.top), Math.round(a.width - b.width)]; });
+ok(Math.abs(q[0]) <= 1 && Math.abs(q[1]) <= 1, "teleprompter por cima do vídeo, no topo da imagem " + JSON.stringify(q));
+await page.click(".std-grav-alca"); await page.waitForTimeout(400);
+await page.click('.std-grav-aba[data-p="tela"]'); await page.waitForTimeout(600);
+ok(await page.evaluate(() => document.fullscreenElement && document.fullscreenElement.classList.contains("std-grav")) && /Sair da tela cheia/.test(await page.textContent(".std-grav-secoes")), "Tela cheia (na aba lateral) abre o gravador sem a barra do navegador");
+const tc = await page.evaluate(() => { const c = document.querySelector(".std-grav-ctl").getBoundingClientRect(), v = document.querySelector(".std-grav-quadro").getBoundingClientRect(); return c.bottom <= innerHeight + 1 && v.bottom <= c.top && v.top >= 0; });
+ok(tc, "em tela cheia: vídeo e barra de baixo no lugar");
+await page.screenshot({ path: `${OUT}/studio-gravador-tela-cheia.png` });
+await page.click('.std-grav-aba[data-p="tela"]'); await page.waitForTimeout(500);
 ok(!(await page.evaluate(() => !!document.fullscreenElement)), "sair da tela cheia");
-await page.click('.std-grav-aba:has-text("Texto perto da câmera")');
-ok(await page.$eval(".std-prompter", (x) => Math.round(x.getBoundingClientRect().width)) > 560, "dá para voltar ao texto largo sobre o vídeo");
-await page.click('.std-grav-aba:has-text("Texto perto da câmera")');
+await page.click('.std-grav-gaveta .std-fechar'); await page.waitForTimeout(400);
 // tamanho e velocidade
 await page.locator('.std-grav-ajuste input').nth(1).fill("60");
 ok(await page.$eval(".std-prompter-texto", (x) => x.style.fontSize) === "60px", "tamanho da letra ajustável");
