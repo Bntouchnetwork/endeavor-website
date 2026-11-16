@@ -163,7 +163,7 @@ async function ia(d: { id: string; user_id: string }, b: Any) {
   let r: Any;
   try {
     r = await hubJson({ agent: AGENTE, input: montarEntrada(f, ajustes, c, mensagens, extra), userId: d.user_id, idempotencyKey: "wa-" + crypto.randomUUID(),
-      task: "whatsapp_" + f, metadata: { ferramenta: f, grupo: c.grupo }, maxOutputTokens: f === "resumo" || f === "grupo" ? 1200 : 700, timeoutMs: 40_000,
+      task: "whatsapp_" + f, metadata: { ferramenta: f, grupo: c.grupo }, maxOutputTokens: 4000, timeoutMs: 45_000,
       meter: { agent: AGENTE } });
   } catch (e) { await registrar(d.user_id, d.id, c, f === "responder" ? "takeover" : f, "erro", null, { erro: e instanceof HubFail ? e.code : "erro" }); throw hubErro(e); }
   const out = normalizar(f, r);
@@ -195,9 +195,9 @@ async function criarLead(d: { id: string; user_id: string }, b: Any) {
     id = ex[0].id;
     await db.from("leads").update({ notes: ((ex[0].notes ? ex[0].notes + "\n" : "") + nota).slice(-19000), updated_at: new Date().toISOString(), ...(fone ? { phone: fone } : {}) }).eq("id", id);
   } else {
-    const { data, error } = await db.from("leads").insert({ name: nome, email: email || null, phone: fone || null, message: assunto || null, assistance: "WhatsApp", source: "whatsapp", status: "new",
-      marketing_consent: false, notes: nota }).select("id").single();
-    if (error) { console.error("lead", error); throw new Erro("Não foi possível criar o lead: " + (error.message.includes("email") ? "o CRM exige e-mail para este contato." : "tente de novo."), 500); }
+    const { data, error } = await db.from("leads").insert({ name: nome, email: email || null, phone: fone || null, message: assunto || null, assistance: "WhatsApp", source: "whatsapp", status: "contacted",
+      marketing_consent: false, notes: nota, last_contact_at: new Date().toISOString() }).select("id").single();
+    if (error) { console.error("lead", error); throw new Erro("Não foi possível criar o lead: " + (/email/.test(error.message) ? "confira o e-mail." : /name/.test(error.message) ? "o nome precisa ter pelo menos 2 letras." : "tente de novo."), 500); }
     id = data.id; novo = true;
   }
   await db.from("wa_chats").update({ lead_id: id, updated_at: new Date().toISOString() }).eq("user_id", d.user_id).eq("chave", c.chave);
