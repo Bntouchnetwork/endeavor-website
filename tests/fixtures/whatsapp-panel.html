@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WhatsApp Manager (teste)</title>
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../portal.css"><link rel="stylesheet" href="../../webinar/panel.css"><link rel="stylesheet" href="../../whatsapp-panel.css">
+</head><body style="background:#f5f7fa;padding:24px">
+<!-- Página só para os testes automáticos: contexto do admin simulado; a função whatsapp é interceptada pelo Playwright. -->
+<div id="view"></div>
+<script src="../../whatsapp-panel.js"></script>
+<script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const desenhar = () => window.EWaPanel.render(document.getElementById('view'), window.ctx).catch(e => { document.getElementById('view').textContent = 'ERRO: ' + e.message; });
+  window.ctx = {
+    sb: { auth: { getSession: async () => ({ data: { session: { access_token: 'sessao-teste' } } }) } },
+    CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, $: s => document.querySelector(s),
+    copy: (t, b) => { window.__copiado = t; if (b) b.textContent = 'Copiado ✓'; },
+    download: (nome, blob) => { blob.text().then(t => { window.__baixado = { nome, t }; }); },
+    route: desenhar
+  };
+  window.addEventListener('hashchange', desenhar);
+  desenhar();
+</script>
+</body></html>
