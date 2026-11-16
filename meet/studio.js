@@ -1,6 +1,6 @@
 /* Endeavor Web Meeting · AI Presentation Studio (fase 2)
  *
- * Usado no admin e no Portal do Cliente, aba Web Meeting › Apresentações:
+ * Usado no admin e no Portal do Cliente, menu Live Webinar › Apresentações (Studio):
  *   EMeetStudio.render(view, ctx, { scope: 'admin'|'client', clientId? })   lista de apresentações
  *   EMeetStudio.abrir(ctx, id, o)                                         editor em tela cheia
  *
@@ -90,7 +90,7 @@
     function chip(nome, on, dica) { return '<span class="std-chip ' + (on ? 'on' : 'off') + '"' + (dica && !on ? ' title="' + esc(dica) + '"' : '') + '>' + (on ? '● ' : '○ ') + nome + (on ? '' : ': não ligado') + '</span>'; }
     var m = view.querySelector('#std-m');
     var recarregar = function () { render(view, ctx, o); };
-    if (view.querySelector('#std-emp')) view.querySelector('#std-emp').onchange = function () { location.hash = '#/webmeeting?aba=studio' + (this.value ? '&empresa=' + this.value : ''); };
+    if (view.querySelector('#std-emp')) view.querySelector('#std-emp').onchange = function () { location.hash = (o.hashBase || '#/webinar?aba=studio') + (this.value ? '&empresa=' + this.value : ''); };
     view.querySelector('#std-new').onclick = function () { nova(ctx, o, empresas, function (id) { abrir(ctx, id, { aoFechar: recarregar }); }); };
     view.querySelectorAll('[data-ed]').forEach(function (b) { b.onclick = function () { abrir(ctx, b.dataset.ed, { aoFechar: recarregar }); }; });
     view.querySelectorAll('[data-dup]').forEach(function (b) { b.onclick = async function () { b.disabled = true; try { await call({ acao: 'studio_duplicar', id: b.dataset.dup }); recarregar(); } catch (e) { b.disabled = false; ctx.msg(m, e.message, 'error'); } }; });
@@ -509,7 +509,7 @@
       if (!confirm('Publicar a versão ' + S.version + '? Ela passa a abrir nas salas da empresa.' + (semRot ? '\n\n' + semRot + ' slide(s) estão sem roteiro.' : ''))) return;
       ocupar(async function () {
         var j = await call({ acao: 'studio_publicar', id: S.id, version: S.version });
-        S.status = 'published'; S.publicada = j.published_version; atualizarBarra(); aviso('Publicada (versão ' + j.published_version + '). Na sala, abra pelo Assistente › Abrir do Studio.', 'ok');
+        S.status = 'published'; S.publicada = j.published_version; atualizarBarra(); aviso('Publicada (versão ' + j.published_version + '). Use no Live Webinar (Novo webinar) ou numa sala do Web Meeting (Assistente › Do Studio).', 'ok');
       }, raiz.querySelector('#stdPublicar'), 'Publicando…');
     }
     function gerarTudo(pedido, btn) {

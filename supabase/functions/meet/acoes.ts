@@ -24,7 +24,7 @@ const transport = () => (tr ??= sesOn()
   : nodemailer.createTransport({ host: "smtp.gmail.com", port: 465, secure: true, auth: { user: G_USER, pass: G_PASS } }));
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
 
-function moldura(titulo: string, corpoHtml: string, cta?: { rot: string; url: string }) {
+export function moldura(titulo: string, corpoHtml: string, cta?: { rot: string; url: string }) {
   const btn = cta ? `<p style="margin:22px 0 6px"><a href="${esc(cta.url)}" style="display:inline-block;background:#0b1f3a;color:#fff;padding:13px 22px;border-radius:10px;font:700 15px Arial,sans-serif;text-decoration:none">${esc(cta.rot)}</a></p>` : "";
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(titulo)}</title></head>
 <body style="margin:0;background:#eef1f6"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:24px 12px"><tr><td align="center">

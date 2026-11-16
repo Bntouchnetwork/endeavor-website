@@ -1,0 +1,96 @@
+/* Endeavor Live Webinar · página pública (inscrição e sala) */
+.lw-main{max-width:72rem;margin:0 auto;padding:2rem 1rem}
+.lw-carregando,.lw-msg{text-align:center;padding:3rem 1rem;font-size:1.05rem}
+.lw-hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* inscrição */
+.lw-inscr{display:grid;gap:1.5rem;align-items:start}
+@media (min-width:860px){.lw-inscr{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}}
+.lw-empresa{margin:0;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-700,#84652a);font-weight:600}
+.lw-inscr h1{font-family:var(--font-serif);font-size:clamp(1.7rem,1.3rem + 1.6vw,2.6rem);line-height:1.15;margin:.35rem 0 .75rem;color:var(--ink)}
+.lw-desc{white-space:pre-line;font-size:1.02rem;line-height:1.6}
+.lw-meta{display:grid;grid-template-columns:auto 1fr;gap:.35rem 1rem;margin:1.25rem 0}
+.lw-meta dt{font-weight:600;color:var(--ink)}
+.lw-meta dd{margin:0;text-transform:capitalize}
+.lw-nota{font-size:.85rem;color:var(--muted)}
+.lw-check{display:flex;gap:.55rem;align-items:flex-start;font-size:.88rem;line-height:1.45;margin:.5rem 0;cursor:pointer}
+.lw-check input{margin-top:.2rem;flex:none}
+
+/* sala (tema escuro) */
+body.lw-escuro{background:#060f1e}
+body.lw-escuro .lw-main{max-width:none;padding:0}
+.lw-sala{display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"topo topo" "video chat" "rodape rodape";height:100vh;height:100dvh;color:#e8edf5;font-family:"Inter",system-ui,sans-serif}
+.lw-topo{grid-area:topo;display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.7rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.08)}
+.lw-topo h1{margin:0;font-size:1.1rem;font-weight:600;color:#fff;font-family:inherit}
+.lw-topo .lw-empresa{color:#e3cf9f}
+.lw-topo-dir{display:flex;gap:.6rem;align-items:center;flex:none}
+.lw-selo{font-size:.78rem;font-weight:700;letter-spacing:.05em;padding:.3rem .65rem;border-radius:999px;background:rgba(255,255,255,.08);color:#c7d2e3;white-space:nowrap}
+.lw-selo.vivo{background:#c62828;color:#fff}
+.lw-selo:empty{display:none}
+.lw-conta{font-size:.82rem;color:#c7d2e3;white-space:nowrap}
+.lw-video{grid-area:video;position:relative;display:grid;grid-template-rows:minmax(0,1fr) auto;align-items:center;justify-items:center;padding:1rem 1.25rem;min-height:0}
+.lw-palco{width:100%;display:grid;place-items:center;min-height:0}
+.lw-palco .slide{width:min(100%,calc((100dvh - 230px) * 16 / 9));border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.45)}
+.lw-entra{animation:lw-entra .45s ease}
+@keyframes lw-entra{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){.lw-entra{animation:none}}
+.lw-legenda{margin:.75rem 0 0;max-width:56rem;text-align:center;font-size:1rem;line-height:1.5;color:#fff;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:3em}
+.lw-espera{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(6,15,30,.88);border:1px solid rgba(255,255,255,.15);padding:1rem 1.5rem;border-radius:12px;font-size:1.15rem;font-weight:600;text-align:center;max-width:90%}
+.lw-som{position:absolute;left:50%;top:1.5rem;transform:translateX(-50%);background:#c8a45d;color:#07162b;border:0;border-radius:999px;padding:.6rem 1.1rem;font:600 .95rem "Inter",sans-serif;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.lw-chat{grid-area:chat;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);border-left:1px solid rgba(255,255,255,.08);background:#0a1830;min-height:0}
+.lw-abas{display:flex;border-bottom:1px solid rgba(255,255,255,.08)}
+.lw-abas button{flex:1;background:none;border:0;border-bottom:2px solid transparent;color:#a8b6cc;padding:.75rem .5rem;font:600 .88rem "Inter",sans-serif;cursor:pointer;position:relative}
+.lw-abas button[aria-selected=true]{color:#fff;border-bottom-color:#c8a45d}
+.lw-abas button.novo::after{content:"";position:absolute;top:.6rem;right:1rem;width:8px;height:8px;border-radius:50%;background:#c8a45d}
+.lw-painel{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto;min-height:0}
+.lw-painel:not(:has(.lw-priv-intro)){grid-template-rows:minmax(0,1fr) auto}
+.lw-painel[hidden]{display:none}
+.lw-priv-intro{margin:0;padding:.75rem 1rem;font-size:.8rem;color:#a8b6cc;border-bottom:1px solid rgba(255,255,255,.06)}
+.lw-msgs{list-style:none;margin:0;padding:.75rem 1rem;overflow:auto;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:.7rem;min-height:0}
+.lw-m{font-size:.9rem;line-height:1.45}
+.lw-m p{margin:0}
+.lw-m-quem{display:flex;gap:.4rem;align-items:center;font-size:.8rem;color:#a8b6cc}
+.lw-m-quem strong{color:#e8edf5;font-weight:600}
+.lw-m-quem time{margin-left:auto;font-size:.72rem;color:#6f7f99}
+.lw-m-txt{color:#e8edf5;word-wrap:break-word}
+.lw-m--ia .lw-m-txt,.lw-m--anfitriao .lw-m-txt{background:rgba(255,255,255,.05);border-radius:8px;padding:.45rem .6rem;margin-top:.2rem}
+.lw-m--sistema{font-size:.82rem;color:#c7d2e3;background:rgba(200,164,93,.1);border:1px solid rgba(200,164,93,.25);border-radius:8px;padding:.5rem .6rem}
+.lw-m--sistema .lw-m-quem strong{color:#e3cf9f}
+.lw-m--faq{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:.6rem .7rem}
+.lw-faq-p{font-weight:600;color:#fff;margin:.3rem 0 !important}
+.lw-faq-r{color:#c7d2e3;font-size:.86rem}
+.lw-faq-r strong{color:#e3cf9f;font-weight:600}
+.lw-tag{font-size:.66rem;font-weight:700;letter-spacing:.04em;padding:.1rem .4rem;border-radius:4px;text-transform:uppercase}
+.lw-tag--ia{background:#2f6fdb;color:#fff}
+.lw-tag--eq{background:#1e6b3a;color:#fff}
+.lw-tag--faq{background:rgba(200,164,93,.2);color:#e3cf9f}
+.lw-link{display:block;margin-top:.3rem;color:#e3cf9f;word-break:break-all;font-size:.85rem}
+.lw-cta{margin-top:.4rem;background:#c8a45d;color:#07162b;border:0;border-radius:6px;padding:.45rem .75rem;font:600 .84rem "Inter",sans-serif;cursor:pointer}
+.lw-cta:disabled{opacity:.5;cursor:default}
+.lw-cta--sec{background:transparent;color:#e3cf9f;border:1px solid rgba(200,164,93,.5)}
+.lw-botoes{display:flex;flex-wrap:wrap;gap:.5rem;padding:.5rem 1rem}
+.lw-form{padding:.6rem 1rem .9rem;border-top:1px solid rgba(255,255,255,.08)}
+.lw-form-linha{display:flex;gap:.5rem;min-width:0}
+.lw-form input{flex:1;min-width:0;background:#06142a;border:1px solid #2a4a7a;border-radius:8px;color:#fff;padding:.6rem .7rem;font:inherit}
+.lw-form input:disabled{opacity:.5}
+.lw-enviar{background:#c8a45d;color:#07162b;border:0;border-radius:8px;padding:0 1rem;font:600 .88rem "Inter",sans-serif;cursor:pointer}
+.lw-enviar:disabled{opacity:.5;cursor:default}
+.lw-aviso{margin:0 0 .4rem;font-size:.78rem;color:#e3cf9f;min-height:0}
+.lw-aviso:empty{display:none}
+.lw-contato,.lw-agenda{display:grid;gap:.45rem;padding:.6rem 1rem;border-top:1px solid rgba(255,255,255,.06);max-height:46vh;overflow:auto}
+.lw-contato input,.lw-agenda input,.lw-agenda select{background:#06142a;border:1px solid #2a4a7a;border-radius:6px;color:#fff;padding:.5rem .6rem;font:inherit;font-size:.88rem;width:100%;box-sizing:border-box}
+.lw-sala .lw-check{color:#c7d2e3;font-size:.8rem}
+.lw-campo{display:grid;gap:.25rem;font-size:.8rem;color:#c7d2e3}
+.lw-dia{margin:.4rem 0 0;font-size:.8rem;font-weight:600;color:#e3cf9f;text-transform:capitalize}
+.lw-horas{display:flex;flex-wrap:wrap;gap:.35rem}
+.lw-hora{background:transparent;border:1px solid #2a4a7a;color:#e8edf5;border-radius:6px;padding:.35rem .55rem;font:600 .82rem "Inter",sans-serif;cursor:pointer}
+.lw-hora[aria-pressed=true]{background:#c8a45d;border-color:#c8a45d;color:#07162b}
+.lw-ok{color:#8fe0b0;font-weight:600;margin:.3rem 0}
+.lw-rodape{grid-area:rodape;font-size:.74rem;color:#6f7f99;text-align:center;padding:.45rem 1rem;border-top:1px solid rgba(255,255,255,.06)}
+.lw-sala :focus-visible{outline:2px solid #e3cf9f;outline-offset:2px}
+@media (max-width:900px){
+  .lw-sala{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(320px,1fr) auto;grid-template-areas:"topo" "video" "chat" "rodape";height:auto;min-height:100dvh}
+  .lw-chat{border-left:0;border-top:1px solid rgba(255,255,255,.08)}
+  .lw-palco .slide{width:100%}
+  .lw-topo{flex-wrap:wrap}
+}

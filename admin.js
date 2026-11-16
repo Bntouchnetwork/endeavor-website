@@ -16,7 +16,7 @@
   var STATUS_PT = { new: 'Novo', contacted: 'Contatado', qualified: 'Qualificado', proposal: 'Proposta', rejected: 'Proposta rejeitada', client: 'Cliente', partner: 'Virou parceiro', lost: 'Perdido',
     sent: 'Enviado', viewed: 'Visualizado', signed: 'Assinado', voided: 'Anulado', expired: 'Expirado',
     confirmed: 'Confirmado', cancelled: 'Cancelado', completed: 'Concluído', no_show: 'Não compareceu' };
-  var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro', chat: 'Chat do site' };
+  var SOURCE_PT = { contact_form: 'Formulário', booking: 'Agendamento', manual: 'Manual', partner: 'Parceiro', chat: 'Chat do site', instagram: 'Instagram', webinar: 'Live Webinar' };
   var MEET_PT = { video: 'Vídeo', phone: 'Telefone', whatsapp: 'WhatsApp' };
   function badge(s) { return '<span class="badge badge--' + esc(s) + '">' + esc(STATUS_PT[s] || s) + '</span>'; }
   function tz() { return (state.settings && state.settings.timezone) || 'America/New_York'; }
@@ -208,7 +208,7 @@
 
   /* ---------- console shell ---------- */
   var NAV = [
-    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'], ['webmeeting', 'Web Meeting', 'i-video'],
+    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'], ['webmeeting', 'Web Meeting', 'i-video'], ['webinar', 'Live Webinar', 'i-live'],
     ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['instagram', 'Instagram', 'i-ig'], ['projetos', 'AI Projects', 'i-code'], ['agentes', 'Agentes IA', 'i-bot'], ['hubai', 'Hub AI', 'i-db'], ['conectores', 'Conectores', 'i-link'], ['bookkeeping', 'Bookkeeping', 'i-book'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
@@ -240,7 +240,8 @@
     view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
     ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, marketing: viewMarketing, instagram: viewInstagram, bookkeeping: viewBooks, agentes: viewAgents, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig,
       projetos: function (vw) { return AdminProjects.projects(vw, clientsCtx()); }, conectores: function (vw) { return AdminProjects.connectors(vw, clientsCtx()); }, hubai: function (vw) { return AdminProjects.hub(vw, clientsCtx()); },
-      webmeeting: function (vw) { return window.EMeetPanel ? EMeetPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Web Meeting não carregou. Recarregue a página.')); } })[v](view).catch(function (e) {
+      webmeeting: function (vw) { return window.EMeetPanel ? EMeetPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Web Meeting não carregou. Recarregue a página.')); },
+      webinar: function (vw) { return window.EWebinarPanel ? EWebinarPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Live Webinar não carregou. Recarregue a página.')); } })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
   }
@@ -361,7 +362,7 @@
       '<div class="toolbar"><input type="search" id="crm-q" placeholder="Buscar nome, e-mail, empresa…" aria-label="Buscar">' +
       '<select id="crm-kind" aria-label="Filtrar por tipo"><option value="">Todos os tipos</option>' + Object.keys(KIND_PT).map(function (k) { return '<option value="' + k + '">' + KIND_PT[k] + '</option>'; }).join('') + '</select>' +
       '<select id="crm-status" aria-label="Filtrar por status"></select>' +
-      '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="chat">Chat do site</option><option value="partner">Parceiro</option></select></div>' +
+      '<select id="crm-source" aria-label="Filtrar por origem"><option value="">Todas as origens</option><option value="contact_form">Formulário</option><option value="booking">Agendamento</option><option value="manual">Manual</option><option value="chat">Chat do site</option><option value="partner">Parceiro</option><option value="webinar">Live Webinar</option></select></div>' +
       '<div class="table-wrap"><table class="data"><thead><tr><th>Data</th><th>Nome</th><th>Contato</th><th>Assistência / empresas</th><th>Origem</th><th>Tipo e status</th></tr></thead><tbody id="crm-body"></tbody></table></div>';
     function fillStatus() {
       var k = $('#crm-kind').value, cur = $('#crm-status').value;

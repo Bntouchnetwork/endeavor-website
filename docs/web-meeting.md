@@ -77,7 +77,7 @@ Na pré-sala e no menu **Mais**, três botões: **Nenhum**, **Desfocado** e **Fu
 
 ## AI Presentation Studio (Apresentações)
 
-Fica em **Web Meeting › Apresentações (Studio)**, no admin e no Portal do Cliente. Ali a apresentação é preparada **antes** da reunião, e depois de publicada abre em qualquer sala da mesma empresa.
+Fica em **Live Webinar › Apresentações (Studio)**, no admin e no Portal do Cliente (antes ficava no Web Meeting; o endereço antigo redireciona). Veja também `docs/live-webinar.md`. Ali a apresentação é preparada **antes** da reunião, e depois de publicada abre em qualquer sala da mesma empresa.
 
 - **Lista:** apresentações da empresa (o admin vê todas e filtra por empresa), com a situação (rascunho ou publicada vN) e as ações Editar, Duplicar e Apagar. No topo aparece o que está ligado no HUB AI: texto, voz, imagens e vídeo.
 - **Editor em tela cheia:**
