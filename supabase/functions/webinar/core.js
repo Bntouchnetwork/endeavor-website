@@ -75,7 +75,8 @@
     });
     if (cfg.cta_final !== false && linha.length) {
       var u = linha[linha.length - 1];
-      out.push({ chave: 'cta-final', em: u.ini + 2000, autor: 'ia', texto: cfg.texto_cta || 'Quer conversar sobre o seu caso? Clique em "Falar em particular" para marcar um horário com a nossa equipe.' });
+      // perto do fim da apresentação (45 s antes), mas nunca antes do início do último slide
+      out.push({ chave: 'cta-final', em: Math.max(u.ini + 2000, u.ini + u.dur - 45000), autor: 'ia', texto: cfg.texto_cta || 'Quer conversar sobre o seu caso? Clique em "Falar em particular" para marcar um horário com a nossa equipe.' });
     }
     return out.sort(function (a, b) { return a.em - b.em; });
   }
