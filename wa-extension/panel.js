@@ -52,13 +52,13 @@
       '<div id="app" hidden>' +
         '<section class="geral"><label class="chave"><input type="checkbox" id="tk-geral"><span class="tr"></span><span><b>IA Takeover</b><small id="tk-sub">responde sozinha as conversas individuais</small></span></label>' +
         '<button class="bt" id="pausar" aria-pressed="false">Pausar IA</button></section>' +
-        '<section class="agora" id="agora" aria-live="polite"><div class="agora-lin"><span class="pt"></span><span id="agora-txt">Pronta.</span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
-          '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
-          '<p class="previa" id="previa" hidden></p></section>' +
         '<section class="contato" id="conv"><p class="mut">Abra uma conversa no WhatsApp.</p></section>' +
-        '<section class="cmd"><label for="cmd" class="rot">Comando para a IA</label><textarea id="cmd" rows="4" placeholder="Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
-        '<div class="linha"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
-        '<button class="bt pri" id="cmd-ir">Enviar comando</button></div><small class="mut" id="mic-st"></small></section>' +
+        '<section class="trabalho" id="agora" aria-live="polite">' +
+          '<div class="agora-lin"><span class="pt"></span><span id="agora-txt">Pronta.</span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
+          '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
+          '<textarea id="cmd" rows="6" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
+          '<div class="linha"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
+          '<button class="bt pri" id="cmd-ir">Enviar</button></div><small class="mut" id="mic-st"></small></section>' +
         '<section class="res" id="res"></section>' +
         '<section class="grupo" id="grupo" hidden></section>' +
         '<footer class="rodape"><a href="' + ADMIN + '" target="_blank" rel="noopener" title="Regras, fluxos, tempos e registro">Admin</a> · <span id="quem"></span> · <button class="lk" id="sair">Desconectar</button> · <button class="lk" id="diag" title="Copia só a estrutura da página, sem o texto das mensagens">Diagnóstico</button></footer>' +
@@ -102,7 +102,7 @@
 
   /* ---------------- o que a IA está fazendo ---------------- */
   function agora(texto, tipo, prog) {
-    var a = $('#agora'); a.className = 'agora ' + (tipo || '');
+    var a = $('#agora'); a.className = 'trabalho ' + (tipo || '');
     $('#agora-txt').textContent = texto;
     var pct = prog == null ? 0 : Math.round(prog * 100);
     $('#barra').style.width = pct + '%';
@@ -110,7 +110,6 @@
     $('#barra-box').setAttribute('aria-valuenow', String(pct));
     $('#barra-box').classList.toggle('ativa', tipo === 'digitando' || tipo === 'espera' || tipo === 'pensando');
     $('#barra-box').classList.toggle('cheia', pct >= 45);
-    if (tipo !== 'digitando') $('#previa').hidden = true;
     $('#parar').hidden = !S.acao;
     pontos();
   }
@@ -138,15 +137,26 @@
   async function digitarVisivel(texto, ac, substituir) {
     if (!W.caixa()) throw new Error('Não encontrei a caixa de mensagem. Abra uma conversa.');
     if (W.textoNaCaixa()) { if (!substituir) return { ok: false, motivo: 'ocupada' }; W.limparCaixa(); }
-    var ini = Date.now();
-    var r = await W.digitar(texto, C.ritmoDigitacao(texto, S.ajustes), {
-      parar: function () { return (ac && ac.parar) || S.teclouEm > ini; },
-      progresso: function (p) {
-        agora('Digitando na caixa…', 'digitando', p);
-        var pv = $('#previa'); pv.hidden = false; pv.textContent = texto.slice(0, Math.round(p * texto.length));
-      }
-    });
-    return r;
+    var ini = Date.now(), esp = espelhoIni();
+    try {
+      return await W.digitar(texto, C.ritmoDigitacao(texto, S.ajustes), {
+        parar: function () { return (ac && ac.parar) || S.teclouEm > ini; },
+        progresso: function (p) {
+          agora('Digitando na caixa…', 'digitando', p);
+          if (esp) $('#cmd').value = texto.slice(0, Math.round(p * texto.length));
+        }
+      });
+    } finally { if (esp) espelhoFim(); }
+  }
+  /** A área de texto mostra a IA digitando; depois volta vazia (ou com o rascunho) para os comandos. */
+  function espelhoIni() {
+    var cx = $('#cmd');
+    if (raiz.activeElement === cx && cx.value.trim()) return false; // você está escrevendo um comando: não atrapalha
+    S.rascunho = cx.value; cx.value = ''; cx.readOnly = true; cx.classList.add('espelho');
+    return true;
+  }
+  function espelhoFim() {
+    var cx = $('#cmd'); cx.readOnly = false; cx.classList.remove('espelho'); cx.value = S.rascunho || ''; S.rascunho = '';
   }
 
   /* ---------------- pessoa usando o WhatsApp (a IA nunca disputa o teclado) ---------------- */
@@ -438,7 +448,6 @@
       if (r.contato) atualizarContato(c, r.contato);
       if (r.fluxo_info) mostrarFluxo(c, r.fluxo_info);
       if (!r.responder) { agora('Takeover · sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', 'ok'); return; }
-      res('<div class="bloco"><div class="cartao-rot">Takeover vai responder ' + esc(c.nome) + '</div><p>' + esc(r.texto) + '</p></div>');
       var vou = Date.now();
       if (!await esperar(C.espera(S.ajustes), 'Takeover · esperando para digitar', ac)) return cancelar(r, c, 'Parado por você.');
       if (!mesmaConversa(c)) return cancelar(r, c, 'A conversa mudou antes de digitar.');

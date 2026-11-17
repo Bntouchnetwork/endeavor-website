@@ -18,6 +18,32 @@
   var uid = function (p) { return p + Math.random().toString(36).slice(2, 7); };
   function msg(el, t, tipo) { el.textContent = t; el.className = 'portal-alert' + (tipo === 'erro' ? ' portal-alert--error' : tipo === 'ok' ? ' portal-alert--ok' : ''); el.hidden = !t; }
   function soLeitura(el) { if (!el) return; el.querySelectorAll('input, textarea, select, button').forEach(function (x) { x.disabled = true; }); }
+  /* ---------------- "Me ajude a escrever": a IA reescreve o texto da caixa; dá para desfazer ---------------- */
+  var AJUDA = { pt: 'Me ajude a escrever', en: 'Help me write', es: 'Ayúdame a escribir' };
+  var DESFAZ = { pt: 'Desfazer', en: 'Undo', es: 'Deshacer' };
+  function lang() { var l = (document.documentElement.lang || 'pt').slice(0, 2).toLowerCase(); return AJUDA[l] ? l : 'pt'; }
+  function botaoIA() {
+    var t = AJUDA[lang()];
+    return '<button class="btn btn--ghost btn--xs wa-ia-bt" type="button" data-ia title="' + t + '" aria-label="' + t + '">' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+      '<path d="M4 20l1-4L15.5 5.5a2.1 2.1 0 0 1 3 3L8 19l-4 1z"/><path d="M13.5 7.5l3 3"/><path d="M19 14.5v3M17.5 16h3M5 4v2.5M3.75 5.25h2.5"/></svg></button>' +
+      '<button class="btn btn--ghost btn--xs wa-ia-desfazer" type="button" data-desfazer hidden>' + DESFAZ[lang()] + '</button>';
+  }
+  /** liga o ícone: caixa = textarea a reescrever; contexto() = dados para a IA; o texto novo passa pelo oninput da caixa (atualiza a config) */
+  function ligarIA(raiz, caixa, call, tipo, contexto, aviso) {
+    var bt = raiz.querySelector('[data-ia]'), un = raiz.querySelector('[data-desfazer]'), antes = null;
+    if (!bt || !caixa) return;
+    bt.onclick = async function () {
+      bt.disabled = true; bt.classList.add('wa-ia-on'); caixa.setAttribute('aria-busy', 'true');
+      try {
+        var r = await call({ acao: 'wa_melhorar', tipo: tipo, texto: caixa.value, contexto: contexto() });
+        antes = caixa.value; caixa.value = r.texto; if (caixa.oninput) caixa.oninput();
+        un.hidden = false; caixa.focus();
+      } catch (e) { if (aviso) msg(aviso, e.message, 'erro'); }
+      bt.disabled = false; bt.classList.remove('wa-ia-on'); caixa.removeAttribute('aria-busy');
+    };
+    un.onclick = function () { if (antes == null) return; caixa.value = antes; antes = null; if (caixa.oninput) caixa.oninput(); un.hidden = true; caixa.focus(); };
+  }
   /** salva a configuração inteira (perfil, regras, fluxos, modelos) com controle de versão */
   async function salvarConfig(call, d) {
     var r = await call({ acao: 'wa_config', config: d.config, version: d.config_version });
@@ -56,7 +82,7 @@
         '<div class="field"><label for="rq-' + i + '">Quando</label><input id="rq-' + i + '" data-k="quando" maxlength="400" value="' + esc(r.quando) + '" placeholder="Ex.: perguntarem o prazo"></div>' +
         '<div class="field"><label for="rz-' + i + '">Fazer</label><textarea id="rz-' + i + '" data-k="fazer" rows="2" maxlength="800">' + esc(r.fazer) + '</textarea></div>' +
         '<div class="portal-btn-row"><label class="wa-chave"><input type="checkbox" data-k="ativa"' + (r.ativa ? ' checked' : '') + '><span>Ativa</span></label>' +
-        '<button class="btn btn--ghost btn--xs" type="button" data-del>Remover</button></div></fieldset>';
+        botaoIA() + '<button class="btn btn--ghost btn--xs" type="button" data-del>Remover</button></div></fieldset>';
     }
     function desenhar() {
       var l = ctx.$('#rg-lista');
@@ -73,6 +99,7 @@
           if (fs.dataset.conf !== '1') { fs.dataset.conf = '1'; this.textContent = 'Confirmar remover'; this.classList.add('btn--danger'); return; }
           cfg.regras.splice(+fs.dataset.i, 1); desenhar();
         };
+        ligarIA(fs, fs.querySelector('[data-k="fazer"]'), call, 'regra', function () { return { nome: r.nome, quando: r.quando }; }, ctx.$('#rg-m'));
       });
       if (!d.dono) soLeitura(corpo);
     }
@@ -102,7 +129,7 @@
       try {
         var a = await call({ acao: 'wa_ajustes', ajustes: Object.assign({}, d.ajustes, { negocio: ctx.$('#pf-neg').value }), version: d.version });
         d.ajustes = a.ajustes; d.version = a.version;
-        await salvarConfig(call, d); cfg = d.config;
+        await salvarConfig(call, d); cfg = d.config; desenhar(); // as regras passam a editar a config nova
         msg(m, 'Perfil salvo.', 'ok');
       } catch (x) { msg(m, x.message, 'erro'); }
     };
@@ -125,7 +152,7 @@
     function passoHtml(fi, s, si) {
       var opts = Object.keys(PASSOS).map(function (t) { return '<option value="' + t + '"' + (t === s.tipo ? ' selected' : '') + '>' + PASSOS[t] + '</option>'; }).join('');
       return '<li class="wa-passo" data-si="' + si + '"><div class="field-row"><div class="field"><label for="ps-' + fi + '-' + si + '">Passo ' + (si + 1) + '</label><select id="ps-' + fi + '-' + si + '" data-p="tipo">' + opts + '</select></div>' +
-        '<div class="portal-btn-row wa-passo-bt"><button class="btn btn--ghost btn--xs" type="button" data-up aria-label="Subir o passo ' + (si + 1) + '">↑</button><button class="btn btn--ghost btn--xs" type="button" data-down aria-label="Descer o passo ' + (si + 1) + '">↓</button><button class="btn btn--ghost btn--xs" type="button" data-rm>Remover</button></div></div>' +
+        '<div class="portal-btn-row wa-passo-bt"><button class="btn btn--ghost btn--xs" type="button" data-up aria-label="Subir o passo ' + (si + 1) + '">↑</button><button class="btn btn--ghost btn--xs" type="button" data-down aria-label="Descer o passo ' + (si + 1) + '">↓</button>' + botaoIA() + '<button class="btn btn--ghost btn--xs" type="button" data-rm>Remover</button></div></div>' +
         (s.tipo === 'coletar' ? '<div class="wa-campos" role="group" aria-label="Dados a pedir">' + Object.keys(CAMPOS).map(function (c) { return '<label class="wa-chave"><input type="checkbox" data-campo="' + c + '"' + ((s.campos || []).indexOf(c) > -1 ? ' checked' : '') + '><span>' + CAMPOS[c] + '</span></label>'; }).join('') + '</div>' : '') +
         '<div class="field"><label for="pt-' + fi + '-' + si + '" class="sr-only">Instrução do passo ' + (si + 1) + '</label><textarea id="pt-' + fi + '-' + si + '" data-p="texto" rows="2" maxlength="600" placeholder="Instrução para a IA neste passo">' + esc(s.texto) + '</textarea></div></li>';
     }
@@ -157,6 +184,7 @@
           li.querySelector('[data-up]').onclick = function () { if (si > 0) { f.passos.splice(si - 1, 0, f.passos.splice(si, 1)[0]); desenhar(); } };
           li.querySelector('[data-down]').onclick = function () { if (si < f.passos.length - 1) { f.passos.splice(si + 1, 0, f.passos.splice(si, 1)[0]); desenhar(); } };
           li.querySelector('[data-rm]').onclick = function () { f.passos.splice(si, 1); desenhar(); };
+          ligarIA(li, li.querySelector('[data-p="texto"]'), call, 'passo', function () { return { passo: PASSOS[s.tipo] || s.tipo, fluxo: f.nome, gatilho: f.gatilho }; }, ctx.$('#fx-m'));
         });
         fs.querySelector('[data-addp]').onclick = function () { if (f.passos.length >= 10) return; f.passos.push({ tipo: 'mensagem', texto: '' }); desenhar(); };
         fs.querySelector('[data-delf]').onclick = function () {

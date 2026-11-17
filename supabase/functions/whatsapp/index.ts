@@ -13,7 +13,7 @@
 // armazenamento conectado, manda o e-mail com a lista e o link da Initial Docs e faz o follow-up.
 //
 // Painel (Authorization: sessão; admin → conta da Endeavor, ou de um cliente com clientId; cliente → a própria empresa):
-//   wa_painel | wa_ajustes { ajustes, version } | wa_config { config, version } | wa_sugerir { tipo: regras|fluxos }
+//   wa_painel | wa_ajustes { ajustes, version } | wa_config { config, version } | wa_sugerir { tipo: regras|fluxos } | wa_melhorar { tipo: regra|passo, texto, contexto }
 //   wa_conectar { nome } | wa_revogar { id } | wa_registro { antes?, ferramenta?, status? } | wa_conversa { chave, seguir?, takeover? }
 //   wa_pedidos | wa_pedido { id, status }
 // Extensão (body.token = código de conexão; só o hash fica no banco):
@@ -516,6 +516,23 @@ async function painel(req: Request, b: Any) {
       try { r = await chamarIA(k, u.id, tipo, montarEntrada(tipo, ajustes, { nome: "", grupo: false }, [], { empresa: k.nome, cfg: config, existentes, pedido: b.pedido })); }
       catch (e) { throw hubErro(e); }
       return normalizar(tipo, r);
+    }
+    case "wa_melhorar": {
+      soDono();
+      if (!hubOn()) throw new Erro("O HUB AI não está configurado no servidor.", 503);
+      const passo = b.tipo === "passo", max = passo ? 600 : 800;
+      const texto = txt(b.texto, max), ctxo = b.contexto && typeof b.contexto === "object" ? b.contexto : {};
+      const pedido = (passo
+        ? `Instrução de um passo de fluxo. Tipo do passo: ${txt(ctxo.passo, 40)}. Fluxo: ${txt(ctxo.fluxo, 80)}. Gatilho do fluxo: ${txt(ctxo.gatilho, 400)}.`
+        : `Campo "Fazer" de uma regra. Nome da regra: ${txt(ctxo.nome, 80)}. Quando: ${txt(ctxo.quando, 400)}.`) + ` Limite: ${max} caracteres.`;
+      if (!texto && !txt(ctxo.quando || ctxo.gatilho || ctxo.nome || ctxo.fluxo, 400)) throw new Erro("Escreva algo ou preencha o “quando” antes de pedir ajuda.", 400);
+      const [{ ajustes }, { config }] = await Promise.all([ajustesDe(k), configDe(k)]);
+      let r: Any;
+      try { r = await chamarIA(k, u.id, "melhorar_texto", montarEntrada("melhorar_texto", ajustes, { nome: "", grupo: false }, [], { empresa: k.nome, cfg: config, texto: texto || "(vazio: escreva do zero)", pedido })); }
+      catch (e) { throw hubErro(e); }
+      const out = normalizar("melhorar_texto", r).texto.slice(0, max);
+      if (!out) throw new Erro("A IA não trouxe um texto. Tente de novo.", 502);
+      return { texto: out };
     }
     case "wa_conectar": {
       const { count } = await db.from("wa_devices").select("id", { count: "exact", head: true }).eq("conta", k.conta).is("revoked_at", null);

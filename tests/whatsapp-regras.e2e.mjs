@@ -27,6 +27,7 @@ function servidorNovo(dono) {
       case "wa_config": if (b.version !== cv) return { st: 409, j: { erro: "As regras mudaram." } }; cfg = b.config; cv++; return { j: { config: cfg, config_version: cv } };
       case "wa_sugerir": return { j: b.tipo === "fluxos" ? { fluxos: [{ nome: "Pós-venda", gatilho: "Cliente fechou", passos: [{ tipo: "mensagem", texto: "Boas-vindas" }, { tipo: "avisar_equipe", texto: "Avise" }] }] }
         : { regras: [{ nome: "Prazo", quando: "Perguntarem o prazo", fazer: "Explique que depende do caso", acao: "responder" }] } };
+      case "wa_melhorar": return { j: { texto: b.tipo === "passo" ? "Explique com calma que a lista vai por e-mail." : "Responda com cordialidade que o prazo depende do caso e convide para agendar." } };
       case "wa_pedidos": return { j: { pedidos } };
       case "wa_pedido": pedidos[0].status = b.status; return { j: { ok: true } };
     }
@@ -65,6 +66,20 @@ try {
   await page.waitForFunction(() => /Perfil salvo/.test(document.getElementById("pf-m").textContent));
   ok(srv.cfg().perfil.tom === "Acolhedor" && srv.chamadas.some((c) => c.acao === "wa_ajustes" && c.ajustes.negocio === "Acme Imóveis"), "perfil salvo (sobre o negócio + perfil)");
 
+  /* "Me ajude a escrever": o ícone ao lado de Remover reescreve a caixa, e dá para desfazer */
+  const ic = page.locator('.wa-regra[data-i="1"] [data-ia]');
+  ok(await ic.getAttribute("title") === "Me ajude a escrever" && await ic.getAttribute("aria-label") === "Me ajude a escrever", "ícone com a dica \"Me ajude a escrever\"");
+  ok(await page.locator('.wa-regra[data-i="1"] [data-ia] + [data-desfazer] + [data-del]').count() === 1, "o ícone fica ao lado de Remover");
+  await ic.click();
+  await page.waitForSelector('.wa-regra[data-i="1"] [data-desfazer]:not([hidden])');
+  const m1 = srv.chamadas.find((x) => x.acao === "wa_melhorar");
+  ok(m1 && m1.tipo === "regra" && m1.texto === "Avise" && m1.contexto.quando === "Reclamação", "pede à IA com o texto e o contexto da regra");
+  ok(/cordialidade/.test(await page.inputValue('.wa-regra[data-i="1"] [data-k="fazer"]')), "a IA reescreveu o texto da caixa");
+  await page.click('.wa-regra[data-i="1"] [data-desfazer]');
+  ok(await page.inputValue('.wa-regra[data-i="1"] [data-k="fazer"]') === "Avise", "Desfazer volta o texto anterior");
+  await ic.click();
+  await page.waitForSelector('.wa-regra[data-i="1"] [data-desfazer]:not([hidden])');
+
   await page.click("#rg-ia");
   await page.waitForSelector(".wa-sug [data-sug]");
   ok((await page.textContent(".wa-sug")).includes("Prazo"), "IA sugere regras para o negócio");
@@ -78,6 +93,7 @@ try {
   await page.click("#rg-salvar");
   await page.waitForFunction(() => /Regras salvas/.test(document.getElementById("rg-m").textContent));
   ok(srv.cfg().regras.length === 4 && srv.cfg().regras.some((r) => r.nome === "Prazo"), "regras salvas com a sugestão e a nova");
+  ok(/cordialidade/.test(srv.cfg().regras[1].fazer), "o texto aceito da IA é salvo com a regra");
   await page.screenshot({ path: OUT + "/wa-regras.png", fullPage: true });
 
   await page.click(".subtabs >> text=Fluxos");
@@ -88,6 +104,11 @@ try {
   await page.selectOption('.wa-fluxo[data-fi="1"] .wa-passo[data-si="1"] select', "coletar");
   ok(await page.locator('.wa-fluxo[data-fi="1"] .wa-passo[data-si="1"] [data-campo]').count() === 4, "trocar para “Pedir dados” mostra os campos");
   await page.click('.wa-fluxo[data-fi="1"] .wa-passo[data-si="1"] [data-up]');
+  await page.click('.wa-fluxo[data-fi="0"] .wa-passo[data-si="0"] [data-ia]');
+  await page.waitForSelector('.wa-fluxo[data-fi="0"] .wa-passo[data-si="0"] [data-desfazer]:not([hidden])');
+  const m2 = srv.chamadas.filter((x) => x.acao === "wa_melhorar").pop();
+  ok(m2.tipo === "passo" && m2.contexto.fluxo === "Pedido de documentos", "passo do fluxo: a IA recebe o fluxo e o tipo do passo");
+  ok(/lista vai por e-mail/.test(await page.inputValue('.wa-fluxo[data-fi="0"] .wa-passo[data-si="0"] [data-p="texto"]')), "passo do fluxo reescrito pela IA");
   await page.click("#fx-ia");
   await page.waitForSelector("#fx-sug [data-sug]");
   await page.click("#fx-sug [data-sug]");
@@ -98,6 +119,7 @@ try {
   ok(c.fluxos[1].passos[0].tipo === "coletar", "passo movido para cima");
   ok(c.fluxos.length === 3 && c.fluxos[2].nome === "Pós-venda", "ideia de fluxo da IA adicionada");
   ok(c.modelos[0].documentos.length === 2, "lista de documentos do modelo salva");
+  ok(/lista vai por e-mail/.test(c.fluxos[0].passos[0].texto), "texto do passo reescrito é salvo");
   await page.screenshot({ path: OUT + "/wa-fluxos.png", fullPage: true });
 
   await page.click('.wa-fluxo[data-fi="1"] [data-delf]');
@@ -132,6 +154,7 @@ try {
   const b = await pagina(false);
   await b.page.goto(`${BASE}/tests/fixtures/whatsapp-panel.html?cliente=c1#/whatsapp?aba=regras`);
   await b.page.waitForSelector("#wa-perfil");
+  ok(await b.page.locator(".wa-regra [data-ia]").first().isDisabled(), "quem não é titular não usa o \"Me ajude a escrever\"");
   ok(await b.page.isDisabled("#rg-salvar") && await b.page.isDisabled("#pf-tom") && (await b.page.textContent("body")).includes("Só o titular"), "quem não é titular só vê (sem editar)");
   await b.page.close();
 } catch (e) { console.error(e); falhas.push("exceção: " + e.message); }

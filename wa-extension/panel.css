@@ -50,16 +50,16 @@ label { display: block; margin: 4px 0; }
 .chave small { display: block; color: var(--mut); font-size: 11px; }
 .chave.peq .tr { width: 28px; height: 16px; } .chave.peq .tr::after { width: 10px; height: 10px; } .chave.peq input:checked + .tr::after { left: 15px; }
 
-.agora { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; border-left: 4px solid var(--verde-esc); }
-.agora .pt { width: 9px; height: 9px; border-radius: 50%; background: var(--verde-esc); }
-.agora.pensando .pt, .agora.espera .pt, .agora.digitando .pt { animation: pulsa 1s infinite; background: #2b6cb0; }
-.agora.pensando, .agora.espera, .agora.digitando { border-left-color: #2b6cb0; }
-.agora.alerta { border-left-color: var(--alerta); } .agora.alerta .pt { background: var(--alerta); }
-.agora.erro { border-left-color: var(--erro); } .agora.erro .pt { background: var(--erro); }
-.agora .barra { grid-column: 1 / -1; height: 3px; background: var(--linha); border-radius: 2px; overflow: hidden; }
-.agora .barra i { display: block; height: 100%; width: 0; background: #2b6cb0; transition: width .2s; }
+.trabalho { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; border-left: 4px solid var(--verde-esc); }
+.trabalho .pt { width: 9px; height: 9px; border-radius: 50%; background: var(--verde-esc); }
+.trabalho.pensando .pt, .trabalho.espera .pt, .trabalho.digitando .pt { animation: pulsa 1s infinite; background: #2b6cb0; }
+.trabalho.pensando, .trabalho.espera, .trabalho.digitando { border-left-color: #2b6cb0; }
+.trabalho.alerta { border-left-color: var(--alerta); } .trabalho.alerta .pt { background: var(--alerta); }
+.trabalho.erro { border-left-color: var(--erro); } .trabalho.erro .pt { background: var(--erro); }
+.trabalho .barra { grid-column: 1 / -1; height: 3px; background: var(--linha); border-radius: 2px; overflow: hidden; }
+.trabalho .barra i { display: block; height: 100%; width: 0; background: #2b6cb0; transition: width .2s; }
 @keyframes pulsa { 50% { opacity: .3; } }
-@media (prefers-reduced-motion: reduce) { .agora .pt { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .trabalho .pt { animation: none !important; } }
 
 .conv-cab { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 4px; }
 .tag { display: inline-block; font-size: 11px; border-radius: 10px; padding: 1px 8px; background: #e6f6ec; color: var(--verde-esc); }
@@ -97,23 +97,21 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 #app:not([hidden]) { display: flex; }
 .corpo { display: flex; flex-direction: column; min-height: 0; }
 .res { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-.res:empty { display: block; border-style: dashed; background: transparent; }
-.res:empty::before { content: "As respostas dos comandos aparecem aqui."; color: var(--mut); font-size: 12px; }
-.cmd textarea { min-height: 88px; }
-.agora { display: block; }
+.trabalho #cmd { display: block; margin-top: 10px; min-height: 120px; resize: none; line-height: 1.45; }
+.trabalho #cmd.espelho { background: rgba(18,140,74,.06); border-color: var(--verde-esc); cursor: default; }
+.trabalho .linha { margin-top: 8px; }
+.trabalho { display: block; flex: 0 0 auto; }
 .agora-lin { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .agora-lin #agora-txt { flex: 1; min-width: 0; }
-.agora .barra { position: relative; height: 26px; border-radius: 13px; background: var(--linha); overflow: hidden; }
-.agora .barra i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, #128c4a, #25d366); border-radius: 13px; transition: width .2s ease; }
-.agora .barra.ativa i { background-image: linear-gradient(90deg, #128c4a, #25d366), repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 10px, transparent 10px 20px); background-blend-mode: overlay; background-size: 100% 100%, 28px 28px; animation: listras 1s linear infinite; }
-.agora.espera .barra i, .agora.pensando .barra i { background: linear-gradient(90deg, #2b6cb0, #4c9be8); }
-.agora .barra span { position: relative; display: block; text-align: center; font-weight: 600; font-size: 12px; line-height: 26px; color: var(--texto); }
-.agora .barra.cheia span { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+.trabalho .barra { position: relative; height: 26px; border-radius: 13px; background: var(--linha); overflow: hidden; }
+.trabalho .barra i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, #128c4a, #25d366); border-radius: 13px; transition: width .2s ease; }
+.trabalho .barra.ativa i { background-image: linear-gradient(90deg, #128c4a, #25d366), repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 10px, transparent 10px 20px); background-blend-mode: overlay; background-size: 100% 100%, 28px 28px; animation: listras 1s linear infinite; }
+.trabalho.espera .barra i, .trabalho.pensando .barra i { background: linear-gradient(90deg, #2b6cb0, #4c9be8); }
+.trabalho .barra span { position: relative; display: block; text-align: center; font-weight: 600; font-size: 12px; line-height: 26px; color: var(--texto); }
+.trabalho .barra.cheia span { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
 #pausar { white-space: nowrap; }
 @keyframes listras { to { background-position: 0 0, 28px 0; } }
-@media (prefers-reduced-motion: reduce) { .agora .barra.ativa i { animation: none; } }
-.previa { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: rgba(18,140,74,.07); font-size: 13px; line-height: 1.45; max-height: 6.2em; overflow: hidden; white-space: pre-wrap; }
-.previa::after { content: "▍"; color: var(--verde-esc); animation: pisca 1s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) { .trabalho .barra.ativa i { animation: none; } }
 @keyframes pisca { 50% { opacity: 0; } }
 .contato .ct-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
 .contato .ct-grade label { font-size: 11px; color: var(--mut); margin: 0; }
@@ -138,6 +136,7 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
   .erro { color: #ff8a80; }
   .chave .tr { background: #3b4a54; }
   input::placeholder, textarea::placeholder { color: #8696a0; }
-  .previa { background: rgba(37,211,102,.08); }
-  .agora .barra span { color: var(--texto); }
+
+  .trabalho .barra span { color: var(--texto); }
 }
+@media (prefers-color-scheme: dark) { .trabalho #cmd.espelho { background: rgba(37,211,102,.08) !important; } }

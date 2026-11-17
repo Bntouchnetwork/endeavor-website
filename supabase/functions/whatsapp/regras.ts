@@ -153,7 +153,7 @@ export function montarEntrada(f: string, a: Any, c: { nome: string; grupo: boole
   if (extra.base) partes.push(`<base>${limpo(extra.base, 1500)}</base>`);
   if (extra.texto) partes.push(`<texto>${limpo(extra.texto, 3000)}</texto>`);
   if (extra.existentes) partes.push(`<existentes>${limpo(extra.existentes, 3000)}</existentes>`);
-  if (mensagens.length || !["sugerir_regras", "sugerir_fluxos"].includes(f)) partes.push(`<mensagens>\n${C.montarConversa(mensagens, f === "resumo" || f === "grupo" ? 60 : 30)}\n</mensagens>`);
+  if (mensagens.length || !["sugerir_regras", "sugerir_fluxos", "melhorar_texto"].includes(f)) partes.push(`<mensagens>\n${C.montarConversa(mensagens, f === "resumo" || f === "grupo" ? 60 : 30)}\n</mensagens>`);
   return partes.join("\n");
 }
 function fluxoDaIA(r: Any, cfg: Any) {
@@ -199,6 +199,7 @@ export function normalizar(f: string, r: Any, cfg?: Any): Any {
       relevante: r?.relevante === true, responder: r?.relevante === true && r?.responder === true && !!s(r?.texto), texto: s(r?.texto), motivo: s(r?.motivo, 200) };
     case "sugerir_regras": return { regras: limparConfig({ regras: (Array.isArray(r?.regras) ? r.regras : []).map((x: Any) => ({ ...x, acao: x?.acao === "fluxo" ? "responder" : x?.acao })), fluxos: [] }).regras.slice(0, 8) };
     case "sugerir_fluxos": return { fluxos: limparConfig({ fluxos: r?.fluxos }).fluxos.slice(0, 5) };
+    case "melhorar_texto": return { texto: s(r?.texto, 800) };
   }
   return {};
 }
