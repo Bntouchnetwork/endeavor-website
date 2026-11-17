@@ -12,7 +12,7 @@
 // Interno (x-interno = service role; a função whatsapp chama): processar { id, reenviar? }
 // Agendado (x-booking-key, a cada 10 min): tick
 // Público (página docs.html): pub_info { t } | pub_sessao { t, doc, nome, tipo, tamanho } | pub_confirmar { t, doc, file_id }
-// GET ?google=callback: retorno do consentimento do Google.
+// GET /docs/google-callback: retorno do consentimento do Google.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { enviarEmail, type Marca, SITE } from "../_shared/mail.ts";
@@ -24,7 +24,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON = Deno.env.get("SUPABASE_ANON_KEY") || "sb_publishable_BXyVbQtTEpA5cmJHQiIl4A_4DO1quqO";
 const G_ID = Deno.env.get("GOOGLE_CLIENT_ID") ?? "", G_SECRET = Deno.env.get("GOOGLE_CLIENT_SECRET") ?? "";
-const REDIRECT = `${SUPABASE_URL}/functions/v1/docs?google=callback`;
+const REDIRECT = `${SUPABASE_URL}/functions/v1/docs/google-callback`;
 const ESCOPOS = "openid email https://www.googleapis.com/auth/drive.file";
 const ORIGENS = [SITE, "https://www.endeavorbiz.com", "http://localhost:8092"];
 const db = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false } });
@@ -335,7 +335,7 @@ async function retornoGoogle(url: URL) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   const url = new URL(req.url);
-  if (req.method === "GET" && url.searchParams.get("google") === "callback") {
+  if (req.method === "GET" && url.pathname.endsWith("/google-callback")) {
     try { return await retornoGoogle(url); } catch (e) { console.error(e); return Response.redirect(`${SITE}/admin.html#/whatsapp?aba=pedidos&google=erro`, 302); }
   }
   if (req.method !== "POST") return json({ erro: "Use POST." }, 405);
