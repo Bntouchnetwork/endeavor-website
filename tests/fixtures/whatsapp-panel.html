@@ -6,9 +6,11 @@
 <!-- Página só para os testes automáticos: contexto do admin simulado; a função whatsapp é interceptada pelo Playwright. -->
 <div id="view"></div>
 <script src="../../whatsapp-panel.js"></script>
+<script src="../../whatsapp-regras.js"></script>
 <script>
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const desenhar = () => window.EWaPanel.render(document.getElementById('view'), window.ctx).catch(e => { document.getElementById('view').textContent = 'ERRO: ' + e.message; });
+  const OPC = /cliente=c1/.test(location.search) ? { scope: 'client', clientId: 'c1' } : { scope: 'admin' };
+  const desenhar = () => window.EWaPanel.render(document.getElementById('view'), window.ctx, OPC).catch(e => { document.getElementById('view').textContent = 'ERRO: ' + e.message; });
   window.ctx = {
     sb: { auth: { getSession: async () => ({ data: { session: { access_token: 'sessao-teste' } } }) } },
     CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, $: s => document.querySelector(s),

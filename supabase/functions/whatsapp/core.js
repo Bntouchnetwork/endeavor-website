@@ -50,7 +50,7 @@
     o.texto_aviso = txt(a.texto_aviso, 200, PADRAO.texto_aviso);
     o.idioma = /^[a-z]{2}(-[A-Z]{2})?$/.test(String(a.idioma || '')) ? a.idioma : PADRAO.idioma;
     o.negocio = txt(a.negocio, 3000, PADRAO.negocio);
-    o.link_agenda = /^https:\/\/[^\s<>"]{4,300}$/.test(String(a.link_agenda || '')) ? a.link_agenda : PADRAO.link_agenda;
+    o.link_agenda = a.link_agenda === '' ? '' : /^https:\/\/[^\s<>"]{4,300}$/.test(String(a.link_agenda || '')) ? a.link_agenda : PADRAO.link_agenda; // vazio: empresa sem página de agendamento
     var h = a.horario || {};
     o.horario = { ativo: h.ativo === true, inicio: hhmm(h.inicio, PADRAO.horario.inicio), fim: hhmm(h.fim, PADRAO.horario.fim), tz: txt(h.tz, 64, PADRAO.horario.tz) };
     var pr = Array.isArray(a.prontas) ? a.prontas : PADRAO.prontas;

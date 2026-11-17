@@ -11,11 +11,11 @@
   if (window.__emgrCarregado) return; window.__emgrCarregado = true;
   var C = window.EWaCore, W = window.EWaDom;
   var VERSAO = (chrome.runtime.getManifest && chrome.runtime.getManifest().version) || '1.0.0';
-  var ADMIN = 'https://endeavorbiz.com/admin.html#/whatsapp';
+  var ADMIN = 'https://endeavorbiz.com/admin.html#/whatsapp'; // muda para o portal do cliente quando a conta é de uma empresa cliente
 
   var S = {
     conectado: false, ajustes: C.limparAjustes({}), version: 0, conversas: {}, usuario: '', pausado: false, aberto: true, largura: 380,
-    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, ultGrupo: {}, analiseGrupo: {}, humanoEm: 0, teclouEm: 0, acao: null
+    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, ultGrupo: {}, analiseGrupo: {}, humanoEm: 0, teclouEm: 0, acao: null
   };
 
   /* ---------------- servidor ---------------- */
@@ -164,6 +164,7 @@
       '<label class="chave peq"><input type="checkbox" id="c-seguir"' + (st.seguir ? ' checked' : '') + '><span class="tr"></span><span>Acompanhar' + (c.grupo ? ' os assuntos' : ' e sugerir') + '</span></label>' +
       '<label class="chave peq"><input type="checkbox" id="c-tk"' + (st.takeover ? ' checked' : '') + '><span class="tr"></span><span>IA Takeover nesta ' + (c.grupo ? 'conversa de grupo' : 'conversa') + '</span></label>' +
       '<p class="alerta" id="c-tk-aviso" hidden>No grupo, a IA só responde quando o assunto é com a empresa e no máximo uma vez a cada ' + S.ajustes.grupo_intervalo + ' min. Resposta automática em grupo é o uso mais arriscado para o número. <button class="bt mini" id="c-tk-sim">Ligar mesmo assim</button> <button class="bt mini" id="c-tk-nao">Cancelar</button></p>' +
+      (st.fluxo ? '<p class="fluxo" id="conv-fluxo">Fluxo: ' + esc(st.fluxo.id) + (st.fluxo.status === 'enviado_crm' ? ' · pedido no CRM ✓' : ' · em andamento') + '</p>' : '') +
       '<button class="bt mini" id="c-agora"' + (st.takeover && S.ajustes.takeover ? '' : ' hidden') + '>Responder agora</button>';
     $('#c-seguir').onchange = function () { mudarConversa(c, { seguir: this.checked }); };
     $('#c-tk').onchange = function () {
@@ -238,8 +239,9 @@
       var c = precisaConversa(); if (!c) return;
       carregando('Pensando na resposta…');
       var r = await ia('sugerir', c);
+      if (r.aviso_protecao) agora(r.aviso_protecao + ' Revise antes de enviar.', 'alerta');
       var ks = [cartao('Sugestão', r.resposta, { logId: r.log_id, ferramenta: 'sugerir' })].concat((r.alternativas || []).map(function (t, i) { return cartao('Alternativa ' + (i + 1), t, { ferramenta: 'sugerir' }); }));
-      res(ks.map(function (k) { return k.html; }).join('')); ks.forEach(function (k) { k.ligar(); }); agora('Sugestão pronta.', 'ok');
+      res(ks.map(function (k) { return k.html; }).join('')); ks.forEach(function (k) { k.ligar(); }); if (!r.aviso_protecao) agora('Sugestão pronta.', 'ok');
     },
     resumo: async function () {
       var c = precisaConversa(); if (!c) return;
@@ -289,7 +291,8 @@
       var c = precisaConversa(); if (!c) return;
       carregando('Buscando horários livres na agenda…');
       var h = await api({ acao: 'ext_horarios' });
-      if (!h.horarios.length) { res('<p class="erro">Não há horários livres nos próximos 14 dias.</p>'); return agora('Sem horários livres.', 'alerta'); }
+      if (!h.horarios.length && h.link) { var kl = cartao('Oferecer agendamento', 'Podemos marcar uma conversa. Escolha o melhor horário aqui: ' + h.link, { ferramenta: 'agendamento' }); res(kl.html); kl.ligar(); return agora('Link de agendamento pronto.', 'ok'); }
+      if (!h.horarios.length) { res('<p class="erro">Sem horários livres e sem link de agendamento. Cadastre o link em Ajustes, no portal.</p>'); return agora('Sem horários livres.', 'alerta'); }
       var fone = /^\d{8,15}@c\.us$/.test(c.chave) ? '+' + c.chave.split('@')[0] : '';
       var tres = h.legiveis.slice(0, 3);
       var oferta = 'Tenho estes horários livres para conversarmos: ' + tres.join('; ') + '. Qual fica melhor para você? Se preferir, escolha outro aqui: ' + S.ajustes.link_agenda;
@@ -322,7 +325,7 @@
       res(k.html + '<div class="bloco"><h3>Propostas deste contato</h3>' + (lista.length ? lista.map(function (p, i) {
         return '<div class="pronta"><b>' + esc(p.titulo) + '</b> <span class="tag">' + esc(p.status) + '</span><div class="linha"><button class="bt mini" data-pl="' + i + '">Digitar o link</button></div></div>';
       }).join('') : '<p class="mut">Nenhuma proposta enviada para este contato. Os valores ficam só na proposta oficial.</p>') +
-        '<a href="' + esc(ps.nova || 'https://endeavorbiz.com/admin.html#/pagamentos?tab=nova-proposta') + '" target="_blank" rel="noopener">Criar proposta no admin</a></div>');
+        (ps.nova ? '<a href="' + esc(ps.nova) + '" target="_blank" rel="noopener">Criar proposta no admin</a>' : '') + '</div>');
       k.ligar();
       $$('[data-pl]').forEach(function (b) { b.onclick = function () { usarTexto('Aqui está a sua proposta da Endeavor: ' + lista[+b.dataset.pl].link, false, { ferramenta: 'proposta' }); }; });
       agora('Proposta pronta para revisar.', 'ok');
@@ -424,6 +427,7 @@
         msgBg({ tipo: 'aviso', titulo: c.nome + ' precisa de você', texto: r.motivo || 'A IA não respondeu: assunto para a equipe.' });
         return;
       }
+      if (r.fluxo_info) mostrarFluxo(c, r.fluxo_info);
       if (!r.responder) { agora('Takeover · sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', 'ok'); return; }
       res('<div class="bloco"><div class="cartao-rot">Takeover vai responder ' + esc(c.nome) + '</div><p>' + esc(r.texto) + '</p></div>');
       var vou = Date.now();
@@ -442,6 +446,15 @@
       agora('Takeover · respondeu ' + c.nome + ' ✓', 'ok');
     } catch (e) { agora('Takeover: ' + e.message, 'erro'); }
     finally { S.ocupado = false; S.acao = null; $('#parar').hidden = true; }
+  }
+  /** andamento do fluxo na conversa (ex.: Pedido de documentos · falta e-mail · enviado ao CRM) */
+  function mostrarFluxo(c, f) {
+    var CAMPO = { nome: 'nome', email: 'e-mail', telefone: 'telefone', tipo_caso: 'tipo de caso' };
+    var txt = f.status === 'enviado_crm' ? 'Fluxo “' + f.nome + '”: pedido passado para o CRM ✓' : 'Fluxo “' + f.nome + '”: coletando' + (f.falta && f.falta.length ? ' · falta ' + f.falta.map(function (x) { return CAMPO[x] || x; }).join(', ') : '');
+    var el = $('#conv-fluxo');
+    if (!el && $('#conv')) { $('#conv').insertAdjacentHTML('beforeend', '<p class="fluxo" id="conv-fluxo"></p>'); el = $('#conv-fluxo'); }
+    if (el && mesmaConversa(c)) el.textContent = txt;
+    if (f.status === 'enviado_crm' && !S.avisados[c.chave + f.id]) { S.avisados[c.chave + f.id] = true; msgBg({ tipo: 'aviso', titulo: 'Pedido no CRM: ' + c.nome, texto: f.nome + ' — o CRM segue com o e-mail e o follow-up.' }); }
   }
   function cancelar(r, c, motivo) {
     agora(motivo, 'alerta');
@@ -526,7 +539,8 @@
       S.conectado = true; S.ajustes = r.ajustes; S.version = r.version; S.usuario = r.usuario;
       S.conversas = {}; (r.conversas || []).forEach(function (x) { S.conversas[x.chave] = x; });
       $('#conectar').hidden = true; $('#app').hidden = false;
-      $('#quem').textContent = r.usuario || r.dispositivo || '';
+      $('#quem').textContent = (r.endeavor === false && r.empresa ? r.empresa + ' · ' : '') + (r.usuario || r.dispositivo || '');
+      if (r.painel) $$('a[href="' + ADMIN + '"]').forEach(function (a) { a.href = r.painel; }), ADMIN = r.painel;
       desenharTempos(); pontos();
       agora(r.ia ? (S.ajustes.takeover ? 'Pronta. IA Takeover ligado nas conversas marcadas.' : 'Pronta.') : 'O Hub AI não está configurado no servidor.', r.ia ? 'ok' : 'erro');
       ultimaChave = undefined; tick(false);

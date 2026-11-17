@@ -42,6 +42,7 @@ function responder(b) {
     case "ext_ia": {
       logId++;
       const f = b.ferramenta;
+      if (f === "responder" && (b.mensagens || []).some((m) => /lista de documentos/.test(m.texto))) return [200, { responder: true, texto: "Por compliance não recebemos documentos por aqui. Qual é o seu nome completo e e-mail? Vou mandar a lista e um link seguro.", escalar: false, log_id: logId, aviso_incluido: false, fluxo_info: { id: "documentos", nome: "Pedido de documentos", status: "coletando", falta: ["nome", "email"] } }];
       if (f === "responder") return [200, { responder: true, texto: "Olá! Aqui é o assistente virtual da Endeavor. Posso te ajudar com a LLC.", escalar: false, log_id: logId, aviso_incluido: true }];
       if (f === "sugerir") return [200, { resposta: "Sugestão principal", alternativas: ["Alternativa curta"], log_id: logId }];
       if (f === "grupo") return [200, { topicos: [{ assunto: "EIN", resumo: "Perguntas sobre como tirar o EIN" }], relevante: true, responder: false, texto: "A Endeavor pode ajudar com o EIN.", log_id: logId }];
@@ -112,6 +113,13 @@ try {
   ok(!!reg && reg.aviso_incluido === true && reg.log_id === 1, "registro: enviado, com o aviso marcado");
   ok(ia("responder")[0].mensagens.some((m) => m.texto.includes("português")), "a IA recebeu as mensagens da conversa");
   await page.screenshot({ path: path.join(OUT, "wa-enviado.png") });
+
+  /* fluxo de documentos: o painel mostra o andamento (coletando · falta nome, e-mail) */
+  await page.evaluate(() => window.chegar("15551230000@c.us", "Me manda a lista de documentos"));
+  await page.waitForFunction(() => (window.__enviadas || []).some((e) => /compliance/.test(e.t)), null, { timeout: 15000 });
+  await P("#conv-fluxo").waitFor({ timeout: 3000 });
+  ok(/Pedido de documentos.*falta nome, e-mail/.test(await P("#conv-fluxo").textContent()), "fluxo: painel mostra o andamento e o que falta");
+  await page.waitForTimeout(800);
 
   /* conversa não lida (outra conversa): o Takeover abre e responde */
   await page.evaluate(() => window.chegar("15559990000@c.us", "Olá, quero informações"));

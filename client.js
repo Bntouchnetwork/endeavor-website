@@ -313,6 +313,9 @@
     // Web Meeting habilitado pela Endeavor na ficha do cliente
     var ma = await sb.from('meet_access').select('enabled').eq('client_id', id).maybeSingle();
     S.meetOn = !!(ma.data && ma.data.enabled);
+    // WhatsApp Manager liberado pela Endeavor na ficha do cliente
+    var wa = await sb.from('wa_access').select('enabled').eq('client_id', id).maybeSingle();
+    S.waOn = !!(wa.data && wa.data.enabled);
     try { localStorage.setItem('endeavor-client-id', id); } catch (e) { /* ignore */ }
   }
 
@@ -435,6 +438,7 @@
       if (S.perms.owner && window.ETools) ETools.nav().forEach(function (x) { m.push([x[0], x[1], x[2], 1]); });
       if (S.meetOn && window.EMeetPanel) m.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
       if (S.meetOn && window.EWebinarPanel) m.push(['webinar', 'Live Webinar', 'i-live', 1]);
+      if (S.waOn && window.EWaPanel) m.push(['whatsapp', 'WhatsApp Manager', 'i-wa', 1]);
       if (S.perms.owner) m.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
       m.push(['settings', 'nav_settings', 'i-gear']);
       return m;
@@ -450,6 +454,7 @@
     if (S.perms.owner && !PARTNER && window.ETools) ETools.nav().forEach(function (x) { n.push([x[0], x[1], x[2], 1]); });
     if (S.meetOn && !PARTNER && window.EMeetPanel) n.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
     if (S.meetOn && !PARTNER && window.EWebinarPanel) n.push(['webinar', 'Live Webinar', 'i-live', 1]);
+    if (S.waOn && !PARTNER && window.EWaPanel) n.push(['whatsapp', 'WhatsApp Manager', 'i-wa', 1]);
     n.push(['settings', 'nav_settings', 'i-gear']);
     return n;
   }
@@ -497,6 +502,7 @@
     if (window.EClientOA) V.oa = EClientOA.view;
     if (window.EProjects) V.projetos = function (view) { return EProjects.view(view, refCtx()); };
     if (window.EMeetPanel && S.client && S.meetOn && !PARTNER) V.webmeeting = function (view) { return EMeetPanel.render(view, refCtx(), { scope: 'client', clientId: S.client.id, clientName: S.client.name }); };
+    if (window.EWaPanel && S.client && S.waOn && !PARTNER) V.whatsapp = function (view) { return EWaPanel.render(view, refCtx(), { scope: 'client', clientId: S.client.id }); };
     if (window.EWebinarPanel && S.client && S.meetOn && !PARTNER) V.webinar = function (view) { return EWebinarPanel.render(view, refCtx(), { scope: 'client', clientId: S.client.id, clientName: S.client.name }); };
     if (window.ETools && S.client && !PARTNER) {
       Object.assign(V, ETools.views);

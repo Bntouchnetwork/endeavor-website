@@ -127,7 +127,7 @@
       var tab = (ERoute.get().match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
-      var TABS = [['empresas', 'Empresas'], ['abertura', 'Abertura'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios'], ['webmeeting', 'Web Meeting']];
+      var TABS = [['empresas', 'Empresas'], ['abertura', 'Abertura'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios'], ['webmeeting', 'Web Meeting'], ['whatsapp', 'WhatsApp Manager']];
       view.innerHTML = '<p class="crumbs"><a href="#/crm?tipo=client">CRM</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-ach">Pedir débito na conta da empresa</button><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
@@ -138,7 +138,7 @@
       view.querySelector('#c-edit').onclick = function () { editClient(ctx, c); };
       view.querySelector('#c-ach').onclick = function () { achRequest(ctx, c); };
       var body = view.querySelector('#c-body');
-      var fn = { empresas: tabCompanies, abertura: tabOnboarding, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance, webmeeting: tabMeet }[tab] || tabCompanies;
+      var fn = { empresas: tabCompanies, abertura: tabOnboarding, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance, webmeeting: tabMeet, whatsapp: tabWhatsApp }[tab] || tabCompanies;
       await fn(body, ctx, c, companies);
     }
   };
@@ -300,6 +300,24 @@
       catch (err) { return ctx.msg(m, err.message, 'error'); }
       var r = await ctx.sb.from('meet_access').upsert(row, { onConflict: 'client_id' });
       ctx.msg(m, r.error ? ctx.errText(r.error) : (row.enabled ? 'Salvo. A aba Web Meeting já aparece no portal do cliente.' : 'Salvo. O Web Meeting está desabilitado para esta empresa.'), r.error ? 'error' : 'ok');
+    };
+  }
+
+  /* ---------- WhatsApp Manager: liberar para a empresa (cada empresa tem perfil, regras e fluxos próprios) ---------- */
+  async function tabWhatsApp(body, ctx, c) {
+    var esc = ctx.esc;
+    var wa = (await ctx.sb.from('wa_access').select('*').eq('client_id', c.id).maybeSingle()).data || { enabled: false };
+    body.innerHTML = '<section class="portal-card"><h2 class="portal-h2">WhatsApp Manager</h2>' +
+      '<p class="portal-muted">Liberado, o menu “WhatsApp Manager” aparece no Portal do Cliente. A empresa baixa a extensão do Chrome, descreve o próprio negócio e cria as próprias regras e fluxos (com sugestões da IA). As proteções fixas valem sempre: a IA nunca informa valores e nunca pede documentos nem dados bancários.</p>' +
+      '<p class="portal-alert portal-alert--info">Automação no WhatsApp Web vai contra os termos do WhatsApp e pode bloquear o número. Explique isso ao cliente antes de liberar.</p>' +
+      '<form class="portal-form" id="wa-f"><div class="check-row"><input type="checkbox" id="wa-on"' + (wa.enabled ? ' checked' : '') + '><label for="wa-on"><strong>Liberar o WhatsApp Manager para ' + esc(c.name) + '</strong></label></div>' +
+      '<div class="portal-alert" id="wa-m" role="status"></div><button class="btn btn--navy" type="submit">Salvar</button>' +
+      (wa.enabled ? ' <a class="btn btn--ghost" href="#/whatsapp?cliente=' + c.id + '">Ver como a empresa (regras e fluxos)</a>' : '') + '</form></section>';
+    body.querySelector('#wa-f').onsubmit = async function (e) {
+      e.preventDefault();
+      var m = body.querySelector('#wa-m'), on = body.querySelector('#wa-on').checked;
+      var r = await ctx.sb.from('wa_access').upsert({ client_id: c.id, enabled: on, updated_at: new Date().toISOString(), updated_by: (await ctx.sb.auth.getUser()).data.user.email }, { onConflict: 'client_id' });
+      ctx.msg(m, r.error ? ctx.errText(r.error) : (on ? 'Salvo. O menu WhatsApp Manager já aparece no portal do cliente.' : 'Salvo. O WhatsApp Manager está desligado para esta empresa; as extensões dela param em até 1 minuto.'), r.error ? 'error' : 'ok');
     };
   }
 

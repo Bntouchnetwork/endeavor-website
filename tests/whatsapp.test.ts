@@ -1,7 +1,7 @@
 // My WhatsApp Manager: regras compartilhadas (wa-extension/core.js) e regras do servidor (supabase/whatsapp/regras.ts).
 //   deno test --allow-read tests/whatsapp.test.ts
 import "../wa-extension/core.js";
-import { montarEntrada, normalizar } from "../supabase/functions/whatsapp/regras.ts";
+import { limparConfig, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/functions/whatsapp/regras.ts";
 // deno-lint-ignore no-explicit-any
 const C = (globalThis as any).EWaCore;
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`); };
@@ -107,4 +107,64 @@ Deno.test("resposta da IA sempre no formato e sem números sensíveis", () => {
   eq(normalizar("lead", { nome: "Ana", email: "nao-e-email" }).email, "", "e-mail inválido sai");
   eq(normalizar("comando", { acao: "apagar_tudo", texto: "x" }).acao, "escrever");
   eq(normalizar("sugerir", { resposta: "Seu SSN 123-45-6789", alternativas: ["a", "", 3, "b", "c", "d"] }), { resposta: "Seu SSN [número removido]", alternativas: ["a", "b", "c"] });
+});
+
+Deno.test("proteção fixa: resposta com valor não sai", () => {
+  for (const t of ["A abertura custa $499.", "O valor é de 300 dólares", "Fica US$ 1.200 por ano", "The fee is 250 USD", "Custa uns 500 reais", "price is $99"]) sim(!!violaProtecao(t), "deveria barrar: " + t);
+  for (const t of ["Os valores vão na proposta por e-mail.", "Leva de 3 a 5 dias úteis.", "Temos horário às 10:00 de terça.", "Somos de Orlando, FL 32801."]) eq(violaProtecao(t), "", "não deveria barrar: " + t);
+});
+
+Deno.test("proteção fixa: pedir documento ou dado bancário não sai; avisar para NÃO mandar pode", () => {
+  for (const t of ["Me envia uma foto do passaporte, por favor.", "Pode me mandar o número da conta?", "Please send me your SSN", "Qual é o seu número do passaporte?", "Anexe o comprovante de endereço aqui."]) sim(!!violaProtecao(t), "deveria barrar: " + t);
+  for (const t of ["Por compliance, não mande documentos nem o passaporte pelo WhatsApp: vou enviar por e-mail a lista e um link seguro.", "Please don't send your passport here.", "Vou te mandar por e-mail a lista de documentos."]) eq(violaProtecao(t), "", "não deveria barrar: " + t);
+});
+
+Deno.test("configuração padrão: fluxo de documentos (compliance → CRM) e de proposta, com regras ligadas aos fluxos", () => {
+  const c = padraoConfig(true);
+  const doc = c.fluxos.find((f: any) => f.id === "documentos");
+  eq(doc.passos.map((p: any) => p.tipo), ["mensagem", "coletar", "crm_documentos", "mensagem"]);
+  eq(doc.passos[1].campos, ["nome", "email", "tipo_caso"]);
+  eq(c.regras.find((r: any) => r.id === "preco").fluxo, "proposta");
+  sim(c.modelos.every((m: any) => m.subpastas[0] === "Initial Docs"), "Initial Docs sempre presente");
+  eq(padraoConfig(false).perfil.servicos, "", "cliente começa com o perfil vazio");
+});
+
+Deno.test("configuração: limites, ids únicos, regra apontando para fluxo inexistente vira responder, Initial Docs obrigatória", () => {
+  const c = limparConfig({
+    regras: [{ id: "x", nome: "A", quando: "q", acao: "fluxo", fluxo: "nao-existe" }, { id: "x", nome: "B", quando: "q2", acao: "hackear" }, { nome: "", quando: "sem nome" }],
+    fluxos: [{ id: "f", nome: "F", gatilho: "g", passos: [{ tipo: "rm -rf", texto: "t" }, { tipo: "coletar", campos: ["nome", "senha"], texto: "c" }] }],
+    modelos: [{ nome: "M", subpastas: ["Docs/Fiscais", "Outros"] }],
+  });
+  eq(c.regras.map((r: any) => [r.id, r.acao]), [["x", "responder"], ["x-1", "responder"]]);
+  eq(c.fluxos[0].passos.map((p: any) => p.tipo), ["mensagem", "coletar"]);
+  eq(c.fluxos[0].passos[1].campos, ["nome"], "campo desconhecido sai");
+  eq(c.modelos[0].subpastas, ["Initial Docs", "Docs-Fiscais", "Outros"]);
+});
+
+Deno.test("fluxo vai para o CRM só com os dados completos e o passo de CRM", () => {
+  const doc = padraoConfig(true).fluxos.find((f: any) => f.id === "documentos");
+  eq(prontoParaCRM(doc, { nome: "Ana Souza", email: "" }).falta, ["email"]);
+  eq(prontoParaCRM(doc, { nome: "Ana Souza", email: "ana@x.com" }), { ok: true, falta: [], tipo: "documentos" });
+  eq(prontoParaCRM({ passos: [{ tipo: "mensagem" }] }, { nome: "Ana", email: "a@x.com" }).ok, false, "sem passo de CRM");
+});
+
+Deno.test("resposta do Takeover com fluxo: só fluxos ativos e modelos existentes", () => {
+  const cfg = padraoConfig(true);
+  const r = normalizar("responder", { responder: true, texto: "Oi", fluxo: { id: "documentos", dados: { nome: "Ana", email: "ANA@X.COM", tipo_caso: "abertura-llc" }, pronto: true } }, cfg);
+  eq(r.fluxo, { id: "documentos", dados: { nome: "Ana", email: "ana@x.com", telefone: "", tipo_caso: "abertura-llc" }, pronto: true });
+  eq(normalizar("responder", { responder: true, texto: "Oi", fluxo: { id: "inventado" } }, cfg).fluxo, null);
+  eq(normalizar("responder", { responder: true, texto: "Oi", fluxo: { id: "documentos", dados: { email: "x", tipo_caso: "lua" } } }, cfg).fluxo.dados, { nome: "", email: "", telefone: "", tipo_caso: "" });
+});
+
+Deno.test("entrada da IA leva perfil, regras, fluxos, modelos e as proteções fixas", () => {
+  const cfg = padraoConfig(true);
+  const e = montarEntrada("responder", C.limparAjustes({}), { nome: "Ana", grupo: false }, [{ eu: false, texto: "me manda a lista" }], { cfg, empresa: "Endeavor", fluxo_atual: { id: "documentos", dados: { nome: "Ana" } } });
+  for (const t of ["<regras_da_empresa>", "[documentos] Pedido de documentos", "<modelos_documentos>", "[abertura-llc]", "<protecoes_fixas>", "Nunca informar preços", "<fluxo_atual>"]) sim(e.includes(t), "faltou " + t);
+});
+
+Deno.test("sugestões da IA de regras e fluxos passam pelos mesmos limites", () => {
+  const r = normalizar("sugerir_regras", { regras: [{ nome: "Prazo", quando: "perguntarem prazo", fazer: "explique", acao: "fluxo", fluxo: "x" }, { nome: "", quando: "" }] });
+  eq(r.regras.length, 1); eq(r.regras[0].acao, "responder");
+  const f = normalizar("sugerir_fluxos", { fluxos: [{ nome: "Pós-venda", gatilho: "cliente novo", passos: [{ tipo: "mensagem", texto: "boas-vindas" }, { tipo: "avisar_equipe", texto: "" }] }] });
+  eq(f.fluxos[0].passos.map((p: any) => p.tipo), ["mensagem", "avisar_equipe"]);
 });

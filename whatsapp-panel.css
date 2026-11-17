@@ -21,3 +21,19 @@
 .portal-form h2.portal-h2 { margin-top: 1.25rem; }
 .portal-form h2.portal-h2:first-child { margin-top: 0; }
 .pill--live-ok { background: #e6f4ea; color: #1e6b3a; }
+/* Perfil e regras, fluxos, modelos, pedidos */
+.wa-regra, .wa-fluxo, .wa-modelo { border: 1px solid #e3e7ee; border-radius: 10px; padding: .85rem 1rem; margin: 0 0 .85rem; min-width: 0; }
+.wa-regra .field, .wa-fluxo .field, .wa-modelo .field { margin-bottom: .6rem; }
+.wa-prot ul { margin: .25rem 0 0 1.1rem; padding: 0; display: grid; gap: .3rem; }
+.wa-passos-lista { margin: .25rem 0 .5rem; padding-left: 1.2rem; display: grid; gap: .5rem; }
+.wa-passo { border-left: 3px solid #d7dee8; padding-left: .7rem; }
+.wa-passo-bt { align-items: end; gap: .35rem; }
+.wa-campos { display: flex; flex-wrap: wrap; gap: .25rem 1rem; margin: 0 0 .4rem; }
+.wa-sug { background: #f6f9fc; border: 1px dashed #b9c6d6; border-radius: 10px; padding: .75rem 1rem; margin-bottom: 1rem; }
+.wa-sug h3 { font-size: 1rem; margin: 0 0 .5rem; }
+.wa-sug-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; align-items: start; padding: .5rem 0; border-top: 1px solid #e3e7ee; }
+.wa-sug-item:first-of-type { border-top: 0; }
+.wa-sug-item ol { margin: .25rem 0 0 1rem; padding: 0; }
+#wa-corpo [hidden] { display: none !important; }
+.wa-regra textarea, .wa-fluxo textarea, .wa-modelo textarea { min-height: 3.4rem; }
+.wa-modelo textarea { min-height: 7rem; }

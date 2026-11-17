@@ -19,7 +19,7 @@ const log = Array.from({ length: 3 }, (_, i) => ({ id: 10 - i, chave: "155@c.us"
 function servidor(b) {
   chamadas.push(b);
   switch (b.acao) {
-    case "wa_painel": return { j: { ajustes: A, version, ia: true, hoje: { enviado: 3, sugerido: 5 }, dispositivos: devs, conversas: [{ chave: "155@c.us", nome: "Maria Teste", grupo: false, seguir: true, takeover: true }] } };
+    case "wa_painel": return { j: { ajustes: A, version, ia: true, dono: true, endeavor: true, empresa: "Endeavor Business Solutions", config: { perfil: {}, regras: [], fluxos: [], modelos: [] }, config_version: 1, hoje: { enviado: 3, sugerido: 5 }, dispositivos: devs, conversas: [{ chave: "155@c.us", nome: "Maria Teste", grupo: false, seguir: true, takeover: true }] } };
     case "wa_ajustes": if (b.version !== version) return { st: 409, j: { erro: "Os ajustes mudaram em outro lugar." } }; Object.assign(A, b.ajustes, { espera_max: Math.max(b.ajustes.espera_max, b.ajustes.espera_min) }); version++; return { j: { ajustes: A, version } };
     case "wa_conectar": return { j: { id: "d2", codigo: "wam_CODIGOtesteABCDEFGHIJKLMNOP" } };
     case "wa_revogar": devs[0].ativo = false; devs[0].online = false; return { j: { ok: true } };
@@ -58,7 +58,7 @@ try {
   await page.waitForTimeout(300);
   ok(chamadas.some((c) => c.acao === "wa_revogar" && c.id === "d1"), "desligou o navegador");
 
-  await page.click("text=Registro");
+  await page.click(".subtabs >> text=Registro");
   await page.waitForSelector(".wa-txt");
   ok(await page.locator("tbody tr").count() === 3, "registro: lista o que passou pela IA");
   await page.selectOption("#wa-f", "lead");
@@ -69,7 +69,7 @@ try {
   const csv = await page.evaluate(() => window.__baixado);
   ok(csv.nome.endsWith(".csv") && csv.t.includes('""Aqui""'), "registro: CSV com aspas escapadas");
 
-  await page.click("text=Ajustes");
+  await page.click(".subtabs >> text=Ajustes");
   await page.waitForSelector("#wa-aj");
   await page.fill("#wa-espera_min", "20"); await page.fill("#wa-espera_max", "5");
   await page.click("#wa-pr-add");

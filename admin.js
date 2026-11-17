@@ -242,7 +242,7 @@
       projetos: function (vw) { return AdminProjects.projects(vw, clientsCtx()); }, conectores: function (vw) { return AdminProjects.connectors(vw, clientsCtx()); }, hubai: function (vw) { return AdminProjects.hub(vw, clientsCtx()); },
       webmeeting: function (vw) { return window.EMeetPanel ? EMeetPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Web Meeting não carregou. Recarregue a página.')); },
       webinar: function (vw) { return window.EWebinarPanel ? EWebinarPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Live Webinar não carregou. Recarregue a página.')); },
-      whatsapp: function (vw) { return window.EWaPanel ? EWaPanel.render(vw, clientsCtx()) : Promise.reject(new Error('O módulo WhatsApp Manager não carregou. Recarregue a página.')); } })[v](view).catch(function (e) {
+      whatsapp: function (vw) { var cl = (location.hash.match(/[?&]cliente=([0-9a-f-]{36})/) || [])[1]; return window.EWaPanel ? EWaPanel.render(vw, clientsCtx(), { scope: 'admin', clientId: cl }) : Promise.reject(new Error('O módulo WhatsApp Manager não carregou. Recarregue a página.')); } })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });
   }
