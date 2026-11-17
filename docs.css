@@ -1,0 +1,29 @@
+/* Envio seguro de documentos (docs.html) */
+.dc { background: #f3f5f9; margin: 0; }
+.dc-main { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
+.dc-topo { margin-bottom: 1.25rem; }
+.dc-topo .dc-emp { font: 600 .9rem Inter, sans-serif; color: #6b7280; letter-spacing: .02em; }
+.dc-topo h1 { font: 700 clamp(1.5rem, 4vw, 2rem)/1.2 'Source Serif 4', Georgia, serif; color: #0b1f3a; margin: .25rem 0 .5rem; }
+.dc-seg { display: flex; gap: .6rem; align-items: flex-start; background: #eaf4ee; border: 1px solid #c7e3d1; color: #1e4d2f; border-radius: 12px; padding: .8rem 1rem; font-size: .95rem; margin: 0 0 1.25rem; }
+.dc-seg svg { flex: none; width: 20px; height: 20px; margin-top: 2px; }
+.dc-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; }
+.dc-item { background: #fff; border: 1px solid #e3e7ee; border-radius: 12px; padding: .9rem 1rem; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem 1rem; align-items: center; }
+.dc-item.ok { border-color: #b9dcc6; }
+.dc-nome { font-weight: 600; color: #0b1f3a; overflow-wrap: anywhere; }
+.dc-st { font-size: .85rem; color: #6b7280; }
+.dc-item.ok .dc-st { color: #1e6b3a; }
+.dc-bt { position: relative; }
+.dc-bt input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.dc-bt label { display: inline-flex; align-items: center; gap: .4rem; min-height: 2.6rem; padding: .5rem 1rem; border-radius: 10px; background: #0b1f3a; color: #fff; font-weight: 600; cursor: pointer; }
+.dc-item.ok .dc-bt label { background: #fff; color: #0b1f3a; border: 1px solid #c9d2df; }
+.dc-bt input:focus-visible + label { outline: 3px solid #c9a24a; outline-offset: 2px; }
+.dc-prog { grid-column: 1 / -1; height: 6px; background: #e8edf3; border-radius: 3px; overflow: hidden; }
+.dc-prog i { display: block; height: 100%; width: 0; background: #1e6b3a; transition: width .15s; }
+.dc-msg { grid-column: 1 / -1; font-size: .88rem; margin: 0; }
+.dc-msg.erro { color: #b42318; }
+.dc-fim { background: #fff; border: 1px solid #b9dcc6; border-radius: 12px; padding: 1rem; margin-top: 1rem; color: #1e4d2f; }
+.dc-rod { margin-top: 2rem; font-size: .82rem; color: #6b7280; }
+.dc-lang { display: flex; gap: .5rem; justify-content: flex-end; margin-bottom: .5rem; }
+.dc-lang a { font-size: .85rem; color: #0b1f3a; }
+.dc-lang a[aria-current] { font-weight: 700; text-decoration: none; }
+@media (max-width: 520px) { .dc-item { grid-template-columns: 1fr; } .dc-bt label { width: 100%; justify-content: center; } }

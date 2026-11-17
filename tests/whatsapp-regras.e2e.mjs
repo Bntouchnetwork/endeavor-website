@@ -40,6 +40,14 @@ async function pagina(dono) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   page.on("pageerror", (e) => console.log("pageerror:", e.message));
   await page.route("**/fn/whatsapp", async (r) => { const res = srv.f(JSON.parse(r.request().postData() || "{}")); await r.fulfill({ status: res.st || 200, json: res.j }); });
+  srv.docs = [];
+  await page.route("**/fn/docs", async (r) => {
+    const b = JSON.parse(r.request().postData() || "{}"); srv.docs.push(b);
+    if (b.acao === "doc_status") return r.fulfill({ json: { google_configurado: true, conexao: srv.conectado ? { status: "conectado", account_email: "docs@acme.com", pasta: "https://drive.google.com/drive/folders/x" } : null } });
+    if (b.acao === "google_conectar") { srv.conectado = true; return r.fulfill({ json: { url: `${BASE}/tests/fixtures/whatsapp-panel.html?cliente=c1#/whatsapp?aba=pedidos&google=ok` } }); }
+    if (b.acao === "pedido_reenviar") return b.email.includes("@") ? r.fulfill({ json: { ok: true } }) : r.fulfill({ status: 400, json: { erro: "E-mail inválido." } });
+    return r.fulfill({ json: { ok: true } });
+  });
   return { page, srv };
 }
 try {
@@ -100,9 +108,20 @@ try {
 
   await page.click(".subtabs >> text=Pedidos ao CRM");
   await page.waitForSelector("[data-ped]");
+  ok((await page.textContent(".wa-google")).includes("Não conectado"), "Google Drive: mostra não conectado");
+  await page.click("#gd-on");
+  await page.waitForSelector(".wa-google .portal-alert--ok");
+  ok(srv.docs.some((x) => x.acao === "google_conectar" && x.clientId === "c1"), "conectar pede o consentimento do Google para a empresa");
+  ok((await page.textContent(".wa-google")).includes("docs@acme.com"), "na volta: conectado, com a conta");
+  await page.click("[data-outro]");
+  await page.fill(".wa-outro input", "ana.nova@x.com");
+  await page.click(".wa-outro button");
+  await page.waitForFunction(() => /novo e-mail/.test(document.querySelector(".wa-pedido .portal-alert:last-child").textContent));
+  ok(srv.docs.some((x) => x.acao === "pedido_reenviar" && x.email === "ana.nova@x.com"), "enviar para outro e-mail");
+  await page.waitForSelector("[data-ped]");
   ok((await page.textContent("#wa-corpo")).includes("Aguardando armazenamento"), "pedido de documentos aguardando o armazenamento");
   await page.selectOption("[data-ped]", "completo");
-  await page.waitForFunction(() => /atualizada/.test(document.getElementById("pd-m").textContent));
+  await page.waitForFunction(() => [...document.querySelectorAll(".wa-pedido .portal-alert")].some((x) => /atualizada/.test(x.textContent)));
   ok(srv.chamadas.some((x) => x.acao === "wa_pedido" && x.status === "completo"), "situação do pedido muda");
   await page.setViewportSize({ width: 390, height: 800 });
   await page.click(".subtabs >> text=Fluxos");

@@ -163,7 +163,7 @@ function fluxoDaIA(r: Any, cfg: Any) {
   if (!fl) return null;
   const d = f.dados && typeof f.dados === "object" ? f.dados : {};
   const modelo = cfg.modelos.find((m: Any) => m.id === String(d.tipo_caso) || m.nome.toLowerCase() === String(d.tipo_caso || "").toLowerCase());
-  return { id: fl.id, dados: { nome: txt(d.nome, 120), email: EMAIL.test(String(d.email || "").trim()) ? txt(d.email, 160).toLowerCase() : "", telefone: txt(d.telefone, 40), tipo_caso: modelo ? modelo.id : "" }, pronto: f.pronto === true };
+  return { id: fl.id, dados: { nome: txt(d.nome, 120), email: EMAIL.test(String(d.email || "").trim()) ? txt(d.email, 160).toLowerCase() : "", telefone: txt(d.telefone, 40), tipo_caso: modelo ? modelo.id : "" }, pronto: f.pronto === true, reenviar: f.reenviar === true };
 }
 /** Resposta da IA sempre no formato esperado pela extensão (e sem números sensíveis). */
 export function normalizar(f: string, r: Any, cfg?: Any): Any {

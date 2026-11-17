@@ -51,6 +51,7 @@
     var aba = param('aba') || 'inicio', call = api(ctx), esc = ctx.esc;
     view.innerHTML = '<p class="portal-muted">Carregando…</p>';
     var d = await call({ acao: 'wa_painel' });
+    d.opt = OPT;
     var cab = '<div class="console__head"><div><h1>WhatsApp Manager' + (d.endeavor ? '' : ' · ' + esc(d.empresa)) + '</h1><p class="portal-muted">A extensão My WhatsApp Manager coloca um painel com IA ao lado do WhatsApp Web. Aqui ficam o perfil do negócio, as regras e os fluxos que a IA segue, os pedidos que ela passa para o CRM, o registro e os ajustes.</p></div>' +
       '<div class="portal-btn-row"><a class="btn btn--ghost btn--sm" href="' + ZIP + '" download id="wa-zip">Baixar extensão</a><a class="btn btn--navy btn--sm" href="https://web.whatsapp.com/" target="_blank" rel="noopener" id="wa-abrir">Abrir WhatsApp Web</a></div></div>';
     view.innerHTML = cab + abas(aba) + '<div id="wa-corpo"></div>';

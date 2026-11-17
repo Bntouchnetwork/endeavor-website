@@ -200,26 +200,77 @@
   }
 
   /* ================================================================ Pedidos ao CRM ================================================================ */
+  function chamarDocs(ctx, d) {
+    return async function (body) {
+      if (d.opt && d.opt.clientId) body = Object.assign({ clientId: d.opt.clientId }, body);
+      var s = (await ctx.sb.auth.getSession()).data.session;
+      var r = await fetch(ctx.CFG.functionsUrl + '/docs', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: ctx.CFG.supabaseKey, Authorization: 'Bearer ' + (s ? s.access_token : ctx.CFG.supabaseKey) }, body: JSON.stringify(body) });
+      var j = await r.json().catch(function () { return {}; });
+      if (!r.ok) throw new Error(j.erro || 'O agente de documentos não respondeu.');
+      return j;
+    };
+  }
   async function pedidos(corpo, ctx, call, d) {
-    var esc = ctx.esc;
+    var esc = ctx.esc, docs = chamarDocs(ctx, d);
     corpo.innerHTML = '<p class="portal-muted">Carregando…</p>';
-    var r = await call({ acao: 'wa_pedidos' });
+    var res = await Promise.all([call({ acao: 'wa_pedidos' }), docs({ acao: 'doc_status' }).catch(function (e) { return { erro: e.message }; })]);
+    var r = res[0], st = res[1], con = st.conexao;
+    var volta = (location.hash.match(/[?&]google=(ok|erro)/) || [])[1], vmsg = decodeURIComponent((location.hash.match(/[?&]msg=([^&]+)/) || [])[1] || '');
     var quando = function (iso) { try { return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)); } catch (e) { return iso; } };
-    corpo.innerHTML = '<section class="portal-card"><p class="portal-muted">Pedidos que a IA passou para o CRM durante as conversas. Para documentos, o agente do CRM cria a pasta do cliente pelo modelo no armazenamento conectado, manda o e-mail com a lista e o link da Initial Docs e faz o follow-up até completar.</p>' +
-      '<p class="portal-alert portal-alert--info">Enquanto o Google Drive ou o Dropbox não estiver conectado, os pedidos de documentos ficam como “Aguardando armazenamento”, e a equipe pode mandar a lista manualmente.</p>' +
-      (r.pedidos.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Quando</th><th>Contato</th><th>Pedido</th><th>Situação</th><th><span class="sr-only">Mudar situação</span></th></tr></thead><tbody>' +
-        r.pedidos.map(function (p) {
-          var st = ST[p.status] || [p.status, ''];
-          return '<tr><td>' + quando(p.created_at) + '</td><td><b>' + esc(p.nome) + '</b><br><small>' + esc([p.email, p.telefone].filter(Boolean).join(' · ')) + '</small></td>' +
-            '<td>' + (p.tipo === 'documentos' ? 'Documentos' : 'Proposta') + (p.modelo ? '<br><small>' + esc(p.modelo) + (p.documentos && p.documentos.length ? ' · ' + p.documentos.length + ' documentos' : '') + '</small>' : '') + '</td>' +
-            '<td><span class="pill ' + st[1] + '">' + st[0] + '</span></td><td>' + (d.dono ? '<label class="sr-only" for="ps-' + p.id + '">Situação de ' + esc(p.nome) + '</label><select id="ps-' + p.id + '" data-ped="' + p.id + '">' +
-              Object.keys(ST).filter(function (k) { return k !== 'recebendo'; }).map(function (k) { return '<option value="' + k + '"' + (k === p.status ? ' selected' : '') + '>' + ST[k][0] + '</option>'; }).join('') + '</select>' : '') + '</td></tr>';
-        }).join('') + '</tbody></table></div>' : '<p class="portal-muted">Nenhum pedido ainda. Eles aparecem quando a IA conclui um fluxo com passo de CRM.</p>') +
-      '<p class="portal-alert" id="pd-m" role="status" hidden></p></section>';
-    corpo.querySelectorAll('[data-ped]').forEach(function (s) {
-      s.onchange = async function () {
-        try { await call({ acao: 'wa_pedido', id: s.dataset.ped, status: s.value }); msg(ctx.$('#pd-m'), 'Situação atualizada.', 'ok'); }
-        catch (e) { msg(ctx.$('#pd-m'), e.message, 'erro'); }
+    var cartaoGoogle = '<section class="portal-card wa-google"><h2 class="portal-h2">Armazenamento: Google Drive</h2>' +
+      (volta === 'ok' ? '<p class="portal-alert portal-alert--ok">Google Drive conectado. Os pedidos que estavam esperando já seguiram.</p>' : volta === 'erro' ? '<p class="portal-alert portal-alert--error">' + esc(vmsg || 'Não foi possível conectar o Google Drive.') + '</p>' : '') +
+      (st.erro ? '<p class="portal-alert portal-alert--error">' + esc(st.erro) + '</p>' :
+        !st.google_configurado ? '<p class="portal-alert portal-alert--info">O Google ainda não está configurado no servidor. A Endeavor precisa cadastrar o app do Google (GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET nos secrets do Supabase).</p>' :
+        con && con.status === 'conectado' ? '<p><span class="pill pill--live-ok">Conectado</span> ' + esc(con.account_email || '') + (con.pasta ? ' · <a href="' + esc(con.pasta) + '" target="_blank" rel="noopener">Abrir a pasta no Drive</a>' : '') + '</p>' +
+          '<p class="portal-muted">O CRM cria uma pasta por cliente pelo modelo, manda o e-mail com a lista e o link da Initial Docs, e faz o follow-up até completar. Os arquivos vão do cliente direto para este Drive; nada fica na Endeavor. A permissão é só para as pastas que o app cria.</p>' +
+          (d.dono ? '<button class="btn btn--ghost btn--sm" type="button" id="gd-off">Desconectar</button>' : '') :
+        '<p>' + (con && con.status === 'erro' ? '<span class="pill pill--overdue">Parou de funcionar</span> ' + esc(con.erro || '') : '<span class="pill pill--warn">Não conectado</span>') + '</p>' +
+          '<p class="portal-muted">Conecte a conta Google da empresa. O app só enxerga as pastas que ele mesmo cria (permissão “drive.file”).</p>' +
+          (d.dono ? '<button class="btn btn--navy btn--sm" type="button" id="gd-on">Conectar com Google Drive</button>' : '')) +
+      '<p class="portal-alert" id="gd-m" role="status" hidden></p></section>';
+    corpo.innerHTML = cartaoGoogle + '<section class="portal-card"><h2 class="portal-h2">Pedidos</h2><p class="portal-muted">Pedidos que a IA passou para o CRM durante as conversas.</p>' +
+      (r.pedidos.length ? '<div class="wa-pedidos">' + r.pedidos.map(function (p) {
+        var s = ST[p.status] || [p.status, ''], docsL = p.documentos || [], rec = p.recebidos || {};
+        var falta = docsL.filter(function (x) { return !(rec[x] && rec[x].length); });
+        return '<article class="wa-pedido" data-id="' + p.id + '"><div class="wa-pedido-cab"><div><b>' + esc(p.nome) + '</b> <span class="pill ' + s[1] + '">' + s[0] + '</span><br><small>' + esc([p.email, p.email_alt ? '(antes: ' + p.email_alt + ')' : '', p.telefone].filter(Boolean).join(' · ')) + '</small></div><small>' + quando(p.created_at) + '</small></div>' +
+          '<p>' + (p.tipo === 'documentos' ? 'Documentos' : 'Proposta') + (p.modelo ? ' · ' + esc(p.modelo) : '') +
+            (p.tipo === 'documentos' && docsL.length ? ' · <b>' + (docsL.length - falta.length) + ' de ' + docsL.length + '</b> recebidos' : '') +
+            (p.pasta && p.pasta.link ? ' · <a href="' + esc(p.pasta.link) + '" target="_blank" rel="noopener">Pasta no Drive</a>' : '') +
+            (p.enviado_at ? ' · lista enviada ' + quando(p.enviado_at) + (p.followups ? ' · ' + p.followups + ' lembrete(s)' : '') : '') + '</p>' +
+          (p.tipo === 'documentos' && falta.length && p.enviado_at ? '<p class="portal-muted">Faltam: ' + esc(falta.join(', ')) + '</p>' : '') +
+          (d.dono ? '<div class="portal-btn-row">' +
+            (p.tipo === 'documentos' && ['completo', 'cancelado'].indexOf(p.status) < 0 ? '<button class="btn btn--ghost btn--xs" type="button" data-env>' + (p.enviado_at ? 'Reenviar a lista' : 'Enviar agora') + '</button><button class="btn btn--ghost btn--xs" type="button" data-outro>Enviar para outro e-mail</button>' : '') +
+            '<label class="sr-only" for="ps-' + p.id + '">Situação de ' + esc(p.nome) + '</label><select id="ps-' + p.id + '" data-ped="' + p.id + '">' +
+              Object.keys(ST).map(function (k) { return '<option value="' + k + '"' + (k === p.status ? ' selected' : '') + '>' + ST[k][0] + '</option>'; }).join('') + '</select></div>' +
+            '<form class="wa-outro" hidden><label for="po-' + p.id + '">Novo e-mail</label><div class="portal-btn-row"><input id="po-' + p.id + '" type="email" required placeholder="nome@exemplo.com"><button class="btn btn--navy btn--xs">Enviar</button></div><small class="portal-muted">O e-mail atual fica guardado como alternativo; o contato no CRM ganha o segundo e-mail.</small></form>' : '') +
+          '<p class="portal-alert" role="status" hidden></p></article>';
+      }).join('') + '</div>' : '<p class="portal-muted">Nenhum pedido ainda. Eles aparecem quando a IA conclui um fluxo com passo de CRM.</p>') + '</section>';
+    var gm = ctx.$('#gd-m');
+    var on = ctx.$('#gd-on'); if (on) on.onclick = async function () {
+      on.disabled = true;
+      try { var x = await docs({ acao: 'google_conectar', volta: d.opt && d.opt.scope === 'admin' ? 'admin' : 'portal' }); location.href = x.url; }
+      catch (e) { msg(gm, e.message, 'erro'); on.disabled = false; }
+    };
+    var off = ctx.$('#gd-off'); if (off) off.onclick = async function () {
+      if (off.dataset.conf !== '1') { off.dataset.conf = '1'; off.textContent = 'Confirmar desconectar'; off.classList.add('btn--danger'); return; }
+      try { await docs({ acao: 'google_desconectar' }); pedidos(corpo, ctx, call, d); } catch (e) { msg(gm, e.message, 'erro'); }
+    };
+    corpo.querySelectorAll('.wa-pedido').forEach(function (art) {
+      var id = art.dataset.id, m = art.querySelector('.portal-alert:last-child');
+      var env = art.querySelector('[data-env]'); if (env) env.onclick = async function () {
+        env.disabled = true; msg(m, 'Enviando…');
+        try { await docs({ acao: 'pedido_enviar', id: id }); msg(m, 'Lista enviada.', 'ok'); setTimeout(function () { pedidos(corpo, ctx, call, d); }, 900); }
+        catch (e) { msg(m, e.message, 'erro'); env.disabled = false; }
+      };
+      var outro = art.querySelector('[data-outro]'), f = art.querySelector('.wa-outro');
+      if (outro) outro.onclick = function () { f.hidden = !f.hidden; if (!f.hidden) f.querySelector('input').focus(); };
+      if (f) f.onsubmit = async function (e) {
+        e.preventDefault(); msg(m, 'Enviando…');
+        try { await docs({ acao: 'pedido_reenviar', id: id, email: f.querySelector('input').value }); msg(m, 'Enviado para o novo e-mail.', 'ok'); setTimeout(function () { pedidos(corpo, ctx, call, d); }, 900); }
+        catch (x) { msg(m, x.message, 'erro'); }
+      };
+      var sel = art.querySelector('[data-ped]'); if (sel) sel.onchange = async function () {
+        try { await call({ acao: 'wa_pedido', id: id, status: sel.value }); msg(m, 'Situação atualizada.', 'ok'); } catch (e) { msg(m, e.message, 'erro'); }
       };
     });
   }

@@ -220,7 +220,7 @@ async function ia(d: Disp, b: Any) {
     const pode = C.podeResponder(ajustes, envios, Date.now(), c.grupo, ultG?.[0] ? Date.parse(ultG[0].created_at) : 0);
     if (!pode.ok) return { responder: false, motivo: pode.motivo };
     if (!conv.aviso_ia_at) extra.aviso = avisoComIA(ajustes.texto_aviso, ajustes.idioma);
-    if (conv.fluxo && !["enviado_crm", "cancelado"].includes(conv.fluxo.status)) extra.fluxo_atual = { id: conv.fluxo.id, dados: conv.fluxo.dados, status: conv.fluxo.status };
+    if (conv.fluxo && conv.fluxo.status !== "cancelado") extra.fluxo_atual = { id: conv.fluxo.id, dados: conv.fluxo.dados, status: conv.fluxo.status };
     extra.telefone = foneDaChave(c.chave);
   }
   if (k.endeavor && (f === "responder" || f === "comando" || f === "sugerir")) {
@@ -245,7 +245,7 @@ async function ia(d: Disp, b: Any) {
   }
   if (!takeover) for (const campo of ["resposta", "texto", "mensagem"]) if (out[campo] && violaProtecao(out[campo])) out.aviso_protecao = violaProtecao(out[campo]);
   // fluxos: guarda o andamento na conversa e, com os dados completos, passa o pedido para o CRM
-  if (takeover && !c.grupo && out.fluxo) out.fluxo_info = await andarFluxo(k, d, c, conv, config, out.fluxo, mensagens);
+  if (takeover && !c.grupo && out.fluxo) out.fluxo_info = await andarFluxo(k, d, c, conv, config, out.fluxo, mensagens, ajustes);
   delete out.fluxo;
   const textoLog = out.resposta || out.texto || out.mensagem || out.traducao || out.resumo || "";
   const status = out.escalar ? "escalado" : takeover && !out.responder ? "ignorado" : "sugerido";
@@ -261,25 +261,44 @@ async function sino(kind: string, title: string, body: string, link: string) {
 }
 
 /* ---------------- fluxos → CRM ---------------- */
-async function andarFluxo(k: Conta, d: Disp, c: Any, conv: Any, config: Any, fx: Any, mensagens: Any[]) {
+async function andarFluxo(k: Conta, d: Disp, c: Any, conv: Any, config: Any, fx: Any, mensagens: Any[], ajustes: Any) {
   const fluxo = config.fluxos.find((x: Any) => x.id === fx.id);
   if (!fluxo) return null;
   const antes = conv.fluxo && conv.fluxo.id === fx.id && conv.fluxo.status !== "enviado_crm" ? conv.fluxo : { id: fx.id, dados: {}, status: "coletando", inicio: agora() };
-  if (conv.fluxo?.id === fx.id && conv.fluxo.status === "enviado_crm") return { id: fx.id, nome: fluxo.nome, status: "enviado_crm", pedido_id: conv.fluxo.pedido_id };
+  if (conv.fluxo?.id === fx.id && conv.fluxo.status === "enviado_crm") return await depoisDoCRM(k, d, c, conv, fluxo, fx);
   const dados = { ...antes.dados };
   for (const [kk, v] of Object.entries(fx.dados)) if (v) dados[kk] = v;
   if (!dados.telefone) dados.telefone = foneDaChave(c.chave);
   const pr = prontoParaCRM(fluxo, dados);
   let novo: Any = { ...antes, dados, status: "coletando", atualizado: agora() };
   if (pr.ok && fx.pronto) {
-    const pedido = await pedidoCRM(k, d, c, conv, config, pr.tipo, dados, mensagens);
+    const pedido = await pedidoCRM(k, d, c, conv, config, pr.tipo, dados, mensagens, ajustes);
     novo = { ...novo, status: "enviado_crm", pedido_id: pedido.id, enviado: agora() };
   }
   await db.from("wa_chats").update({ fluxo: novo, updated_at: agora() }).eq("id", conv.id);
   return { id: fluxo.id, nome: fluxo.nome, status: novo.status, falta: pr.falta, pedido_id: novo.pedido_id || null };
 }
 /** Cria ou atualiza o contato no CRM (Endeavor: leads; cliente: ct_contacts) e registra o pedido para o agente do CRM. */
-async function pedidoCRM(k: Conta, d: Disp, c: Any, conv: Any, config: Any, tipo: string, dados: Any, mensagens: Any[]) {
+/** O pedido já está no CRM e a pessoa diz que o e-mail não chegou ou dá outro e-mail: atualiza o pedido e pede o reenvio (no máximo a cada 10 min). */
+async function depoisDoCRM(k: Conta, d: Disp, c: Any, conv: Any, fluxo: Any, fx: Any) {
+  const f = conv.fluxo, base = { id: fluxo.id, nome: fluxo.nome, status: "enviado_crm", pedido_id: f.pedido_id || null };
+  const novoEmail = fx.dados.email && fx.dados.email !== (f.dados?.email || "") ? fx.dados.email : "";
+  if (!f.pedido_id || (!novoEmail && !fx.reenviar)) return base;
+  if (f.reenviado && Date.now() - Date.parse(f.reenviado) < 10 * 60_000) return { ...base, reenvio: "aguarde" };
+  const r = await chamarDocs({ acao: "processar", id: f.pedido_id, reenviar: true, ...(novoEmail ? { email: novoEmail } : {}) });
+  const dados = { ...f.dados, ...(novoEmail ? { email: novoEmail } : {}) };
+  await db.from("wa_chats").update({ fluxo: { ...f, dados, reenviado: agora() }, updated_at: agora() }).eq("id", conv.id);
+  await registrar(k, d.user_id, d.id, c, "fluxo", r?.ok ? "enviado" : "erro", novoEmail ? `Lista reenviada para o novo e-mail ${novoEmail}` : "Lista reenviada (o e-mail não tinha chegado)", { pedido_id: f.pedido_id, motivo: r?.ok ? "" : (r?.motivo || r?.erro || "") });
+  return { ...base, reenvio: r?.ok ? "enviado" : "pendente", email: novoEmail || undefined };
+}
+/** chama o agente de documentos do CRM (função docs) por dentro */
+async function chamarDocs(body: Any) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/docs`, { method: "POST", headers: { "Content-Type": "application/json", apikey: ANON, Authorization: "Bearer " + ANON, "x-interno": SERVICE }, body: JSON.stringify(body), signal: AbortSignal.timeout(40_000) });
+    return await r.json().catch(() => ({}));
+  } catch (e) { console.error("docs", e); return { ok: false, motivo: "agente de documentos indisponível" }; }
+}
+async function pedidoCRM(k: Conta, d: Disp, c: Any, conv: Any, config: Any, tipo: string, dados: Any, mensagens: Any[], ajustes: Any) {
   const nome = txt(dados.nome, 120), email = EMAIL.test(dados.email || "") ? String(dados.email).toLowerCase() : null, tel = fone(dados.telefone) || null;
   const modelo = config.modelos.find((m: Any) => m.id === dados.tipo_caso) || (tipo === "documentos" ? config.modelos[0] : null);
   const ultimas = mensagens.filter((m: Any) => !m.eu).slice(-3).map((m: Any) => m.texto).join(" | ");
@@ -316,11 +335,13 @@ async function pedidoCRM(k: Conta, d: Disp, c: Any, conv: Any, config: Any, tipo
   }
   const { data: p, error } = await db.from("crm_requests").insert({ conta: k.conta, client_id: k.clientId, tipo, lead_id, ct_contact_id, nome, email, telefone: tel,
     modelo: modelo?.nome || null, documentos: modelo?.documentos || [], subpastas: modelo?.subpastas || [], resumo,
-    status: tipo === "documentos" ? "aguardando_armazenamento" : "novo", eventos: [{ em: agora(), evento: "criado pelo WhatsApp (IA Takeover)" }] }).select("id").single();
+    status: tipo === "documentos" ? "aguardando_armazenamento" : "novo", idioma: String(ajustes.idioma || "pt").slice(0, 2), eventos: [{ em: agora(), evento: "criado pelo WhatsApp (IA Takeover)" }] }).select("id").single();
   if (error) { console.error("crm_requests", error); throw new Erro("Não foi possível passar o pedido para o CRM.", 500); }
   await registrar(k, d.user_id, d.id, c, "fluxo", "criado", `${tipo === "documentos" ? "Pedido de documentos" : "Pedido de proposta"} para ${nome}${modelo ? " · " + modelo.nome : ""}`, { pedido_id: p.id, tipo });
+  let envio: Any = null;
+  if (tipo === "documentos") envio = await chamarDocs({ acao: "processar", id: p.id });
   if (k.endeavor) await sino("whatsapp", `WhatsApp: ${tipo === "documentos" ? "pedido de documentos" : "pedido de proposta"} de ${nome}`,
-    `${modelo ? "Modelo: " + modelo.nome + ". " : ""}${tipo === "documentos" ? "O CRM envia a lista e o link da Initial Docs quando o armazenamento estiver conectado." : "Prepare a proposta."}`, "#/whatsapp?aba=pedidos");
+    `${modelo ? "Modelo: " + modelo.nome + ". " : ""}${tipo === "documentos" ? (envio?.ok ? "O CRM criou a pasta e mandou a lista com o link da Initial Docs." : "Aguardando o Google Drive conectado para mandar a lista.") : "Prepare a proposta."}`, "#/whatsapp?aba=pedidos");
   return p;
 }
 
@@ -524,7 +545,7 @@ async function painel(req: Request, b: Any) {
       return { conversa: conversaOut(data) };
     }
     case "wa_pedidos": {
-      const { data, error } = await db.from("crm_requests").select("id, tipo, nome, email, telefone, modelo, documentos, status, resumo, eventos, created_at, updated_at, lead_id, ct_contact_id")
+      const { data, error } = await db.from("crm_requests").select("id, tipo, nome, email, email_alt, telefone, modelo, documentos, status, resumo, eventos, created_at, updated_at, lead_id, ct_contact_id, pasta, recebidos, enviado_at, followups, reenvios")
         .eq("conta", k.conta).order("created_at", { ascending: false }).limit(200);
       if (error) throw new Erro("Não foi possível ler os pedidos.", 500);
       return { pedidos: data || [] };

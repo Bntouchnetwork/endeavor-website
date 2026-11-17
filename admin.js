@@ -416,7 +416,7 @@
       '<div class="portal-grid2">' +
         '<div class="field"><label for="ld-kind">Tipo</label><select id="ld-kind">' + Object.keys(KIND_PT).map(function (k) { return '<option value="' + k + '"' + (k === kind0 ? ' selected' : '') + '>' + KIND_PT[k] + '</option>'; }).join('') + '</select></div>' +
         '<div class="field"><label for="ld-status">Status</label><select id="ld-status"></select></div>' +
-        fld('ld-name', 'Nome', l.name, 'text', true) + fld('ld-email', 'E-mail', l.email, 'email', true) +
+        fld('ld-name', 'Nome', l.name, 'text', true) + fld('ld-email', 'E-mail', l.email, 'email') + fld('ld-email2', 'Segundo e-mail', l.email2, 'email') +
         fld('ld-phone', 'Telefone', l.phone, 'tel') + fld('ld-country', 'País', l.country) +
         fld('ld-company', 'Empresa', l.company) + fld('ld-assist', 'Assistência', l.assistance) +
         '<div class="field"><label for="ld-lang">Idioma</label><select id="ld-lang"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option></select></div>' +
@@ -453,10 +453,12 @@
     $('#lead-form', o).addEventListener('submit', async function (e) {
       e.preventDefault();
       var m = $('#ld-msg', o), k = kSel.value;
-      var row = { name: $('#ld-name').value.trim(), email: $('#ld-email').value.trim().toLowerCase(), phone: $('#ld-phone').value.trim() || null,
+      var row = { name: $('#ld-name').value.trim(), email: $('#ld-email').value.trim().toLowerCase() || null, email2: $('#ld-email2').value.trim().toLowerCase() || null, phone: $('#ld-phone').value.trim() || null,
         country: $('#ld-country').value.trim() || null, company: $('#ld-company').value.trim() || null, assistance: $('#ld-assist').value.trim() || null,
         language: $('#ld-lang').value, kind: k, status: k === 'client' ? 'client' : sSel.value, notes: $('#ld-notes').value };
-      if (row.name.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(row.email)) return msg(m, 'Preencha nome e um e-mail válido.', 'error');
+      var okMail = function (e) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e || ''); };
+      if (row.name.length < 2 || (row.email ? !okMail(row.email) : !row.phone) || (row.email2 && !okMail(row.email2))) return msg(m, 'Preencha o nome e um e-mail válido (ou, sem e-mail, o telefone).', 'error');
+      if (k === 'client' && !row.email) return msg(m, 'Para virar cliente com acesso ao portal, o lead precisa de e-mail.', 'error');
       save.disabled = true; var label = save.textContent; save.textContent = k === 'client' ? 'Criando a conta…' : 'Salvando…';
       try {
         var r = id ? await sb.from('leads').update(row).eq('id', id) : await sb.from('leads').insert(Object.assign(row, { source: 'manual' })).select('id').single();
