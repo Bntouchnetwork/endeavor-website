@@ -103,6 +103,13 @@ try {
   ok((await P("#cv-nome").textContent()) === "Maria Teste", "o nome da conversa fica na linha de status do box");
   ok(await P(".geral").count() === 0 && await P("#agora .controles #tk-geral").count() === 1 && await P("#agora .controles #pausar").count() === 1 && await P("#agora .controles #monitorar").count() === 1 && await P("#agora .controles #mic").count() === 1, "IA Takeover, Pausar, Monitorar grupos, Falar e Enviar na linha de baixo do box (sem a seção do topo)");
   ok(await P("#app").evaluate((a) => a.firstElementChild.id === "agora"), "o box fica logo abaixo do cabeçalho do painel");
+  const ordemBt = await P("#agora .controles").evaluate((l) => [...l.querySelectorAll("button, input")].map((e) => e.id).filter(Boolean));
+  ok(JSON.stringify(ordemBt) === JSON.stringify(["mic", "cmd-ir", "pausar", "monitorar", "tk-geral"]), "botões na ordem Falar, Enviar, Pausar, Monitorar grupos e o switch IA Takeover à direita (" + ordemBt.join(", ") + ")");
+  const tops = await P("#agora .controles").evaluate((l) => [...l.querySelectorAll("#mic, #cmd-ir, #pausar, #monitorar, .chave")].map((e) => Math.round(e.getBoundingClientRect().top + e.getBoundingClientRect().height / 2)));
+  ok(Math.max(...tops) - Math.min(...tops) <= 4, "todos os botões numa linha só, na largura padrão do painel");
+  await P("#agora").screenshot({ path: path.join(OUT, "wa-box.png") });
+  ok(!(await P("#cmd-ir").textContent()).trim() && await P("#cmd-ir svg").count() === 1 && await P("#cmd-ir").getAttribute("aria-label") === "Enviar", "Enviar só com o ícone de flechinha");
+  ok(await P("#monitorar svg").count() === 1 && !(await P("#monitorar").textContent()).trim(), "Monitorar grupos só com o ícone de grupo");
   ok(await P("#c-tk").count() === 0 && await P("#c-seguir").count() === 0, "sem chaves por conversa (só o IA Takeover geral e o Pausar)");
   ok(await P("[data-f]").count() === 0, "sem botões de ferramentas (só o comando)");
   ok(await P("#ct-tel").inputValue() === (process.env.MODERNO ? "" : "+15551230000"), "card do contato: telefone vem da conversa (contato salvo por nome: fica para digitar)");
@@ -110,7 +117,8 @@ try {
   /* mensagem nova: Takeover responde com espera, digitação visível e envio */
   await page.evaluate(() => window.chegar("15551230000@c.us", "Vocês atendem em português?"));
   await P("#agora.espera").waitFor({ timeout: 6000 });
-  ok(/esperando para digitar/i.test(await P("#agora-txt").textContent()), "painel mostra a espera antes de digitar");
+  ok(/^esperando para digitar/i.test(await P("#agora-txt").textContent()), "painel mostra a espera antes de digitar (sem o prefixo Takeover)");
+  ok(/%$/.test(await P("#barra-pct").textContent()), "porcentagem na barra também durante a espera");
   await P("#agora.digitando").waitFor({ timeout: 4000 });
   await dorme(600);
   const parcial = await caixa();
@@ -219,7 +227,7 @@ try {
     const r1 = ia("responder").length;
     await page.evaluate((x) => window.chegar(x, "Alguém sabe como abrir LLC?", "Endeavor Teste"), k);
     await dorme(3500);
-    ok(await P("#cv-tag").isVisible() && (await P("#cv-tag").textContent()) === "Grupo" && await P("#conv").isHidden(), nomeG + ": reconhecido como grupo (" + (k === "novo1@g.us" ? "cabeçalho com dados do grupo" : "aviso de grupo criado") + ")");
+    ok(await P("#pt-g").isVisible() && await P(".agora-lin > .pt").first().isHidden() && await P("#conv").isHidden(), nomeG + ": reconhecido como grupo (" + (k === "novo1@g.us" ? "cabeçalho com dados do grupo" : "aviso de grupo criado") + ")");
     ok(ia("responder").length === r1 && !(await enviadas()).some((e) => e.k === k), nomeG + ": o Takeover individual não responde no grupo");
     ok(ia("grupo").some((x) => x.conversa.nome === nomeG && x.conversa.grupo === true), nomeG + ": vai para a IA como grupo");
   }
@@ -228,14 +236,16 @@ try {
   await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
   await P("#grupo .g-cab").first().waitFor({ timeout: 6000 });
   await dorme(800);
-  ok(await P("#conv").isHidden() && await P("#cv-tag").isVisible(), "grupo: sem o card separado; a etiqueta Grupo fica no canto do box");
+  ok(await P("#conv").isHidden() && await P("#pt-g").isVisible(), "grupo: ícone de grupo no lugar da bolinha, na linha de status");
   const rolG = await page.evaluate(() => { const r = document.getElementById("emgr-host").shadowRoot; const c = r.getElementById("corpo"), g = r.getElementById("grupo"); return [c.scrollHeight <= c.clientHeight + 1, g.scrollHeight <= g.clientHeight + 1]; });
   ok(rolG[0] && rolG[1], "cartões do grupo fixos, sem rolagem");
   await page.screenshot({ path: path.join(OUT, "wa-grupo-box.png") });
 
   /* Monitorar grupos: ligado, a IA abre sozinha o grupo com mensagem nova */
+  const corMon = async () => P("#monitorar").evaluate((b) => getComputedStyle(b).backgroundColor);
+  const corOff = await corMon();
   await P("#monitorar").click();
-  ok(await P("#monitorar").getAttribute("aria-pressed") === "true", "Monitorar grupos: liga com um clique");
+  ok(await P("#monitorar").getAttribute("aria-pressed") === "true" && (await corMon()) !== corOff, "Monitorar grupos: liga com um clique e fica verde");
   await page.evaluate(() => window.abrirConversa("15551230000@c.us"));
   await dorme(1500);
   const gm0 = ia("grupo").filter((x) => x.takeover === true && x.conversa.nome === "Grupo Empreendedores").length;
@@ -245,6 +255,17 @@ try {
   ok(ia("grupo").filter((x) => x.takeover === true && x.conversa.nome === "Grupo Empreendedores").length > gm0, "Monitorar grupos: a IA abriu o grupo com mensagem nova e leu pelo modo do grupo");
   await P("#monitorar").click();
   ok(await P("#monitorar").getAttribute("aria-pressed") === "false", "Monitorar grupos: desliga com outro clique");
+
+  /* resposta em cima da mensagem da IA (citação): a mensagem vai marcada para a IA continuar a conversa */
+  await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
+  await dorme(1200);
+  await page.evaluate(() => window.chegar("120363000000000001@g.us", "E quanto tempo demora?", "Pedro", "A Endeavor pode ajudar com o EIN."));
+  await dorme(800);
+  const lida = await page.evaluate(() => { const m = window.EWaDom ? window.EWaDom.conversaAberta().mensagens : null; return m && m[m.length - 1]; });
+  if (lida) ok(lida.cita && lida.cita.eu === true && lida.texto.trim() === "E quanto tempo demora?", "citação: a resposta em cima da mensagem da IA é reconhecida e o texto vem limpo");
+  for (let i = 0; i < 80 && !ia("grupo").some((x) => { const u = x.mensagens[x.mensagens.length - 1]; return u && u.cita && u.cita.eu === true; }); i++) await dorme(1000);
+  const comCita = ia("grupo").find((x) => { const u = x.mensagens[x.mensagens.length - 1]; return u && u.cita && u.cita.eu; });
+  ok(!!comCita && comCita.mensagens[comCita.mensagens.length - 1].texto.trim() === "E quanto tempo demora?", "citação: vai para a IA marcada como resposta à mensagem dela, com o texto limpo");
 
   /* velocidade: o controle vale na hora */
   ok(await P("#vel-n").textContent() === "400", "velocidade: mostra o padrão dos Ajustes");

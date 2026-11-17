@@ -44,6 +44,17 @@
     }
     return limpo(t);
   }
+  /** Mensagem que responde (cita) outra: { eu, autor, texto } ou null. "eu" = respondeu a uma mensagem nossa (You/Você). */
+  var RE_EU_CITA = /^(you|você|voce|tú|tu|eu)$/i;
+  function citaDa(linha) {
+    var q = $('[data-testid*="quoted"], [aria-label*="quoted" i], [aria-label*="citad" i], [aria-label*="mensaje citado" i], .quoted-mention', linha);
+    if (!q) return null;
+    var bloco = q.closest('[role="button"]') && linha.contains(q.closest('[role="button"]')) ? q.closest('[role="button"]') : q;
+    var linhasQ = limpo(bloco.innerText || bloco.textContent).split('\n').map(limpo).filter(Boolean);
+    if (!linhasQ.length) return null;
+    var autorEl = $('span[dir="auto"]', bloco), autor = limpo(autorEl ? autorEl.textContent : linhasQ[0]);
+    return { eu: RE_EU_CITA.test(autor), autor: autor, texto: linhasQ.slice(1).join('\n') || linhasQ[0], _linhas: linhasQ };
+  }
   function midiaDa(linha) {
     if ($('audio, [data-icon*="audio"], [data-icon*="ptt"], [aria-label*="voice" i], [aria-label*="áudio" i]', linha)) return 'áudio';
     if ($('img[src^="blob:"], [data-icon*="image"]', linha)) return 'imagem';
@@ -109,7 +120,12 @@
       if (id && !chave) { chave = id.chave; grupo = id.grupo; }
       var pre = el.hasAttribute('data-pre-plain-text') ? el : $('[data-pre-plain-text]', el);
       var info = pre ? C.lerPrePlain(pre.getAttribute('data-pre-plain-text')) : null;
-      var texto = textoDa(el), midia = texto ? '' : midiaDa(el);
+      var texto = textoDa(el), midia = texto ? '' : midiaDa(el), cita = citaDa(el);
+      if (cita) { // tira do texto as linhas da mensagem citada (autor e texto) que vieram junto
+        var tl = texto.split('\n');
+        cita._linhas.forEach(function (l) { var i = tl.indexOf(l); if (i > -1 && i < cita._linhas.length + 2) tl.splice(i, 1); });
+        texto = tl.join('\n').trim(); delete cita._linhas;
+      }
       if (!texto && !midia) return;
       var eu = minha(el, main);
       var hora = info ? info.hora : ((RE_HORA.exec(limpo(el.innerText)) || [])[1] || '');
@@ -122,7 +138,9 @@
         var prim = texto.split('\n')[0];
         if (prim.length <= 40 && $$('span[dir="auto"]', el).some(function (sp) { return limpo(sp.textContent) === prim; })) autorBolha = prim;
       }
-      msgs.push({ id: vistos[base] > 1 ? base + '#' + vistos[base] : base, eu: eu, autor: eu ? 'EU' : (info && info.autor) || nome, hora: hora, texto: texto || '[' + midia + ']', midia: midia, _autorBolha: autorBolha });
+      var msg = { id: vistos[base] > 1 ? base + '#' + vistos[base] : base, eu: eu, autor: eu ? 'EU' : (info && info.autor) || nome, hora: hora, texto: texto || '[' + midia + ']', midia: midia, _autorBolha: autorBolha };
+      if (cita) msg.cita = cita;
+      msgs.push(msg);
     });
     if (!chave && !nome) return null;
     if (!chave) chave = chaveDoNome(nome);

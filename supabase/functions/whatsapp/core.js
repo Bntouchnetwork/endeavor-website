@@ -109,7 +109,8 @@
     max = max || 30;
     return (msgs || []).filter(function (m) { return m && m.texto; }).slice(-max).map(function (m) {
       var quem = m.eu ? 'EU' : (m.autor || 'Contato');
-      return (m.hora ? '[' + m.hora + '] ' : '') + String(quem).slice(0, 60) + ': ' + limparSensivel(String(m.texto).slice(0, 1500)).texto;
+      var cita = m.cita_eu || (m.cita && m.cita.eu) ? ' (respondendo à mensagem de EU)' : '';
+      return (m.hora ? '[' + m.hora + '] ' : '') + String(quem).slice(0, 60) + cita + ': ' + limparSensivel(String(m.texto).slice(0, 1500)).texto;
     }).join('\n');
   }
 

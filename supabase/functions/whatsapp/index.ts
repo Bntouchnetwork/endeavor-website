@@ -171,7 +171,7 @@ async function registrar(k: Conta, userId: string | null, deviceId: string | nul
 
 /* ---------------- IA (HUB) ---------------- */
 function lerMensagens(v: unknown) {
-  return (Array.isArray(v) ? v : []).slice(-80).map((m: Any) => ({ eu: m?.eu === true, autor: txt(m?.autor, 60), texto: String(m?.texto ?? "").slice(0, 1500), hora: txt(m?.hora, 20), midia: txt(m?.midia, 20) }))
+  return (Array.isArray(v) ? v : []).slice(-80).map((m: Any) => ({ eu: m?.eu === true, autor: txt(m?.autor, 60), texto: String(m?.texto ?? "").slice(0, 1500), hora: txt(m?.hora, 20), midia: txt(m?.midia, 20), cita_eu: m?.cita?.eu === true || m?.cita_eu === true }))
     .filter((m) => m.texto || m.midia);
 }
 const hubErro = (e: unknown) => {
@@ -229,21 +229,31 @@ async function ia(d: Disp, b: Any) {
     extra.temas_recentes = (ant || []).map((x: Any) => txt(x.texto, 160)).join(" | ");
   }
   let bloqueio = "";
+  // grupo: alguém respondeu em cima da mensagem da IA → é continuação da conversa (sem intervalo e fora do limite do dia)
+  const ultRec = [...mensagens].reverse().find((m) => !m.eu);
+  const continuacao = !!(g && takeover && ultRec && ultRec.cita_eu);
+  if (continuacao) {
+    const { data: tr } = await db.from("wa_log").select("detalhes").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", new Date(Date.now() - 3 * 3600_000).toISOString()).limit(50);
+    const trocas = (tr || []).filter((x: Any) => x.detalhes?.continuacao && x.detalhes?.com === ultRec!.autor).length;
+    extra.continuacao = { autor: ultRec!.autor, trocas };
+  }
 
   // IA Takeover: o servidor também confere o ritmo (limite por hora, por dia no grupo e intervalo do grupo) antes de chamar a IA
   if (takeover) {
     if (g) {
       if (g.modo !== "auto") bloqueio = "Grupo em modo aprovação: você aprova a resposta";
       else {
-        const { count } = await db.from("wa_log").select("id", { count: "exact", head: true }).eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", new Date(Date.now() - 86400_000).toISOString());
-        if ((count || 0) >= g.limite_dia) bloqueio = `Limite de ${g.limite_dia} respostas por dia neste grupo`;
+        // continuações não contam no limite do dia
+        const { data: dia } = await db.from("wa_log").select("detalhes").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", new Date(Date.now() - 86400_000).toISOString()).limit(500);
+        const usadas = (dia || []).filter((x: Any) => !x.detalhes?.continuacao).length;
+        if (!continuacao && usadas >= g.limite_dia) bloqueio = `Limite de ${g.limite_dia} respostas por dia neste grupo`;
       }
     }
     const desde = new Date(Date.now() - 3600_000).toISOString();
     const { data: env } = await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", desde);
     const envios = (env || []).map((x: Any) => Date.parse(x.created_at));
     const { data: ultG } = c.grupo ? await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").order("created_at", { ascending: false }).limit(1) : { data: [] };
-    const pode = C.podeResponder(ajustes, envios, Date.now(), c.grupo, ultG?.[0] ? Date.parse(ultG[0].created_at) : 0);
+    const pode = C.podeResponder(ajustes, envios, Date.now(), c.grupo && !continuacao, ultG?.[0] ? Date.parse(ultG[0].created_at) : 0);
     if (!pode.ok) { if (!g) return { responder: false, motivo: pode.motivo }; bloqueio = bloqueio || pode.motivo; }
     if (!conv.aviso_ia_at && !bloqueio) extra.aviso = avisoComIA(ajustes.texto_aviso, ajustes.idioma);
     if (conv.fluxo && conv.fluxo.status !== "cancelado") extra.fluxo_atual = { id: conv.fluxo.id, dados: conv.fluxo.dados, status: conv.fluxo.status };
@@ -289,7 +299,7 @@ async function ia(d: Disp, b: Any) {
   const textoLog = out.resposta || out.texto || out.mensagem || out.traducao || out.resumo || "";
   const status = out.escalar ? "escalado" : takeover && !out.responder && !(g && out.texto) ? "ignorado" : "sugerido";
   out.log_id = await registrar(k, d.user_id, d.id, c, takeover ? "takeover" : f, status, textoLog,
-    { ferramenta: f, ...(out.motivo ? { motivo: txt(out.motivo, 200) } : {}), ...(out.regra ? { regra: out.regra } : {}), ...(out.fluxo_info ? { fluxo: out.fluxo_info.id, etapa: out.fluxo_info.status } : {}) });
+    { ferramenta: f, ...(out.motivo ? { motivo: txt(out.motivo, 200) } : {}), ...(out.regra ? { regra: out.regra } : {}), ...(continuacao ? { continuacao: true, com: txt(ultRec!.autor, 60) } : {}), ...(out.fluxo_info ? { fluxo: out.fluxo_info.id, etapa: out.fluxo_info.status } : {}) });
   out.aviso_incluido = !!extra.aviso && !!out.responder;
   if (out.escalar && k.endeavor) await sino("whatsapp", `WhatsApp: ${c.nome || "conversa"} precisa de você`, out.motivo || "A IA não respondeu sozinha.", "#/whatsapp?aba=registro");
   return out;

@@ -171,6 +171,28 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 .grupo .g-cartao .linha, .grupo .g-int .linha { flex: none; margin-top: 6px; }
 .grupo .cartao-rot { flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+/* ---------- 1.6.0: botões com ícone e ícone de grupo na linha de status ---------- */
+.pt-g { flex: none; display: inline-flex; color: var(--verde-esc); }
+.pt-g svg, .ic-bt svg { width: 18px; height: 18px; }
+.pt-g svg, .mon svg { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+.trabalho.pensando .pt-g, .trabalho.espera .pt-g, .trabalho.digitando .pt-g { animation: pulsa 1s infinite; color: #2b6cb0; }
+.trabalho.alerta .pt-g { color: var(--alerta); } .trabalho.erro .pt-g { color: var(--erro); }
+@media (prefers-reduced-motion: reduce) { .pt-g { animation: none !important; } }
+.ic-bt { display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; min-width: 38px; }
+#cmd-ir svg { fill: currentColor; }
+.mon { color: #8696a0; }
+.mon[aria-pressed="true"] { color: #fff; background: var(--verde-esc); border-color: var(--verde-esc); }
+.controles .chave.peq { margin: 0 0 0 4px; }
+
+.controles { flex-wrap: nowrap; gap: 5px; }
+.controles .bt { flex: none; }
+.controles .mic { padding: 6px 8px; gap: 3px; }
+.controles .ic-bt { padding: 6px 8px; min-width: 34px; }
+.controles #pausar { padding: 5px 8px; }
+.controles .chave.peq .tr { width: 26px; } .controles .chave.peq input:checked + .tr::after { left: 13px; }
+.controles .chave.peq { flex: 0 1 auto; min-width: 0; gap: 4px; font-size: 11px; letter-spacing: -.01em; white-space: nowrap; }
+.controles .chave.peq > span:last-child { overflow: hidden; text-overflow: ellipsis; }
+
 /* modo escuro (no fim, para valer sobre as regras acima) */
 @media (prefers-color-scheme: dark) {
   .bt { background: #2a3942; border-color: #3b4a54; color: #e9edef; }
@@ -193,3 +215,4 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 @media (prefers-color-scheme: dark) { .trabalho #cmd.espelho { background: rgba(37,211,102,.08) !important; } }
 @media (prefers-color-scheme: dark) { .g-cartao textarea[readonly] { background: rgba(37,211,102,.06) !important; } .g-int { border-color: #5a4a22; background: rgba(246,199,107,.06); } .vel input[type=range] { accent-color: #25d366; background: transparent !important; } }
 @media (prefers-color-scheme: dark) { .cv-tag { background: #111b21 !important; } .bt.mini.on, .bt.mini[aria-pressed="true"] { background: #103529; color: #7ee2a8; border-color: #25d366; } #pausar.on { background: #3d2e0f; color: #f6c76b; border-color: #f6c76b; } }
+@media (prefers-color-scheme: dark) { .mon { color: #8696a0; } .mon[aria-pressed="true"] { color: #fff; background: #128c4a; border-color: #128c4a; } .pt-g { color: #25d366; } }

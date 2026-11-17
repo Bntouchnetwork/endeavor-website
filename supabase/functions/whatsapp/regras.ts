@@ -182,6 +182,7 @@ export function montarEntrada(f: string, a: Any, c: { nome: string; grupo: boole
   if (extra.base) partes.push(`<base>${limpo(extra.base, 1500)}</base>`);
   if (extra.texto) partes.push(`<texto>${limpo(extra.texto, 3000)}</texto>`);
   if (extra.existentes) partes.push(`<existentes>${limpo(extra.existentes, 3000)}</existentes>`);
+  if (extra.continuacao) partes.push(`<continuacao>${JSON.stringify(extra.continuacao)}</continuacao>`);
   if (extra.grupo_cfg) partes.push(`<grupo_ajustes>${JSON.stringify(extra.grupo_cfg)}</grupo_ajustes>`);
   if (extra.temas_recentes) partes.push(`<temas_recentes>${limpo(extra.temas_recentes, 1500)}</temas_recentes>`);
   if (mensagens.length || !["sugerir_regras", "sugerir_fluxos", "melhorar_texto", "conteudo_grupo"].includes(f)) partes.push(`<mensagens>\n${C.montarConversa(mensagens, f === "resumo" || f === "grupo" ? 60 : 30)}\n</mensagens>`);

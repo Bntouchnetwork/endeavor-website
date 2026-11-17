@@ -53,18 +53,18 @@ function desenhar() {
     box.innerHTML = '<div role="row"><div><span>Today</span></div></div>' + (c.novo === 'sistema' ? '<div role="row"><div><span>You created group "' + c.nome + '"</span></div></div>' : '') + (c.novo ? '' : '<div role="row"><div class="perfil"><span>' + c.nome + '</span><span>Business account</span><button>Block</button></div></div>') +
       c.msgs.map(function (x) {
         return '<div role="row"><div style="display:flex' + (x.eu ? ';justify-content:flex-end' : '') + '"><div class="bolha" style="max-width:60%;padding:4px 8px;background:' + (x.eu ? '#d9fdd3' : '#eee') + '">' +
-          (c.grupo && !x.eu ? '<div><span dir="auto">' + x.autor + '</span></div>' : '') + '<div><span dir="ltr"><span>' + x.t + '</span></span></div>' +
+          (c.grupo && !x.eu ? '<div><span dir="auto">' + x.autor + '</span></div>' : '') + (x.cita ? '<div role="button" aria-label="Quoted message"><span dir="auto">You</span><div><span>' + x.cita + '</span></div></div>' : '') + '<div><span dir="ltr"><span>' + x.t + '</span></span></div>' +
           '<div><span>' + (x.h || hora()) + '</span>' + (x.eu ? '<span data-icon="msg-dblcheck"></span>' : '') + '</div><button aria-label="Menu" hidden></button></div></div></div>';
       }).join('');
     return;
   }
   box.innerHTML = c.msgs.map(function (x, i) {
     var id = (x.eu ? 'true_' : 'false_') + aberta + '_ID' + (x.id || (x.id = seq++));
-    return '<div data-id="' + id + '" class="' + (x.eu ? 'message-out' : 'message-in') + '"><div class="copyable-text" data-pre-plain-text="[' + (x.h || hora()) + ', 11/16/2026] ' + (x.eu ? 'Eu' : x.autor) + ': "><span class="selectable-text"><span>' + x.t + '</span></span></div></div>';
+    return '<div data-id="' + id + '" class="' + (x.eu ? 'message-out' : 'message-in') + '"><div class="copyable-text" data-pre-plain-text="[' + (x.h || hora()) + ', 11/16/2026] ' + (x.eu ? 'Eu' : x.autor) + ': ">' + (x.cita ? '<div role="button"><div class="quoted-mention"><span dir="auto">You</span><span>' + x.cita + '</span></div></div>' : '') + '<span class="selectable-text"><span>' + x.t + '</span></span></div></div>';
   }).join('');
 }
-window.chegar = function (k, t, autor) {
-  var c = conversas[k]; c.msgs.push({ eu: false, t: t, autor: autor || c.nome, h: hora() });
+window.chegar = function (k, t, autor, cita) {
+  var c = conversas[k]; c.msgs.push({ eu: false, t: t, autor: autor || c.nome, h: hora(), cita: cita || '' });
   if (aberta === k) desenhar(); else { c.naoLidas++; lista(); }
 };
 window.abrirConversa = abrir;

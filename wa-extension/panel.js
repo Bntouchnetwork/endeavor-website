@@ -52,16 +52,17 @@
       '<a href="' + ADMIN + '" target="_blank" rel="noopener">Abrir o admin</a></section>' +
       '<div id="app" hidden>' +
         '<section class="trabalho" id="agora" aria-live="polite">' +
-          '<div class="agora-lin"><span class="pt"></span><span class="cv"><b id="cv-nome">Abra uma conversa</b><span id="agora-txt">Pronta.</span></span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
+          '<div class="agora-lin"><span class="pt"></span><span class="pt-g" id="pt-g" hidden title="Grupo" aria-label="Grupo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14c2.8-.4 5.5 1.3 5.5 4.5"/></svg></span><span class="cv"><b id="cv-nome">Abra uma conversa</b><span id="agora-txt">Pronta.</span></span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
           '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
           '<div class="vel"><label for="vel">Velocidade</label><input type="range" id="vel" min="80" max="400" step="10" list="vel-padrao" aria-describedby="vel-n"><datalist id="vel-padrao"><option id="vel-pd" value="220"></option></datalist>' +
           '<output id="vel-n" for="vel">220</output><small class="mut">car/min</small></div>' +
           '<textarea id="cmd" rows="8" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
-          '<div class="linha controles"><label class="chave peq" title="IA Takeover: responde sozinha as conversas"><input type="checkbox" id="tk-geral"><span class="tr"></span><span>IA Takeover</span></label>' +
+          '<div class="linha controles"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
+          '<button class="bt pri ic-bt" id="cmd-ir" aria-label="Enviar" title="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10.1 15 12 3.4 13.9z"/></svg></button>' +
           '<button class="bt mini" id="pausar" aria-pressed="false">Pausar</button>' +
-          '<button class="bt mini" id="monitorar" aria-pressed="false" title="Ligado: a IA abre sozinha os grupos com mensagem nova">Monitorar grupos</button><span class="esp"></span>' +
-          '<button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
-          '<button class="bt pri" id="cmd-ir">Enviar</button></div><small class="mut" id="mic-st"></small><span class="tag cv-tag" id="cv-tag" hidden>Grupo</span></section>' +
+          '<button class="bt ic-bt mon" id="monitorar" aria-pressed="false" aria-label="Monitorar grupos" title="Monitorar grupos: desligado"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14c2.8-.4 5.5 1.3 5.5 4.5"/></svg></button>' +
+          '<span class="esp"></span><label class="chave peq" title="IA Takeover: responde sozinha as conversas"><input type="checkbox" id="tk-geral"><span class="tr"></span><span>IA Takeover</span></label></div>' +
+          '<small class="mut" id="mic-st"></small></section>' +
         '<section class="contato" id="conv" hidden></section>' +
         '<section class="grupo" id="grupo" hidden></section>' +
         '<section class="res" id="res"></section>' +
@@ -105,17 +106,27 @@
   })();
 
   /* ---------------- o que a IA está fazendo ---------------- */
+  var falso = { t: null, p: 0 };
   function agora(texto, tipo, prog) {
+    if (tipo === 'pensando' && prog == null) {
+      if (!falso.t) { falso.p = 0; falso.t = setInterval(function () { falso.p += (0.92 - falso.p) * 0.06; barraPct(falso.p); }, 250); }
+      prog = falso.p;
+    } else if (falso.t) { clearInterval(falso.t); falso.t = null; if (prog == null && tipo !== 'erro') prog = 1; }
     var a = $('#agora'); a.className = 'trabalho ' + (tipo || '');
     $('#agora-txt').textContent = texto;
+    var pct = barraPct(prog);
+    $('#barra-box').classList.toggle('ativa', tipo === 'digitando' || tipo === 'espera' || tipo === 'pensando');
+
+    $('#parar').hidden = !S.acao;
+    pontos();
+  }
+  function barraPct(prog) {
     var pct = prog == null ? 0 : Math.round(prog * 100);
     $('#barra').style.width = pct + '%';
     $('#barra-pct').textContent = prog == null ? '' : pct + '%';
     $('#barra-box').setAttribute('aria-valuenow', String(pct));
-    $('#barra-box').classList.toggle('ativa', tipo === 'digitando' || tipo === 'espera' || tipo === 'pensando');
     $('#barra-box').classList.toggle('cheia', pct >= 45);
-    $('#parar').hidden = !S.acao;
-    pontos();
+    return pct;
   }
   function pontos() {
     var on = S.ajustes.takeover && !S.pausado;
@@ -124,6 +135,7 @@
     $('#pausar').textContent = S.pausado ? 'Retomar' : 'Pausar';
     $('#pausar').classList.toggle('on', S.pausado);
     $('#monitorar').setAttribute('aria-pressed', String(S.monitorar)); $('#monitorar').classList.toggle('on', S.monitorar);
+    $('#monitorar').title = 'Monitorar grupos: ' + (S.monitorar ? 'ligado' : 'desligado');
     $('#pausar').setAttribute('aria-pressed', String(S.pausado));
     if (!S.vel) $('#vel').value = S.ajustes.velocidade;
     $('#vel-pd').value = S.ajustes.velocidade;
@@ -193,7 +205,7 @@
     var el = $('#conv');
     // o nome da conversa fica na linha de status do box; a etiqueta "Grupo", no canto de baixo do box
     $('#cv-nome').textContent = c ? c.nome : 'Abra uma conversa'; $('#cv-nome').classList.toggle('vazio', !c);
-    $('#cv-tag').hidden = !(c && c.grupo);
+    $('#pt-g').hidden = !(c && c.grupo); $('.agora-lin .pt').hidden = !!(c && c.grupo); // nos grupos, o ícone de grupo no lugar da bolinha
     if (!c || c.grupo) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false;
     var st = estado(c), k = st.contato || {};
@@ -520,7 +532,7 @@
     S.tratadas[c.chave] = ult && ult.id;
     S.ocupado = true; var ac = S.acao = { parar: false };
     try {
-      agora('Takeover · lendo a conversa com ' + c.nome + '…', 'pensando');
+      agora('Lendo a conversa com ' + c.nome + '…', 'pensando');
       var r = await ia(c.grupo ? 'grupo' : 'responder', c, { takeover: true });
       if (r.eh_grupo) { // o servidor já conhece esta conversa como grupo: nunca responde como conversa individual
         W.marcarGrupo(c.chave); S.conversas[c.chave] = Object.assign({}, estado(c), { grupo: true }); c.grupo = true; S.tratadas[c.chave] = null;
@@ -534,9 +546,9 @@
       }
       if (r.contato) atualizarContato(c, r.contato);
       if (r.fluxo_info) mostrarFluxo(c, r.fluxo_info);
-      if (!r.responder) { agora(c.grupo && r.texto ? 'Grupo · resposta pronta para você aprovar.' : 'Takeover · sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', c.grupo && r.texto ? 'alerta' : 'ok'); return; }
+      if (!r.responder) { agora(c.grupo && r.texto ? 'Resposta pronta para você aprovar.' : 'Sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', c.grupo && r.texto ? 'alerta' : 'ok'); return; }
       var vou = Date.now();
-      if (!await esperar(C.espera(S.ajustes), 'Takeover · esperando para digitar', ac)) return cancelar(r, c, 'Parado por você.');
+      if (!await esperar(C.espera(S.ajustes), 'Esperando para digitar', ac)) return cancelar(r, c, 'Parado por você.');
       if (!mesmaConversa(c)) return cancelar(r, c, 'A conversa mudou antes de digitar.');
       if (W.textoNaCaixa() || S.teclouEm > vou) return cancelar(r, c, 'Você começou a escrever: a IA não digitou.');
       var d = await digitarVisivel(r.texto, ac, false);
@@ -548,7 +560,7 @@
         if (r.aviso_incluido && S.conversas[c.chave]) S.conversas[c.chave].aviso_enviado = true;
       }).catch(function () { });
       await esperar(C.pausa(S.ajustes), 'Enviado ✓ · pausa', ac);
-      agora('Takeover · respondeu ' + c.nome + ' ✓', 'ok');
+      agora('Respondeu ' + c.nome + ' ✓', 'ok');
     } catch (e) { agora('Takeover: ' + e.message, 'erro'); }
     finally { S.ocupado = false; S.acao = null; $('#parar').hidden = true; }
   }
@@ -620,10 +632,10 @@
     var t = S.tentativas[alvo.nome] || { n: 0, em: 0, ate: 0 };
     if (Date.now() < t.ate || Date.now() - t.em < 6000) return;
     t.n++; t.em = Date.now();
-    if (t.n > 2) { t.ate = Date.now() + 600000; t.n = 0; S.tentativas[alvo.nome] = t; agora('Takeover · não consegui abrir a conversa com ' + alvo.nome + '. Abra a conversa para a IA responder.', 'alerta'); return; }
+    if (t.n > 2) { t.ate = Date.now() + 600000; t.n = 0; S.tentativas[alvo.nome] = t; agora('Não consegui abrir a conversa com ' + alvo.nome + '. Abra a conversa para a IA responder.', 'alerta'); return; }
     S.tentativas[alvo.nome] = t;
     S.abertaPelaIA[alvo.nome] = true;
-    agora('Takeover · abrindo a conversa com ' + alvo.nome + '…', 'pensando');
+    agora('Abrindo a conversa com ' + alvo.nome + '…', 'pensando');
     W.abrir(alvo.linha);
   }
   function agendarTick() { clearTimeout(tickAgendado); tickAgendado = setTimeout(function () { tick(false); }, 700); }
