@@ -135,6 +135,42 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 .g-int { border: 1px solid #f2d39b; background: rgba(246,199,107,.08); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
 #g-dica .cartao { border-style: dashed; }
 
+/* ---------- 1.5.0: tudo num box só, perto do topo; cartões abaixo, fixos ---------- */
+.trabalho { position: relative; }
+.agora-lin .cv { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: 6px; overflow: hidden; }
+#cv-nome { flex: none; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#cv-nome::after { content: " ·"; font-weight: 400; color: var(--mut); }
+#cv-nome.vazio { font-weight: 600; color: var(--mut); }
+.agora-lin #agora-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trabalho .barra { height: 32px; border-radius: 16px; }
+.trabalho .barra i { border-radius: 16px; }
+.trabalho .barra span { line-height: 32px; font-size: 13px; }
+.vel input[type=range] { -webkit-appearance: none; appearance: none; height: 28px; background: transparent; }
+.vel input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; background: linear-gradient(90deg, #128c4a, #25d366); }
+.vel input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; margin-top: -6px; border-radius: 50%; background: #fff; border: 2px solid var(--verde-esc); box-shadow: 0 1px 3px rgba(0,0,0,.25); cursor: pointer; }
+.vel input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--verde); outline-offset: 2px; }
+.vel output { font-size: 13px; }
+.trabalho #cmd { min-height: 200px; }
+.controles { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.controles .esp { flex: 1; }
+.controles .chave.peq { font-size: 12px; font-weight: 600; margin: 0 4px 0 0; }
+.bt.mini.on, .bt.mini[aria-pressed="true"] { background: #e6f6ec; border-color: var(--verde-esc); color: var(--verde-esc); font-weight: 600; }
+#pausar.on { background: #fff4e0; border-color: var(--alerta); color: var(--alerta); }
+.cv-tag { position: absolute; right: 12px; bottom: -9px; font-size: 10px; font-weight: 700; padding: 1px 8px; border: 1px solid var(--verde-esc); background: #fff; }
+.contato:not([hidden]) { display: block; flex: none; }
+.contato .conv-cab { margin-bottom: 6px; }
+.contato .cartao-rot { margin: 0; }
+/* cartões do grupo: dividem o espaço que sobra, sem rolagem do painel */
+.grupo:not([hidden]) { display: flex; flex-direction: column; gap: 6px; flex: 1 1 auto; min-height: 0; overflow: hidden; }
+.grupo .g-cab { flex: none; margin: 0; }
+.grupo .topicos { flex: none; max-height: 3.4em; overflow: hidden; margin: 0; }
+#g-sug, #g-int, #g-dica { display: flex; flex-direction: column; gap: 6px; flex: 1 1 0; min-height: 0; }
+#g-sug:empty, #g-int:empty, #g-dica:empty { display: none; }
+.grupo .g-cartao, .grupo .g-int { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; margin: 0; }
+.grupo .g-cartao textarea, .grupo .g-int textarea { flex: 1 1 auto; min-height: 2.9em; }
+.grupo .g-cartao .linha, .grupo .g-int .linha { flex: none; margin-top: 6px; }
+.grupo .cartao-rot { flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* modo escuro (no fim, para valer sobre as regras acima) */
 @media (prefers-color-scheme: dark) {
   .bt { background: #2a3942; border-color: #3b4a54; color: #e9edef; }
@@ -156,3 +192,4 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 }
 @media (prefers-color-scheme: dark) { .trabalho #cmd.espelho { background: rgba(37,211,102,.08) !important; } }
 @media (prefers-color-scheme: dark) { .g-cartao textarea[readonly] { background: rgba(37,211,102,.06) !important; } .g-int { border-color: #5a4a22; background: rgba(246,199,107,.06); } .vel input[type=range] { accent-color: #25d366; background: transparent !important; } }
+@media (prefers-color-scheme: dark) { .cv-tag { background: #111b21 !important; } .bt.mini.on, .bt.mini[aria-pressed="true"] { background: #103529; color: #7ee2a8; border-color: #25d366; } #pausar.on { background: #3d2e0f; color: #f6c76b; border-color: #f6c76b; } }

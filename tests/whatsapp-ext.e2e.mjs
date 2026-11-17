@@ -100,7 +100,9 @@ try {
   await page.evaluate(() => window.abrirConversa("15551230000@c.us"));
   await dorme(2500);
   ok(ia("responder").length === 0, "ao abrir a conversa, a mensagem antiga (08:00) não é respondida");
-  ok((await P("#conv").textContent()).includes("Maria Teste"), "o painel mostra a conversa aberta");
+  ok((await P("#cv-nome").textContent()) === "Maria Teste", "o nome da conversa fica na linha de status do box");
+  ok(await P(".geral").count() === 0 && await P("#agora .controles #tk-geral").count() === 1 && await P("#agora .controles #pausar").count() === 1 && await P("#agora .controles #monitorar").count() === 1 && await P("#agora .controles #mic").count() === 1, "IA Takeover, Pausar, Monitorar grupos, Falar e Enviar na linha de baixo do box (sem a seção do topo)");
+  ok(await P("#app").evaluate((a) => a.firstElementChild.id === "agora"), "o box fica logo abaixo do cabeçalho do painel");
   ok(await P("#c-tk").count() === 0 && await P("#c-seguir").count() === 0, "sem chaves por conversa (só o IA Takeover geral e o Pausar)");
   ok(await P("[data-f]").count() === 0, "sem botões de ferramentas (só o comando)");
   ok(await P("#ct-tel").inputValue() === (process.env.MODERNO ? "" : "+15551230000"), "card do contato: telefone vem da conversa (contato salvo por nome: fica para digitar)");
@@ -117,8 +119,8 @@ try {
   const esp = await P("#cmd").inputValue();
   ok(esp.length > 0 && await P("#cmd.espelho").count() === 1 && await P("#cmd").evaluate((e) => e.readOnly), "a área de texto do painel mostra a IA digitando (só leitura)");
   ok(await P(".rot").count() === 0 && await P("#previa").count() === 0, "sem a seção separada de comando e sem a prévia antiga");
-  const ordem = await P("#app").evaluate((a) => { const c = a.querySelector("#conv"), t = a.querySelector("#agora"); return !!(c.compareDocumentPosition(t) & 4) && t.contains(a.querySelector("#cmd")) && t.contains(a.querySelector("#barra-box")) && t.contains(a.querySelector("#mic")); });
-  ok(ordem, "um box só abaixo do card: barra, área de texto, Falar e Enviar");
+  const ordem = await P("#app").evaluate((a) => { const c = a.querySelector("#conv"), t = a.querySelector("#agora"); return !!(t.compareDocumentPosition(c) & 4) && t.contains(a.querySelector("#cmd")) && t.contains(a.querySelector("#barra-box")) && t.contains(a.querySelector("#mic")); });
+  ok(ordem, "um box só: barra, velocidade, área de texto e botões; o card do contato fica abaixo");
   await page.screenshot({ path: path.join(OUT, "wa-digitando.png") });
   await page.waitForFunction(() => (window.__enviadas || []).length >= 1, null, { timeout: 15000 });
   const env = await enviadas();
@@ -217,10 +219,32 @@ try {
     const r1 = ia("responder").length;
     await page.evaluate((x) => window.chegar(x, "Alguém sabe como abrir LLC?", "Endeavor Teste"), k);
     await dorme(3500);
-    ok((await P("#conv .tag").textContent()) === "Grupo", nomeG + ": reconhecido como grupo (" + (k === "novo1@g.us" ? "cabeçalho com dados do grupo" : "aviso de grupo criado") + ")");
+    ok(await P("#cv-tag").isVisible() && (await P("#cv-tag").textContent()) === "Grupo" && await P("#conv").isHidden(), nomeG + ": reconhecido como grupo (" + (k === "novo1@g.us" ? "cabeçalho com dados do grupo" : "aviso de grupo criado") + ")");
     ok(ia("responder").length === r1 && !(await enviadas()).some((e) => e.k === k), nomeG + ": o Takeover individual não responde no grupo");
     ok(ia("grupo").some((x) => x.conversa.nome === nomeG && x.conversa.grupo === true), nomeG + ": vai para a IA como grupo");
   }
+
+  /* grupo: sem card separado, cartões fixos (o painel não rola) */
+  await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
+  await P("#grupo .g-cab").first().waitFor({ timeout: 6000 });
+  await dorme(800);
+  ok(await P("#conv").isHidden() && await P("#cv-tag").isVisible(), "grupo: sem o card separado; a etiqueta Grupo fica no canto do box");
+  const rolG = await page.evaluate(() => { const r = document.getElementById("emgr-host").shadowRoot; const c = r.getElementById("corpo"), g = r.getElementById("grupo"); return [c.scrollHeight <= c.clientHeight + 1, g.scrollHeight <= g.clientHeight + 1]; });
+  ok(rolG[0] && rolG[1], "cartões do grupo fixos, sem rolagem");
+  await page.screenshot({ path: path.join(OUT, "wa-grupo-box.png") });
+
+  /* Monitorar grupos: ligado, a IA abre sozinha o grupo com mensagem nova */
+  await P("#monitorar").click();
+  ok(await P("#monitorar").getAttribute("aria-pressed") === "true", "Monitorar grupos: liga com um clique");
+  await page.evaluate(() => window.abrirConversa("15551230000@c.us"));
+  await dorme(1500);
+  const gm0 = ia("grupo").filter((x) => x.takeover === true && x.conversa.nome === "Grupo Empreendedores").length;
+  await page.evaluate(() => window.chegar("120363000000000001@g.us", "Alguém indica contador nos EUA?", "Ana"));
+  await page.waitForFunction(() => (document.querySelector("#main header") || {}).textContent?.includes("Grupo Empreendedores"), null, { timeout: 60000 });
+  for (let i = 0; i < 80 && ia("grupo").filter((x) => x.takeover === true && x.conversa.nome === "Grupo Empreendedores").length <= gm0; i++) await dorme(1000); // no máximo uma leitura por minuto em cada grupo
+  ok(ia("grupo").filter((x) => x.takeover === true && x.conversa.nome === "Grupo Empreendedores").length > gm0, "Monitorar grupos: a IA abriu o grupo com mensagem nova e leu pelo modo do grupo");
+  await P("#monitorar").click();
+  ok(await P("#monitorar").getAttribute("aria-pressed") === "false", "Monitorar grupos: desliga com outro clique");
 
   /* velocidade: o controle vale na hora */
   ok(await P("#vel-n").textContent() === "400", "velocidade: mostra o padrão dos Ajustes");

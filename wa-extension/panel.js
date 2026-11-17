@@ -16,7 +16,7 @@
 
   var S = {
     conectado: false, ajustes: C.limparAjustes({}), version: 0, conversas: {}, usuario: '', pausado: false, aberto: true, largura: 380,
-    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null
+    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, monitorar: false, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null
   };
 
   /* ---------------- servidor ---------------- */
@@ -51,17 +51,18 @@
       '<input id="cod" type="password" autocomplete="off" placeholder="wam_…" aria-label="Código de conexão"><button class="bt pri" id="cod-ir">Conectar</button><p class="erro" id="cod-erro" role="alert"></p>' +
       '<a href="' + ADMIN + '" target="_blank" rel="noopener">Abrir o admin</a></section>' +
       '<div id="app" hidden>' +
-        '<section class="geral"><label class="chave"><input type="checkbox" id="tk-geral"><span class="tr"></span><span><b>IA Takeover</b><small id="tk-sub">responde sozinha as conversas individuais</small></span></label>' +
-        '<button class="bt" id="pausar" aria-pressed="false">Pausar IA</button></section>' +
-        '<section class="contato" id="conv"><p class="mut">Abra uma conversa no WhatsApp.</p></section>' +
         '<section class="trabalho" id="agora" aria-live="polite">' +
-          '<div class="agora-lin"><span class="pt"></span><span id="agora-txt">Pronta.</span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
+          '<div class="agora-lin"><span class="pt"></span><span class="cv"><b id="cv-nome">Abra uma conversa</b><span id="agora-txt">Pronta.</span></span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
           '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
           '<div class="vel"><label for="vel">Velocidade</label><input type="range" id="vel" min="80" max="400" step="10" list="vel-padrao" aria-describedby="vel-n"><datalist id="vel-padrao"><option id="vel-pd" value="220"></option></datalist>' +
           '<output id="vel-n" for="vel">220</output><small class="mut">car/min</small></div>' +
           '<textarea id="cmd" rows="8" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
-          '<div class="linha"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
-          '<button class="bt pri" id="cmd-ir">Enviar</button></div><small class="mut" id="mic-st"></small></section>' +
+          '<div class="linha controles"><label class="chave peq" title="IA Takeover: responde sozinha as conversas"><input type="checkbox" id="tk-geral"><span class="tr"></span><span>IA Takeover</span></label>' +
+          '<button class="bt mini" id="pausar" aria-pressed="false">Pausar</button>' +
+          '<button class="bt mini" id="monitorar" aria-pressed="false" title="Ligado: a IA abre sozinha os grupos com mensagem nova">Monitorar grupos</button><span class="esp"></span>' +
+          '<button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
+          '<button class="bt pri" id="cmd-ir">Enviar</button></div><small class="mut" id="mic-st"></small><span class="tag cv-tag" id="cv-tag" hidden>Grupo</span></section>' +
+        '<section class="contato" id="conv" hidden></section>' +
         '<section class="grupo" id="grupo" hidden></section>' +
         '<section class="res" id="res"></section>' +
         '<footer class="rodape"><a href="' + ADMIN + '" target="_blank" rel="noopener" title="Regras, fluxos, tempos e registro">Admin</a> · <span id="quem"></span> · <button class="lk" id="sair">Desconectar</button> · <button class="lk" id="diag" title="Copia só a estrutura da página, sem o texto das mensagens">Diagnóstico</button></footer>' +
@@ -120,8 +121,9 @@
     var on = S.ajustes.takeover && !S.pausado;
     $$('.aba .pt').forEach(function (p) { p.className = 'pt' + (on ? ' on' : ''); });
     $('#tk-geral').checked = !!S.ajustes.takeover;
-    $('#tk-sub').textContent = !S.ajustes.takeover ? 'desligado' : S.pausado ? 'em pausa' : 'responde sozinha as conversas individuais';
-    $('#pausar').textContent = S.pausado ? 'Retomar IA' : 'Pausar IA';
+    $('#pausar').textContent = S.pausado ? 'Retomar' : 'Pausar';
+    $('#pausar').classList.toggle('on', S.pausado);
+    $('#monitorar').setAttribute('aria-pressed', String(S.monitorar)); $('#monitorar').classList.toggle('on', S.monitorar);
     $('#pausar').setAttribute('aria-pressed', String(S.pausado));
     if (!S.vel) $('#vel').value = S.ajustes.velocidade;
     $('#vel-pd').value = S.ajustes.velocidade;
@@ -189,13 +191,16 @@
   /** Card do contato: nome, e-mail e telefone que a pessoa passa na conversa (a IA preenche), e "Enviar para o CRM". */
   function desenharConversa(c) {
     var el = $('#conv');
-    if (!c) { el.innerHTML = '<p class="mut">Abra uma conversa no WhatsApp.</p>'; return; }
-    if (c.grupo) { el.innerHTML = '<div class="conv-cab"><b>' + esc(c.nome) + '</b><span class="tag">Grupo</span></div>'; return; }
+    // o nome da conversa fica na linha de status do box; a etiqueta "Grupo", no canto de baixo do box
+    $('#cv-nome').textContent = c ? c.nome : 'Abra uma conversa'; $('#cv-nome').classList.toggle('vazio', !c);
+    $('#cv-tag').hidden = !(c && c.grupo);
+    if (!c || c.grupo) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
     var st = estado(c), k = st.contato || {};
     var fone = k.telefone || foneDaChave(c.chave);
     var ativo = raiz.activeElement && el.contains(raiz.activeElement);
     if (ativo) return; // a pessoa está editando o card: não sobrescreve
-    el.innerHTML = '<div class="conv-cab"><b>' + esc(k.nome || c.nome) + '</b>' + (st.lead_id || st.no_crm ? '<span class="tag ok">No CRM ✓</span>' : '<span class="tag">Contato</span>') + '</div>' +
+    el.innerHTML = '<div class="conv-cab"><span class="cartao-rot">Contato</span>' + (st.lead_id || st.no_crm ? '<span class="tag ok">No CRM ✓</span>' : '<span class="tag">Contato</span>') + '</div>' +
       '<div class="ct-grade"><label>Nome<input id="ct-nome" autocomplete="off" value="' + esc(k.nome || '') + '" placeholder="—"></label>' +
       '<label>E-mail<input id="ct-email" type="email" autocomplete="off" value="' + esc(k.email || '') + '" placeholder="—"></label>' +
       '<label>Telefone<input id="ct-tel" autocomplete="off" value="' + esc(fone) + '" placeholder="+1 …"></label></div>' +
@@ -577,8 +582,9 @@
     var c = W.conversaAberta();
     if ((c && c.chave) !== ultimaChave) {
       if (ultimaChave) res(''); ultimaChave = c && c.chave; S.atual = c; desenharConversa(c);
+      if (c && c.grupo && !(S.conversas[c.chave] || {}).grupo) S.conversas[c.chave] = Object.assign({}, estado(c), { grupo: true }); // lembra o grupo (para "Monitorar grupos")
       $('#grupo').hidden = true; $('#grupo').innerHTML = '';
-      if (c && c.grupo) { var an = S.analiseGrupo[c.chave]; if (an) mostrarGrupo(an.r, c); else if (!S.ocupado) analisarGrupo(c, false); }
+      if (c && c.grupo) { var an = S.analiseGrupo[c.chave]; if (an) mostrarGrupo(an.r, c); else if (!S.ocupado && !S.abertaPelaIA[c.nome]) analisarGrupo(c, false); }
     }
     if (!c) return procurarNaoLidas();
     // primeira vez que a conversa aparece: não responde mensagem antiga (só a que chegou agora ou se a IA abriu a conversa)
@@ -587,12 +593,15 @@
       S.vistas[c.chave] = true;
       if (ult && !forcar && !S.abertaPelaIA[c.nome] && !C.recente(ult.hora, new Date(), 2)) S.tratadas[c.chave] = ult.id;
     }
+    var pelaIA = !!S.abertaPelaIA[c.nome];
     delete S.abertaPelaIA[c.nome]; delete S.tentativas[c.nome];
     if (S.ocupado || S.pausado) return;
     var st = estado(c);
     if (ult && S.tratadas[c.chave] !== ult.id) {
       if (S.ajustes.takeover && !c.grupo) return responderAuto(c);
       if (c.grupo) {
+        // a IA abriu a conversa achando que era individual e é um grupo: sem "Monitorar grupos", não mexe nele
+        if (pelaIA && !S.monitorar) { S.tratadas[c.chave] = ult.id; return procurarNaoLidas(); }
         if (Date.now() - (S.leituraGrupo[c.chave] || 0) < 60000) return; // mensagens novas: no máximo uma leitura por minuto em cada grupo
         S.leituraGrupo[c.chave] = Date.now();
         return S.ajustes.takeover ? responderAuto(c) : analisarGrupo(c, false).then(function () { S.tratadas[c.chave] = ult.id; });
@@ -603,10 +612,9 @@
   function procurarNaoLidas() {
     if (S.ocupado || S.pausado || !S.ajustes.takeover) return;
     if (Date.now() - S.humanoEm < 30000 || W.textoNaCaixa()) return; // a pessoa está usando o WhatsApp
-    var alvo = W.naoLidas().find(function (x) {
-      var st = porNome(x.nome);
-      return !(st && st.grupo);
-    });
+    // primeiro as conversas individuais; com "Monitorar grupos" ligado, depois os grupos com mensagem nova
+    var lista = W.naoLidas(), ehGrupo = function (x) { var st = porNome(x.nome); return !!(st && st.grupo); };
+    var alvo = lista.find(function (x) { return !ehGrupo(x); }) || (S.monitorar ? lista.find(ehGrupo) : null);
     if (!alvo) return;
     // não insiste: se a conversa não abrir, espera 10 min antes de tentar de novo a mesma
     var t = S.tentativas[alvo.nome] || { n: 0, em: 0, ate: 0 };
@@ -621,6 +629,10 @@
   function agendarTick() { clearTimeout(tickAgendado); tickAgendado = setTimeout(function () { tick(false); }, 700); }
 
   $('#tk-geral').onchange = function () { salvarAjustes({ takeover: this.checked }); };
+  $('#monitorar').onclick = function () {
+    S.monitorar = !S.monitorar; guardar({ monitorar: S.monitorar }); pontos();
+    agora(S.monitorar ? 'Monitorando grupos: a IA abre sozinha os grupos com mensagem nova.' : 'Grupos sem monitoramento: a IA só olha o grupo que você abrir.', 'ok');
+  };
   $('#pausar').onclick = function () { S.pausado = !S.pausado; if (S.pausado && S.acao) S.acao.parar = true; guardar({ pausado: S.pausado }); pontos(); agora(S.pausado ? 'IA em pausa. Nada é enviado sozinho.' : 'IA retomada.', S.pausado ? 'alerta' : 'ok'); };
 
   /* ---------------- tempos humanos (ajustáveis no painel; os mesmos do admin) ---------------- */
@@ -680,7 +692,8 @@
   }
 
   /* ---------------- partida ---------------- */
-  ler(['aberto', 'largura', 'pausado']).then(function (p) {
+  ler(['aberto', 'largura', 'pausado', 'monitorar']).then(function (p) {
+    S.monitorar = p.monitorar === true;
     if (p.aberto === false) S.aberto = false;
     if (p.largura) S.largura = Math.max(300, Math.min(640, +p.largura));
     S.pausado = p.pausado === true;
