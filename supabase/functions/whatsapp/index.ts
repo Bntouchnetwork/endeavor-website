@@ -145,13 +145,13 @@ function lerConversa(c: Any) {
   if (!chave) throw new Erro("Abra uma conversa no WhatsApp Web.");
   return { chave, nome: txt(c?.nome, 120), grupo: c?.grupo === true || /@g\.us$/.test(chave) };
 }
-async function conversaDe(k: Conta, c: { chave: string; nome: string; grupo: boolean }, ajustes: Any) {
+async function conversaDe(k: Conta, c: { chave: string; nome: string; grupo: boolean }, ajustes: Any, userId: string) {
   const { data } = await db.from("wa_chats").select("*").eq("conta", k.conta).eq("chave", c.chave).maybeSingle();
   if (data) {
     if (c.nome && c.nome !== data.nome) await db.from("wa_chats").update({ nome: c.nome }).eq("id", data.id);
     return data;
   }
-  const { data: novo, error } = await db.from("wa_chats").upsert({ conta: k.conta, chave: c.chave, nome: c.nome, grupo: c.grupo, seguir: true, takeover: !c.grupo && ajustes.takeover_individual },
+  const { data: novo, error } = await db.from("wa_chats").upsert({ conta: k.conta, user_id: userId, chave: c.chave, nome: c.nome, grupo: c.grupo, seguir: true, takeover: !c.grupo && ajustes.takeover_individual },
     { onConflict: "conta,chave" }).select("*").single();
   if (error) throw new Erro("Não foi possível registrar a conversa.", 500);
   return novo;
@@ -204,7 +204,7 @@ async function ia(d: Disp, b: Any) {
   const c = lerConversa(b.conversa);
   const mensagens = lerMensagens(b.mensagens);
   const [{ ajustes }, { config }] = await Promise.all([ajustesDe(k), configDe(k)]);
-  const conv = await conversaDe(k, c, ajustes);
+  const conv = await conversaDe(k, c, ajustes, d.user_id);
   const extra: Any = { pedido: b.pedido, base: b.base, texto: b.texto, empresa: k.nome, cfg: config };
   if (f === "traduzir") extra.idioma_destino = /^[a-z]{2}(-[A-Z]{2})?$/.test(String(b.idioma_destino || "")) ? b.idioma_destino : ajustes.idioma;
   if (!mensagens.length && !["comando", "traduzir"].includes(f)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");
@@ -416,7 +416,7 @@ async function extensao(b: Any) {
     case "ext_conversa": {
       const c = lerConversa(b.conversa);
       const { ajustes } = await ajustesDe(k);
-      const conv = await conversaDe(k, c, ajustes);
+      const conv = await conversaDe(k, c, ajustes, d.user_id);
       const up: Any = { updated_at: agora() };
       if (typeof b.seguir === "boolean") up.seguir = b.seguir;
       if (typeof b.takeover === "boolean") up.takeover = b.takeover;
