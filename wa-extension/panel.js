@@ -16,7 +16,7 @@
 
   var S = {
     conectado: false, ajustes: C.limparAjustes({}), version: 0, conversas: {}, usuario: '', pausado: false, aberto: true, largura: 380,
-    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, monitorar: false, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null
+    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, monitorar: false, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, gst: {}, contador: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null
   };
 
   /* ---------------- servidor ---------------- */
@@ -52,7 +52,7 @@
       '<a href="' + ADMIN + '" target="_blank" rel="noopener">Abrir o admin</a></section>' +
       '<div id="app" hidden>' +
         '<section class="trabalho" id="agora" aria-live="polite">' +
-          '<div class="agora-lin"><span class="pt"></span><span class="tag-g" id="cv-grupo" hidden>Grupo</span><span class="cv"><b id="cv-nome">Abra uma conversa</b><span id="agora-txt">Pronta.</span></span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
+          '<div class="agora-lin"><span class="pt"></span><span class="tag-g" id="cv-grupo" hidden>Grupo</span><span class="cv"><b id="cv-nome">Abra uma conversa</b><span id="agora-txt">Pronta.</span></span><span class="cont-g" id="cv-cont" hidden></span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
           '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
           '<div class="vel"><label for="vel">Velocidade</label><input type="range" id="vel" min="80" max="400" step="10" list="vel-padrao" aria-describedby="vel-n"><datalist id="vel-padrao"><option id="vel-pd" value="220"></option></datalist>' +
           '<output id="vel-n" for="vel">220</output><small class="mut">car/min</small></div>' +
@@ -448,49 +448,81 @@
     };
   })();
 
-  /* ---------------- grupos: área abaixo do box ---------------- */
-  var MODO_G = { aprovar: 'Você aprova', auto: 'Automático', desligado: 'IA desligada' };
-  /** cartão compacto: texto + Aprovar (digita e envia) · Editar · Outra (opcional) · Descartar */
-  function cartaoAprovar(rotulo, texto, o) {
-    var id = 'a' + Math.random().toString(36).slice(2, 8);
-    return { html: '<div class="cartao g-cartao" id="' + id + '"><div class="cartao-rot">' + esc(rotulo) + '</div><textarea rows="3" readonly aria-label="' + esc(rotulo) + '">' + esc(texto) + '</textarea>' +
-      '<div class="linha"><button class="bt pri" data-a="ok">' + esc(o.rotOk || 'Aprovar e enviar') + '</button><button class="bt mini" data-a="editar">Editar</button>' + (o.outra ? '<button class="bt mini" data-a="outra">Outra</button>' : '') + '<button class="bt mini" data-a="fora">Descartar</button></div></div>',
-      ligar: function () {
-        var el = $('#' + id); if (!el) return; var ta = el.querySelector('textarea');
-        el.querySelector('[data-a="ok"]').onclick = function () { if (o.antes) o.antes(); usarTexto(ta.value, true, o); };
-        el.querySelector('[data-a="editar"]').onclick = function () { ta.readOnly = false; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); };
-        var ou = el.querySelector('[data-a="outra"]'); if (ou) ou.onclick = o.outra;
-        el.querySelector('[data-a="fora"]').onclick = function () { el.remove(); if (o.descartar) o.descartar(); if (o.logId) api({ acao: 'ext_registrar', log_id: o.logId, status: 'descartado' }).catch(function () { }); };
-      } };
+  /* ---------------- grupos: cartões fixos abaixo do box (Assuntos, Resposta sugerida, Interesse, Dica da semana) ----------------
+   * Ao abrir um grupo os cartões já aparecem montados, com "Nada ainda", e a IA vai preenchendo. */
+  function estG(c) { return S.gst[c.chave] || (S.gst[c.chave] = { r: null, lendo: false, sugFeita: false, intI: 0, dica: null }); }
+  function cartaoG(cls, rot, corpo, botoes) {
+    return '<section class="gc ' + cls + '"><div class="cartao-rot">' + rot + '</div>' + corpo + (botoes ? '<div class="linha">' + botoes + '</div>' : '') + '</section>';
   }
+  function bt(a, txt, pri, on) { return '<button class="bt' + (pri ? ' pri' : '') + '" data-a="' + a + '"' + (on ? '' : ' disabled') + '>' + txt + '</button>'; }
+  function desenharGrupo(c) {
+    var g = $('#grupo'); if (!c || !c.grupo) { g.hidden = true; g.innerHTML = ''; return; }
+    if (raiz.activeElement && g.contains(raiz.activeElement) && raiz.activeElement.tagName === 'TEXTAREA' && !raiz.activeElement.readOnly) return; // editando: não redesenha
+    var st = estG(c), r = st.r || {}, cfg = r.grupo_cfg || {}, desl = !!r.desligado;
+    g.hidden = false;
+    // Assuntos
+    var tps = (r.topicos || []).slice(0, 3);
+    var ass = desl ? '<p class="vazio">IA desligada neste grupo. Mude em Admin › WhatsApp Manager › Grupos.</p>'
+      : tps.length ? '<ul class="topicos">' + tps.map(function (t) { return '<li><b>' + esc(t.assunto) + '</b> ' + esc(t.resumo) + '</li>'; }).join('') + '</ul>'
+      : '<p class="vazio">' + (st.lendo && !st.r ? 'Lendo o grupo…' : 'Nada ainda') + '</p>';
+    // Resposta sugerida
+    var sug = !desl && r.texto && !st.sugFeita ? r.texto : '';
+    // Interesse
+    var ints = desl ? [] : (r.interesse || []); if (st.intI >= ints.length) st.intI = 0;
+    var x = ints[st.intI];
+    var rotInt = 'Interesse' + (x ? ' · <b>' + esc(x.autor) + '</b>' + (x.motivo ? ' · ' + esc(x.motivo) : '') : '') +
+      (ints.length > 1 ? ' <button class="lk gc-nav" data-a="prox" aria-label="Próximo interessado">' + (st.intI + 1) + '/' + ints.length + ' ›</button>' : '');
+    // Dica da semana
+    var d = st.dica, dOff = desl || cfg.conteudo === false;
+    var dTxt = dOff ? '' : d && !d.postada ? d.texto || '' : '';
+    var dPh = dOff ? 'Dica desligada neste grupo' : d && d.carregando ? 'Preparando a dica…' : d && d.erro ? d.erro : d && d.postada ? 'Dica postada ✓' : 'Nada ainda';
+    g.innerHTML =
+      cartaoG('gc-ass', 'Assuntos', ass) +
+      cartaoG('gc-sug', 'Resposta sugerida', '<textarea id="gc-sug-t" readonly placeholder="Nada ainda" aria-label="Resposta sugerida">' + esc(sug) + '</textarea>',
+        bt('sug-ok', 'Aprovar e enviar', true, !!sug) + bt('sug-ed', 'Editar', false, !!sug) + bt('sug-fora', 'Descartar', false, !!sug)) +
+      cartaoG('gc-int', rotInt, '<textarea id="gc-int-t" placeholder="Nada ainda" aria-label="Mensagem para o privado"' + (x ? '' : ' readonly') + '>' + esc(x ? x.mensagem : '') + '</textarea>',
+        bt('priv', 'Abrir privado e digitar', true, !!x) + bt('cop', 'Copiar', false, !!x)) +
+      cartaoG('gc-dica', 'Dica da semana' + (d && d.tema && dTxt ? ' · ' + esc(d.tema) : ''), '<textarea id="gc-dica-t" readonly placeholder="' + esc(dPh) + '" aria-label="Dica da semana">' + esc(dTxt) + '</textarea>',
+        bt('dica-ok', 'Aprovar e postar', true, !!dTxt) + bt('dica-ed', 'Editar', false, !!dTxt) + bt('dica-outra', 'Outra', false, !dOff && !(d && d.carregando)) + bt('dica-fora', 'Descartar', false, !!dTxt));
+    var on = function (a, f) { var b = g.querySelector('[data-a="' + a + '"]'); if (b) b.onclick = f; };
+    var editar = function (id) { var ta = $(id); ta.readOnly = false; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); };
+    on('sug-ok', function () { var t = $('#gc-sug-t').value; st.sugFeita = true; usarTexto(t, true, { logId: r.log_id, ferramenta: 'grupo' }); desenharGrupo(c); });
+    on('sug-ed', function () { editar('#gc-sug-t'); });
+    on('sug-fora', function () { st.sugFeita = true; if (r.log_id) api({ acao: 'ext_registrar', log_id: r.log_id, status: 'descartado' }).catch(function () { }); desenharGrupo(c); });
+    on('prox', function () { st.intI = (st.intI + 1) % ints.length; desenharGrupo(c); });
+    on('priv', function () { abrirPrivado(x.autor, $('#gc-int-t').value); });
+    on('cop', function () { navigator.clipboard.writeText($('#gc-int-t').value).then(function () { agora('Copiado.', 'ok'); }); });
+    on('dica-ok', function () { var t = $('#gc-dica-t').value; d.postada = true; usarTexto(t, true, { logId: d.logId, ferramenta: 'conteudo_grupo' }); desenharGrupo(c); });
+    on('dica-ed', function () { editar('#gc-dica-t'); });
+    on('dica-outra', function () { prepararDica(c, true); });
+    on('dica-fora', function () { if (d.logId) api({ acao: 'ext_registrar', log_id: d.logId, status: 'descartado' }).catch(function () { }); prepararDica(c, true); });
+    ints.forEach(function (y) { var k = c.chave + '|' + y.autor; if (!S.avisados[k]) { S.avisados[k] = true; msgBg({ tipo: 'aviso', titulo: 'Interesse no grupo ' + c.nome, texto: y.autor + (y.motivo ? ': ' + y.motivo : '') }); } });
+  }
+  /** resultado da IA no grupo: guarda, atualiza o contador e os cartões */
   function mostrarGrupo(r, c) {
-    var g = $('#grupo'); g.hidden = false;
-    var cfg = r.grupo_cfg || {}, modo = MODO_G[cfg.modo] || MODO_G.aprovar;
-    if (cfg.modo === 'auto') modo += ' · até ' + cfg.limite_dia + '/dia';
-    var h = '<div class="g-cab"><b>No grupo</b><span class="tag' + (cfg.modo === 'auto' ? ' ok' : '') + '">' + esc(modo) + '</span><button class="lk" id="g-ja">Analisar de novo</button></div>';
-    if (r.desligado) h += '<p class="mut">A IA está desligada neste grupo. Mude em Admin › WhatsApp Manager › Grupos.</p>';
-    else {
-      var tps = (r.topicos || []).slice(0, 3);
-      h += tps.length ? '<ul class="topicos">' + tps.map(function (t) { return '<li><b>' + esc(t.assunto) + '</b> ' + esc(t.resumo) + '</li>'; }).join('') + '</ul>' : '<p class="mut">Sem assuntos novos para a empresa.</p>';
-      h += '<div id="g-sug"></div><div id="g-int"></div><div id="g-dica"></div>';
-    }
-    g.innerHTML = h;
-    $('#g-ja').onclick = function () { analisarGrupo(c || W.conversaAberta(), true); };
-    if (r.desligado) return;
-    if (r.texto && !r.enviado) {
-      var k = cartaoAprovar(r.relevante ? 'Resposta sugerida' : 'Sugestão (assunto pouco ligado à empresa)', r.texto, { logId: r.log_id, ferramenta: 'grupo', descartar: function () { r.enviado = true; } , antes: function () { r.enviado = true; } });
-      $('#g-sug').innerHTML = k.html; k.ligar();
-    }
-    (r.interesse || []).forEach(function (x, i) {
-      $('#g-int').insertAdjacentHTML('beforeend', '<div class="g-int"><div class="cartao-rot">Interesse · <b>' + esc(x.autor) + '</b>' + (x.motivo ? ' · ' + esc(x.motivo) : '') + '</div>' +
-        '<textarea rows="3" aria-label="Mensagem para o privado de ' + esc(x.autor) + '">' + esc(x.mensagem) + '</textarea>' +
-        '<div class="linha"><button class="bt pri" data-priv="' + i + '">Abrir privado e digitar</button><button class="bt mini" data-cop="' + i + '">Copiar</button></div></div>');
-      var chaveAviso = c.chave + '|' + x.autor;
-      if (!S.avisados[chaveAviso]) { S.avisados[chaveAviso] = true; msgBg({ tipo: 'aviso', titulo: 'Interesse no grupo ' + c.nome, texto: x.autor + (x.motivo ? ': ' + x.motivo : '') }); }
-    });
-    $$('#g-int [data-cop]').forEach(function (b) { b.onclick = function () { var t = b.closest('.g-int').querySelector('textarea').value; navigator.clipboard.writeText(t).then(function () { agora('Copiado.', 'ok'); }); }; });
-    $$('#g-int [data-priv]').forEach(function (b) { b.onclick = function () { abrirPrivado(r.interesse[+b.dataset.priv].autor, b.closest('.g-int').querySelector('textarea').value); }; });
-    if (r.conteudo_devido && cfg.conteudo !== false) mostrarDica(c, false);
+    var st = estG(c); st.r = r; st.sugFeita = !!r.enviado; st.lendo = false;
+    if (r.grupo_cfg) S.contador[c.chave] = { usadas: r.usadas_hoje || 0, limite: r.grupo_cfg.limite_dia, modo: r.grupo_cfg.modo };
+    contador(c);
+    if (mesmaConversa(c)) { desenharGrupo(c); if (!r.desligado) prepararDica(c, false); }
+  }
+  /** contador no canto direito da linha de status: "3 de 10" (respostas automáticas de hoje no grupo) */
+  function contador(c) {
+    var el = $('#cv-cont'), k = c && c.grupo ? S.contador[c.chave] : null;
+    el.hidden = !k; if (!k) return;
+    el.textContent = k.modo === 'auto' ? k.usadas + ' de ' + k.limite : k.modo === 'desligado' ? 'desligado' : 'você aprova';
+    el.title = k.modo === 'auto' ? 'Respostas automáticas hoje neste grupo (as continuações não contam)' : '';
+    el.classList.toggle('cheio', k.modo === 'auto' && k.usadas >= k.limite);
+  }
+  /** dica da semana sempre pronta: gera ao abrir o grupo (uma por grupo nesta sessão); postar só com aprovação */
+  async function prepararDica(c, outra) {
+    var st = estG(c), cfg = (st.r && st.r.grupo_cfg) || {};
+    if (cfg.conteudo === false || (st.r && st.r.desligado)) return;
+    if (st.dica && (st.dica.carregando || (!outra && (st.dica.texto || st.dica.postada || st.dica.erro)))) return;
+    st.dica = { carregando: true };
+    if (mesmaConversa(c)) desenharGrupo(c);
+    try { var r = await ia('conteudo_grupo', c); st.dica = { texto: r.texto, tema: r.tema, logId: r.log_id }; }
+    catch (e) { st.dica = { erro: e.message }; }
+    if (mesmaConversa(c)) desenharGrupo(c);
   }
   /** puxa para o privado: abre a conversa da pessoa (se estiver na lista) e digita a mensagem na caixa, sem enviar */
   async function abrirPrivado(autor, texto) {
@@ -504,34 +536,18 @@
     if (!ab || ab.grupo) return agora('Não consegui abrir a conversa. A mensagem está copiada: cole no privado de ' + autor + '.', 'alerta');
     usarTexto(texto, false, { ferramenta: 'grupo' });
   }
-  /** dica da semana: a IA sugere, você aprova antes de postar */
-  async function mostrarDica(c, outra) {
-    var box = $('#g-dica'); if (!box) return;
-    var d = S.dica[c.chave];
-    if (d && d.postada) return;
-    if (!d || outra) {
-      box.innerHTML = '<p class="mut">Preparando a dica da semana…</p>';
-      try { var r = await ia('conteudo_grupo', c); d = S.dica[c.chave] = { texto: r.texto, tema: r.tema, logId: r.log_id }; }
-      catch (e) { box.innerHTML = '<p class="erro">' + esc(e.message) + '</p>'; return; }
-      if (!mesmaConversa(c) || !$('#g-dica')) return;
-      box = $('#g-dica');
-    }
-    if (!d.texto) { box.innerHTML = ''; return; }
-    var k = cartaoAprovar('Dica da semana' + (d.tema ? ' · ' + d.tema : ''), d.texto, { logId: d.logId, ferramenta: 'conteudo_grupo', rotOk: 'Aprovar e postar',
-      antes: function () { d.postada = true; }, descartar: function () { d.postada = true; }, outra: function () { mostrarDica(c, true); } });
-    box.innerHTML = k.html; k.ligar();
-  }
   async function analisarGrupo(c, manual) {
     if (!c || !c.grupo) return;
+    var st = estG(c); st.lendo = true; if (mesmaConversa(c)) desenharGrupo(c);
     try {
       agora('Lendo os assuntos do grupo…', 'pensando');
       var r = await ia('grupo', c);
       S.analiseGrupo[c.chave] = { em: Date.now(), r: r };
-      if (mesmaConversa(c)) mostrarGrupo(r, c);
+      mostrarGrupo(r, c);
       if (r.desligado) agora('IA desligada neste grupo.', 'ok');
       else if ((r.interesse || []).length || r.relevante) agora((r.interesse || []).length ? 'Alguém mostrou interesse.' : 'Há assunto com a empresa.', 'alerta');
       else zerar(); // nada com a empresa: a barra volta a zero
-    } catch (e) { if (manual) falhou(e); else agora(e.message, 'erro'); }
+    } catch (e) { st.lendo = false; if (mesmaConversa(c)) desenharGrupo(c); if (manual) falhou(e); else agora(e.message, 'erro'); }
   }
 
   /* ---------------- IA Takeover ---------------- */
@@ -564,6 +580,7 @@
       if (!mesmaConversa(c)) { W.limparCaixa(); return cancelar(r, c, 'A conversa mudou: não enviei.'); }
       W.enviar();
       S.envios.push(Date.now()); if (c.grupo) S.ultGrupo[c.chave] = Date.now();
+      if (c.grupo && !r.continuacao && S.contador[c.chave]) { S.contador[c.chave].usadas++; if (mesmaConversa(c)) contador(c); }
       api({ acao: 'ext_registrar', log_id: r.log_id, status: 'enviado', texto: r.texto, conversa: ref(c), aviso_incluido: !!r.aviso_incluido }).then(function () {
         if (r.aviso_incluido && S.conversas[c.chave]) S.conversas[c.chave].aviso_enviado = true;
       }).catch(function () { });
@@ -603,7 +620,7 @@
     if ((c && c.chave) !== ultimaChave) {
       if (ultimaChave) res(''); ultimaChave = c && c.chave; S.atual = c; desenharConversa(c);
       if (c && c.grupo && !(S.conversas[c.chave] || {}).grupo) S.conversas[c.chave] = Object.assign({}, estado(c), { grupo: true }); // lembra o grupo (para "Monitorar grupos")
-      $('#grupo').hidden = true; $('#grupo').innerHTML = '';
+      desenharGrupo(c); contador(c);
       if (c && c.grupo) { var an = S.analiseGrupo[c.chave]; if (an) mostrarGrupo(an.r, c); else if (!S.ocupado && !S.abertaPelaIA[c.nome]) analisarGrupo(c, false); }
     }
     if (!c) return procurarNaoLidas();

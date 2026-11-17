@@ -229,6 +229,12 @@ async function ia(d: Disp, b: Any) {
     extra.temas_recentes = (ant || []).map((x: Any) => txt(x.texto, 160)).join(" | ");
   }
   let bloqueio = "";
+  // respostas automáticas de hoje no grupo (continuações não contam): limite e contador do painel
+  let usadas = 0;
+  if (g && f === "grupo") {
+    const { data: dia } = await db.from("wa_log").select("detalhes").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", new Date(Date.now() - 86400_000).toISOString()).limit(500);
+    usadas = (dia || []).filter((x: Any) => !x.detalhes?.continuacao).length;
+  }
   // grupo: alguém respondeu em cima da mensagem da IA → é continuação da conversa (sem intervalo e fora do limite do dia)
   const ultRec = [...mensagens].reverse().find((m) => !m.eu);
   const continuacao = !!(g && takeover && ultRec && ultRec.cita_eu);
@@ -243,9 +249,6 @@ async function ia(d: Disp, b: Any) {
     if (g) {
       if (g.modo !== "auto") bloqueio = "Grupo em modo aprovação: você aprova a resposta";
       else {
-        // continuações não contam no limite do dia
-        const { data: dia } = await db.from("wa_log").select("detalhes").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", new Date(Date.now() - 86400_000).toISOString()).limit(500);
-        const usadas = (dia || []).filter((x: Any) => !x.detalhes?.continuacao).length;
         if (!continuacao && usadas >= g.limite_dia) bloqueio = `Limite de ${g.limite_dia} respostas por dia neste grupo`;
       }
     }
@@ -272,6 +275,8 @@ async function ia(d: Disp, b: Any) {
     const { data: ultC } = await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "conteudo_grupo").eq("status", "enviado").order("id", { ascending: false }).limit(1);
     out.conteudo_devido = conteudoDevido(g, ultC?.[0] ? Date.parse(ultC[0].created_at) : 0);
     out.grupo_cfg = g;
+    out.usadas_hoje = usadas;
+    out.continuacao = continuacao;
   }
   // o aviso da IA é obrigatório na primeira mensagem automática da conversa
   if (extra.aviso && out.responder && out.texto && !/assistente virtual|virtual assistant|asistente virtual/i.test(out.texto)) {
