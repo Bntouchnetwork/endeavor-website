@@ -13,7 +13,10 @@ footer{display:flex;gap:6px;padding:6px;border-top:1px solid #ccc}footer [conten
 var conversas = {
   '15551230000@c.us': { nome: 'Maria Teste', grupo: false, msgs: [{ eu: false, t: 'Oi, quero abrir uma LLC na Flórida. Quanto custa?', autor: 'Maria Teste' }], naoLidas: 0 },
   '120363000000000001@g.us': { nome: 'Grupo Empreendedores', grupo: true, msgs: [{ eu: false, t: 'Alguém sabe como tirar EIN?', autor: 'João' }, { eu: false, t: 'Também quero saber', autor: 'Ana' }], naoLidas: 0 },
-  '15559990000@c.us': { nome: 'Carlos Novo', grupo: false, msgs: [], naoLidas: 0 }
+  '15559990000@c.us': { nome: 'Carlos Novo', grupo: false, msgs: [], naoLidas: 0 },
+  // grupos recém-criados, com 2 pessoas e sem a lista de participantes no cabeçalho (o caso real que falhou)
+  'novo1@g.us': { nome: 'Teste Endeavor', grupo: true, novo: 'info', msgs: [], naoLidas: 0 },
+  'novo2@g.us': { nome: 'Teste Sistema', grupo: true, novo: 'sistema', msgs: [], naoLidas: 0 }
 };
 var aberta = null, seq = 1, MODERNO = /moderno/.test(location.search);
 function hora() { var d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
@@ -35,7 +38,7 @@ function abrir(k) {
   var c = conversas[k], v = document.getElementById('vazio'); if (v) v.remove();
   var m = document.getElementById('main');
   if (!m) { m = document.createElement('div'); m.id = 'main'; document.getElementById('app').appendChild(m); }
-  m.innerHTML = '<header><span dir="auto" title="' + c.nome + '">' + c.nome + '</span>' + (MODERNO && c.grupo ? '<span title="Ana, João, Pedro, You">Ana, João, Pedro, You</span>' : '') + '</header><div class="msgs"></div>' +
+  m.innerHTML = '<header><span dir="auto" title="' + c.nome + '">' + c.nome + '</span>' + (MODERNO && c.grupo && !c.novo ? '<span title="Ana, João, Pedro, You">Ana, João, Pedro, You</span>' : '') + (MODERNO && c.novo === 'info' ? '<span>click here for group info</span>' : '') + '</header><div class="msgs"></div>' +
     '<footer><div contenteditable="true" role="textbox" data-tab="10"></div><button aria-label="Send">Enviar</button></footer>';
   desenhar();
   m.querySelector('footer button').onclick = function () {
@@ -47,7 +50,7 @@ function desenhar() {
   var c = conversas[aberta], box = document.querySelector('#main .msgs');
   if (MODERNO) {
     // estrutura parecida com o WhatsApp Web atual: role="row", sem data-id e sem as classes antigas; minhas mensagens com os vistos
-    box.innerHTML = '<div role="row"><div><span>Today</span></div></div><div role="row"><div class="perfil"><span>' + c.nome + '</span><span>Business account</span><button>Block</button></div></div>' +
+    box.innerHTML = '<div role="row"><div><span>Today</span></div></div>' + (c.novo === 'sistema' ? '<div role="row"><div><span>You created group "' + c.nome + '"</span></div></div>' : '') + (c.novo ? '' : '<div role="row"><div class="perfil"><span>' + c.nome + '</span><span>Business account</span><button>Block</button></div></div>') +
       c.msgs.map(function (x) {
         return '<div role="row"><div style="display:flex' + (x.eu ? ';justify-content:flex-end' : '') + '"><div class="bolha" style="max-width:60%;padding:4px 8px;background:' + (x.eu ? '#d9fdd3' : '#eee') + '">' +
           (c.grupo && !x.eu ? '<div><span dir="auto">' + x.autor + '</span></div>' : '') + '<div><span dir="ltr"><span>' + x.t + '</span></span></div>' +

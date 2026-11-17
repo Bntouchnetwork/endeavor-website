@@ -17,7 +17,7 @@ Deno.test("ajustes: padrão com Takeover ligado e limites seguros", () => {
   eq([p.takeover, p.takeover_individual, p.espera_min, p.espera_max, p.velocidade], [true, true, 4, 12, 220]);
   const a = C.limparAjustes({ espera_min: 30, espera_max: 2, velocidade: 99999, pausa_min: -5, limite_hora: 1000, takeover: "sim", link_agenda: "javascript:alert(1)", idioma: "xx_yy", prontas: [{ titulo: "", texto: "  " }, { texto: "Oi" }] });
   eq([a.espera_min, a.espera_max], [30, 30], "máximo nunca menor que o mínimo");
-  eq([a.velocidade, a.pausa_min, a.limite_hora, a.takeover], [900, 0, 120, false]);
+  eq([a.velocidade, a.pausa_min, a.limite_hora, a.takeover], [400, 0, 120, false]);
   eq(a.link_agenda, "https://endeavorbiz.com/booking.html", "só link https");
   eq(a.idioma, "pt-BR");
   eq(a.prontas, [{ titulo: "Resposta", texto: "Oi" }], "respostas prontas vazias saem");

@@ -148,7 +148,11 @@ function lerConversa(c: Any) {
 async function conversaDe(k: Conta, c: { chave: string; nome: string; grupo: boolean }, ajustes: Any, userId: string) {
   const { data } = await db.from("wa_chats").select("*").eq("conta", k.conta).eq("chave", c.chave).maybeSingle();
   if (data) {
-    if (c.nome && c.nome !== data.nome) await db.from("wa_chats").update({ nome: c.nome }).eq("id", data.id);
+    const up: Any = {};
+    if (c.nome && c.nome !== data.nome) up.nome = c.nome;
+    // virou grupo (a extensão reconheceu depois): fica grupo para sempre, sem o Takeover individual
+    if (c.grupo && !data.grupo) { up.grupo = true; up.takeover = false; }
+    if (Object.keys(up).length) { await db.from("wa_chats").update(up).eq("id", data.id); Object.assign(data, up); }
     return data;
   }
   const { data: novo, error } = await db.from("wa_chats").upsert({ conta: k.conta, user_id: userId, chave: c.chave, nome: c.nome, grupo: c.grupo, seguir: true, takeover: !c.grupo && ajustes.takeover_individual },
@@ -205,6 +209,11 @@ async function ia(d: Disp, b: Any) {
   const mensagens = lerMensagens(b.mensagens);
   const [{ ajustes }, { config }] = await Promise.all([ajustesDe(k), configDe(k)]);
   const conv = await conversaDe(k, c, ajustes, d.user_id);
+  // conversa já conhecida como grupo: nunca responde como conversa individual
+  if (conv.grupo && !c.grupo) {
+    if (f === "responder") return { responder: false, eh_grupo: true, motivo: "Isto é um grupo: a IA segue o modo do grupo." };
+    c.grupo = true;
+  }
   const extra: Any = { pedido: b.pedido, base: b.base, texto: b.texto, empresa: k.nome, cfg: config };
   if (f === "traduzir") extra.idioma_destino = /^[a-z]{2}(-[A-Z]{2})?$/.test(String(b.idioma_destino || "")) ? b.idioma_destino : ajustes.idioma;
   if (!mensagens.length && !["comando", "traduzir", "conteudo_grupo"].includes(f)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");

@@ -39,7 +39,7 @@
     o.espera_min = num(a.espera_min, 1, 300, PADRAO.espera_min);
     o.espera_max = num(a.espera_max, 1, 600, PADRAO.espera_max);
     if (o.espera_max < o.espera_min) o.espera_max = o.espera_min;
-    o.velocidade = num(a.velocidade, 60, 900, PADRAO.velocidade);
+    o.velocidade = num(a.velocidade, 80, 400, PADRAO.velocidade); // acima de ~400 car/min a digitação parece de robô
     o.variacao = num(a.variacao, 0, 50, PADRAO.variacao);
     o.pausa_min = num(a.pausa_min, 0, 300, PADRAO.pausa_min);
     o.pausa_max = num(a.pausa_max, 0, 600, PADRAO.pausa_max);

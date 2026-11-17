@@ -57,9 +57,9 @@
         '<section class="trabalho" id="agora" aria-live="polite">' +
           '<div class="agora-lin"><span class="pt"></span><span id="agora-txt">Pronta.</span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
           '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
-          '<textarea id="cmd" rows="8" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
-          '<div class="vel"><label for="vel">Velocidade</label><input type="range" id="vel" min="60" max="900" step="10" list="vel-padrao" aria-describedby="vel-n"><datalist id="vel-padrao"><option id="vel-pd" value="220"></option></datalist>' +
+          '<div class="vel"><label for="vel">Velocidade</label><input type="range" id="vel" min="80" max="400" step="10" list="vel-padrao" aria-describedby="vel-n"><datalist id="vel-padrao"><option id="vel-pd" value="220"></option></datalist>' +
           '<output id="vel-n" for="vel">220</output><small class="mut">car/min</small></div>' +
+          '<textarea id="cmd" rows="8" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
           '<div class="linha"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
           '<button class="bt pri" id="cmd-ir">Enviar</button></div><small class="mut" id="mic-st"></small></section>' +
         '<section class="grupo" id="grupo" hidden></section>' +
@@ -147,16 +147,18 @@
   async function digitarVisivel(texto, ac, substituir) {
     if (!W.caixa()) throw new Error('Não encontrei a caixa de mensagem. Abra uma conversa.');
     if (W.textoNaCaixa()) { if (!substituir) return { ok: false, motivo: 'ocupada' }; W.limparCaixa(); }
-    var ini = Date.now(), esp = espelhoIni();
+    var ini = Date.now(), esp = espelhoIni(), nomeIni = W.nomeAberto(), mudou = false;
     try {
-      return await W.digitar(texto, C.ritmoDigitacao(texto, S.ajustes), {
-        parar: function () { return (ac && ac.parar) || S.teclouEm > ini; },
+      var rd = await W.digitar(texto, C.ritmoDigitacao(texto, S.ajustes), {
+        parar: function () { if (W.nomeAberto() !== nomeIni) mudou = true; return (ac && ac.parar) || S.teclouEm > ini || mudou; }, // trocou de conversa: para na hora
         escala: function () { return S.ajustes.velocidade / velAtual(); },
         progresso: function (p) {
           agora('Digitando na caixa…', 'digitando', p);
           if (esp) $('#cmd').value = texto.slice(0, Math.round(p * texto.length));
         }
       });
+      if (!rd.ok && mudou) rd.motivo = 'trocou';
+      return rd;
     } finally { if (esp) espelhoFim(); }
   }
   /** A área de texto mostra a IA digitando; depois volta vazia (ou com o rascunho) para os comandos. */
@@ -246,7 +248,7 @@
     S.ocupado = true; var ac = S.acao = { parar: false };
     try {
       var r = await digitarVisivel(texto, ac, true);
-      if (!r.ok) { agora(r.motivo === 'parado' ? 'Parado. O texto ficou na caixa.' : 'Não foi possível digitar.', 'alerta'); return; }
+      if (!r.ok) { agora(r.motivo === 'trocou' ? 'Você trocou de conversa: a IA parou de digitar.' : r.motivo === 'parado' ? 'Parado. O texto ficou na caixa.' : 'Não foi possível digitar.', 'alerta'); return; }
       if (enviarJa) {
         if (!mesmaConversa(c)) { agora('A conversa mudou: não enviei.', 'alerta'); return; }
         W.enviar(); agora('Enviado ✓', 'ok');
@@ -515,6 +517,10 @@
     try {
       agora('Takeover · lendo a conversa com ' + c.nome + '…', 'pensando');
       var r = await ia(c.grupo ? 'grupo' : 'responder', c, { takeover: true });
+      if (r.eh_grupo) { // o servidor já conhece esta conversa como grupo: nunca responde como conversa individual
+        W.marcarGrupo(c.chave); S.conversas[c.chave] = Object.assign({}, estado(c), { grupo: true }); c.grupo = true; S.tratadas[c.chave] = null;
+        desenharConversa(c); agora('Isto é um grupo: a IA segue o modo do grupo.', 'alerta'); return;
+      }
       if (c.grupo) { S.analiseGrupo[c.chave] = { em: Date.now(), r: r }; if (r.responder) r.enviado = true; mostrarGrupo(r, c); }
       if (r.escalar) {
         agora(c.nome + ' precisa de você: ' + (r.motivo || 'assunto para a equipe'), 'alerta');
@@ -529,7 +535,7 @@
       if (!mesmaConversa(c)) return cancelar(r, c, 'A conversa mudou antes de digitar.');
       if (W.textoNaCaixa() || S.teclouEm > vou) return cancelar(r, c, 'Você começou a escrever: a IA não digitou.');
       var d = await digitarVisivel(r.texto, ac, false);
-      if (!d.ok) return cancelar(r, c, d.motivo === 'parado' ? 'Você assumiu a conversa: a IA parou e o texto ficou na caixa para você.' : 'A caixa estava ocupada.');
+      if (!d.ok) return cancelar(r, c, d.motivo === 'trocou' ? 'A conversa mudou: a IA parou de digitar.' : d.motivo === 'parado' ? 'Você assumiu a conversa: a IA parou e o texto ficou na caixa para você.' : 'A caixa estava ocupada.');
       if (!mesmaConversa(c)) { W.limparCaixa(); return cancelar(r, c, 'A conversa mudou: não enviei.'); }
       W.enviar();
       S.envios.push(Date.now()); if (c.grupo) S.ultGrupo[c.chave] = Date.now();
@@ -640,7 +646,7 @@
     try {
       var r = await api({ acao: 'ext_iniciar', versao: VERSAO });
       S.conectado = true; S.ajustes = r.ajustes; S.version = r.version; S.usuario = r.usuario;
-      S.conversas = {}; (r.conversas || []).forEach(function (x) { S.conversas[x.chave] = x; });
+      S.conversas = {}; (r.conversas || []).forEach(function (x) { S.conversas[x.chave] = x; if (x.grupo) W.marcarGrupo(x.chave); });
       $('#conectar').hidden = true; $('#app').hidden = false;
       $('#quem').textContent = (r.endeavor === false && r.empresa ? r.empresa + ' · ' : '') + (r.usuario || r.dispositivo || '');
       if (r.painel) $$('a[href="' + ADMIN + '"]').forEach(function (a) { a.href = r.painel; }), ADMIN = r.painel;

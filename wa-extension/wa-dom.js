@@ -64,15 +64,38 @@
   }
   function hash(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
   function chaveDoNome(nome) { var d = String(nome || '').replace(/[^\d+]/g, ''); return /^\+?\d{8,15}$/.test(d) && /^[\d\s()+\-.]+$/.test(nome) ? d.replace('+', '') + '@c.us' : ''; }
-  /** Grupo sem data-id: subtítulo do cabeçalho com a lista de participantes ("Ana, João, Você") ou ícone de grupo. */
-  function pareceGrupo(cab, main, autores, nome) {
-    if (!cab) return false;
-    if ($('[data-icon*="group"], [data-icon="default-group"]', cab)) return true;
-    var sub = $$('span[title], span[dir="auto"]', cab).map(function (s) { return s.getAttribute('title') || s.textContent || ''; }).filter(function (t) { return t && t !== nome; });
-    if (sub.some(function (t) { return /,/.test(t) && /\b(you|você|voce|tú|tu)\b/i.test(t); })) return true;
-    return autores.filter(function (a) { return a && a !== nome; }).length > 0 && autores.length > 1;
+  /** Grupo sem data-id. Sinais do próprio WhatsApp, não a quantidade de gente que falou:
+   *  1. ícone de grupo no cabeçalho;
+   *  2. cabeçalho que leva aos dados do grupo ("group info", "dados do grupo"…), em texto, title ou aria-label;
+   *  3. subtítulo com a lista de participantes ("Ana, João, Você");
+   *  4. aviso do sistema na conversa ("criou o grupo", "adicionou", "created group"…);
+   *  5. mensagem recebida assinada (data-pre-plain-text) por alguém que não é o nome da conversa. */
+  var RE_INFO_GRUPO = /(group info|dados do grupo|informa[cç][õo]es do grupo|info\.? do grupo|info(rmaci[oó]n)? del grupo|datos del grupo|clique (aqui )?(para|pra) (ver )?(os )?dados do grupo|click here for group info|haz clic aqu[ií] para (ver )?(la )?info)/i;
+  var RE_SISTEMA_GRUPO = /(created (this )?group|criou (este |o )?grupo|cre[oó] (este |el )?grupo|added you|adicionou voc[eê]|te a[nñ]adi[oó]|joined using this group's invite link|entrou usando o link de convite)/i;
+  var norm = function (t) { var d = String(t || '').replace(/[^\d]/g, ''); return /^[\d\s()+\-.~]+$/.test(String(t || '').trim()) && d.length >= 8 ? d : String(t || '').replace(/^~\s*/, '').trim().toLowerCase(); };
+  function pareceGrupo(cab, main, autores, nome, bolhas) {
+    if (cab) {
+      if ($('[data-icon*="group"], [data-icon*="community"]', cab)) return true;
+      var atr = $$('[title], [aria-label]', cab).map(function (e) { return (e.getAttribute('aria-label') || '') + ' ' + (e.getAttribute('title') !== nome ? e.getAttribute('title') || '' : ''); }).join(' | ');
+      if (RE_INFO_GRUPO.test(atr) || RE_INFO_GRUPO.test(limpo(cab.innerText || cab.textContent).replace(nome, ''))) return true;
+      var sub = $$('span[title], span[dir="auto"]', cab).map(function (s) { return s.getAttribute('title') || s.textContent || ''; }).filter(function (t) { return t && t !== nome; });
+      if (sub.some(function (t) { return /,/.test(t) && /(^|[\s,])(you|você|voce|tú|tu)([\s,]|$)/i.test(t); })) return true;
+    }
+    if (main && RE_SISTEMA_GRUPO.test(String(main.innerText || main.textContent || ''))) return true;
+    var n = norm(nome);
+    if (autores.some(function (a) { return a && a !== 'EU' && norm(a) !== n; })) return true;
+    return false;
   }
+  // grupo visto uma vez fica marcado (o cabeçalho muda: "digitando…", "online"…); o painel também marca os grupos que o servidor conhece
+  var gruposConhecidos = {};
+  function marcarGrupo(chave) { if (chave) gruposConhecidos[chave] = true; }
 
+  /** Nome da conversa aberta, lido só do cabeçalho (rápido, para conferir a cada letra digitada). */
+  function nomeAberto() {
+    var main = principal(); var cab = main && $('header', main);
+    var el = cab && ($('span[dir="auto"][title]', cab) || $('[data-testid="conversation-info-header-chat-title"]', cab) || $('span[dir="auto"]', cab));
+    return el ? limpo(el.getAttribute('title') || el.textContent) : '';
+  }
   /** Conversa aberta: { chave, nome, grupo, mensagens:[{id, eu, autor, hora, texto, midia}] } ou null. */
   function conversaAberta() {
     var main = principal(); if (!main) return null;
@@ -103,7 +126,9 @@
     });
     if (!chave && !nome) return null;
     if (!chave) chave = chaveDoNome(nome);
-    if (grupo === null) grupo = /@g\.us$/.test(chave) || pareceGrupo(cab, main, autores, nome);
+    var bolhas = msgs.map(function (m) { return m._autorBolha; }).filter(Boolean);
+    if (grupo === null) grupo = /@g\.us$/.test(chave) || !!gruposConhecidos[chave || nome] || pareceGrupo(cab, main, autores, nome, bolhas);
+    if (grupo) marcarGrupo(chave || nome);
     msgs.forEach(function (m) {
       if (grupo && m._autorBolha) { m.autor = m._autorBolha; m.texto = m.texto.slice(m._autorBolha.length).trim() || m.texto; }
       delete m._autorBolha;
@@ -230,5 +255,5 @@
   }
   function pronto() { return !!(document.getElementById('pane-side') || principal()); }
 
-  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, linhaPorNome: linhaPorNome, abrir: abrir, pronto: pronto };
+  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, linhaPorNome: linhaPorNome, marcarGrupo: marcarGrupo, nomeAberto: nomeAberto, abrir: abrir, pronto: pronto };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -12,7 +12,7 @@
     comando: 'Comando', personalizar: 'Resposta pronta adaptada', responder: 'Takeover', takeover: 'IA Takeover', grupo: 'Grupo', fluxo: 'Fluxo → CRM' };
   var ST = { sugerido: ['Sugerido', 'pill--report'], aprovado: ['Aprovado', 'pill--report'], enviado: ['Enviado', 'pill--live-ok'], descartado: ['Descartado', 'pill--muted'],
     escalado: ['Precisa de você', 'pill--warn'], criado: ['Criado', 'pill--report'], erro: ['Erro', 'pill--overdue'], ignorado: ['Sem resposta', 'pill--muted'] };
-  var TEMPOS = [['espera_min', 'Esperar antes de digitar · mínimo (s)'], ['espera_max', 'Esperar antes de digitar · máximo (s)'], ['velocidade', 'Velocidade de digitação (caracteres/min)'],
+  var TEMPOS = [['espera_min', 'Esperar antes de digitar · mínimo (s)'], ['espera_max', 'Esperar antes de digitar · máximo (s)'], ['velocidade', 'Velocidade de digitação (caracteres/min, de 80 a 400)'],
     ['variacao', 'Variação da velocidade (%)'], ['pausa_min', 'Pausa depois de enviar · mínimo (s)'], ['pausa_max', 'Pausa depois de enviar · máximo (s)'], ['digitar_max', 'Tempo máximo digitando uma mensagem (s)'],
     ['limite_hora', 'Respostas automáticas por hora (todas as conversas)'], ['grupo_intervalo', 'Intervalo mínimo no mesmo grupo (min)']];
 

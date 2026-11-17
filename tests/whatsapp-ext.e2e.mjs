@@ -23,7 +23,7 @@ const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
 /* ---------- função whatsapp simulada ---------- */
 const chamadas = [];
 let logId = 0;
-const ajustes = { takeover: true, takeover_individual: true, espera_min: 1, espera_max: 1, velocidade: 600, variacao: 0, pausa_min: 0, pausa_max: 0, digitar_max: 6, limite_hora: 20, grupo_intervalo: 10,
+const ajustes = { takeover: true, takeover_individual: true, espera_min: 1, espera_max: 1, velocidade: 400, variacao: 0, pausa_min: 0, pausa_max: 0, digitar_max: 6, limite_hora: 20, grupo_intervalo: 10,
   texto_aviso: "Olá! Aqui é o assistente virtual da Endeavor.", idioma: "pt-BR", negocio: "Endeavor", link_agenda: "https://endeavorbiz.com/booking.html", horario: { ativo: false, inicio: "08:00", fim: "20:00", tz: "America/New_York" },
   prontas: [{ titulo: "Saudação", texto: "Olá! Como posso ajudar?" }] };
 const conversas = {};
@@ -205,14 +205,31 @@ try {
   await page.waitForFunction(() => (document.querySelector("#main header") || {}).textContent?.includes("Carlos Novo"), null, { timeout: 6000 });
   await page.waitForFunction(() => /Oi Carlos/.test(document.querySelector("#main footer [contenteditable]").textContent), null, { timeout: 15000 });
   ok(!(await enviadas()).some((e) => /Oi Carlos/.test(e.t)), "Abrir privado: abre a conversa e digita a mensagem, sem enviar");
+  await page.evaluate(() => window.abrirConversa("15551230000@c.us")); // troca de conversa no meio da digitação
+  await dorme(1200);
+  ok(!/Oi Carlos/.test(await caixa()) && /trocou de conversa/.test(await P("#agora-txt").textContent()), "trocar de conversa enquanto a IA digita: ela para e não digita na outra conversa");
   await page.evaluate(() => { document.querySelector("#main footer [contenteditable]").innerHTML = ""; });
 
+  /* grupo novo, só 2 pessoas, sem a lista de participantes no cabeçalho: tem que ser reconhecido como grupo */
+  if (process.env.MODERNO) for (const [k, nomeG] of [["novo1@g.us", "Teste Endeavor"], ["novo2@g.us", "Teste Sistema"]]) {
+    await page.evaluate((x) => window.abrirConversa(x), k);
+    await dorme(1200);
+    const r1 = ia("responder").length;
+    await page.evaluate((x) => window.chegar(x, "Alguém sabe como abrir LLC?", "Endeavor Teste"), k);
+    await dorme(3500);
+    ok((await P("#conv .tag").textContent()) === "Grupo", nomeG + ": reconhecido como grupo (" + (k === "novo1@g.us" ? "cabeçalho com dados do grupo" : "aviso de grupo criado") + ")");
+    ok(ia("responder").length === r1 && !(await enviadas()).some((e) => e.k === k), nomeG + ": o Takeover individual não responde no grupo");
+    ok(ia("grupo").some((x) => x.conversa.nome === nomeG && x.conversa.grupo === true), nomeG + ": vai para a IA como grupo");
+  }
+
   /* velocidade: o controle vale na hora */
-  ok(await P("#vel-n").textContent() === "600", "velocidade: mostra o padrão dos Ajustes");
+  ok(await P("#vel-n").textContent() === "400", "velocidade: mostra o padrão dos Ajustes");
+  ok(await P("#vel").getAttribute("max") === "400" && await P("#vel").getAttribute("min") === "80", "velocidade: de 80 a 400 car/min (mais rápido parece robô)");
+  ok(await P("#agora").evaluate((t) => { const b = t.querySelector("#barra-box"), v = t.querySelector(".vel"), x = t.querySelector("#cmd"); return b.nextElementSibling === v && !!(v.compareDocumentPosition(x) & 4); }), "velocidade logo abaixo da barra do Takeover");
   await P("#vel").fill("120");
   ok(await P("#vel-n").textContent() === "120", "velocidade: arrastar muda o número na hora");
   ok(!chamadas.some((c) => c.acao === "ext_ajustes" && "velocidade" in (c.ajustes || {})), "velocidade do painel não muda os Ajustes do admin");
-  await P("#vel").fill("600");
+  await P("#vel").fill("400");
 
   /* pausar: nada sai sozinho */
   await page.evaluate(() => window.abrirConversa("15551230000@c.us"));
