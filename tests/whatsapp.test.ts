@@ -1,7 +1,7 @@
 // My WhatsApp Manager: regras compartilhadas (wa-extension/core.js) e regras do servidor (supabase/whatsapp/regras.ts).
 //   deno test --allow-read tests/whatsapp.test.ts
 import "../wa-extension/core.js";
-import { limparConfig, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/functions/whatsapp/regras.ts";
+import { avisoComIA, limparConfig, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/functions/whatsapp/regras.ts";
 // deno-lint-ignore no-explicit-any
 const C = (globalThis as any).EWaCore;
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`); };
@@ -167,4 +167,11 @@ Deno.test("sugestões da IA de regras e fluxos passam pelos mesmos limites", () 
   eq(r.regras.length, 1); eq(r.regras[0].acao, "responder");
   const f = normalizar("sugerir_fluxos", { fluxos: [{ nome: "Pós-venda", gatilho: "cliente novo", passos: [{ tipo: "mensagem", texto: "boas-vindas" }, { tipo: "avisar_equipe", texto: "" }] }] });
   eq(f.fluxos[0].passos.map((p: any) => p.tipo), ["mensagem", "avisar_equipe"]);
+});
+
+Deno.test("aviso da primeira resposta sempre diz que é assistente virtual (nome personalizado pode)", () => {
+  eq(avisoComIA("Olá! Aqui a Majorie do support Endeavor."), "Olá! Aqui a Majorie do support Endeavor, assistente virtual.");
+  eq(avisoComIA("Olá! Aqui é o assistente virtual da Endeavor."), "Olá! Aqui é o assistente virtual da Endeavor.");
+  eq(avisoComIA("Hi! This is Majorie from Endeavor", "en-US"), "Hi! This is Majorie from Endeavor, virtual assistant.");
+  eq(avisoComIA(""), "assistente virtual.");
 });

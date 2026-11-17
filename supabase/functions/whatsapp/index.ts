@@ -22,7 +22,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { hubJson, hubOn, HubFail } from "../_shared/hub-ai.ts";
 import "./core.js";
-import { FERRAMENTAS, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, prontoParaCRM, STATUS, violaProtecao } from "./regras.ts";
+import { avisoComIA, FERRAMENTAS, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, prontoParaCRM, STATUS, violaProtecao } from "./regras.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -219,7 +219,7 @@ async function ia(d: Disp, b: Any) {
     const { data: ultG } = c.grupo ? await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").order("created_at", { ascending: false }).limit(1) : { data: [] };
     const pode = C.podeResponder(ajustes, envios, Date.now(), c.grupo, ultG?.[0] ? Date.parse(ultG[0].created_at) : 0);
     if (!pode.ok) return { responder: false, motivo: pode.motivo };
-    if (!conv.aviso_ia_at) extra.aviso = ajustes.texto_aviso;
+    if (!conv.aviso_ia_at) extra.aviso = avisoComIA(ajustes.texto_aviso, ajustes.idioma);
     if (conv.fluxo && !["enviado_crm", "cancelado"].includes(conv.fluxo.status)) extra.fluxo_atual = { id: conv.fluxo.id, dados: conv.fluxo.dados, status: conv.fluxo.status };
     extra.telefone = foneDaChave(c.chave);
   }
@@ -231,7 +231,13 @@ async function ia(d: Disp, b: Any) {
   catch (e) { await registrar(k, d.user_id, d.id, c, takeover ? "takeover" : f, "erro", null, { erro: e instanceof HubFail ? e.code : "erro" }); throw hubErro(e); }
   const out = normalizar(f, r, config);
   // o aviso da IA é obrigatório na primeira mensagem automática da conversa
-  if (extra.aviso && out.responder && out.texto && !out.texto.toLowerCase().includes(ajustes.texto_aviso.slice(0, 18).toLowerCase())) out.texto = ajustes.texto_aviso + " " + out.texto;
+  if (extra.aviso && out.responder && out.texto && !/assistente virtual|virtual assistant|asistente virtual/i.test(out.texto)) {
+    // a IA começou com o aviso antigo (sem "assistente virtual"): troca pelo aviso completo, sem repetir
+    const base = String(ajustes.texto_aviso || "").trim().replace(/[.!\s]+$/, "");
+    let resto = out.texto;
+    if (base && resto.toLowerCase().startsWith(base.toLowerCase())) resto = resto.slice(base.length).replace(/^[.!,\s]+/, "");
+    out.texto = extra.aviso + " " + resto;
+  }
   // proteções fixas, conferidas em código: a resposta automática que cita valor ou pede documento não sai
   if (takeover && out.responder) {
     const v = violaProtecao(out.texto);

@@ -36,6 +36,14 @@ export function violaProtecao(texto: string): string {
   return "";
 }
 
+/** O aviso da primeira resposta automática sempre diz que é assistente virtual (o nome do assistente pode ser personalizado). */
+export function avisoComIA(texto: string, idioma = "pt-BR") {
+  const t = String(texto || "").trim();
+  if (/assistente virtual|virtual assistant|asistente virtual|intelig[eê]ncia artificial|artificial intelligence|\bIA\b|\bAI\b|\bbot\b|chatbot/i.test(t)) return t;
+  const sufixo = idioma.startsWith("en") ? "virtual assistant" : idioma.startsWith("es") ? "asistente virtual" : "assistente virtual";
+  return (t ? t.replace(/[.!\s]+$/, "") + ", " : "") + sufixo + ".";
+}
+
 /* ================================================================ perfil, regras, fluxos e modelos ================================================================ */
 export const PASSOS = ["mensagem", "coletar", "crm_documentos", "crm_proposta", "agendar", "avisar_equipe"];
 export const CAMPOS = ["nome", "email", "telefone", "tipo_caso"];
