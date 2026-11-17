@@ -1,7 +1,7 @@
 // My WhatsApp Manager · a extensão de verdade carregada no Chromium, num WhatsApp Web falso (tests/fixtures/whatsapp-falso.html)
 // e com a função whatsapp simulada por um servidor local. Cobre: conectar, painel empurrando a página, IA Takeover com
 // tempos humanos e digitação visível, não responder mensagem antiga, abrir conversa não lida, parar quando a pessoa digita,
-// ferramentas (sugerir, comando, lead, agenda, prontas), grupo (assuntos e aviso do Takeover), pausar e recolher.
+// painel fixo (barra de progresso com prévia, card do contato com Enviar para o CRM, comando), grupo sem resposta automática, pausar e recolher.
 //   node tests/whatsapp-ext.e2e.mjs [pasta-capturas]
 import { createRequire } from "node:module";
 import http from "node:http";
@@ -43,7 +43,7 @@ function responder(b) {
       logId++;
       const f = b.ferramenta;
       if (f === "responder" && (b.mensagens || []).some((m) => /lista de documentos/.test(m.texto))) return [200, { responder: true, texto: "Por compliance não recebemos documentos por aqui. Qual é o seu nome completo e e-mail? Vou mandar a lista e um link seguro.", escalar: false, log_id: logId, aviso_incluido: false, fluxo_info: { id: "documentos", nome: "Pedido de documentos", status: "coletando", falta: ["nome", "email"] } }];
-      if (f === "responder") return [200, { responder: true, texto: "Olá! Aqui é o assistente virtual da Endeavor. Posso te ajudar com a LLC.", escalar: false, log_id: logId, aviso_incluido: true }];
+      if (f === "responder") return [200, { responder: true, texto: "Olá! Aqui é o assistente virtual da Endeavor. Posso te ajudar com a LLC.", escalar: false, log_id: logId, aviso_incluido: true, contato: { nome: "Maria Teste", email: "maria@exemplo.com" } }];
       if (f === "sugerir") return [200, { resposta: "Sugestão principal", alternativas: ["Alternativa curta"], log_id: logId }];
       if (f === "grupo") return [200, { topicos: [{ assunto: "EIN", resumo: "Perguntas sobre como tirar o EIN" }], relevante: true, responder: false, texto: "A Endeavor pode ajudar com o EIN.", log_id: logId }];
       if (f === "comando") return [200, { acao: "escrever", texto: "Amanhã eu ligo às 10h.", log_id: logId }];
@@ -94,7 +94,9 @@ try {
   await dorme(2500);
   ok(ia("responder").length === 0, "ao abrir a conversa, a mensagem antiga (08:00) não é respondida");
   ok((await P("#conv").textContent()).includes("Maria Teste"), "o painel mostra a conversa aberta");
-  ok(await P("#c-tk").isChecked(), "conversa individual entra com Takeover ligado");
+  ok(await P("#c-tk").count() === 0 && await P("#c-seguir").count() === 0, "sem chaves por conversa (só o IA Takeover geral e o Pausar)");
+  ok(await P("[data-f]").count() === 0, "sem botões de ferramentas (só o comando)");
+  ok(await P("#ct-tel").inputValue() === (process.env.MODERNO ? "" : "+15551230000"), "card do contato: telefone vem da conversa (contato salvo por nome: fica para digitar)");
 
   /* mensagem nova: Takeover responde com espera, digitação visível e envio */
   await page.evaluate(() => window.chegar("15551230000@c.us", "Vocês atendem em português?"));
@@ -104,6 +106,8 @@ try {
   await dorme(600);
   const parcial = await caixa();
   ok(parcial.length > 0 && parcial.length < 70, "a IA digita aos poucos na caixa (visível: \"" + parcial.slice(0, 20) + "…\")");
+  ok(/%$/.test(await P("#barra-pct").textContent()) && await P("#barra-box.ativa").count() === 1, "barra de progresso com porcentagem enquanto digita");
+  ok((await P("#previa").textContent()).length > 0 && await P("#previa").isVisible(), "prévia do texto sendo digitado no painel");
   await page.screenshot({ path: path.join(OUT, "wa-digitando.png") });
   await page.waitForFunction(() => (window.__enviadas || []).length >= 1, null, { timeout: 15000 });
   const env = await enviadas();
@@ -112,6 +116,7 @@ try {
   const reg = chamadas.find((c) => c.acao === "ext_registrar" && c.status === "enviado");
   ok(!!reg && reg.aviso_incluido === true && reg.log_id === 1, "registro: enviado, com o aviso marcado");
   ok(ia("responder")[0].mensagens.some((m) => m.texto.includes("português")), "a IA recebeu as mensagens da conversa");
+  ok(await P("#ct-nome").inputValue() === "Maria Teste" && await P("#ct-email").inputValue() === "maria@exemplo.com", "card do contato preenchido com o que a pessoa passou");
   await page.screenshot({ path: path.join(OUT, "wa-enviado.png") });
 
   /* fluxo de documentos: o painel mostra o andamento (coletando · falta nome, e-mail) */
@@ -140,17 +145,11 @@ try {
   ok(chamadas.some((c) => c.acao === "ext_registrar" && c.status === "descartado"), "registro: descartado");
   await page.evaluate(() => { document.querySelector("#main footer [contenteditable]").innerHTML = ""; });
 
-  /* ferramentas: sugerir e digitar na caixa (sem enviar) */
-  await P('[data-f="sugerir"]').click();
-  await P(".cartao").first().waitFor({ timeout: 5000 });
-  ok(await P(".cartao").count() === 2, "sugerir: sugestão e alternativa");
-  const n = (await enviadas()).length;
-  await P('.cartao [data-k="digitar"]').first().click();
-  await page.waitForFunction(() => (document.querySelector("#main footer [contenteditable]")?.innerText || "").includes("Sugestão principal"), null, { timeout: 8000 });
-  await dorme(400);
-  ok((await enviadas()).length === n, "\"Digitar na caixa\" escreve sem enviar");
-  ok(chamadas.some((c) => c.acao === "ext_registrar" && c.status === "aprovado"), "registro: aprovado");
-  await page.evaluate(() => { document.querySelector("#main footer [contenteditable]").innerHTML = ""; });
+  /* card do contato: Enviar para o CRM */
+  await P("#ct-crm").click();
+  await P(".contato .tag.ok").waitFor({ timeout: 5000 });
+  const lead0 = chamadas.find((c) => c.acao === "ext_lead");
+  ok(lead0 && lead0.nome === "Maria Teste" && lead0.email === "maria@exemplo.com" && lead0.telefone === (process.env.MODERNO ? "" : "+15551230000"), "Enviar para o CRM leva nome, e-mail e telefone do card");
 
   /* comando por texto */
   await P("#cmd").fill("diga que amanhã eu ligo às 10h");
@@ -159,47 +158,14 @@ try {
   ok((await P(".cartao textarea").first().inputValue()) === "Amanhã eu ligo às 10h.", "comando vira mensagem pronta para revisar");
   ok(ia("comando")[0].pedido.includes("amanhã"), "o comando vai para a IA");
 
-  /* lead no CRM com confirmação */
-  await P('[data-f="lead"]').click();
-  await P("#f-lead").waitFor({ timeout: 5000 });
-  if (process.env.MODERNO) { ok(await P('#f-lead [name="telefone"]').inputValue() === "", "lead: contato salvo por nome, sem número na página: telefone fica para digitar"); await P('#f-lead [name="telefone"]').fill("+15551230000"); }
-  else ok(await P('#f-lead [name="telefone"]').inputValue() === "+15551230000", "lead: telefone vem da conversa");
-  ok(!chamadas.some((c) => c.acao === "ext_lead"), "lead: nada é criado antes de confirmar");
-  await P("#f-lead button").click();
-  await P(".bloco.ok").waitFor({ timeout: 5000 });
-  const lead = chamadas.find((c) => c.acao === "ext_lead");
-  ok(lead && lead.email === "maria@exemplo.com" && lead.nome === "Maria Teste", "lead criado com os dados confirmados");
-
-  /* agendamento */
-  await P('[data-f="agenda"]').click();
-  await P("#f-ag").waitFor({ timeout: 5000 });
-  ok((await P(".cartao textarea").first().inputValue()).includes("Dia 1 10:00"), "agenda: mensagem com horários livres reais");
-  await P('#f-ag [name="email"]').fill("maria@exemplo.com");
-  if (process.env.MODERNO) await P('#f-ag [name="telefone"]').fill("+15551230000");
-  await P("#f-ag button").click();
-  await P(".bloco.ok").waitFor({ timeout: 5000 });
-  ok(chamadas.some((c) => c.acao === "ext_agendar" && c.telefone === "+15551230000"), "agenda: marcou com os dados confirmados");
-
-  /* respostas prontas */
-  await P('[data-f="prontas"]').click();
-  ok((await P("#res").textContent()).includes("Olá! Como posso ajudar?"), "respostas prontas aparecem no painel");
-
-  /* grupo: assuntos e sugestão; Takeover do grupo pede confirmação */
+  /* grupo: a IA não responde sozinha */
   await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
-  await dorme(1500);
-  ok(await P("#grupo").isVisible(), "grupo: seção de assuntos aparece");
-  ok(!(await P("#c-tk").isChecked()), "grupo: Takeover começa desligado");
+  await dorme(1200);
+  ok((await P("#conv").textContent()).includes("Em grupos a IA não responde sozinha"), "grupo: o painel avisa que não há resposta automática");
+  const g0 = ia("responder").length;
   await page.evaluate(() => window.chegar("120363000000000001@g.us", "A Endeavor faz EIN?", "Pedro"));
-  await P("#grupo .topicos").waitFor({ timeout: 8000 });
-  ok((await P("#grupo").textContent()).includes("EIN"), "grupo: a IA resume os assuntos");
-  ok(await P("#grupo .cartao").count() === 1, "grupo: sugere a resposta");
-  ok(ia("grupo").at(-1).takeover !== true && ia("grupo").at(-1).mensagens.some((m) => m.autor === "Pedro"), "grupo: monitorando (sem Takeover) e com o autor de cada mensagem");
-  ok(!(await enviadas()).some((e) => e.k.endsWith("@g.us")), "grupo: nada enviado sozinho");
-  await P("#c-tk").click({ force: true });
-  ok(await P("#c-tk-aviso").isVisible(), "grupo: ligar o Takeover mostra o aviso de risco");
-  await P("#c-tk-sim").click();
-  await dorme(500);
-  ok(chamadas.some((c) => c.acao === "ext_conversa" && c.takeover === true && c.conversa.grupo === true), "grupo: Takeover ligado só depois de confirmar");
+  await dorme(3000);
+  ok(ia("responder").length === g0 && !(await enviadas()).some((e) => e.k.endsWith("@g.us")), "grupo: nada enviado sozinho");
   await page.screenshot({ path: path.join(OUT, "wa-grupo.png") });
 
   /* pausar: nada sai sozinho */
@@ -212,17 +178,15 @@ try {
   ok(ia("responder").length === r0, "em pausa, o Takeover não responde");
   await P("#pausar").click();
 
-  /* tempos humanos ajustáveis */
-  await P("#tempos summary").click();
-  await P('[data-t="velocidade"]').fill("300");
-  await P('[data-t="velocidade"]').dispatchEvent("change");
-  await dorme(1200);
-  ok(chamadas.some((c) => c.acao === "ext_ajustes" && c.ajustes.velocidade === 300), "tempos: velocidade salva");
+  /* painel fixo, sem rolagem */
+  const rol = await page.evaluate(() => { const c = document.getElementById("emgr-host").shadowRoot.getElementById("corpo"); return [c.scrollHeight, c.clientHeight]; });
+  ok(rol[0] <= rol[1] + 1, "painel fixo: sem rolagem (" + rol.join(" / ") + ")");
+  await page.screenshot({ path: path.join(OUT, "wa-painel-novo.png") });
 
   /* modo escuro: botões legíveis (texto claro sobre fundo escuro) */
   await page.emulateMedia({ colorScheme: "dark" });
   await page.waitForTimeout(300);
-  const cor = await P('[data-f="resumo"]').evaluate((b) => { const s = getComputedStyle(b); return { fundo: s.backgroundColor, texto: s.color }; });
+  const cor = await P('#mic').evaluate((b) => { const s = getComputedStyle(b); return { fundo: s.backgroundColor, texto: s.color }; });
   const lum = (c) => { const [r, g, b] = c.match(/\d+/g).map(Number).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
   const L1 = lum(cor.texto), L2 = lum(cor.fundo), contraste = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
   ok(contraste >= 4.5, "modo escuro: botões com contraste legível (" + contraste.toFixed(1) + ":1)");

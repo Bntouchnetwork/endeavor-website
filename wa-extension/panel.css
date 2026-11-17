@@ -91,6 +91,37 @@ details summary { cursor: pointer; font-weight: 600; }
 
 p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background: rgba(18,140,74,.08); border-radius: 6px; padding: 4px 8px; }
 
+/* ---------- painel fixo, sem rolagem (1.2.0) ---------- */
+.corpo { overflow: hidden; }
+#app { flex: 1; min-height: 0; }
+#app:not([hidden]) { display: flex; }
+.corpo { display: flex; flex-direction: column; min-height: 0; }
+.res { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.res:empty { display: block; border-style: dashed; background: transparent; }
+.res:empty::before { content: "As respostas dos comandos aparecem aqui."; color: var(--mut); font-size: 12px; }
+.cmd textarea { min-height: 88px; }
+.agora { display: block; }
+.agora-lin { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.agora-lin #agora-txt { flex: 1; min-width: 0; }
+.agora .barra { position: relative; height: 26px; border-radius: 13px; background: var(--linha); overflow: hidden; }
+.agora .barra i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, #128c4a, #25d366); border-radius: 13px; transition: width .2s ease; }
+.agora .barra.ativa i { background-image: linear-gradient(90deg, #128c4a, #25d366), repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 10px, transparent 10px 20px); background-blend-mode: overlay; background-size: 100% 100%, 28px 28px; animation: listras 1s linear infinite; }
+.agora.espera .barra i, .agora.pensando .barra i { background: linear-gradient(90deg, #2b6cb0, #4c9be8); }
+.agora .barra span { position: relative; display: block; text-align: center; font-weight: 600; font-size: 12px; line-height: 26px; color: var(--texto); }
+.agora .barra.cheia span { color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.35); }
+#pausar { white-space: nowrap; }
+@keyframes listras { to { background-position: 0 0, 28px 0; } }
+@media (prefers-reduced-motion: reduce) { .agora .barra.ativa i { animation: none; } }
+.previa { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: rgba(18,140,74,.07); font-size: 13px; line-height: 1.45; max-height: 6.2em; overflow: hidden; white-space: pre-wrap; }
+.previa::after { content: "▍"; color: var(--verde-esc); animation: pisca 1s steps(1) infinite; }
+@keyframes pisca { 50% { opacity: 0; } }
+.contato .ct-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 8px; }
+.contato .ct-grade label { font-size: 11px; color: var(--mut); margin: 0; }
+.contato .ct-grade label:first-child { grid-column: 1 / -1; }
+.contato .ct-grade input { margin-top: 2px; padding: 5px 8px; }
+.tag.ok { background: #e6f6ec; color: var(--verde-esc); font-weight: 600; }
+.rodape { font-size: 11px; color: var(--mut); text-align: center; padding: 2px 0 0; }
+
 /* modo escuro (no fim, para valer sobre as regras acima) */
 @media (prefers-color-scheme: dark) {
   .bt { background: #2a3942; border-color: #3b4a54; color: #e9edef; }
@@ -107,4 +138,6 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
   .erro { color: #ff8a80; }
   .chave .tr { background: #3b4a54; }
   input::placeholder, textarea::placeholder { color: #8696a0; }
+  .previa { background: rgba(37,211,102,.08); }
+  .agora .barra span { color: var(--texto); }
 }

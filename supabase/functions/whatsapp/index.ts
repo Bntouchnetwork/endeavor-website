@@ -156,7 +156,7 @@ async function conversaDe(k: Conta, c: { chave: string; nome: string; grupo: boo
   if (error) throw new Erro("Não foi possível registrar a conversa.", 500);
   return novo;
 }
-const conversaOut = (x: Any) => ({ chave: x.chave, nome: x.nome, grupo: x.grupo, seguir: x.seguir, takeover: x.takeover, aviso_enviado: !!x.aviso_ia_at, lead_id: x.lead_id,
+const conversaOut = (x: Any) => ({ chave: x.chave, nome: x.nome, grupo: x.grupo, seguir: x.seguir, takeover: x.takeover, aviso_enviado: !!x.aviso_ia_at, lead_id: x.lead_id || x.ct_contact_id, contato: x.contato || null,
   fluxo: x.fluxo ? { id: x.fluxo.id, status: x.fluxo.status } : null, atualizado: x.updated_at });
 async function registrar(k: Conta, userId: string | null, deviceId: string | null, c: { chave?: string; nome?: string; grupo?: boolean } | null, ferramenta: string, status: string, texto?: unknown, detalhes: Any = {}) {
   const { data } = await db.from("wa_log").insert({ conta: k.conta, user_id: userId, device_id: deviceId, chave: c?.chave || null, nome: c?.nome || null, grupo: !!c?.grupo,
@@ -212,7 +212,7 @@ async function ia(d: Disp, b: Any) {
 
   // IA Takeover: o servidor também confere o ritmo (limite por hora e intervalo do grupo) antes de chamar a IA
   if (takeover) {
-    if (!conv.takeover) return { responder: false, motivo: "Takeover desligado nesta conversa" };
+    if (c.grupo && !conv.takeover) return { responder: false, motivo: "Em grupos a IA não responde sozinha" };
     const desde = new Date(Date.now() - 3600_000).toISOString();
     const { data: env } = await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", desde);
     const envios = (env || []).map((x: Any) => Date.parse(x.created_at));
@@ -245,6 +245,11 @@ async function ia(d: Disp, b: Any) {
   }
   if (!takeover) for (const campo of ["resposta", "texto", "mensagem"]) if (out[campo] && violaProtecao(out[campo])) out.aviso_protecao = violaProtecao(out[campo]);
   // fluxos: guarda o andamento na conversa e, com os dados completos, passa o pedido para o CRM
+  if (takeover && !c.grupo && out.contato) {
+    const ct = { ...(conv.contato || {}), ...out.contato };
+    await db.from("wa_chats").update({ contato: ct, updated_at: agora() }).eq("id", conv.id);
+    out.contato = ct;
+  }
   if (takeover && !c.grupo && out.fluxo) out.fluxo_info = await andarFluxo(k, d, c, conv, config, out.fluxo, mensagens, ajustes);
   delete out.fluxo;
   const textoLog = out.resposta || out.texto || out.mensagem || out.traducao || out.resumo || "";
@@ -373,7 +378,8 @@ async function criarLead(d: Disp, b: Any) {
     if (error) { console.error("lead", error); throw new Erro("Não foi possível criar o contato: " + (/email/.test(error.message) ? "confira o e-mail." : /name/.test(error.message) ? "o nome precisa ter pelo menos 2 letras." : "tente de novo."), 500); }
     id = data.id; novo = true;
   }
-  await db.from("wa_chats").update(k.endeavor ? { lead_id: id, updated_at: agora() } : { ct_contact_id: id, updated_at: agora() }).eq("conta", k.conta).eq("chave", c.chave);
+  const contato = { nome, ...(email ? { email } : {}), ...(tel ? { telefone: tel } : {}) };
+  await db.from("wa_chats").update(k.endeavor ? { lead_id: id, contato, updated_at: agora() } : { ct_contact_id: id, contato, updated_at: agora() }).eq("conta", k.conta).eq("chave", c.chave);
   await registrar(k, d.user_id, d.id, c, "lead", "criado", `${nome}${assunto ? " · " + assunto : ""}`, { lead_id: id, novo });
   return { ok: true, lead_id: id, novo, link: k.endeavor ? `${SITE}/admin.html#/crm` : `${SITE}/client.html#/crm` };
 }

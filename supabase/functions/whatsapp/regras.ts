@@ -165,6 +165,17 @@ function fluxoDaIA(r: Any, cfg: Any) {
   const modelo = cfg.modelos.find((m: Any) => m.id === String(d.tipo_caso) || m.nome.toLowerCase() === String(d.tipo_caso || "").toLowerCase());
   return { id: fl.id, dados: { nome: txt(d.nome, 120), email: EMAIL.test(String(d.email || "").trim()) ? txt(d.email, 160).toLowerCase() : "", telefone: txt(d.telefone, 40), tipo_caso: modelo ? modelo.id : "" }, pronto: f.pronto === true, reenviar: f.reenviar === true };
 }
+/** dados do contato que a pessoa passou na conversa (para o card do painel); só o que for válido */
+export function contatoDaIA(c: Any) {
+  if (!c || typeof c !== "object") return null;
+  const nome = txt(c.nome, 120), email = EMAIL.test(String(c.email || "").trim()) ? txt(c.email, 160).toLowerCase() : "";
+  const tel = String(c.telefone || "").replace(/[^\d+]/g, ""), telefone = /^\+?[1-9]\d{6,14}$/.test(tel) ? (tel.startsWith("+") ? tel : "+" + tel) : "";
+  const o: Any = {};
+  if (nome.length >= 2) o.nome = nome;
+  if (email) o.email = email;
+  if (telefone) o.telefone = telefone;
+  return Object.keys(o).length ? o : null;
+}
 /** Resposta da IA sempre no formato esperado pela extensão (e sem números sensíveis). */
 export function normalizar(f: string, r: Any, cfg?: Any): Any {
   const s = (v: unknown, max = 2000) => limpo(typeof v === "string" ? v : "", max).trim();
@@ -182,7 +193,7 @@ export function normalizar(f: string, r: Any, cfg?: Any): Any {
     case "personalizar": return { texto: s(r?.texto) };
     case "responder": {
       const escalar = r?.escalar === true; const texto = s(r?.texto);
-      return { responder: !escalar && r?.responder === true && !!texto, texto, escalar, motivo: s(r?.motivo, 200), regra: txt(r?.regra, 32), fluxo: fluxoDaIA(r, cfg) };
+      return { responder: !escalar && r?.responder === true && !!texto, texto, escalar, motivo: s(r?.motivo, 200), regra: txt(r?.regra, 32), fluxo: fluxoDaIA(r, cfg), contato: contatoDaIA(r?.contato) };
     }
     case "grupo": return { topicos: (Array.isArray(r?.topicos) ? r.topicos : []).slice(0, 8).map((t: Any) => ({ assunto: s(t?.assunto, 120), resumo: s(t?.resumo, 300) })).filter((t: Any) => t.assunto),
       relevante: r?.relevante === true, responder: r?.relevante === true && r?.responder === true && !!s(r?.texto), texto: s(r?.texto), motivo: s(r?.motivo, 200) };

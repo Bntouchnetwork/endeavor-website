@@ -50,21 +50,18 @@
       '<input id="cod" type="password" autocomplete="off" placeholder="wam_…" aria-label="Código de conexão"><button class="bt pri" id="cod-ir">Conectar</button><p class="erro" id="cod-erro" role="alert"></p>' +
       '<a href="' + ADMIN + '" target="_blank" rel="noopener">Abrir o admin</a></section>' +
       '<div id="app" hidden>' +
-        '<section class="geral"><label class="chave"><input type="checkbox" id="tk-geral"><span class="tr"></span><span><b>IA Takeover</b><small id="tk-sub">responde sozinha nas conversas ligadas</small></span></label>' +
+        '<section class="geral"><label class="chave"><input type="checkbox" id="tk-geral"><span class="tr"></span><span><b>IA Takeover</b><small id="tk-sub">responde sozinha as conversas individuais</small></span></label>' +
         '<button class="bt" id="pausar" aria-pressed="false">Pausar IA</button></section>' +
-        '<section class="agora" id="agora" aria-live="polite"><span class="pt"></span><span id="agora-txt">Pronta.</span><button class="bt mini" id="parar" hidden>Parar</button><div class="barra"><i id="barra"></i></div></section>' +
-        '<section class="conv" id="conv"><p class="mut">Abra uma conversa no WhatsApp.</p></section>' +
-        '<section class="cmd"><label for="cmd" class="rot">Comando para a IA</label><textarea id="cmd" rows="2" placeholder="Ex.: responda que amanhã eu ligo às 10h"></textarea>' +
+        '<section class="agora" id="agora" aria-live="polite"><div class="agora-lin"><span class="pt"></span><span id="agora-txt">Pronta.</span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
+          '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
+          '<p class="previa" id="previa" hidden></p></section>' +
+        '<section class="contato" id="conv"><p class="mut">Abra uma conversa no WhatsApp.</p></section>' +
+        '<section class="cmd"><label for="cmd" class="rot">Comando para a IA</label><textarea id="cmd" rows="4" placeholder="Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
         '<div class="linha"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
         '<button class="bt pri" id="cmd-ir">Enviar comando</button></div><small class="mut" id="mic-st"></small></section>' +
-        '<nav class="ferr" aria-label="Ferramentas">' +
-          [['sugerir', 'Sugerir resposta'], ['resumo', 'Resumo'], ['prontas', 'Respostas prontas'], ['lead', 'Lead no CRM'], ['agenda', 'Agendamento'], ['proposta', 'Proposta'], ['traduzir', 'Tradução']]
-            .map(function (f) { return '<button class="bt" data-f="' + f[0] + '">' + f[1] + '</button>'; }).join('') + '</nav>' +
         '<section class="res" id="res"></section>' +
         '<section class="grupo" id="grupo" hidden></section>' +
-        '<details class="tempos" id="tempos"><summary>Tempos humanos do Takeover</summary><div class="grade" id="tempos-campos"></div><small class="mut">Cada resposta sorteia um tempo entre o mínimo e o máximo.</small></details>' +
-        '<footer class="rodape"><p class="risco">Automação no WhatsApp Web vai contra os termos do WhatsApp e pode bloquear o número. Use o número de teste. Respostas automáticas se identificam como assistente virtual.</p>' +
-        '<p><a href="' + ADMIN + '" target="_blank" rel="noopener">Admin · registro e ajustes</a> · <span id="quem"></span> · <button class="lk" id="sair">Desconectar</button> · <button class="lk" id="diag" title="Copia só a estrutura da página, sem o texto das mensagens">Copiar diagnóstico</button></p></footer>' +
+        '<footer class="rodape"><a href="' + ADMIN + '" target="_blank" rel="noopener" title="Regras, fluxos, tempos e registro">Admin</a> · <span id="quem"></span> · <button class="lk" id="sair">Desconectar</button> · <button class="lk" id="diag" title="Copia só a estrutura da página, sem o texto das mensagens">Diagnóstico</button></footer>' +
       '</div>' +
     '</div></aside>' +
     '<button class="aba" id="aba" hidden aria-label="Abrir o My WhatsApp Manager"><img src="' + ICONE + '" alt=""><span class="pt"></span></button>';
@@ -107,7 +104,13 @@
   function agora(texto, tipo, prog) {
     var a = $('#agora'); a.className = 'agora ' + (tipo || '');
     $('#agora-txt').textContent = texto;
-    $('#barra').style.width = prog == null ? '0' : Math.round(prog * 100) + '%';
+    var pct = prog == null ? 0 : Math.round(prog * 100);
+    $('#barra').style.width = pct + '%';
+    $('#barra-pct').textContent = prog == null ? '' : pct + '%';
+    $('#barra-box').setAttribute('aria-valuenow', String(pct));
+    $('#barra-box').classList.toggle('ativa', tipo === 'digitando' || tipo === 'espera' || tipo === 'pensando');
+    $('#barra-box').classList.toggle('cheia', pct >= 45);
+    if (tipo !== 'digitando') $('#previa').hidden = true;
     $('#parar').hidden = !S.acao;
     pontos();
   }
@@ -115,7 +118,7 @@
     var on = S.ajustes.takeover && !S.pausado;
     $$('.aba .pt').forEach(function (p) { p.className = 'pt' + (on ? ' on' : ''); });
     $('#tk-geral').checked = !!S.ajustes.takeover;
-    $('#tk-sub').textContent = !S.ajustes.takeover ? 'desligado' : S.pausado ? 'em pausa' : 'responde sozinha nas conversas ligadas';
+    $('#tk-sub').textContent = !S.ajustes.takeover ? 'desligado' : S.pausado ? 'em pausa' : 'responde sozinha as conversas individuais';
     $('#pausar').textContent = S.pausado ? 'Retomar IA' : 'Pausar IA';
     $('#pausar').setAttribute('aria-pressed', String(S.pausado));
   }
@@ -138,7 +141,10 @@
     var ini = Date.now();
     var r = await W.digitar(texto, C.ritmoDigitacao(texto, S.ajustes), {
       parar: function () { return (ac && ac.parar) || S.teclouEm > ini; },
-      progresso: function (p) { agora('Digitando na caixa… ' + Math.round(p * 100) + '%', 'digitando', p); }
+      progresso: function (p) {
+        agora('Digitando na caixa…', 'digitando', p);
+        var pv = $('#previa'); pv.hidden = false; pv.textContent = texto.slice(0, Math.round(p * texto.length));
+      }
     });
     return r;
   }
@@ -156,40 +162,42 @@
   function porNome(nome) { for (var k in S.conversas) if (S.conversas[k].nome === nome) return S.conversas[k]; return null; }
   function mesmaConversa(c) { var a = W.conversaAberta(); return !!a && a.chave === c.chave; }
 
+  function foneDaChave(chave) { return /^\d{8,15}@c\.us$/.test(chave || '') ? '+' + chave.split('@')[0] : ''; }
+  /** Card do contato: nome, e-mail e telefone que a pessoa passa na conversa (a IA preenche), e "Enviar para o CRM". */
   function desenharConversa(c) {
     var el = $('#conv');
-    if (!c) { el.innerHTML = '<p class="mut">Abra uma conversa no WhatsApp.</p>'; $('#grupo').hidden = true; return; }
-    var st = estado(c);
-    el.innerHTML = '<div class="conv-cab"><b>' + esc(c.nome) + '</b><span class="tag">' + (c.grupo ? 'Grupo' : 'Individual') + '</span></div>' +
-      '<label class="chave peq"><input type="checkbox" id="c-seguir"' + (st.seguir ? ' checked' : '') + '><span class="tr"></span><span>Acompanhar' + (c.grupo ? ' os assuntos' : ' e sugerir') + '</span></label>' +
-      '<label class="chave peq"><input type="checkbox" id="c-tk"' + (st.takeover ? ' checked' : '') + '><span class="tr"></span><span>IA Takeover nesta ' + (c.grupo ? 'conversa de grupo' : 'conversa') + '</span></label>' +
-      '<p class="alerta" id="c-tk-aviso" hidden>No grupo, a IA só responde quando o assunto é com a empresa e no máximo uma vez a cada ' + S.ajustes.grupo_intervalo + ' min. Resposta automática em grupo é o uso mais arriscado para o número. <button class="bt mini" id="c-tk-sim">Ligar mesmo assim</button> <button class="bt mini" id="c-tk-nao">Cancelar</button></p>' +
+    if (!c) { el.innerHTML = '<p class="mut">Abra uma conversa no WhatsApp.</p>'; return; }
+    if (c.grupo) { el.innerHTML = '<div class="conv-cab"><b>' + esc(c.nome) + '</b><span class="tag">Grupo</span></div><p class="mut">Em grupos a IA não responde sozinha. Use o comando para pedir um resumo ou uma sugestão.</p>'; return; }
+    var st = estado(c), k = st.contato || {};
+    var fone = k.telefone || foneDaChave(c.chave);
+    var ativo = raiz.activeElement && el.contains(raiz.activeElement);
+    if (ativo) return; // a pessoa está editando o card: não sobrescreve
+    el.innerHTML = '<div class="conv-cab"><b>' + esc(k.nome || c.nome) + '</b>' + (st.lead_id || st.no_crm ? '<span class="tag ok">No CRM ✓</span>' : '<span class="tag">Contato</span>') + '</div>' +
+      '<div class="ct-grade"><label>Nome<input id="ct-nome" autocomplete="off" value="' + esc(k.nome || '') + '" placeholder="—"></label>' +
+      '<label>E-mail<input id="ct-email" type="email" autocomplete="off" value="' + esc(k.email || '') + '" placeholder="—"></label>' +
+      '<label>Telefone<input id="ct-tel" autocomplete="off" value="' + esc(fone) + '" placeholder="+1 …"></label></div>' +
       (st.fluxo ? '<p class="fluxo" id="conv-fluxo">Fluxo: ' + esc(st.fluxo.id) + (st.fluxo.status === 'enviado_crm' ? ' · pedido no CRM ✓' : ' · em andamento') + '</p>' : '') +
-      '<button class="bt mini" id="c-agora"' + (st.takeover && S.ajustes.takeover ? '' : ' hidden') + '>Responder agora</button>';
-    $('#c-seguir').onchange = function () { mudarConversa(c, { seguir: this.checked }); };
-    $('#c-tk').onchange = function () {
-      var v = this.checked;
-      if (v && c.grupo) { this.checked = false; $('#c-tk-aviso').hidden = false; return; }
-      mudarConversa(c, { takeover: v });
+      '<div class="linha"><button class="bt pri mini" id="ct-crm">' + (st.lead_id || st.no_crm ? 'Atualizar no CRM' : 'Enviar para o CRM') + '</button><small class="mut" id="ct-msg" role="status"></small></div>';
+    $('#ct-crm').onclick = async function () {
+      var b = this, m = $('#ct-msg'); b.disabled = true; m.textContent = 'Enviando…';
+      var dados = { nome: $('#ct-nome').value.trim() || c.nome, email: $('#ct-email').value.trim(), telefone: $('#ct-tel').value.trim() };
+      try {
+        var o = await api(Object.assign({ acao: 'ext_lead', conversa: ref(c) }, dados));
+        S.conversas[c.chave] = Object.assign({}, st, { lead_id: o.lead_id, no_crm: true, contato: dados });
+        m.textContent = o.novo ? 'Contato criado no CRM ✓' : 'Contato atualizado no CRM ✓';
+        agora('Contato no CRM ✓', 'ok');
+        b.textContent = 'Atualizar no CRM';
+        $('.contato .tag').textContent = 'No CRM ✓'; $('.contato .tag').className = 'tag ok';
+      } catch (e) { m.textContent = e.message; }
+      b.disabled = false;
     };
-    if (c.grupo) {
-      $('#c-tk-sim').onclick = function () { $('#c-tk-aviso').hidden = true; mudarConversa(c, { takeover: true }); };
-      $('#c-tk-nao').onclick = function () { $('#c-tk-aviso').hidden = true; };
-    }
-    $('#c-agora').onclick = function () { S.tratadas[c.chave] = null; tick(true); };
-    $('#grupo').hidden = !c.grupo;
-    if (c.grupo && !S.analiseGrupo[c.chave]) $('#grupo').innerHTML = '<h3>Assuntos do grupo</h3><p class="mut">Quando chegarem mensagens novas, a IA resume os assuntos e sugere a resposta.</p><button class="bt mini" id="g-ja">Analisar agora</button>';
-    else if (c.grupo) mostrarGrupo(S.analiseGrupo[c.chave].r, c);
-    var gj = $('#g-ja'); if (gj) gj.onclick = function () { analisarGrupo(c, true); };
   }
-  async function mudarConversa(c, mud) {
-    try {
-      var r = await api(Object.assign({ acao: 'ext_conversa', conversa: ref(c) }, mud));
-      S.conversas[c.chave] = r.conversa;
-      if (mud.takeover === true) { var u = C.ultimaRecebida(c.mensagens); S.tratadas[c.chave] = u ? u.id : null; }
-      agora(mud.takeover === true ? 'IA Takeover ligado em ' + c.nome + '. Ela responde a próxima mensagem.' : mud.takeover === false ? 'IA Takeover desligado em ' + c.nome + '.' : 'Ajuste salvo.', 'ok');
-    } catch (e) { agora(e.message, 'erro'); }
-    desenharConversa(W.conversaAberta() || c);
+  /** a IA trouxe dados do contato: guarda e atualiza o card */
+  function atualizarContato(c, ct) {
+    if (!ct) return;
+    var st = estado(c);
+    S.conversas[c.chave] = Object.assign({}, st, { contato: Object.assign({}, st.contato || {}, ct) });
+    if (mesmaConversa(c)) desenharConversa(c);
   }
 
   /* ---------------- resultado das ferramentas ---------------- */
@@ -427,6 +435,7 @@
         msgBg({ tipo: 'aviso', titulo: c.nome + ' precisa de você', texto: r.motivo || 'A IA não respondeu: assunto para a equipe.' });
         return;
       }
+      if (r.contato) atualizarContato(c, r.contato);
       if (r.fluxo_info) mostrarFluxo(c, r.fluxo_info);
       if (!r.responder) { agora('Takeover · sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', 'ok'); return; }
       res('<div class="bloco"><div class="cartao-rot">Takeover vai responder ' + esc(c.nome) + '</div><p>' + esc(r.texto) + '</p></div>');
@@ -487,8 +496,7 @@
     if (S.ocupado || S.pausado) return;
     var st = estado(c);
     if (ult && S.tratadas[c.chave] !== ult.id) {
-      if (S.ajustes.takeover && st.takeover && st.seguir) return responderAuto(c);
-      if (st.seguir) return sugerirAuto(c);
+      if (S.ajustes.takeover && !c.grupo) return responderAuto(c);
     }
     procurarNaoLidas();
   }
@@ -497,7 +505,7 @@
     if (Date.now() - S.humanoEm < 30000 || W.textoNaCaixa()) return; // a pessoa está usando o WhatsApp
     var alvo = W.naoLidas().find(function (x) {
       var st = porNome(x.nome);
-      return st ? st.takeover && st.seguir : S.ajustes.takeover_individual;
+      return !(st && st.grupo);
     });
     if (!alvo) return;
     // não insiste: se a conversa não abrir, espera 10 min antes de tentar de novo a mesma
@@ -519,6 +527,7 @@
   var CAMPOS = [['espera_min', 'Esperar antes de digitar · mín (s)'], ['espera_max', 'Esperar · máx (s)'], ['velocidade', 'Velocidade (caracteres/min)'], ['variacao', 'Variação da velocidade (%)'],
     ['pausa_min', 'Pausa depois de enviar · mín (s)'], ['pausa_max', 'Pausa · máx (s)'], ['digitar_max', 'Tempo máximo digitando (s)'], ['limite_hora', 'Respostas automáticas por hora'], ['grupo_intervalo', 'Intervalo no mesmo grupo (min)']];
   function desenharTempos() {
+    if (!$('#tempos-campos')) return; // os tempos humanos agora ficam no admin (Ajustes)
     $('#tempos-campos').innerHTML = CAMPOS.map(function (k) { return '<label>' + k[1] + '<input type="number" step="1" data-t="' + k[0] + '" value="' + esc(S.ajustes[k[0]]) + '"></label>'; }).join('');
     $$('[data-t]').forEach(function (i) { i.onchange = function () { var o = {}; o[i.dataset.t] = Number(i.value); salvarAjustes(o); }; });
   }
