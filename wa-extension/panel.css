@@ -193,6 +193,29 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 .controles .chave.peq { flex: 0 1 auto; min-width: 0; gap: 4px; font-size: 11px; letter-spacing: -.01em; white-space: nowrap; }
 .controles .chave.peq > span:last-child { overflow: hidden; text-overflow: ellipsis; }
 
+/* ---------- 1.7.0: só ícones, etiqueta Grupo e box ocupando a tela ---------- */
+.controles { gap: 10px; }
+.controles .ic-bt, .controles .mic { padding: 7px 10px; min-width: 42px; }
+.controles .ic-bt svg { width: 19px; height: 19px; }
+.pausa svg { fill: currentColor; }
+.pausa .i-play { display: none; }
+.pausa[aria-pressed="true"] .i-pausa { display: none; }
+.pausa[aria-pressed="true"] .i-play { display: block; }
+.tag-g { flex: none; font-size: 12.5px; font-weight: 700; line-height: 1; padding: 4px 10px; border-radius: 12px; background: var(--verde-esc); color: #fff; letter-spacing: .01em; }
+.tag-g + .cv { margin-left: 2px; }
+/* o box cresce para ocupar a tela; com cartões de grupo, divide o espaço com eles */
+.trabalho { flex: 1 1 0; min-height: 330px; display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+.trabalho #cmd { flex: 1 1 auto; min-height: 150px; }
+.trabalho > .agora-lin, .trabalho > .barra, .trabalho > .vel, .trabalho > .controles, .trabalho > #mic-st { flex: none; }
+/* com os cartões do grupo, o box fica no tamanho natural e os cartões ficam com o resto */
+#app:has(> .grupo:not([hidden])) .trabalho { flex: none; min-height: 0; }
+#app:has(> .grupo:not([hidden])) .trabalho #cmd { flex: none; height: 130px; min-height: 130px; }
+.grupo:not([hidden]) { flex: 1 1 0; }
+.grupo .g-cartao, .grupo .g-int { min-height: 104px; }
+
+.grupo .g-cartao .linha, .grupo .g-int .linha { flex-wrap: nowrap; gap: 5px; }
+.grupo .g-cartao .bt, .grupo .g-int .bt { padding: 4px 9px; font-size: 12.5px; white-space: nowrap; }
+
 /* modo escuro (no fim, para valer sobre as regras acima) */
 @media (prefers-color-scheme: dark) {
   .bt { background: #2a3942; border-color: #3b4a54; color: #e9edef; }
@@ -216,3 +239,4 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 @media (prefers-color-scheme: dark) { .g-cartao textarea[readonly] { background: rgba(37,211,102,.06) !important; } .g-int { border-color: #5a4a22; background: rgba(246,199,107,.06); } .vel input[type=range] { accent-color: #25d366; background: transparent !important; } }
 @media (prefers-color-scheme: dark) { .cv-tag { background: #111b21 !important; } .bt.mini.on, .bt.mini[aria-pressed="true"] { background: #103529; color: #7ee2a8; border-color: #25d366; } #pausar.on { background: #3d2e0f; color: #f6c76b; border-color: #f6c76b; } }
 @media (prefers-color-scheme: dark) { .mon { color: #8696a0; } .mon[aria-pressed="true"] { color: #fff; background: #128c4a; border-color: #128c4a; } .pt-g { color: #25d366; } }
+@media (prefers-color-scheme: dark) { .tag-g { background: #128c4a; color: #fff; } }

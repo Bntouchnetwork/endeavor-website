@@ -52,14 +52,14 @@
       '<a href="' + ADMIN + '" target="_blank" rel="noopener">Abrir o admin</a></section>' +
       '<div id="app" hidden>' +
         '<section class="trabalho" id="agora" aria-live="polite">' +
-          '<div class="agora-lin"><span class="pt"></span><span class="pt-g" id="pt-g" hidden title="Grupo" aria-label="Grupo"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14c2.8-.4 5.5 1.3 5.5 4.5"/></svg></span><span class="cv"><b id="cv-nome">Abra uma conversa</b><span id="agora-txt">Pronta.</span></span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
+          '<div class="agora-lin"><span class="pt"></span><span class="tag-g" id="cv-grupo" hidden>Grupo</span><span class="cv"><b id="cv-nome">Abra uma conversa</b><span id="agora-txt">Pronta.</span></span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
           '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
           '<div class="vel"><label for="vel">Velocidade</label><input type="range" id="vel" min="80" max="400" step="10" list="vel-padrao" aria-describedby="vel-n"><datalist id="vel-padrao"><option id="vel-pd" value="220"></option></datalist>' +
           '<output id="vel-n" for="vel">220</output><small class="mut">car/min</small></div>' +
           '<textarea id="cmd" rows="8" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
-          '<div class="linha controles"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
+          '<div class="linha controles"><button class="bt mic ic-bt" id="mic" aria-pressed="false" aria-label="Falar" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg></button>' +
           '<button class="bt pri ic-bt" id="cmd-ir" aria-label="Enviar" title="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10.1 15 12 3.4 13.9z"/></svg></button>' +
-          '<button class="bt mini" id="pausar" aria-pressed="false">Pausar</button>' +
+          '<button class="bt ic-bt pausa" id="pausar" aria-pressed="false" aria-label="Pausar IA" title="Pausar IA"><svg class="i-pausa" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/></svg><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>' +
           '<button class="bt ic-bt mon" id="monitorar" aria-pressed="false" aria-label="Monitorar grupos" title="Monitorar grupos: desligado"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14c2.8-.4 5.5 1.3 5.5 4.5"/></svg></button>' +
           '<span class="esp"></span><label class="chave peq" title="IA Takeover: responde sozinha as conversas"><input type="checkbox" id="tk-geral"><span class="tr"></span><span>IA Takeover</span></label></div>' +
           '<small class="mut" id="mic-st"></small></section>' +
@@ -112,13 +112,19 @@
       if (!falso.t) { falso.p = 0; falso.t = setInterval(function () { falso.p += (0.92 - falso.p) * 0.06; barraPct(falso.p); }, 250); }
       prog = falso.p;
     } else if (falso.t) { clearInterval(falso.t); falso.t = null; if (prog == null && tipo !== 'erro') prog = 1; }
-    var a = $('#agora'); a.className = 'trabalho ' + (tipo || '');
+    var a = $('#agora'); a.className = 'trabalho ' + (tipo || ''); a.title = '';
     $('#agora-txt').textContent = texto;
     var pct = barraPct(prog);
     $('#barra-box').classList.toggle('ativa', tipo === 'digitando' || tipo === 'espera' || tipo === 'pensando');
 
     $('#parar').hidden = !S.acao;
     pontos();
+  }
+  /** a IA decidiu não responder: a barra volta a zero, sem texto */
+  function zerar(motivo) {
+    if (falso.t) { clearInterval(falso.t); falso.t = null; }
+    $('#agora').className = 'trabalho'; $('#agora-txt').textContent = ''; $('#agora').title = motivo || '';
+    barraPct(null); $('#barra-box').classList.remove('ativa'); $('#parar').hidden = !S.acao;
   }
   function barraPct(prog) {
     var pct = prog == null ? 0 : Math.round(prog * 100);
@@ -132,7 +138,7 @@
     var on = S.ajustes.takeover && !S.pausado;
     $$('.aba .pt').forEach(function (p) { p.className = 'pt' + (on ? ' on' : ''); });
     $('#tk-geral').checked = !!S.ajustes.takeover;
-    $('#pausar').textContent = S.pausado ? 'Retomar' : 'Pausar';
+    $('#pausar').setAttribute('aria-label', S.pausado ? 'Retomar IA' : 'Pausar IA'); $('#pausar').title = S.pausado ? 'Retomar IA' : 'Pausar IA';
     $('#pausar').classList.toggle('on', S.pausado);
     $('#monitorar').setAttribute('aria-pressed', String(S.monitorar)); $('#monitorar').classList.toggle('on', S.monitorar);
     $('#monitorar').title = 'Monitorar grupos: ' + (S.monitorar ? 'ligado' : 'desligado');
@@ -205,7 +211,7 @@
     var el = $('#conv');
     // o nome da conversa fica na linha de status do box; a etiqueta "Grupo", no canto de baixo do box
     $('#cv-nome').textContent = c ? c.nome : 'Abra uma conversa'; $('#cv-nome').classList.toggle('vazio', !c);
-    $('#pt-g').hidden = !(c && c.grupo); $('.agora-lin .pt').hidden = !!(c && c.grupo); // nos grupos, o ícone de grupo no lugar da bolinha
+    $('#cv-grupo').hidden = !(c && c.grupo); $('.agora-lin .pt').hidden = !!(c && c.grupo); // nos grupos, a etiqueta verde "Grupo" antes do nome
     if (!c || c.grupo) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false;
     var st = estado(c), k = st.contato || {};
@@ -522,7 +528,9 @@
       var r = await ia('grupo', c);
       S.analiseGrupo[c.chave] = { em: Date.now(), r: r };
       if (mesmaConversa(c)) mostrarGrupo(r, c);
-      agora(r.desligado ? 'IA desligada neste grupo.' : (r.interesse || []).length ? 'Grupo: alguém mostrou interesse.' : r.relevante ? 'Grupo: há assunto com a empresa.' : 'Grupo analisado.', r.relevante || (r.interesse || []).length ? 'alerta' : 'ok');
+      if (r.desligado) agora('IA desligada neste grupo.', 'ok');
+      else if ((r.interesse || []).length || r.relevante) agora((r.interesse || []).length ? 'Alguém mostrou interesse.' : 'Há assunto com a empresa.', 'alerta');
+      else zerar(); // nada com a empresa: a barra volta a zero
     } catch (e) { if (manual) falhou(e); else agora(e.message, 'erro'); }
   }
 
@@ -546,7 +554,7 @@
       }
       if (r.contato) atualizarContato(c, r.contato);
       if (r.fluxo_info) mostrarFluxo(c, r.fluxo_info);
-      if (!r.responder) { agora(c.grupo && r.texto ? 'Resposta pronta para você aprovar.' : 'Sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', c.grupo && r.texto ? 'alerta' : 'ok'); return; }
+      if (!r.responder) { if (c.grupo && r.texto) agora('Resposta pronta para você aprovar.', 'alerta'); else zerar(r.motivo); return; }
       var vou = Date.now();
       if (!await esperar(C.espera(S.ajustes), 'Esperando para digitar', ac)) return cancelar(r, c, 'Parado por você.');
       if (!mesmaConversa(c)) return cancelar(r, c, 'A conversa mudou antes de digitar.');

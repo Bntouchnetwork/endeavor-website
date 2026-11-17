@@ -45,6 +45,7 @@ function responder(b) {
       if (f === "responder" && (b.mensagens || []).some((m) => /lista de documentos/.test(m.texto))) return [200, { responder: true, texto: "Por compliance não recebemos documentos por aqui. Qual é o seu nome completo e e-mail? Vou mandar a lista e um link seguro.", escalar: false, log_id: logId, aviso_incluido: false, fluxo_info: { id: "documentos", nome: "Pedido de documentos", status: "coletando", falta: ["nome", "email"] } }];
       if (f === "responder") return [200, { responder: true, texto: "Olá! Aqui é o assistente virtual da Endeavor. Posso te ajudar com a LLC.", escalar: false, log_id: logId, aviso_incluido: true, contato: { nome: "Maria Teste", email: "maria@exemplo.com" } }];
       if (f === "sugerir") return [200, { resposta: "Sugestão principal", alternativas: ["Alternativa curta"], log_id: logId }];
+      if (f === "grupo" && /mecânico/.test(((b.mensagens || []).slice(-1)[0] || {}).texto || "")) return [200, { topicos: [], relevante: false, responder: false, texto: "", interesse: [], log_id: logId, grupo_cfg: { modo: modoGrupo, limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 } }];
       if (f === "grupo") {
         const auto = modoGrupo === "auto" && b.takeover === true;
         return [200, { topicos: [{ assunto: "EIN", resumo: "Perguntas sobre como tirar o EIN" }], relevante: true, responder: auto, texto: auto ? "Oi Pedro! Dá para tirar o EIN sem SSN; posso explicar no privado." : "A Endeavor pode ajudar com o EIN.", log_id: logId,
@@ -110,6 +111,11 @@ try {
   await P("#agora").screenshot({ path: path.join(OUT, "wa-box.png") });
   ok(!(await P("#cmd-ir").textContent()).trim() && await P("#cmd-ir svg").count() === 1 && await P("#cmd-ir").getAttribute("aria-label") === "Enviar", "Enviar só com o ícone de flechinha");
   ok(await P("#monitorar svg").count() === 1 && !(await P("#monitorar").textContent()).trim(), "Monitorar grupos só com o ícone de grupo");
+  ok(!(await P("#mic").textContent()).trim() && !(await P("#pausar").textContent()).trim() && await P("#mic").getAttribute("aria-label") === "Falar" && await P("#pausar").getAttribute("aria-label") === "Pausar IA", "Falar e Pausar só com ícones (com nome para leitor de tela)");
+  const espaco = await P("#agora .controles").evaluate((l) => { const a = l.querySelector("#mic").getBoundingClientRect(), b = l.querySelector("#cmd-ir").getBoundingClientRect(); return b.left - a.right; });
+  ok(espaco >= 8, "mais espaço entre os ícones (" + Math.round(espaco) + " px)");
+  const altBox = await P("#agora").evaluate((b) => b.getBoundingClientRect().height / b.closest(".corpo").getBoundingClientRect().height);
+  ok(altBox > 0.6, "conversa individual: o box ocupa a maior parte da tela (" + Math.round(altBox * 100) + "%)");
   ok(await P("#c-tk").count() === 0 && await P("#c-seguir").count() === 0, "sem chaves por conversa (só o IA Takeover geral e o Pausar)");
   ok(await P("[data-f]").count() === 0, "sem botões de ferramentas (só o comando)");
   ok(await P("#ct-tel").inputValue() === (process.env.MODERNO ? "" : "+15551230000"), "card do contato: telefone vem da conversa (contato salvo por nome: fica para digitar)");
@@ -227,7 +233,7 @@ try {
     const r1 = ia("responder").length;
     await page.evaluate((x) => window.chegar(x, "Alguém sabe como abrir LLC?", "Endeavor Teste"), k);
     await dorme(3500);
-    ok(await P("#pt-g").isVisible() && await P(".agora-lin > .pt").first().isHidden() && await P("#conv").isHidden(), nomeG + ": reconhecido como grupo (" + (k === "novo1@g.us" ? "cabeçalho com dados do grupo" : "aviso de grupo criado") + ")");
+    ok(await P("#cv-grupo").isVisible() && (await P("#cv-grupo").textContent()) === "Grupo" && await P(".agora-lin > .pt").first().isHidden() && await P("#conv").isHidden(), nomeG + ": reconhecido como grupo (" + (k === "novo1@g.us" ? "cabeçalho com dados do grupo" : "aviso de grupo criado") + ")");
     ok(ia("responder").length === r1 && !(await enviadas()).some((e) => e.k === k), nomeG + ": o Takeover individual não responde no grupo");
     ok(ia("grupo").some((x) => x.conversa.nome === nomeG && x.conversa.grupo === true), nomeG + ": vai para a IA como grupo");
   }
@@ -236,7 +242,7 @@ try {
   await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
   await P("#grupo .g-cab").first().waitFor({ timeout: 6000 });
   await dorme(800);
-  ok(await P("#conv").isHidden() && await P("#pt-g").isVisible(), "grupo: ícone de grupo no lugar da bolinha, na linha de status");
+  ok(await P("#conv").isHidden() && await P("#cv-grupo").isVisible() && await P("#cv-grupo").evaluate((g) => !!(g.compareDocumentPosition(g.parentElement.querySelector("#cv-nome")) & 4)), "grupo: etiqueta verde Grupo antes do nome, na linha de status");
   const rolG = await page.evaluate(() => { const r = document.getElementById("emgr-host").shadowRoot; const c = r.getElementById("corpo"), g = r.getElementById("grupo"); return [c.scrollHeight <= c.clientHeight + 1, g.scrollHeight <= g.clientHeight + 1]; });
   ok(rolG[0] && rolG[1], "cartões do grupo fixos, sem rolagem");
   await page.screenshot({ path: path.join(OUT, "wa-grupo-box.png") });
@@ -267,6 +273,15 @@ try {
   const comCita = ia("grupo").find((x) => { const u = x.mensagens[x.mensagens.length - 1]; return u && u.cita && u.cita.eu; });
   ok(!!comCita && comCita.mensagens[comCita.mensagens.length - 1].texto.trim() === "E quanto tempo demora?", "citação: vai para a IA marcada como resposta à mensagem dela, com o texto limpo");
 
+  /* assunto de outra área: a IA fica quieta e a barra volta a zero, sem texto */
+  await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
+  await dorme(1200);
+  const nEnv = (await enviadas()).length;
+  await page.evaluate(() => window.chegar("120363000000000001@g.us", "Alguém conhece um mecânico brasileiro?", "Ana"));
+  for (let i = 0; i < 80 && !ia("grupo").some((x) => /mecânico/.test(x.mensagens[x.mensagens.length - 1].texto)); i++) await dorme(1000);
+  await dorme(1500);
+  ok((await enviadas()).length === nEnv && (await P("#agora-txt").textContent()) === "" && (await P("#barra-pct").textContent()) === "" && (await P("#barra-box").getAttribute("aria-valuenow")) === "0", "não responde: a barra volta a zero, sem texto");
+
   /* velocidade: o controle vale na hora */
   ok(await P("#vel-n").textContent() === "400", "velocidade: mostra o padrão dos Ajustes");
   ok(await P("#vel").getAttribute("max") === "400" && await P("#vel").getAttribute("min") === "80", "velocidade: de 80 a 400 car/min (mais rápido parece robô)");
@@ -280,6 +295,7 @@ try {
   await page.evaluate(() => window.abrirConversa("15551230000@c.us"));
   await dorme(1200);
   await P("#pausar").click();
+  ok(await P("#pausar").getAttribute("aria-label") === "Retomar IA" && await P("#pausar .i-play").isVisible(), "em pausa: o ícone vira play (Retomar IA)");
   const r0 = ia("responder").length;
   await page.evaluate(() => window.chegar("15551230000@c.us", "Oi de novo"));
   await dorme(3000);
