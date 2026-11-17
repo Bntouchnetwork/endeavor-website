@@ -52,3 +52,11 @@
 @media (prefers-reduced-motion: reduce) { .wa-ia-bt.wa-ia-on svg { animation: none; } }
 textarea[aria-busy="true"] { opacity: .6; }
 @media (prefers-color-scheme: dark) { .wa-ia-bt { color: #25d366; } }
+/* Grupos */
+.wa-grupo { border: 1px solid #e3e7ee; border-radius: 10px; padding: .85rem 1rem; margin: 0 0 .85rem; min-width: 0; }
+.wa-grupo-nome { font-weight: 700; padding: 0 .3rem; }
+.wa-grupo-op { display: flex; flex-wrap: wrap; gap: .5rem 1.25rem; align-items: center; }
+.wa-grupo-op select { width: auto; }
+@media (prefers-color-scheme: dark) { .wa-grupo { border-color: #2f3b4a; } }
+.wa-risco { background: #fff8e6; border: 1px solid #f2d39b; color: #6b4a00; border-radius: 8px; padding: .6rem .8rem; font-size: .9rem; }
+@media (prefers-color-scheme: dark) { .wa-risco { background: rgba(246,199,107,.08); border-color: #5a4a22; color: #f6c76b; } }

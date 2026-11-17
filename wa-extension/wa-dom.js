@@ -175,7 +175,7 @@
         if (ch === '\n') quebraDeLinha(c); else document.execCommand('insertText', false, ch);
         i++;
         if (o.progresso) o.progresso(i / texto.length);
-        setTimeout(passo, intervalos[i - 1] || 30);
+        setTimeout(passo, (intervalos[i - 1] || 30) * (o.escala ? Math.max(0.1, Math.min(10, o.escala() || 1)) : 1)); // escala: muda a velocidade na hora
       })();
     });
   }
@@ -208,6 +208,15 @@
       return n ? { nome: (n.getAttribute('title') || '').trim(), linha: r } : null;
     }).filter(Boolean);
   }
+  /** Linha da lista com este nome (para abrir o privado de quem falou no grupo), ou null. */
+  function linhaPorNome(nome) {
+    var lado = document.getElementById('pane-side'); if (!lado || !nome) return null;
+    var alvo = String(nome).trim().toLowerCase();
+    return $$('[role="listitem"], [role="row"]', lado).find(function (r) {
+      var n = $('span[dir="auto"][title]', r) || $('span[title]', r);
+      return n && (n.getAttribute('title') || '').trim().toLowerCase() === alvo;
+    }) || null;
+  }
   /** Abre uma conversa da lista. O WhatsApp reage a pointer/mouse no elemento clicável da linha. */
   function abrir(linha) {
     var nomeEl = $('span[dir="auto"][title]', linha) || $('span[title]', linha) || linha;
@@ -221,5 +230,5 @@
   }
   function pronto() { return !!(document.getElementById('pane-side') || principal()); }
 
-  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, abrir: abrir, pronto: pronto };
+  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, linhaPorNome: linhaPorNome, abrir: abrir, pronto: pronto };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

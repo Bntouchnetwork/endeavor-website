@@ -45,7 +45,13 @@ function responder(b) {
       if (f === "responder" && (b.mensagens || []).some((m) => /lista de documentos/.test(m.texto))) return [200, { responder: true, texto: "Por compliance não recebemos documentos por aqui. Qual é o seu nome completo e e-mail? Vou mandar a lista e um link seguro.", escalar: false, log_id: logId, aviso_incluido: false, fluxo_info: { id: "documentos", nome: "Pedido de documentos", status: "coletando", falta: ["nome", "email"] } }];
       if (f === "responder") return [200, { responder: true, texto: "Olá! Aqui é o assistente virtual da Endeavor. Posso te ajudar com a LLC.", escalar: false, log_id: logId, aviso_incluido: true, contato: { nome: "Maria Teste", email: "maria@exemplo.com" } }];
       if (f === "sugerir") return [200, { resposta: "Sugestão principal", alternativas: ["Alternativa curta"], log_id: logId }];
-      if (f === "grupo") return [200, { topicos: [{ assunto: "EIN", resumo: "Perguntas sobre como tirar o EIN" }], relevante: true, responder: false, texto: "A Endeavor pode ajudar com o EIN.", log_id: logId }];
+      if (f === "grupo") {
+        const auto = modoGrupo === "auto" && b.takeover === true;
+        return [200, { topicos: [{ assunto: "EIN", resumo: "Perguntas sobre como tirar o EIN" }], relevante: true, responder: auto, texto: auto ? "Oi Pedro! Dá para tirar o EIN sem SSN; posso explicar no privado." : "A Endeavor pode ajudar com o EIN.", log_id: logId,
+          interesse: [{ autor: "Carlos Novo", motivo: "quer abrir uma LLC", mensagem: "Oi Carlos, vi sua pergunta no grupo sobre LLC. Posso te ajudar? Quer agendar uma conversa?" }],
+          conteudo_devido: true, grupo_cfg: { modo: modoGrupo, limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 } }];
+      }
+      if (f === "conteudo_grupo") return [200, { texto: "Dica: separe as contas da LLC desde o primeiro dia.", tema: "Contas da LLC", log_id: logId }];
       if (f === "comando") return [200, { acao: "escrever", texto: "Amanhã eu ligo às 10h.", log_id: logId }];
       if (f === "lead") return [200, { nome: "Maria Teste", email: "maria@exemplo.com", telefone: "", assunto: "LLC na Flórida", resumo: "Quer abrir LLC." }];
       return [200, { log_id: logId }];
@@ -72,6 +78,7 @@ const page = await ctx.newPage();
 page.on("pageerror", (e) => console.log("pageerror:", e.message));
 await page.goto("https://web.whatsapp.com/" + (process.env.MODERNO ? "?moderno=1" : ""));
 const P = (s) => page.locator("#emgr-host " + s);
+let modoGrupo = "aprovar";
 const ia = (f) => chamadas.filter((c) => c.acao === "ext_ia" && c.ferramenta === f);
 const enviadas = () => page.evaluate(() => window.__enviadas || []);
 const caixa = () => page.evaluate(() => document.querySelector("#main footer [contenteditable]")?.innerText || "");
@@ -164,15 +171,48 @@ try {
   ok((await P(".cartao textarea").first().inputValue()) === "Amanhã eu ligo às 10h.", "comando vira mensagem pronta para revisar");
   ok(ia("comando")[0].pedido.includes("amanhã"), "o comando vai para a IA");
 
-  /* grupo: a IA não responde sozinha */
+  /* grupo: área abaixo do box (assuntos, resposta para aprovar, interesse, dica da semana) */
   await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
-  await dorme(1200);
-  ok((await P("#conv").textContent()).includes("Em grupos a IA não responde sozinha"), "grupo: o painel avisa que não há resposta automática");
+  await P("#grupo .g-cartao").first().waitFor({ timeout: 6000 });
+  ok((await P("#grupo .g-cab").textContent()).includes("Você aprova") && (await P("#grupo .topicos").textContent()).includes("EIN"), "grupo: mostra o modo (você aprova) e os assuntos");
+  ok(await P("#grupo").evaluate((g, a) => { const t = a.querySelector("#agora"); return !!(t.compareDocumentPosition(g) & 4); }, await P("#app").elementHandle()), "a área do grupo fica abaixo do box do Takeover");
+  ok((await P(".g-int").textContent()).includes("Carlos Novo"), "grupo: avisa quem mostrou interesse, com a mensagem para o privado");
+  await P("#g-dica .g-cartao").waitFor({ timeout: 5000 });
+  ok((await P("#g-dica").textContent()).includes("Dica da semana") && ia("conteudo_grupo").length === 1, "grupo: dica da semana pronta para aprovar");
   const g0 = ia("responder").length;
   await page.evaluate(() => window.chegar("120363000000000001@g.us", "A Endeavor faz EIN?", "Pedro"));
   await dorme(3000);
-  ok(ia("responder").length === g0 && !(await enviadas()).some((e) => e.k.endsWith("@g.us")), "grupo: nada enviado sozinho");
+  ok(ia("responder").length === g0 && !(await enviadas()).some((e) => e.k.endsWith("@g.us")), "grupo em modo aprovação: nada enviado sozinho");
+  ok(ia("grupo").some((x) => x.takeover === true), "mensagem nova no grupo: o servidor decide pelo modo do grupo");
   await page.screenshot({ path: path.join(OUT, "wa-grupo.png") });
+  await P("#g-sug [data-a=ok]").click();
+  await page.waitForFunction(() => (window.__enviadas || []).some((e) => e.k.endsWith("@g.us")), null, { timeout: 15000 });
+  ok((await enviadas()).some((e) => e.k.endsWith("@g.us") && /EIN/.test(e.t)), "Aprovar e enviar: a resposta vai para o grupo");
+  await dorme(600);
+  await P("#g-dica [data-a=ok]").click();
+  await page.waitForFunction(() => (window.__enviadas || []).some((e) => /separe as contas/.test(e.t)), null, { timeout: 15000 });
+  await dorme(500);
+  ok(chamadas.some((c) => c.acao === "ext_registrar" && c.ferramenta === "conteudo_grupo" && c.status === "enviado"), "Aprovar e postar: a dica vai para o grupo e fica registrada");
+  /* modo automático (com limite por dia, conferido no servidor) */
+  modoGrupo = "auto";
+  const nG = (await enviadas()).length;
+  await page.evaluate(() => window.chegar("120363000000000001@g.us", "Alguém sabe se precisa de SSN para o EIN?", "Pedro"));
+  await page.waitForFunction((n) => (window.__enviadas || []).length > n, nG, { timeout: 90000 });
+  ok((await enviadas()).slice(-1)[0].t.includes("sem SSN"), "grupo no automático: a IA respondeu sozinha");
+  modoGrupo = "aprovar";
+  /* puxar para o privado */
+  await P(".g-int [data-priv]").first().click();
+  await page.waitForFunction(() => (document.querySelector("#main header") || {}).textContent?.includes("Carlos Novo"), null, { timeout: 6000 });
+  await page.waitForFunction(() => /Oi Carlos/.test(document.querySelector("#main footer [contenteditable]").textContent), null, { timeout: 15000 });
+  ok(!(await enviadas()).some((e) => /Oi Carlos/.test(e.t)), "Abrir privado: abre a conversa e digita a mensagem, sem enviar");
+  await page.evaluate(() => { document.querySelector("#main footer [contenteditable]").innerHTML = ""; });
+
+  /* velocidade: o controle vale na hora */
+  ok(await P("#vel-n").textContent() === "600", "velocidade: mostra o padrão dos Ajustes");
+  await P("#vel").fill("120");
+  ok(await P("#vel-n").textContent() === "120", "velocidade: arrastar muda o número na hora");
+  ok(!chamadas.some((c) => c.acao === "ext_ajustes" && "velocidade" in (c.ajustes || {})), "velocidade do painel não muda os Ajustes do admin");
+  await P("#vel").fill("600");
 
   /* pausar: nada sai sozinho */
   await page.evaluate(() => window.abrirConversa("15551230000@c.us"));

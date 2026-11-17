@@ -22,7 +22,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { hubJson, hubOn, HubFail } from "../_shared/hub-ai.ts";
 import "./core.js";
-import { avisoComIA, FERRAMENTAS, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, prontoParaCRM, STATUS, violaProtecao } from "./regras.ts";
+import { avisoComIA, conteudoDevido, FERRAMENTAS, grupoCfg, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, prontoParaCRM, STATUS, violaProtecao } from "./regras.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -207,19 +207,36 @@ async function ia(d: Disp, b: Any) {
   const conv = await conversaDe(k, c, ajustes, d.user_id);
   const extra: Any = { pedido: b.pedido, base: b.base, texto: b.texto, empresa: k.nome, cfg: config };
   if (f === "traduzir") extra.idioma_destino = /^[a-z]{2}(-[A-Z]{2})?$/.test(String(b.idioma_destino || "")) ? b.idioma_destino : ajustes.idioma;
-  if (!mensagens.length && !["comando", "traduzir"].includes(f)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");
+  if (!mensagens.length && !["comando", "traduzir", "conteudo_grupo"].includes(f)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");
   const takeover = f === "responder" || (f === "grupo" && b.takeover === true);
 
-  // IA Takeover: o servidor também confere o ritmo (limite por hora e intervalo do grupo) antes de chamar a IA
+  // grupos: cada grupo tem o seu modo (desligado, aprovar, auto com limite por dia), aviso de interesse e dica da semana
+  const g = c.grupo ? grupoCfg(config, c.chave) : null;
+  if (f === "conteudo_grupo" && (!g || !g.conteudo)) throw new Erro("A dica da semana está desligada neste grupo.");
+  if (g && g.modo === "desligado" && (f === "grupo" || f === "conteudo_grupo")) return { desligado: true, topicos: [], interesse: [], responder: false, motivo: "IA desligada neste grupo", grupo_cfg: g };
+  if (g) extra.grupo_cfg = { modo: g.modo, interesse: g.interesse };
+  if (f === "conteudo_grupo") {
+    const { data: ant } = await db.from("wa_log").select("texto").eq("conta", k.conta).eq("ferramenta", "conteudo_grupo").eq("status", "enviado").order("id", { ascending: false }).limit(8);
+    extra.temas_recentes = (ant || []).map((x: Any) => txt(x.texto, 160)).join(" | ");
+  }
+  let bloqueio = "";
+
+  // IA Takeover: o servidor também confere o ritmo (limite por hora, por dia no grupo e intervalo do grupo) antes de chamar a IA
   if (takeover) {
-    if (c.grupo && !conv.takeover) return { responder: false, motivo: "Em grupos a IA não responde sozinha" };
+    if (g) {
+      if (g.modo !== "auto") bloqueio = "Grupo em modo aprovação: você aprova a resposta";
+      else {
+        const { count } = await db.from("wa_log").select("id", { count: "exact", head: true }).eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", new Date(Date.now() - 86400_000).toISOString());
+        if ((count || 0) >= g.limite_dia) bloqueio = `Limite de ${g.limite_dia} respostas por dia neste grupo`;
+      }
+    }
     const desde = new Date(Date.now() - 3600_000).toISOString();
     const { data: env } = await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("ferramenta", "takeover").eq("status", "enviado").gte("created_at", desde);
     const envios = (env || []).map((x: Any) => Date.parse(x.created_at));
     const { data: ultG } = c.grupo ? await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "takeover").eq("status", "enviado").order("created_at", { ascending: false }).limit(1) : { data: [] };
     const pode = C.podeResponder(ajustes, envios, Date.now(), c.grupo, ultG?.[0] ? Date.parse(ultG[0].created_at) : 0);
-    if (!pode.ok) return { responder: false, motivo: pode.motivo };
-    if (!conv.aviso_ia_at) extra.aviso = avisoComIA(ajustes.texto_aviso, ajustes.idioma);
+    if (!pode.ok) { if (!g) return { responder: false, motivo: pode.motivo }; bloqueio = bloqueio || pode.motivo; }
+    if (!conv.aviso_ia_at && !bloqueio) extra.aviso = avisoComIA(ajustes.texto_aviso, ajustes.idioma);
     if (conv.fluxo && conv.fluxo.status !== "cancelado") extra.fluxo_atual = { id: conv.fluxo.id, dados: conv.fluxo.dados, status: conv.fluxo.status };
     extra.telefone = foneDaChave(c.chave);
   }
@@ -230,6 +247,13 @@ async function ia(d: Disp, b: Any) {
   try { r = await chamarIA(k, d.user_id, f, montarEntrada(f, ajustes, c, mensagens, extra)); }
   catch (e) { await registrar(k, d.user_id, d.id, c, takeover ? "takeover" : f, "erro", null, { erro: e instanceof HubFail ? e.code : "erro" }); throw hubErro(e); }
   const out = normalizar(f, r, config);
+  if (g && f === "grupo") {
+    if (bloqueio) { if (out.responder) out.sugestao = true; out.responder = false; out.bloqueio = bloqueio; }
+    if (!g.interesse) out.interesse = [];
+    const { data: ultC } = await db.from("wa_log").select("created_at").eq("conta", k.conta).eq("chave", c.chave).eq("ferramenta", "conteudo_grupo").eq("status", "enviado").order("id", { ascending: false }).limit(1);
+    out.conteudo_devido = conteudoDevido(g, ultC?.[0] ? Date.parse(ultC[0].created_at) : 0);
+    out.grupo_cfg = g;
+  }
   // o aviso da IA é obrigatório na primeira mensagem automática da conversa
   if (extra.aviso && out.responder && out.texto && !/assistente virtual|virtual assistant|asistente virtual/i.test(out.texto)) {
     // a IA começou com o aviso antigo (sem "assistente virtual"): troca pelo aviso completo, sem repetir
@@ -243,7 +267,8 @@ async function ia(d: Disp, b: Any) {
     const v = violaProtecao(out.texto);
     if (v) { out.responder = false; out.escalar = true; out.motivo = v; }
   }
-  if (!takeover) for (const campo of ["resposta", "texto", "mensagem"]) if (out[campo] && violaProtecao(out[campo])) out.aviso_protecao = violaProtecao(out[campo]);
+  if (!takeover || (g && !out.responder)) for (const campo of ["resposta", "texto", "mensagem"]) if (out[campo] && violaProtecao(out[campo])) out.aviso_protecao = violaProtecao(out[campo]);
+  if (Array.isArray(out.interesse)) out.interesse = out.interesse.filter((x: Any) => !violaProtecao(x.mensagem)); // a mensagem para o privado também segue as proteções
   // fluxos: guarda o andamento na conversa e, com os dados completos, passa o pedido para o CRM
   if (takeover && !c.grupo && out.contato) {
     const ct = { ...(conv.contato || {}), ...out.contato };
@@ -253,7 +278,7 @@ async function ia(d: Disp, b: Any) {
   if (takeover && !c.grupo && out.fluxo) out.fluxo_info = await andarFluxo(k, d, c, conv, config, out.fluxo, mensagens, ajustes);
   delete out.fluxo;
   const textoLog = out.resposta || out.texto || out.mensagem || out.traducao || out.resumo || "";
-  const status = out.escalar ? "escalado" : takeover && !out.responder ? "ignorado" : "sugerido";
+  const status = out.escalar ? "escalado" : takeover && !out.responder && !(g && out.texto) ? "ignorado" : "sugerido";
   out.log_id = await registrar(k, d.user_id, d.id, c, takeover ? "takeover" : f, status, textoLog,
     { ferramenta: f, ...(out.motivo ? { motivo: txt(out.motivo, 200) } : {}), ...(out.regra ? { regra: out.regra } : {}), ...(out.fluxo_info ? { fluxo: out.fluxo_info.id, etapa: out.fluxo_info.status } : {}) });
   out.aviso_incluido = !!extra.aviso && !!out.responder;

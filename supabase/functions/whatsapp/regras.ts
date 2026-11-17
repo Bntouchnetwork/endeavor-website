@@ -12,7 +12,7 @@ const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 const txt = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 const bloco = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u0008\u000b-\u001f<>]/g, " ").replace(/[ \t]+/g, " ").trim().slice(0, max);
 export const limpo = (s: unknown, max = 2000) => C.limparSensivel(String(s ?? "")).texto.slice(0, max);
-export const FERRAMENTAS = ["sugerir", "resumo", "lead", "proposta", "traduzir", "comando", "personalizar", "responder", "grupo"];
+export const FERRAMENTAS = ["sugerir", "resumo", "lead", "proposta", "traduzir", "comando", "personalizar", "responder", "grupo", "conteudo_grupo"];
 export const STATUS = ["sugerido", "aprovado", "enviado", "descartado", "escalado", "criado", "erro", "ignorado"];
 
 /* ================================================================ proteções fixas ================================================================ */
@@ -76,7 +76,36 @@ export function limparConfig(c: Any) {
     if (acao === "fluxo" && !fluxo) acao = "responder";
     return { id: id(r?.id, "regra" + (i + 1)), nome: txt(r?.nome, 80), quando: bloco(r?.quando, 400), fazer: bloco(r?.fazer, 800), acao, fluxo, ativa: r?.ativa !== false };
   }).filter((r: Any) => r.nome && r.quando));
-  return { perfil, regras, fluxos, modelos };
+  return { perfil, regras, fluxos, modelos, grupos: limparGrupos(c.grupos) };
+}
+
+/* ---------------- grupos: o que a IA faz em cada grupo ----------------
+ * modo: desligado (nada) | aprovar (sugere, você aprova) | auto (responde sozinha, com limite por dia)
+ * interesse: avisa quando alguém mostra interesse e sugere a mensagem para o privado
+ * conteudo: sugere uma dica para postar (por_semana: 1 ou 2), sempre com a sua aprovação */
+export const GRUPO_PADRAO = { modo: "aprovar", limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 };
+const MODOS_GRUPO = ["desligado", "aprovar", "auto"];
+export function limparGrupos(g: Any) {
+  const o: Any = {};
+  if (!g || typeof g !== "object" || Array.isArray(g)) return o;
+  for (const [k, v] of Object.entries(g).slice(0, 200)) {
+    const chave = txt(k, 120); const x: Any = v && typeof v === "object" ? v : {};
+    if (!chave) continue;
+    const lim = Math.round(Number(x.limite_dia));
+    o[chave] = { nome: txt(x.nome, 120), modo: MODOS_GRUPO.includes(x.modo) ? x.modo : GRUPO_PADRAO.modo,
+      limite_dia: Number.isFinite(lim) ? Math.max(1, Math.min(10, lim)) : GRUPO_PADRAO.limite_dia,
+      interesse: x.interesse !== false, conteudo: x.conteudo !== false, por_semana: Number(x.por_semana) === 2 ? 2 : 1 };
+  }
+  return o;
+}
+export function grupoCfg(cfg: Any, chave: string) {
+  const g = cfg?.grupos?.[chave];
+  return { ...GRUPO_PADRAO, ...(g || {}) };
+}
+/** dica do grupo vencida? (1 por semana = a cada 7 dias; 2 por semana = a cada 3,5 dias) */
+export function conteudoDevido(g: Any, ultimoEnvio: number, agora = Date.now()) {
+  if (!g.conteudo || g.modo === "desligado") return false;
+  return !ultimoEnvio || agora - ultimoEnvio >= (7 / (g.por_semana || 1)) * 86400_000;
 }
 
 /** Configuração inicial: o fluxo de documentos (compliance → CRM) e o de preço/caso específico já vêm prontos. */
@@ -153,7 +182,9 @@ export function montarEntrada(f: string, a: Any, c: { nome: string; grupo: boole
   if (extra.base) partes.push(`<base>${limpo(extra.base, 1500)}</base>`);
   if (extra.texto) partes.push(`<texto>${limpo(extra.texto, 3000)}</texto>`);
   if (extra.existentes) partes.push(`<existentes>${limpo(extra.existentes, 3000)}</existentes>`);
-  if (mensagens.length || !["sugerir_regras", "sugerir_fluxos", "melhorar_texto"].includes(f)) partes.push(`<mensagens>\n${C.montarConversa(mensagens, f === "resumo" || f === "grupo" ? 60 : 30)}\n</mensagens>`);
+  if (extra.grupo_cfg) partes.push(`<grupo_ajustes>${JSON.stringify(extra.grupo_cfg)}</grupo_ajustes>`);
+  if (extra.temas_recentes) partes.push(`<temas_recentes>${limpo(extra.temas_recentes, 1500)}</temas_recentes>`);
+  if (mensagens.length || !["sugerir_regras", "sugerir_fluxos", "melhorar_texto", "conteudo_grupo"].includes(f)) partes.push(`<mensagens>\n${C.montarConversa(mensagens, f === "resumo" || f === "grupo" ? 60 : 30)}\n</mensagens>`);
   return partes.join("\n");
 }
 function fluxoDaIA(r: Any, cfg: Any) {
@@ -196,7 +227,9 @@ export function normalizar(f: string, r: Any, cfg?: Any): Any {
       return { responder: !escalar && r?.responder === true && !!texto, texto, escalar, motivo: s(r?.motivo, 200), regra: txt(r?.regra, 32), fluxo: fluxoDaIA(r, cfg), contato: contatoDaIA(r?.contato) };
     }
     case "grupo": return { topicos: (Array.isArray(r?.topicos) ? r.topicos : []).slice(0, 8).map((t: Any) => ({ assunto: s(t?.assunto, 120), resumo: s(t?.resumo, 300) })).filter((t: Any) => t.assunto),
-      relevante: r?.relevante === true, responder: r?.relevante === true && r?.responder === true && !!s(r?.texto), texto: s(r?.texto), motivo: s(r?.motivo, 200) };
+      relevante: r?.relevante === true, responder: r?.relevante === true && r?.responder === true && !!s(r?.texto), texto: s(r?.texto), motivo: s(r?.motivo, 200),
+      interesse: (Array.isArray(r?.interesse) ? r.interesse : []).slice(0, 3).map((x: Any) => ({ autor: s(x?.autor, 80), motivo: s(x?.motivo, 200), mensagem: s(x?.mensagem, 800) })).filter((x: Any) => x.autor && x.mensagem) };
+    case "conteudo_grupo": return { texto: s(r?.texto, 1200), tema: s(r?.tema, 120) };
     case "sugerir_regras": return { regras: limparConfig({ regras: (Array.isArray(r?.regras) ? r.regras : []).map((x: Any) => ({ ...x, acao: x?.acao === "fluxo" ? "responder" : x?.acao })), fluxos: [] }).regras.slice(0, 8) };
     case "sugerir_fluxos": return { fluxos: limparConfig({ fluxos: r?.fluxos }).fluxos.slice(0, 5) };
     case "melhorar_texto": return { texto: s(r?.texto, 800) };

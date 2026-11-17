@@ -4,7 +4,8 @@
  * - A IA digita de forma visível na caixa da mensagem; o painel mostra o que ela está fazendo.
  * - IA Takeover: responde sozinha nas conversas com a chave ligada, com tempos humanos (espera, digitação, pausa),
  *   limite por hora, e para na hora se você começar a digitar.
- * - Grupos: a IA acompanha os assuntos e sugere a resposta; o Takeover do grupo tem chave própria (desligada por padrão).
+ * - Grupos (área abaixo do box): assuntos, resposta para aprovar (ou automática com limite por dia, se o grupo estiver assim
+ *   no admin), quem mostrou interesse com a mensagem para o privado, e a dica da semana para postar com a sua aprovação.
  * Nada da conversa é guardado: o servidor registra só o que passou pela IA. */
 (function () {
   'use strict';
@@ -15,7 +16,7 @@
 
   var S = {
     conectado: false, ajustes: C.limparAjustes({}), version: 0, conversas: {}, usuario: '', pausado: false, aberto: true, largura: 380,
-    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, ultGrupo: {}, analiseGrupo: {}, humanoEm: 0, teclouEm: 0, acao: null
+    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null
   };
 
   /* ---------------- servidor ---------------- */
@@ -56,11 +57,13 @@
         '<section class="trabalho" id="agora" aria-live="polite">' +
           '<div class="agora-lin"><span class="pt"></span><span id="agora-txt">Pronta.</span><button class="bt mini" id="parar" hidden>Parar</button></div>' +
           '<div class="barra" id="barra-box" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="barra"></i><span id="barra-pct"></span></div>' +
-          '<textarea id="cmd" rows="6" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
+          '<textarea id="cmd" rows="8" aria-label="Mensagem da IA e comandos" placeholder="Escreva um comando para a IA. Ex.: responda que amanhã eu ligo às 10h · faça um resumo · crie o lead · mande os horários"></textarea>' +
+          '<div class="vel"><label for="vel">Velocidade</label><input type="range" id="vel" min="60" max="900" step="10" list="vel-padrao" aria-describedby="vel-n"><datalist id="vel-padrao"><option id="vel-pd" value="220"></option></datalist>' +
+          '<output id="vel-n" for="vel">220</output><small class="mut">car/min</small></div>' +
           '<div class="linha"><button class="bt mic" id="mic" aria-pressed="false" title="Falar o comando"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg><span>Falar</span></button>' +
           '<button class="bt pri" id="cmd-ir">Enviar</button></div><small class="mut" id="mic-st"></small></section>' +
-        '<section class="res" id="res"></section>' +
         '<section class="grupo" id="grupo" hidden></section>' +
+        '<section class="res" id="res"></section>' +
         '<footer class="rodape"><a href="' + ADMIN + '" target="_blank" rel="noopener" title="Regras, fluxos, tempos e registro">Admin</a> · <span id="quem"></span> · <button class="lk" id="sair">Desconectar</button> · <button class="lk" id="diag" title="Copia só a estrutura da página, sem o texto das mensagens">Diagnóstico</button></footer>' +
       '</div>' +
     '</div></aside>' +
@@ -120,7 +123,14 @@
     $('#tk-sub').textContent = !S.ajustes.takeover ? 'desligado' : S.pausado ? 'em pausa' : 'responde sozinha as conversas individuais';
     $('#pausar').textContent = S.pausado ? 'Retomar IA' : 'Pausar IA';
     $('#pausar').setAttribute('aria-pressed', String(S.pausado));
+    if (!S.vel) $('#vel').value = S.ajustes.velocidade;
+    $('#vel-pd').value = S.ajustes.velocidade;
+    $('#vel-n').textContent = velAtual();
+    $('#vel').title = 'Padrão (Ajustes do admin): ' + S.ajustes.velocidade + ' car/min';
   }
+  /** velocidade da digitação: o controle do painel vale na hora; o padrão continua nos Ajustes do admin */
+  function velAtual() { return S.vel || S.ajustes.velocidade; }
+  $('#vel').oninput = function () { S.vel = Number(this.value) === S.ajustes.velocidade ? 0 : Number(this.value); $('#vel-n').textContent = velAtual(); };
   $('#parar').onclick = function () { if (S.acao) S.acao.parar = true; };
   function esperar(ms, rotulo, ac) {
     return new Promise(function (fim) {
@@ -141,6 +151,7 @@
     try {
       return await W.digitar(texto, C.ritmoDigitacao(texto, S.ajustes), {
         parar: function () { return (ac && ac.parar) || S.teclouEm > ini; },
+        escala: function () { return S.ajustes.velocidade / velAtual(); },
         progresso: function (p) {
           agora('Digitando na caixa…', 'digitando', p);
           if (esp) $('#cmd').value = texto.slice(0, Math.round(p * texto.length));
@@ -177,7 +188,7 @@
   function desenharConversa(c) {
     var el = $('#conv');
     if (!c) { el.innerHTML = '<p class="mut">Abra uma conversa no WhatsApp.</p>'; return; }
-    if (c.grupo) { el.innerHTML = '<div class="conv-cab"><b>' + esc(c.nome) + '</b><span class="tag">Grupo</span></div><p class="mut">Em grupos a IA não responde sozinha. Use o comando para pedir um resumo ou uma sugestão.</p>'; return; }
+    if (c.grupo) { el.innerHTML = '<div class="conv-cab"><b>' + esc(c.nome) + '</b><span class="tag">Grupo</span></div>'; return; }
     var st = estado(c), k = st.contato || {};
     var fone = k.telefone || foneDaChave(c.chave);
     var ativo = raiz.activeElement && el.contains(raiz.activeElement);
@@ -412,13 +423,78 @@
     };
   })();
 
-  /* ---------------- grupos ---------------- */
+  /* ---------------- grupos: área abaixo do box ---------------- */
+  var MODO_G = { aprovar: 'Você aprova', auto: 'Automático', desligado: 'IA desligada' };
+  /** cartão compacto: texto + Aprovar (digita e envia) · Editar · Outra (opcional) · Descartar */
+  function cartaoAprovar(rotulo, texto, o) {
+    var id = 'a' + Math.random().toString(36).slice(2, 8);
+    return { html: '<div class="cartao g-cartao" id="' + id + '"><div class="cartao-rot">' + esc(rotulo) + '</div><textarea rows="3" readonly aria-label="' + esc(rotulo) + '">' + esc(texto) + '</textarea>' +
+      '<div class="linha"><button class="bt pri" data-a="ok">' + esc(o.rotOk || 'Aprovar e enviar') + '</button><button class="bt mini" data-a="editar">Editar</button>' + (o.outra ? '<button class="bt mini" data-a="outra">Outra</button>' : '') + '<button class="bt mini" data-a="fora">Descartar</button></div></div>',
+      ligar: function () {
+        var el = $('#' + id); if (!el) return; var ta = el.querySelector('textarea');
+        el.querySelector('[data-a="ok"]').onclick = function () { if (o.antes) o.antes(); usarTexto(ta.value, true, o); };
+        el.querySelector('[data-a="editar"]').onclick = function () { ta.readOnly = false; ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); };
+        var ou = el.querySelector('[data-a="outra"]'); if (ou) ou.onclick = o.outra;
+        el.querySelector('[data-a="fora"]').onclick = function () { el.remove(); if (o.descartar) o.descartar(); if (o.logId) api({ acao: 'ext_registrar', log_id: o.logId, status: 'descartado' }).catch(function () { }); };
+      } };
+  }
   function mostrarGrupo(r, c) {
     var g = $('#grupo'); g.hidden = false;
-    g.innerHTML = '<h3>Assuntos do grupo</h3>' + ((r.topicos || []).length ? '<ul class="topicos">' + r.topicos.map(function (t) { return '<li><b>' + esc(t.assunto) + '</b> ' + esc(t.resumo) + '</li>'; }).join('') + '</ul>' : '<p class="mut">Sem assuntos novos.</p>') +
-      (r.relevante ? '<p class="tag rel">Assunto com a empresa</p>' : '') + '<div id="g-sug"></div><button class="bt mini" id="g-ja">Analisar de novo</button>';
-    if (r.texto) { var k = cartao('Sugestão para o grupo', r.texto, { logId: r.log_id, ferramenta: 'grupo' }); $('#g-sug').innerHTML = k.html; k.ligar(); }
+    var cfg = r.grupo_cfg || {}, modo = MODO_G[cfg.modo] || MODO_G.aprovar;
+    if (cfg.modo === 'auto') modo += ' · até ' + cfg.limite_dia + '/dia';
+    var h = '<div class="g-cab"><b>No grupo</b><span class="tag' + (cfg.modo === 'auto' ? ' ok' : '') + '">' + esc(modo) + '</span><button class="lk" id="g-ja">Analisar de novo</button></div>';
+    if (r.desligado) h += '<p class="mut">A IA está desligada neste grupo. Mude em Admin › WhatsApp Manager › Grupos.</p>';
+    else {
+      var tps = (r.topicos || []).slice(0, 3);
+      h += tps.length ? '<ul class="topicos">' + tps.map(function (t) { return '<li><b>' + esc(t.assunto) + '</b> ' + esc(t.resumo) + '</li>'; }).join('') + '</ul>' : '<p class="mut">Sem assuntos novos para a empresa.</p>';
+      h += '<div id="g-sug"></div><div id="g-int"></div><div id="g-dica"></div>';
+    }
+    g.innerHTML = h;
     $('#g-ja').onclick = function () { analisarGrupo(c || W.conversaAberta(), true); };
+    if (r.desligado) return;
+    if (r.texto && !r.enviado) {
+      var k = cartaoAprovar(r.relevante ? 'Resposta sugerida' : 'Sugestão (assunto pouco ligado à empresa)', r.texto, { logId: r.log_id, ferramenta: 'grupo', descartar: function () { r.enviado = true; } , antes: function () { r.enviado = true; } });
+      $('#g-sug').innerHTML = k.html; k.ligar();
+    }
+    (r.interesse || []).forEach(function (x, i) {
+      $('#g-int').insertAdjacentHTML('beforeend', '<div class="g-int"><div class="cartao-rot">Interesse · <b>' + esc(x.autor) + '</b>' + (x.motivo ? ' · ' + esc(x.motivo) : '') + '</div>' +
+        '<textarea rows="3" aria-label="Mensagem para o privado de ' + esc(x.autor) + '">' + esc(x.mensagem) + '</textarea>' +
+        '<div class="linha"><button class="bt pri" data-priv="' + i + '">Abrir privado e digitar</button><button class="bt mini" data-cop="' + i + '">Copiar</button></div></div>');
+      var chaveAviso = c.chave + '|' + x.autor;
+      if (!S.avisados[chaveAviso]) { S.avisados[chaveAviso] = true; msgBg({ tipo: 'aviso', titulo: 'Interesse no grupo ' + c.nome, texto: x.autor + (x.motivo ? ': ' + x.motivo : '') }); }
+    });
+    $$('#g-int [data-cop]').forEach(function (b) { b.onclick = function () { var t = b.closest('.g-int').querySelector('textarea').value; navigator.clipboard.writeText(t).then(function () { agora('Copiado.', 'ok'); }); }; });
+    $$('#g-int [data-priv]').forEach(function (b) { b.onclick = function () { abrirPrivado(r.interesse[+b.dataset.priv].autor, b.closest('.g-int').querySelector('textarea').value); }; });
+    if (r.conteudo_devido && cfg.conteudo !== false) mostrarDica(c, false);
+  }
+  /** puxa para o privado: abre a conversa da pessoa (se estiver na lista) e digita a mensagem na caixa, sem enviar */
+  async function abrirPrivado(autor, texto) {
+    try { await navigator.clipboard.writeText(texto); } catch (e) { /* sem área de transferência */ }
+    var linha = W.linhaPorNome(autor);
+    if (!linha) return agora('Copiei a mensagem. Procure ' + autor + ' na lista do WhatsApp, abra a conversa e cole.', 'alerta');
+    agora('Abrindo a conversa com ' + autor + '…', 'pensando');
+    W.abrir(linha);
+    for (var i = 0; i < 20; i++) { await new Promise(function (ok) { setTimeout(ok, 200); }); var a = W.conversaAberta(); if (a && !a.grupo && a.nome.toLowerCase() === autor.toLowerCase()) break; }
+    var ab = W.conversaAberta();
+    if (!ab || ab.grupo) return agora('Não consegui abrir a conversa. A mensagem está copiada: cole no privado de ' + autor + '.', 'alerta');
+    usarTexto(texto, false, { ferramenta: 'grupo' });
+  }
+  /** dica da semana: a IA sugere, você aprova antes de postar */
+  async function mostrarDica(c, outra) {
+    var box = $('#g-dica'); if (!box) return;
+    var d = S.dica[c.chave];
+    if (d && d.postada) return;
+    if (!d || outra) {
+      box.innerHTML = '<p class="mut">Preparando a dica da semana…</p>';
+      try { var r = await ia('conteudo_grupo', c); d = S.dica[c.chave] = { texto: r.texto, tema: r.tema, logId: r.log_id }; }
+      catch (e) { box.innerHTML = '<p class="erro">' + esc(e.message) + '</p>'; return; }
+      if (!mesmaConversa(c) || !$('#g-dica')) return;
+      box = $('#g-dica');
+    }
+    if (!d.texto) { box.innerHTML = ''; return; }
+    var k = cartaoAprovar('Dica da semana' + (d.tema ? ' · ' + d.tema : ''), d.texto, { logId: d.logId, ferramenta: 'conteudo_grupo', rotOk: 'Aprovar e postar',
+      antes: function () { d.postada = true; }, descartar: function () { d.postada = true; }, outra: function () { mostrarDica(c, true); } });
+    box.innerHTML = k.html; k.ligar();
   }
   async function analisarGrupo(c, manual) {
     if (!c || !c.grupo) return;
@@ -427,7 +503,7 @@
       var r = await ia('grupo', c);
       S.analiseGrupo[c.chave] = { em: Date.now(), r: r };
       if (mesmaConversa(c)) mostrarGrupo(r, c);
-      agora(r.relevante ? 'Grupo: há assunto com a empresa.' : 'Grupo analisado.', r.relevante ? 'alerta' : 'ok');
+      agora(r.desligado ? 'IA desligada neste grupo.' : (r.interesse || []).length ? 'Grupo: alguém mostrou interesse.' : r.relevante ? 'Grupo: há assunto com a empresa.' : 'Grupo analisado.', r.relevante || (r.interesse || []).length ? 'alerta' : 'ok');
     } catch (e) { if (manual) falhou(e); else agora(e.message, 'erro'); }
   }
 
@@ -439,7 +515,7 @@
     try {
       agora('Takeover · lendo a conversa com ' + c.nome + '…', 'pensando');
       var r = await ia(c.grupo ? 'grupo' : 'responder', c, { takeover: true });
-      if (c.grupo) { S.analiseGrupo[c.chave] = { em: Date.now(), r: r }; mostrarGrupo(r, c); }
+      if (c.grupo) { S.analiseGrupo[c.chave] = { em: Date.now(), r: r }; if (r.responder) r.enviado = true; mostrarGrupo(r, c); }
       if (r.escalar) {
         agora(c.nome + ' precisa de você: ' + (r.motivo || 'assunto para a equipe'), 'alerta');
         msgBg({ tipo: 'aviso', titulo: c.nome + ' precisa de você', texto: r.motivo || 'A IA não respondeu: assunto para a equipe.' });
@@ -447,7 +523,7 @@
       }
       if (r.contato) atualizarContato(c, r.contato);
       if (r.fluxo_info) mostrarFluxo(c, r.fluxo_info);
-      if (!r.responder) { agora('Takeover · sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', 'ok'); return; }
+      if (!r.responder) { agora(c.grupo && r.texto ? 'Grupo · resposta pronta para você aprovar.' : 'Takeover · sem resposta' + (r.motivo ? ': ' + r.motivo : '') + '.', c.grupo && r.texto ? 'alerta' : 'ok'); return; }
       var vou = Date.now();
       if (!await esperar(C.espera(S.ajustes), 'Takeover · esperando para digitar', ac)) return cancelar(r, c, 'Parado por você.');
       if (!mesmaConversa(c)) return cancelar(r, c, 'A conversa mudou antes de digitar.');
@@ -493,7 +569,11 @@
   async function tick(forcar) {
     if (!S.conectado || !W.pronto()) return;
     var c = W.conversaAberta();
-    if ((c && c.chave) !== ultimaChave) { if (ultimaChave) res(''); ultimaChave = c && c.chave; S.atual = c; desenharConversa(c); }
+    if ((c && c.chave) !== ultimaChave) {
+      if (ultimaChave) res(''); ultimaChave = c && c.chave; S.atual = c; desenharConversa(c);
+      $('#grupo').hidden = true; $('#grupo').innerHTML = '';
+      if (c && c.grupo) { var an = S.analiseGrupo[c.chave]; if (an) mostrarGrupo(an.r, c); else if (!S.ocupado) analisarGrupo(c, false); }
+    }
     if (!c) return procurarNaoLidas();
     // primeira vez que a conversa aparece: não responde mensagem antiga (só a que chegou agora ou se a IA abriu a conversa)
     var ult = C.ultimaRecebida(c.mensagens);
@@ -506,6 +586,11 @@
     var st = estado(c);
     if (ult && S.tratadas[c.chave] !== ult.id) {
       if (S.ajustes.takeover && !c.grupo) return responderAuto(c);
+      if (c.grupo) {
+        if (Date.now() - (S.leituraGrupo[c.chave] || 0) < 60000) return; // mensagens novas: no máximo uma leitura por minuto em cada grupo
+        S.leituraGrupo[c.chave] = Date.now();
+        return S.ajustes.takeover ? responderAuto(c) : analisarGrupo(c, false).then(function () { S.tratadas[c.chave] = ult.id; });
+      }
     }
     procurarNaoLidas();
   }

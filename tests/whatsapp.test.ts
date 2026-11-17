@@ -1,7 +1,7 @@
 // My WhatsApp Manager: regras compartilhadas (wa-extension/core.js) e regras do servidor (supabase/whatsapp/regras.ts).
 //   deno test --allow-read tests/whatsapp.test.ts
 import "../wa-extension/core.js";
-import { avisoComIA, limparConfig, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/functions/whatsapp/regras.ts";
+import { avisoComIA, conteudoDevido, grupoCfg, limparConfig, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/functions/whatsapp/regras.ts";
 // deno-lint-ignore no-explicit-any
 const C = (globalThis as any).EWaCore;
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`); };
@@ -151,7 +151,7 @@ Deno.test("fluxo vai para o CRM só com os dados completos e o passo de CRM", ()
 Deno.test("resposta do Takeover com fluxo: só fluxos ativos e modelos existentes", () => {
   const cfg = padraoConfig(true);
   const r = normalizar("responder", { responder: true, texto: "Oi", fluxo: { id: "documentos", dados: { nome: "Ana", email: "ANA@X.COM", tipo_caso: "abertura-llc" }, pronto: true } }, cfg);
-  eq(r.fluxo, { id: "documentos", dados: { nome: "Ana", email: "ana@x.com", telefone: "", tipo_caso: "abertura-llc" }, pronto: true });
+  eq(r.fluxo, { id: "documentos", dados: { nome: "Ana", email: "ana@x.com", telefone: "", tipo_caso: "abertura-llc" }, pronto: true, reenviar: false });
   eq(normalizar("responder", { responder: true, texto: "Oi", fluxo: { id: "inventado" } }, cfg).fluxo, null);
   eq(normalizar("responder", { responder: true, texto: "Oi", fluxo: { id: "documentos", dados: { email: "x", tipo_caso: "lua" } } }, cfg).fluxo.dados, { nome: "", email: "", telefone: "", tipo_caso: "" });
 });
@@ -174,4 +174,21 @@ Deno.test("aviso da primeira resposta sempre diz que é assistente virtual (nome
   eq(avisoComIA("Olá! Aqui é o assistente virtual da Endeavor."), "Olá! Aqui é o assistente virtual da Endeavor.");
   eq(avisoComIA("Hi! This is Majorie from Endeavor", "en-US"), "Hi! This is Majorie from Endeavor, virtual assistant.");
   eq(avisoComIA(""), "assistente virtual.");
+});
+
+Deno.test("grupos: ajustes por grupo, interesse e dica da semana", () => {
+  const cfg = limparConfig({ grupos: { "120@g.us": { nome: "Empreendedores", modo: "auto", limite_dia: 50, interesse: false, por_semana: 2 }, "x@g.us": { modo: "qualquer" } } });
+  eq(cfg.grupos["120@g.us"], { nome: "Empreendedores", modo: "auto", limite_dia: 10, interesse: false, conteudo: true, por_semana: 2 });
+  eq(cfg.grupos["x@g.us"].modo, "aprovar", "modo inválido vira aprovar");
+  eq(grupoCfg(cfg, "novo@g.us").modo, "aprovar", "grupo sem ajuste: aprovar (a IA sugere, você aprova)");
+  const t = Date.parse("2026-11-16T12:00:00Z");
+  eq(conteudoDevido(grupoCfg(cfg, "novo@g.us"), 0, t), true, "nunca postou: dica pronta");
+  eq(conteudoDevido(grupoCfg(cfg, "novo@g.us"), t - 3 * 86400_000, t), false, "1 por semana: espera 7 dias");
+  eq(conteudoDevido(cfg.grupos["120@g.us"], t - 4 * 86400_000, t), true, "2 por semana: a cada 3,5 dias");
+  eq(conteudoDevido({ ...cfg.grupos["120@g.us"], modo: "desligado" }, 0, t), false, "grupo desligado: sem dica");
+  const r = normalizar("grupo", { relevante: true, responder: true, texto: "Oi", interesse: [{ autor: "João", motivo: "quer abrir LLC", mensagem: "Oi João, vi sua pergunta no grupo." }, { autor: "", mensagem: "x" }] });
+  eq(r.interesse.length, 1, "interesse sem autor é descartado");
+  eq(normalizar("conteudo_grupo", { texto: "Dica: separe as contas da LLC.", tema: "contas" }).texto, "Dica: separe as contas da LLC.");
+  const e = montarEntrada("conteudo_grupo", C.limparAjustes({}), { nome: "Empreendedores", grupo: true }, [], { cfg, empresa: "Endeavor", grupo_cfg: { modo: "aprovar" }, temas_recentes: "contas" });
+  eq(e.includes("<temas_recentes>contas") && !e.includes("<mensagens>"), true, "dica: sem conversa, com os temas recentes para não repetir");
 });

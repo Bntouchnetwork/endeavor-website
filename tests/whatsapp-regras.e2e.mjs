@@ -22,7 +22,7 @@ function servidorNovo(dono) {
   function f(b) {
     chamadas.push(b);
     switch (b.acao) {
-      case "wa_painel": return { j: { ajustes: A, version: v, config: cfg, config_version: cv, ia: true, hoje: {}, dispositivos: [], conversas: [], empresa: "Acme Imóveis", endeavor: false, dono, pedidos_abertos: 1 } };
+      case "wa_painel": return { j: { ajustes: A, version: v, config: cfg, config_version: cv, ia: true, hoje: {}, dispositivos: [], conversas: [{ chave: "120363@g.us", nome: "Empreendedores FL", grupo: true }, { chave: "1555@c.us", nome: "Maria", grupo: false }], empresa: "Acme Imóveis", endeavor: false, dono, pedidos_abertos: 1 } };
       case "wa_ajustes": Object.assign(A, b.ajustes); v++; return { j: { ajustes: A, version: v } };
       case "wa_config": if (b.version !== cv) return { st: 409, j: { erro: "As regras mudaram." } }; cfg = b.config; cv++; return { j: { config: cfg, config_version: cv } };
       case "wa_sugerir": return { j: b.tipo === "fluxos" ? { fluxos: [{ nome: "Pós-venda", gatilho: "Cliente fechou", passos: [{ tipo: "mensagem", texto: "Boas-vindas" }, { tipo: "avisar_equipe", texto: "Avise" }] }] }
@@ -127,6 +127,22 @@ try {
   await page.click("#fx-salvar");
   await page.waitForFunction(() => /salvos/.test(document.getElementById("fx-m").textContent));
   ok(srv.cfg().regras.find((r) => r.id === "preco").acao === "responder", "remover um fluxo solta as regras que apontavam para ele");
+
+  /* Grupos: o que a IA faz em cada grupo */
+  await page.click(".subtabs >> text=Grupos");
+  await page.waitForSelector(".wa-grupo");
+  ok(await page.locator(".wa-grupo").count() === 1 && (await page.textContent(".wa-grupo-nome")) === "Empreendedores FL", "Grupos: lista só os grupos que a extensão já viu");
+  ok(await page.inputValue('.wa-grupo [data-gk="modo"]') === "aprovar" && (await page.textContent(".wa-risco")).includes("termos do WhatsApp"), "padrão: sugerir e você aprova, com o aviso de risco");
+  ok(await page.locator(".wa-grupo [data-auto]").isHidden(), "limite por dia só aparece no automático");
+  await page.selectOption('.wa-grupo [data-gk="modo"]', "auto");
+  await page.fill('.wa-grupo [data-gk="limite_dia"]', "2");
+  await page.selectOption('.wa-grupo [data-gk="por_semana"]', "2");
+  await page.uncheck('.wa-grupo [data-gk="interesse"]');
+  await page.click("#gr-salvar");
+  await page.waitForFunction(() => /Grupos salvos/.test(document.getElementById("gr-m").textContent));
+  const gg = srv.cfg().grupos["120363@g.us"];
+  ok(gg && gg.modo === "auto" && gg.limite_dia === 2 && gg.por_semana === 2 && gg.interesse === false && gg.nome === "Empreendedores FL", "ajustes do grupo salvos na configuração");
+  await page.screenshot({ path: OUT + "/wa-grupos-admin.png", fullPage: true });
 
   await page.click(".subtabs >> text=Pedidos ao CRM");
   await page.waitForSelector("[data-ped]");

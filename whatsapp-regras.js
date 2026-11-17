@@ -136,6 +136,52 @@
     if (!d.dono) soLeitura(corpo);
   }
 
+  /* ================================================================ Grupos ================================================================ */
+  var MODOS_G = [['aprovar', 'Sugerir e eu aprovo'], ['auto', 'Responder sozinha (com limite por dia)'], ['desligado', 'Desligado']];
+  var G_PADRAO = { modo: 'aprovar', limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 };
+  function grupos(corpo, ctx, call, d) {
+    var esc = ctx.esc, cfg = d.config;
+    cfg.grupos = cfg.grupos || {};
+    var lista = {};
+    (d.conversas || []).filter(function (c) { return c.grupo; }).forEach(function (c) { lista[c.chave] = c.nome; });
+    Object.keys(cfg.grupos).forEach(function (k) { if (!(k in lista)) lista[k] = cfg.grupos[k].nome || k; });
+    var chaves = Object.keys(lista).sort(function (a, b) { return String(lista[a]).localeCompare(String(lista[b])); });
+    corpo.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Grupos</h2>' +
+      '<p class="portal-muted">Em cada grupo a IA escuta os assuntos ligados aos serviços, prepara respostas úteis (sem preço e sem vender), avisa quando alguém mostra interesse, com a mensagem pronta para o privado, e sugere uma dica para postar. Você escolhe o que fica ligado em cada grupo.</p>' +
+      '<p class="wa-risco">Automatizar o WhatsApp Web vai contra os termos do WhatsApp e pode bloquear o número. Nos grupos, vá devagar: comece em “Sugerir e eu aprovo” e use o automático só em poucos grupos, com limite baixo.</p>' +
+      '<div id="gr-lista"></div>' +
+      (chaves.length ? '<div class="portal-btn-row" style="margin-top:1rem"><button class="btn btn--navy" type="button" id="gr-salvar">Salvar grupos</button></div>' : '') +
+      '<p class="portal-alert" id="gr-m" role="status" hidden></p></section>';
+    var l = ctx.$('#gr-lista');
+    if (!chaves.length) { l.innerHTML = '<p class="portal-muted">Nenhum grupo ainda. Abra um grupo no WhatsApp Web com a extensão ligada e ele aparece aqui.</p>'; return; }
+    l.innerHTML = chaves.map(function (k, i) {
+      var g = Object.assign({}, G_PADRAO, cfg.grupos[k] || {});
+      return '<fieldset class="wa-grupo" data-g="' + esc(k) + '"><legend class="wa-grupo-nome">' + esc(lista[k]) + '</legend>' +
+        '<div class="field-row"><div class="field"><label for="gm-' + i + '">O que a IA faz</label><select id="gm-' + i + '" data-gk="modo">' + MODOS_G.map(function (m) { return '<option value="' + m[0] + '"' + (g.modo === m[0] ? ' selected' : '') + '>' + m[1] + '</option>'; }).join('') + '</select></div>' +
+        '<div class="field" data-auto' + (g.modo === 'auto' ? '' : ' hidden') + '><label for="gl-' + i + '">Respostas sozinha por dia</label><input id="gl-' + i + '" data-gk="limite_dia" type="number" min="1" max="10" value="' + g.limite_dia + '"></div></div>' +
+        '<div class="wa-grupo-op" data-ativo' + (g.modo === 'desligado' ? ' hidden' : '') + '>' +
+          '<label class="wa-chave"><input type="checkbox" data-gk="interesse"' + (g.interesse ? ' checked' : '') + '><span>Avisar quando alguém mostrar interesse (mensagem pronta para o privado)</span></label>' +
+          '<label class="wa-chave"><input type="checkbox" data-gk="conteudo"' + (g.conteudo ? ' checked' : '') + '><span>Sugerir uma dica para postar (você aprova)</span></label>' +
+          '<select data-gk="por_semana" aria-label="Dicas por semana"><option value="1"' + (g.por_semana !== 2 ? ' selected' : '') + '>1 por semana</option><option value="2"' + (g.por_semana === 2 ? ' selected' : '') + '>2 por semana</option></select></div></fieldset>';
+    }).join('');
+    l.querySelectorAll('.wa-grupo').forEach(function (fs) {
+      var k = fs.dataset.g;
+      function g() { return (cfg.grupos[k] = Object.assign({}, G_PADRAO, cfg.grupos[k] || {}, { nome: lista[k] })); }
+      fs.querySelectorAll('[data-gk]').forEach(function (el) {
+        el.onchange = el.oninput = function () {
+          var x = g(), c = el.dataset.gk;
+          x[c] = el.type === 'checkbox' ? el.checked : (c === 'modo' ? el.value : Number(el.value));
+          if (c === 'modo') { fs.querySelector('[data-auto]').hidden = el.value !== 'auto'; fs.querySelector('[data-ativo]').hidden = el.value === 'desligado'; }
+        };
+      });
+    });
+    ctx.$('#gr-salvar').onclick = async function () {
+      var m = ctx.$('#gr-m'); msg(m, 'Salvando…');
+      try { await salvarConfig(call, d); cfg = d.config; msg(m, 'Grupos salvos. A extensão usa na próxima mensagem do grupo.', 'ok'); } catch (e) { msg(m, e.message, 'erro'); }
+    };
+    if (!d.dono) soLeitura(corpo);
+  }
+
   /* ================================================================ Fluxos e modelos de documentos ================================================================ */
   function fluxos(corpo, ctx, call, d) {
     var esc = ctx.esc, cfg = d.config;
@@ -303,5 +349,5 @@
     });
   }
 
-  window.EWaRegras = { perfilRegras: perfilRegras, fluxos: fluxos, pedidos: pedidos, soLeitura: soLeitura };
+  window.EWaRegras = { perfilRegras: perfilRegras, fluxos: fluxos, grupos: grupos, pedidos: pedidos, soLeitura: soLeitura };
 })();

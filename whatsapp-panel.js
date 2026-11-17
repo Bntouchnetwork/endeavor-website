@@ -38,7 +38,7 @@
   function param(n) { var m = location.hash.match(new RegExp('[?&]' + n + '=([^&]+)')); return m ? decodeURIComponent(m[1]) : ''; }
   function quando(iso) { if (!iso) return '—'; try { return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)); } catch (e) { return iso; } }
   function abas(atual) {
-    return '<nav class="subtabs" aria-label="WhatsApp Manager">' + [['inicio', 'Início'], ['regras', 'Perfil e regras'], ['fluxos', 'Fluxos'], ['pedidos', 'Pedidos ao CRM'], ['registro', 'Registro'], ['ajustes', 'Ajustes']].map(function (a) {
+    return '<nav class="subtabs" aria-label="WhatsApp Manager">' + [['inicio', 'Início'], ['regras', 'Perfil e regras'], ['fluxos', 'Fluxos'], ['grupos', 'Grupos'], ['pedidos', 'Pedidos ao CRM'], ['registro', 'Registro'], ['ajustes', 'Ajustes']].map(function (a) {
       return '<a href="' + rota(a[0]) + '"' + (a[0] === atual ? ' aria-current="page"' : '') + '>' + a[1] + '</a>'; }).join('') + '</nav>';
   }
   function pill(s) { var p = ST[s] || [s, '']; return '<span class="pill ' + p[1] + '">' + p[0] + '</span>'; }
@@ -56,10 +56,11 @@
       '<div class="portal-btn-row"><a class="btn btn--ghost btn--sm" href="' + ZIP + '" download id="wa-zip">Baixar extensão</a><a class="btn btn--navy btn--sm" href="https://web.whatsapp.com/" target="_blank" rel="noopener" id="wa-abrir">Abrir WhatsApp Web</a></div></div>';
     view.innerHTML = cab + abas(aba) + '<div id="wa-corpo"></div>';
     var corpo = ctx.$('#wa-corpo');
-    if (!d.dono && ['regras', 'fluxos', 'ajustes'].indexOf(aba) > -1) corpo.insertAdjacentHTML('beforebegin', '<p class="portal-alert portal-alert--info">Só o titular da empresa muda o perfil, as regras, os fluxos e os ajustes. Você pode ver.</p>');
+    if (!d.dono && ['regras', 'fluxos', 'grupos', 'ajustes'].indexOf(aba) > -1) corpo.insertAdjacentHTML('beforebegin', '<p class="portal-alert portal-alert--info">Só o titular da empresa muda o perfil, as regras, os fluxos e os ajustes. Você pode ver.</p>');
     if (aba === 'registro') return registro(corpo, ctx, call);
     if (aba === 'regras') return EWaRegras.perfilRegras(corpo, ctx, call, d);
     if (aba === 'fluxos') return EWaRegras.fluxos(corpo, ctx, call, d);
+    if (aba === 'grupos') return EWaRegras.grupos(corpo, ctx, call, d);
     if (aba === 'pedidos') return EWaRegras.pedidos(corpo, ctx, call, d);
     if (aba === 'ajustes') return ajustes(corpo, ctx, call, d);
     return inicio(corpo, ctx, call, d);

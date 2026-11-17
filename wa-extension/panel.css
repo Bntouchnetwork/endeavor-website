@@ -97,7 +97,7 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 #app:not([hidden]) { display: flex; }
 .corpo { display: flex; flex-direction: column; min-height: 0; }
 .res { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-.trabalho #cmd { display: block; margin-top: 10px; min-height: 120px; resize: none; line-height: 1.45; }
+.trabalho #cmd { display: block; margin-top: 10px; min-height: 156px; resize: none; line-height: 1.45; }
 .trabalho #cmd.espelho { background: rgba(18,140,74,.06); border-color: var(--verde-esc); cursor: default; }
 .trabalho .linha { margin-top: 8px; }
 .trabalho { display: block; flex: 0 0 auto; }
@@ -120,6 +120,21 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
 .tag.ok { background: #e6f6ec; color: var(--verde-esc); font-weight: 600; }
 .rodape { font-size: 11px; color: var(--mut); text-align: center; padding: 2px 0 0; }
 
+/* ---------- 1.4.0: velocidade e área dos grupos ---------- */
+.vel { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; }
+.vel label { color: var(--mut); margin: 0; white-space: nowrap; }
+.vel input[type=range] { flex: 1; min-width: 0; padding: 0; border: 0; background: transparent; accent-color: var(--verde-esc); height: 22px; }
+.vel output { min-width: 3ch; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--texto); }
+.grupo:not([hidden]) { display: block; flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+.g-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.g-cab b { flex: 1; }
+.grupo .topicos { margin: 2px 0 8px; font-size: 12px; }
+.grupo .topicos li { margin-bottom: 2px; }
+.g-cartao textarea, .g-int textarea { resize: none; font-size: 13px; line-height: 1.4; }
+.g-cartao textarea[readonly] { background: rgba(18,140,74,.05); }
+.g-int { border: 1px solid #f2d39b; background: rgba(246,199,107,.08); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+#g-dica .cartao { border-style: dashed; }
+
 /* modo escuro (no fim, para valer sobre as regras acima) */
 @media (prefers-color-scheme: dark) {
   .bt { background: #2a3942; border-color: #3b4a54; color: #e9edef; }
@@ -140,3 +155,4 @@ p.fluxo { margin: 6px 0 0; font-size: 12px; color: var(--verde-esc); background:
   .trabalho .barra span { color: var(--texto); }
 }
 @media (prefers-color-scheme: dark) { .trabalho #cmd.espelho { background: rgba(37,211,102,.08) !important; } }
+@media (prefers-color-scheme: dark) { .g-cartao textarea[readonly] { background: rgba(37,211,102,.06) !important; } .g-int { border-color: #5a4a22; background: rgba(246,199,107,.06); } .vel input[type=range] { accent-color: #25d366; background: transparent !important; } }
