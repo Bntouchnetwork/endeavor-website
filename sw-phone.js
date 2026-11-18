@@ -1,7 +1,7 @@
 /* Service worker do Endeavor Phone: guarda só a "casca" do app (HTML, CSS, JS e ícones) para abrir rápido.
    Nunca guarda respostas da API, do login ou dos dados (ligações, SMS, contatos). */
-var CACHE = 'endeavor-phone-20261201';
-var SHELL = ['phone.html', 'telefonia.css?v=20261201', 'tel-phone.js?v=20261201', 'app-config.js', 'img/phone-192.png', 'img/phone-512.png', 'phone.webmanifest'];
+var CACHE = 'endeavor-phone-20261204';
+var SHELL = ['phone.html', 'telefonia.css?v=20261204', 'tel-phone.js?v=20261204', 'app-config.js', 'img/phone-192.png', 'img/phone-512.png', 'phone.webmanifest'];
 self.addEventListener('install', function (e) { e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(SHELL); }).then(function () { return self.skipWaiting(); })); });
 self.addEventListener('activate', function (e) {
   e.waitUntil(caches.keys().then(function (ks) { return Promise.all(ks.filter(function (k) { return k.indexOf('endeavor-phone-') === 0 && k !== CACHE; }).map(function (k) { return caches.delete(k); })); }).then(function () { return self.clients.claim(); }));

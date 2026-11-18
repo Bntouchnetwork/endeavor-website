@@ -78,6 +78,25 @@ try {
   ok(depois.x < antes.x - 200, "telefone: arrasta pela tela");
   ok(!!(await page.evaluate(() => localStorage.getItem("endeavor-phone-pos"))), "telefone: guarda a posição");
 
+  // redimensionar pelo canto
+  const t0 = await page.locator(".tp").boundingBox();
+  const h = await page.locator(".tp-redim").boundingBox();
+  await page.mouse.move(h.x + 10, h.y + 10); await page.mouse.down(); await page.mouse.move(h.x + 90, h.y + 160, { steps: 8 }); await page.mouse.up();
+  const t1 = await page.locator(".tp").boundingBox();
+  const prop = (b) => b.height / b.width;
+  ok(t1.width > t0.width * 1.15 && Math.abs(prop(t1) - prop(t0)) < 0.08, "redimensionar: cresce mantendo a proporção de celular");
+  ok(t1.y + t1.height <= 900 + 1 && t1.x + t1.width <= 1280 + 1, "redimensionar: não sai da tela");
+  const tam = await page.evaluate(() => JSON.parse(localStorage.getItem("endeavor-phone-tam")));
+  ok(tam > 1.1 && tam <= 1.6, "redimensionar: tamanho salvo no navegador (" + tam + ")");
+  await page.screenshot({ path: OUT + "/tel-portal-grande.png" });
+  await page.locator(".tp-redim").focus(); await page.keyboard.press("ArrowDown");
+  ok(await page.evaluate(() => JSON.parse(localStorage.getItem("endeavor-phone-tam"))) < tam, "redimensionar: setas do teclado");
+  await page.dblclick(".tp-redim");
+  ok(Math.abs((await page.locator(".tp").boundingBox()).width - t0.width) < 2, "duplo clique volta ao tamanho normal");
+  await page.mouse.move(h.x + 10, h.y + 10); await page.mouse.down(); await page.mouse.move(h.x - 200, h.y - 400, { steps: 8 }); await page.mouse.up();
+  ok((await page.locator(".tp").boundingBox()).width >= 330 * 0.8 - 2, "tamanho mínimo respeitado");
+  await page.dblclick(".tp-redim");
+
   // teclado e ligação
   await page.click(".tp-grade [data-app=telefone]");
   for (const k of "4075550123") await page.click(`.tp-tecla[data-k="${k}"]`);

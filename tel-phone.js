@@ -11,21 +11,21 @@
       editar: 'Editar', buscar: 'Buscar', crm: 'Puxar do CRM', importar: 'Importar selecionados', nada: 'Nada por aqui ainda.', enviar: 'Enviar', escreva: 'Mensagem', novaMsg: 'Nova mensagem', para: 'Para',
       ouvido: 'Marcar como ouvido', transcricao: 'Transcrição', perdida: 'Perdida', recebida: 'Recebida', feita: 'Feita', recusada: 'Recusada', vmail: 'Voicemail', abrirTel: 'Abrir telefone', voltar: 'Voltar',
       waTexto: 'Por enquanto o WhatsApp abre numa janela ao lado. Com o adicional “Conectar WhatsApp” (API oficial), as conversas aparecem aqui dentro.', waAbrir: 'Abrir WhatsApp Web', optout: 'Esta pessoa pediu para não receber SMS (STOP).',
-      arraste: 'Arraste para mover', semNumero: 'A empresa ainda não tem número ativo.', partes: 'partes', entregue: 'Entregue', falhou: 'Falhou', naFila: 'Enviando' },
+      redim: 'Arraste o canto para mudar o tamanho (setas também; duplo clique volta ao normal)', arraste: 'Arraste para mover', semNumero: 'A empresa ainda não tem número ativo.', partes: 'partes', entregue: 'Entregue', falhou: 'Falhou', naFila: 'Enviando' },
     en: { telefone: 'Phone', teclado: 'Keypad', recentes: 'Recents', contatos: 'Contacts', mensagens: 'Messages', voicemail: 'Voicemail', whatsapp: 'WhatsApp', inicio: 'Home', ligar: 'Call', apagar: 'Delete',
       minimizar: 'Minimize', fechar: 'Close', demo: 'Demo', demoChamada: 'Demo: no real call', mudo: 'Mute', teclas: 'Keypad', desligar: 'End', atender: 'Answer', recusar: 'Decline',
       chamando: 'Calling…', emChamada: 'On call', recebendo: 'Incoming call', novo: 'New contact', salvar: 'Save', cancelar: 'Cancel', nome: 'Name', tel: 'Phone', email: 'Email', emp: 'Company', notas: 'Notes',
       editar: 'Edit', buscar: 'Search', crm: 'Import from CRM', importar: 'Import selected', nada: 'Nothing here yet.', enviar: 'Send', escreva: 'Message', novaMsg: 'New message', para: 'To',
       ouvido: 'Mark as heard', transcricao: 'Transcript', perdida: 'Missed', recebida: 'Incoming', feita: 'Outgoing', recusada: 'Declined', vmail: 'Voicemail', abrirTel: 'Open phone', voltar: 'Back',
       waTexto: 'For now WhatsApp opens in a window next to this one. With the “Connect WhatsApp” add-on (official API), chats show up right here.', waAbrir: 'Open WhatsApp Web', optout: 'This person opted out of SMS (STOP).',
-      arraste: 'Drag to move', semNumero: 'The company has no active number yet.', partes: 'parts', entregue: 'Delivered', falhou: 'Failed', naFila: 'Sending' },
+      redim: 'Drag the corner to resize (arrow keys work too; double-click resets)', arraste: 'Drag to move', semNumero: 'The company has no active number yet.', partes: 'parts', entregue: 'Delivered', falhou: 'Failed', naFila: 'Sending' },
     es: { telefone: 'Teléfono', teclado: 'Teclado', recentes: 'Recientes', contatos: 'Contactos', mensagens: 'Mensajes', voicemail: 'Buzón de voz', whatsapp: 'WhatsApp', inicio: 'Inicio', ligar: 'Llamar', apagar: 'Borrar',
       minimizar: 'Minimizar', fechar: 'Cerrar', demo: 'Demostración', demoChamada: 'Demostración: ninguna llamada real', mudo: 'Silencio', teclas: 'Teclado', desligar: 'Colgar', atender: 'Contestar', recusar: 'Rechazar',
       chamando: 'Llamando…', emChamada: 'En llamada', recebendo: 'Llamada entrante', novo: 'Nuevo contacto', salvar: 'Guardar', cancelar: 'Cancelar', nome: 'Nombre', tel: 'Teléfono', email: 'Correo', emp: 'Empresa', notas: 'Notas',
       editar: 'Editar', buscar: 'Buscar', crm: 'Traer del CRM', importar: 'Importar seleccionados', nada: 'Nada por aquí todavía.', enviar: 'Enviar', escreva: 'Mensaje', novaMsg: 'Nuevo mensaje', para: 'Para',
       ouvido: 'Marcar como escuchado', transcricao: 'Transcripción', perdida: 'Perdida', recebida: 'Recibida', feita: 'Realizada', recusada: 'Rechazada', vmail: 'Buzón', abrirTel: 'Abrir teléfono', voltar: 'Volver',
       waTexto: 'Por ahora WhatsApp se abre en una ventana al lado. Con el adicional “Conectar WhatsApp” (API oficial), los chats aparecen aquí dentro.', waAbrir: 'Abrir WhatsApp Web', optout: 'Esta persona pidió no recibir SMS (STOP).',
-      arraste: 'Arrastre para mover', semNumero: 'La empresa aún no tiene número activo.', partes: 'partes', entregue: 'Entregado', falhou: 'Falló', naFila: 'Enviando' }
+      redim: 'Arrastre la esquina para cambiar el tamaño (también con flechas; doble clic restablece)', arraste: 'Arrastre para mover', semNumero: 'La empresa aún no tiene número activo.', partes: 'partes', entregue: 'Entregado', falhou: 'Falló', naFila: 'Enviando' }
   };
   var ICONES = {
     telefone: '<path d="M7.5 3.5h2.6l1.4 4-2 1.6a12 12 0 0 0 5.4 5.4l1.6-2 4 1.4v2.6a2 2 0 0 1-2.2 2A16 16 0 0 1 5.5 5.7a2 2 0 0 1 2-2.2z" fill="currentColor"/>',
@@ -62,13 +62,16 @@
     el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Endeavor Phone');
     el.innerHTML = (S.modo === 'janela' ? '<div class="tp-barra" title="' + t('arraste') + '"><span class="tp-grip" aria-hidden="true"></span><button type="button" class="tp-bt-min" aria-label="' + t('minimizar') + '">–</button><button type="button" class="tp-bt-x" aria-label="' + t('fechar') + '">×</button></div>' : '') +
       '<div class="tp-aparelho"><div class="tp-ilha" aria-hidden="true"></div><div class="tp-status"><span class="tp-hora">' + hora() + '</span>' + (S.demo ? '<span class="tp-demo">' + t('demo') + '</span>' : '') + '<span class="tp-sinal" aria-hidden="true">●●●</span></div>' +
-      '<div class="tp-tela" aria-live="polite"></div><button type="button" class="tp-home" aria-label="' + t('inicio') + '"></button></div>';
+      '<div class="tp-tela" aria-live="polite"></div><button type="button" class="tp-home" aria-label="' + t('inicio') + '"></button></div>' +
+      (S.modo === 'janela' ? '<button type="button" class="tp-redim" aria-label="' + t('redim') + '" title="' + t('redim') + '"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M14 6v8H6M14 10v4h-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>' : '');
     document.body.appendChild(el);
     S.el = el; S.tela_el = el.querySelector('.tp-tela');
     if (S.modo === 'janela') {
       var pos = ler('pos');
       if (pos && window.innerWidth > 640) { el.style.left = Math.min(Math.max(0, pos.x), window.innerWidth - 300) + 'px'; el.style.top = Math.min(Math.max(0, pos.y), window.innerHeight - 200) + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto'; }
+      escala(el, ler('tam') || 1);
       arrastar(el, el.querySelector('.tp-barra'));
+      redimensionar(el, el.querySelector('.tp-redim'));
       el.querySelector('.tp-bt-min').onclick = minimizar;
       el.querySelector('.tp-bt-x').onclick = function () { if (S.chamada && !window.confirm(t('desligar') + '?')) return; fechar(); };
     }
@@ -113,10 +116,50 @@
     });
     alca.addEventListener('pointermove', function (e) {
       if (!ini) return;
-      var x = Math.min(Math.max(0, e.clientX - ini.x), window.innerWidth - el.offsetWidth), y = Math.min(Math.max(0, e.clientY - ini.y), window.innerHeight - 60);
+      var x = Math.min(Math.max(0, e.clientX - ini.x), window.innerWidth - el.offsetWidth), y = Math.min(Math.max(0, e.clientY - ini.y), Math.max(0, window.innerHeight - el.offsetHeight)); // o celular inteiro (e a alça de tamanho) fica visível
       el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto';
     });
     alca.addEventListener('pointerup', function () { if (!ini) return; ini = null; el.classList.remove('tp--arrastando'); var r = el.getBoundingClientRect(); guardar('pos', { x: r.left, y: r.top }); });
+  }
+
+  // tamanho do celular: o aparelho inteiro cresce na mesma proporção (CSS zoom), de 80% a 160%, salvo no navegador
+  var BASE_W = 330, BASE_H = 690, MIN = 0.8, MAX = 1.6;
+  function limiteEscala() { return Math.max(MIN, Math.min(MAX, (window.innerHeight - 80) / 660, (window.innerWidth - 24) / BASE_W)); } // 660 = altura do aparelho; 80 = barra + folga
+  function escala(el, k) {
+    k = Math.round(Math.max(MIN, Math.min(limiteEscala(), Number(k) || 1)) * 100) / 100;
+    el.style.setProperty('--tp-k', k);
+    el.dataset.escala = k;
+    // não deixa o celular sair da tela ao crescer
+    var r = el.getBoundingClientRect();
+    if (el.style.left && r.right > window.innerWidth) el.style.left = Math.max(0, window.innerWidth - r.width - 8) + 'px';
+    if (el.style.top && r.bottom > window.innerHeight) el.style.top = Math.max(0, window.innerHeight - r.height - 8) + 'px';
+    return k;
+  }
+  function redimensionar(el, alca) {
+    var ini = null;
+    alca.addEventListener('pointerdown', function (e) {
+      if (window.innerWidth <= 640) return;
+      e.preventDefault();
+      var r = el.getBoundingClientRect();
+      // fixa o canto de cima à esquerda, para o celular crescer na direção do puxão
+      el.style.left = r.left + 'px'; el.style.top = r.top + 'px'; el.style.right = 'auto'; el.style.bottom = 'auto';
+      ini = { x: e.clientX, y: e.clientY, k: Number(el.dataset.escala) || 1 };
+      alca.setPointerCapture(e.pointerId); el.classList.add('tp--redim');
+    });
+    alca.addEventListener('pointermove', function (e) {
+      if (!ini) return;
+      var d = Math.max((e.clientX - ini.x) / BASE_W, (e.clientY - ini.y) / BASE_H);
+      escala(el, ini.k + d);
+    });
+    function fim() { if (!ini) return; ini = null; el.classList.remove('tp--redim'); guardar('tam', Number(el.dataset.escala)); var r = el.getBoundingClientRect(); guardar('pos', { x: r.left, y: r.top }); }
+    alca.addEventListener('pointerup', fim); alca.addEventListener('pointercancel', fim);
+    alca.addEventListener('dblclick', function () { guardar('tam', escala(el, 1)); });
+    alca.addEventListener('keydown', function (e) {
+      var k = Number(el.dataset.escala) || 1, d = { ArrowUp: 0.05, ArrowRight: 0.05, ArrowDown: -0.05, ArrowLeft: -0.05 }[e.key];
+      if (d) { e.preventDefault(); guardar('tam', escala(el, k + d)); }
+      else if (e.key === 'Home') { e.preventDefault(); guardar('tam', escala(el, 1)); }
+    });
+    window.addEventListener('resize', function () { if (document.body.contains(el)) escala(el, Number(el.dataset.escala) || 1); });
   }
 
   /* ---------- novidades: SMS, voicemail e ligação tocando (a cada 5 s) ---------- */
