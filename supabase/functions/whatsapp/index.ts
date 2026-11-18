@@ -27,7 +27,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { hubJson, hubOn, HubFail } from "../_shared/hub-ai.ts";
 import "./core.js";
-import { avisoComIA, conteudoDevido, dentroJanela, FERRAMENTAS, grupoCfg, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, parecido, prontoParaCRM, proximoDepoisDoEnvio, proximoHorario, reclamacao, STATUS, violaProtecao } from "./regras.ts";
+import { avisoComIA, conteudoDevido, dentroJanela, FERRAMENTAS, grupoCfg, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, parecido, prontoParaCRM, proximoDepoisDoEnvio, proximoHorario, reclamacao, STATUS, tipoDoPost, violaProtecao } from "./regras.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -346,10 +346,12 @@ async function lembreteIA(k: Conta, d: { id: string | null; user_id: string }, c
     // trava: enquanto a extensão posta, não repete (volta a valer em 2 h se nada for enviado)
     await estadoLembrete(conv.id, { ...st, proximo: new Date(Date.now() + 2 * 3600_000).toISOString() });
   }
-  const { data: ant } = await db.from("wa_log").select("texto, chave").eq("conta", k.conta).eq("ferramenta", "lembrete").eq("status", "enviado").order("id", { ascending: false }).limit(30);
+  const { data: ant } = await db.from("wa_log").select("texto, chave, detalhes").eq("conta", k.conta).eq("ferramenta", "lembrete").eq("status", "enviado").order("id", { ascending: false }).limit(30);
   const anteriores = (ant || []).filter((x: Any) => x.texto);
+  // dica útil, lembrete de serviços ou os dois alternados (a maioria dicas)
+  const tipo = tipoDoPost(auto, (ant || []).filter((x: Any) => x.chave === c.chave).map((x: Any) => x.detalhes?.tipo === "dica" ? "dica" : "lembrete"));
   const recentes = [...anteriores.filter((x: Any) => x.chave === c.chave).slice(0, 6), ...anteriores.filter((x: Any) => x.chave !== c.chave).slice(0, 4)].map((x: Any) => x.texto as string);
-  const extra: Any = { empresa: k.nome, cfg: config, lembrete_ajustes: { temas: auto.temas, tom: auto.tom }, temas_recentes: recentes.map((t) => txt(t, 220)).join(" | ") };
+  const extra: Any = { empresa: k.nome, cfg: config, lembrete_ajustes: { tipo, temas: auto.temas, tom: auto.tom }, temas_recentes: recentes.map((t) => txt(t, 220)).join(" | ") };
   let out: Any = null;
   for (let tentativa = 0; tentativa < 2; tentativa++) {
     let r: Any;
@@ -373,9 +375,9 @@ async function lembreteIA(k: Conta, d: { id: string | null; user_id: string }, c
   // a primeira mensagem automática do grupo diz que é assistente virtual (proteção fixa)
   const aviso = !conv.aviso_ia_at ? avisoComIA(ajustes.texto_aviso, ajustes.idioma) : "";
   const texto = aviso && !/assistente virtual|virtual assistant|asistente virtual/i.test(out.texto) ? aviso + " " + out.texto : out.texto;
-  if (previa) return { texto, tema: out.tema, aviso_incluido: !!aviso };
-  const log_id = await registrar(k, d.user_id, d.id, c, "lembrete", "sugerido", texto, { motivo: txt("Mensagem automática" + (out.tema ? ": " + out.tema : ""), 200) });
-  return { postar: true, texto, tema: out.tema, log_id, aviso_incluido: !!aviso };
+  if (previa) return { texto, tema: out.tema, tipo, aviso_incluido: !!aviso };
+  const log_id = await registrar(k, d.user_id, d.id, c, "lembrete", "sugerido", texto, { tipo, motivo: txt((tipo === "dica" ? "Dica automática" : "Lembrete de serviços") + (out.tema ? ": " + out.tema : ""), 200) });
+  return { postar: true, texto, tema: out.tema, tipo, log_id, aviso_incluido: !!aviso };
 }
 /** grupos com lembrete vencido (para o ping da extensão); sorteia o próximo horário de quem ainda não tem */
 async function lembretesDevidos(k: Conta, config: Any) {

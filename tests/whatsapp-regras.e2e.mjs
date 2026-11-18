@@ -174,6 +174,7 @@ try {
   await page.waitForSelector("#la-aj");
   ok(await page.getAttribute('.wa-seg a[data-v="auto"]', "aria-current") === "page", "Ajustar abre Ajustes → Mensagens automáticas");
   await page.check('#la-aj [name="ativo"]');
+  await page.selectOption("#la-tipo", "alternar");
   await page.selectOption("#la-iv", "14");
   await page.uncheck('#la-aj [data-dia="1"]');
   await page.fill("#la-ini", "11:00"); await page.fill("#la-fim", "10:00");
@@ -185,7 +186,7 @@ try {
   await page.click('#la-aj button[type="submit"]');
   await page.waitForFunction(() => /Salvo/.test(document.getElementById("la-aj-m").textContent));
   const au = srv.cfg().auto;
-  ok(au.ativo === true && au.intervalo_dias === 14 && au.dias.join() === "2,3,4,5" && au.inicio === "11:00" && au.fim === "16:30" && au.temas.includes("Financiamento"), "ajustes gerais salvos na configuração");
+  ok(au.ativo === true && au.tipo === "alternar" && au.intervalo_dias === 14 && au.dias.join() === "2,3,4,5" && au.inicio === "11:00" && au.fim === "16:30" && au.temas.includes("Financiamento"), "ajustes gerais salvos na configuração");
   ok(srv.cfg().grupos["120363@g.us"].lembrete === true, "salvar os ajustes mantém os grupos");
   await page.click('.wa-seg >> text=Autoatendimento');
   await page.waitForSelector("#wa-aj");

@@ -204,18 +204,20 @@
   /* ================================================================ Mensagens automáticas ================================================================ */
   var DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   var INTERVALOS = [[7, '1 por semana'], [14, 'A cada 2 semanas'], [30, '1 por mês']];
-  var A_PADRAO = { ativo: false, intervalo_dias: 7, dias: [1, 2, 3, 4, 5], inicio: '10:00', fim: '17:00', tz: 'America/New_York', temas: '', tom: '' };
+  var TIPOS = [['lembrete', 'Lembrete de serviços'], ['dica', 'Dica útil'], ['alternar', 'Alternar (a maioria dicas, o lembrete de vez em quando)']];
+  var A_PADRAO = { ativo: false, tipo: 'lembrete', intervalo_dias: 7, dias: [1, 2, 3, 4, 5], inicio: '10:00', fim: '17:00', tz: 'America/New_York', temas: '', tom: '' };
   function quando(iso) { if (!iso) return '—'; try { return new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)); } catch (e) { return iso; } }
   function resumoAuto(a) {
     var iv = INTERVALOS.filter(function (x) { return x[0] === a.intervalo_dias; })[0];
-    return (iv ? iv[1] : '1 por semana') + ' por grupo · ' + (a.dias.length ? a.dias.map(function (x) { return DIAS[x]; }).join(', ') : 'nenhum dia') + ' · ' + a.inicio + '–' + a.fim + ' (' + a.tz.split('/')[1].replace('_', ' ') + ')';
+    var tp = TIPOS.filter(function (x) { return x[0] === a.tipo; })[0];
+    return (tp ? tp[1].split(' (')[0] : 'Lembrete de serviços') + ' · ' + (iv ? iv[1] : '1 por semana') + ' por grupo · ' + (a.dias.length ? a.dias.map(function (x) { return DIAS[x]; }).join(', ') : 'nenhum dia') + ' · ' + a.inicio + '–' + a.fim + ' (' + a.tz.split('/')[1].replace('_', ' ') + ')';
   }
   /** Grupos → Mensagens automáticas: liga o lembrete por grupo, prévia da próxima mensagem e histórico */
   async function mensagensAuto(corpo, ctx, call, d) {
     var esc = ctx.esc, cfg = d.config, a = Object.assign({}, A_PADRAO, cfg.auto || {}), g = gruposConhecidos(d);
     var estado = {}; (d.conversas || []).forEach(function (c) { if (c.grupo) estado[c.chave] = c.lembrete || {}; });
     corpo.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Mensagens automáticas</h2>' +
-      '<p class="portal-muted">Um lembrete dos serviços da ' + esc(d.empresa) + ', escrito pela IA e postado sozinho, sem aprovação: no máximo 1 por semana em cada grupo, em horário sorteado e com texto sempre diferente, sem preço e sem pedir dados. Quem responder entra no fluxo de interesse do Autoatendimento: privado, CRM e agendamento.</p>' +
+      '<p class="portal-muted">Uma dica útil ou um lembrete dos serviços da ' + esc(d.empresa) + ' (ou os dois, alternados), escrito pela IA e postado sozinho, sem aprovação: no máximo 1 por semana em cada grupo, em horário sorteado e com texto sempre diferente, sem preço e sem pedir dados. Quem responder entra no fluxo de interesse do Autoatendimento: privado, CRM e agendamento.</p>' +
       '<p class="wa-risco">Postar divulgação repetida em grupos é o que mais gera denúncia e bloqueio do número, e admins costumam remover quem faz isso. Ligue só em grupos onde esse tipo de post é aceito e use o número de teste. As mensagens param sozinhas se alguém reclamar ou se o número sair do grupo.</p>' +
       '<p class="wa-auto-geral">' + (a.ativo ? '<span class="pill pill--live-ok">Ligadas</span> ' : '<span class="pill pill--muted">Desligadas</span> ') + esc(resumoAuto(a)) +
         ' · <a href="' + hrefV('auto').replace('aba=grupos', 'aba=ajustes') + '" id="la-ajustes">Ajustar</a></p>' +
@@ -232,7 +234,7 @@
         var situ = st.parado ? '<span class="pill pill--warn">Parado</span> ' + esc(st.motivo || '') + ' <button class="btn btn--ghost btn--xs" type="button" data-retomar>Retomar</button>'
           : gc.lembrete ? (st.proximo ? 'Próximo envio: <b>' + quando(st.proximo) + '</b>' : 'Próximo envio: sorteado quando a extensão estiver ligada') : 'Desligado neste grupo';
         return '<fieldset class="wa-grupo wa-lembrete" data-g="' + esc(k) + '"><legend class="wa-grupo-nome">' + esc(g.lista[k]) + '</legend>' +
-          '<label class="wa-chave"><input type="checkbox" id="lk-' + i + '" data-lk' + (gc.lembrete ? ' checked' : '') + '><span>Postar o lembrete de serviços neste grupo</span></label>' +
+          '<label class="wa-chave"><input type="checkbox" id="lk-' + i + '" data-lk' + (gc.lembrete ? ' checked' : '') + '><span>Postar mensagens automáticas neste grupo</span></label>' +
           '<p class="portal-muted wa-situ">' + situ + (st.ultimo ? ' · último: ' + quando(st.ultimo) : '') + '</p>' +
           (gc.modo === 'desligado' || gc.interesse === false ? '<p class="wa-risco wa-risco--leve">O Autoatendimento deste grupo está ' + (gc.modo === 'desligado' ? 'desligado' : 'sem o aviso de interesse') + ': quem responder ao lembrete não entra no fluxo de interesse.</p>' : '') +
           '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" data-previa>Ver prévia da próxima mensagem</button></div><div class="wa-previa" hidden></div></fieldset>';
@@ -261,10 +263,11 @@
     if (!d.dono) soLeitura(corpo);
     try {
       var h = await call({ acao: 'wa_lembretes' }), it = h.historico || [];
+      var TP = { dica: 'Dica', lembrete: 'Lembrete' };
       var ST_L = { enviado: ['Postado', 'pill--live-ok'], sugerido: ['Preparado', 'pill--report'], descartado: ['Não postado', 'pill--muted'], escalado: ['Parado / segurado', 'pill--warn'], erro: ['Erro', 'pill--overdue'] };
-      ctx.$('#la-hist').innerHTML = it.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Quando</th><th>Grupo</th><th>Situação</th><th>Texto</th></tr></thead><tbody>' + it.map(function (x) {
-        var p = ST_L[x.status] || [x.status, ''];
-        return '<tr><td>' + quando(x.created_at) + '</td><td>' + esc(x.nome || x.chave || '—') + '</td><td><span class="pill ' + p[1] + '">' + p[0] + '</span>' + (x.detalhes && x.detalhes.motivo ? '<br><small class="portal-muted">' + esc(x.detalhes.motivo) + '</small>' : '') + '</td><td class="wa-txt">' + esc(x.texto || '') + '</td></tr>';
+      ctx.$('#la-hist').innerHTML = it.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Quando</th><th>Grupo</th><th>Tipo</th><th>Situação</th><th>Texto</th></tr></thead><tbody>' + it.map(function (x) {
+        var p = ST_L[x.status] || [x.status, ''], tp = x.detalhes && x.detalhes.tipo === 'dica' ? 'dica' : 'lembrete';
+        return '<tr><td>' + quando(x.created_at) + '</td><td>' + esc(x.nome || x.chave || '—') + '</td><td>' + TP[tp] + '</td><td><span class="pill ' + p[1] + '">' + p[0] + '</span>' + (x.detalhes && x.detalhes.motivo ? '<br><small class="portal-muted">' + esc(x.detalhes.motivo) + '</small>' : '') + '</td><td class="wa-txt">' + esc(x.texto || '') + '</td></tr>';
       }).join('') + '</tbody></table></div>' : '<p class="portal-muted">Nada postado ainda.</p>';
     } catch (e) { ctx.$('#la-hist').innerHTML = '<p class="portal-alert portal-alert--error">' + esc(e.message) + '</p>'; }
   }
@@ -274,6 +277,8 @@
     corpo.innerHTML = '<form class="portal-card portal-form" id="la-aj" novalidate><h2 class="portal-h2">Mensagens automáticas</h2>' +
       '<p class="portal-muted">Valem para todos os grupos. Em cada grupo você liga ou desliga em <a href="' + hrefV('auto').replace('aba=ajustes', 'aba=grupos') + '">Grupos → Mensagens automáticas</a>. A IA posta sozinha, sem aprovação; a chave geral do Autoatendimento e a pausa da extensão também param estas mensagens.</p>' +
       '<label class="wa-chave"><input type="checkbox" name="ativo"' + (a.ativo ? ' checked' : '') + '><span>Mensagens automáticas ligadas (chave geral)</span></label>' +
+      '<div class="field"><label for="la-tipo">Tipo de post</label><select id="la-tipo" name="tipo">' + TIPOS.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === a.tipo ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select>' +
+        '<small class="portal-muted">Em Alternar, saem 2 dicas e depois 1 lembrete de serviços, e assim por diante. A frequência vale para todos os tipos juntos.</small></div>' +
       '<div class="field-row"><div class="field"><label for="la-iv">Frequência em cada grupo</label><select id="la-iv" name="intervalo_dias">' + INTERVALOS.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === a.intervalo_dias ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
         '<div class="field"><label for="la-tz">Fuso</label><select id="la-tz" name="tz">' + ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Sao_Paulo'].map(function (z) { return '<option' + (z === a.tz ? ' selected' : '') + '>' + z + '</option>'; }).join('') + '</select></div></div>' +
       '<fieldset class="wa-dias"><legend>Dias permitidos</legend>' + DIAS.map(function (n, i) { return '<label class="wa-chave"><input type="checkbox" data-dia="' + i + '"' + (a.dias.indexOf(i) > -1 ? ' checked' : '') + '><span>' + n + '</span></label>'; }).join('') + '</fieldset>' +
@@ -288,7 +293,7 @@
       var dias = Array.prototype.slice.call(f.querySelectorAll('[data-dia]')).filter(function (x) { return x.checked; }).map(function (x) { return +x.dataset.dia; });
       if (!dias.length) return msg(m, 'Escolha pelo menos um dia.', 'erro');
       if (f.elements.fim.value <= f.elements.inicio.value) return msg(m, 'O horário final precisa ser depois do inicial.', 'erro');
-      d.config.auto = { ativo: f.elements.ativo.checked, intervalo_dias: +f.elements.intervalo_dias.value, dias: dias, inicio: f.elements.inicio.value, fim: f.elements.fim.value, tz: f.elements.tz.value, temas: f.elements.temas.value, tom: f.elements.tom.value };
+      d.config.auto = { ativo: f.elements.ativo.checked, tipo: f.elements.tipo.value, intervalo_dias: +f.elements.intervalo_dias.value, dias: dias, inicio: f.elements.inicio.value, fim: f.elements.fim.value, tz: f.elements.tz.value, temas: f.elements.temas.value, tom: f.elements.tom.value };
       msg(m, 'Salvando…');
       try { await salvarConfig(call, d); msg(m, 'Salvo.' + (d.config.auto.ativo ? ' Os horários dos grupos ligados são sorteados de novo em até 1 minuto.' : ' Nada é postado com a chave geral desligada.'), 'ok'); } catch (x) { msg(m, x.message, 'erro'); }
     };

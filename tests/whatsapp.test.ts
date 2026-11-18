@@ -1,7 +1,7 @@
 // My WhatsApp Manager: regras compartilhadas (wa-extension/core.js) e regras do servidor (supabase/whatsapp/regras.ts).
 //   deno test --allow-read tests/whatsapp.test.ts
 import "../wa-extension/core.js";
-import { avisoComIA, conteudoDevido, dentroJanela, grupoCfg, limparAuto, limparConfig, parecido, proximoDepoisDoEnvio, proximoHorario, reclamacao, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/whatsapp/regras.ts";
+import { tipoDoPost, avisoComIA, conteudoDevido, dentroJanela, grupoCfg, limparAuto, limparConfig, parecido, proximoDepoisDoEnvio, proximoHorario, reclamacao, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/whatsapp/regras.ts";
 // deno-lint-ignore no-explicit-any
 const C = (globalThis as any).EWaCore;
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`); };
@@ -242,4 +242,16 @@ Deno.test("mensagens automáticas: texto parecido com um já postado é recusado
 Deno.test("mensagens automáticas: saída da IA normalizada e reclamação sem texto", () => {
   eq(normalizar("lembrete", { reclamacao: true, texto: "algo", motivo: "admin pediu" }), { texto: "", tema: "", reclamacao: true, motivo: "admin pediu" });
   eq(normalizar("lembrete", { texto: "Oi, grupo!", tema: "LLC" }).reclamacao, false);
+});
+
+Deno.test("mensagens automáticas: tipo de post (dica, lembrete ou alternar com a maioria dicas)", () => {
+  eq(limparAuto({}).tipo, "lembrete");
+  eq(limparAuto({ tipo: "qualquer" }).tipo, "lembrete");
+  const alt = limparAuto({ tipo: "alternar" });
+  eq(tipoDoPost(alt, []), "dica");
+  eq(tipoDoPost(alt, ["dica"]), "dica");
+  eq(tipoDoPost(alt, ["dica", "dica"]), "lembrete");
+  eq(tipoDoPost(alt, ["lembrete", "dica"]), "dica");
+  eq(tipoDoPost(limparAuto({ tipo: "dica" }), ["dica", "dica"]), "dica");
+  eq(tipoDoPost(limparAuto({ tipo: "lembrete" }), []), "lembrete");
 });

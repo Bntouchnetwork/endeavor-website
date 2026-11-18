@@ -113,7 +113,8 @@ export function conteudoDevido(g: Any, ultimoEnvio: number, agora = Date.now()) 
  * Postado sem aprovação, no máximo 1 vez por semana por grupo, em horário sorteado dentro dos dias e horas permitidos.
  * O estado (próximo envio, parado) fica em wa_chats.auto, no servidor. */
 export const INTERVALOS_AUTO = [7, 14, 30];
-export const AUTO_PADRAO = { ativo: false, intervalo_dias: 7, dias: [1, 2, 3, 4, 5], inicio: "10:00", fim: "17:00", tz: "America/New_York", temas: "", tom: "" };
+export const TIPOS_AUTO = ["lembrete", "dica", "alternar"];
+export const AUTO_PADRAO = { ativo: false, tipo: "lembrete", intervalo_dias: 7, dias: [1, 2, 3, 4, 5], inicio: "10:00", fim: "17:00", tz: "America/New_York", temas: "", tom: "" };
 const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
 const FUSOS = ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "America/Sao_Paulo"];
 export function limparAuto(a: Any) {
@@ -121,7 +122,7 @@ export function limparAuto(a: Any) {
   const dias = (Array.isArray(a.dias) ? a.dias : AUTO_PADRAO.dias).map(Number).filter((d: number) => Number.isInteger(d) && d >= 0 && d <= 6);
   let inicio = HORA.test(String(a.inicio)) ? String(a.inicio) : AUTO_PADRAO.inicio, fim = HORA.test(String(a.fim)) ? String(a.fim) : AUTO_PADRAO.fim;
   if (fim <= inicio) { inicio = AUTO_PADRAO.inicio; fim = AUTO_PADRAO.fim; }
-  return { ativo: a.ativo === true, intervalo_dias: INTERVALOS_AUTO.includes(Number(a.intervalo_dias)) ? Number(a.intervalo_dias) : 7,
+  return { ativo: a.ativo === true, tipo: TIPOS_AUTO.includes(a.tipo) ? a.tipo : "lembrete", intervalo_dias: INTERVALOS_AUTO.includes(Number(a.intervalo_dias)) ? Number(a.intervalo_dias) : 7,
     dias: [...new Set(dias)].sort() as number[], inicio, fim, tz: FUSOS.includes(a.tz) ? a.tz : AUTO_PADRAO.tz, temas: bloco(a.temas, 600), tom: txt(a.tom, 200) };
 }
 /** diferença (min) entre o horário local do fuso e o UTC no instante ms */
@@ -163,6 +164,12 @@ export function proximoHorario(a: Any, desde: number, sorte = Math.random) {
 /** depois de postar: o próximo fica a "intervalo_dias" do último envio (nunca menos de 7 dias) */
 export function proximoDepoisDoEnvio(a: Any, enviadoEm: number, sorte = Math.random) {
   return proximoHorario(a, enviadoEm + Math.max(7, a.intervalo_dias) * 86400_000 - 12 * 3600_000, sorte);
+}
+/** tipo do próximo post: "dica" ou "lembrete". Em "alternar", a maioria é dica: o lembrete de serviços entra a cada 3 posts
+ *  (depois de 2 dicas seguidas). ultimos = tipos já postados no grupo, do mais recente para o mais antigo. */
+export function tipoDoPost(a: Any, ultimos: string[]) {
+  if (a.tipo === "dica" || a.tipo === "lembrete") return a.tipo;
+  return ultimos.length >= 2 && ultimos[0] === "dica" && ultimos[1] === "dica" ? "lembrete" : "dica";
 }
 /** alguém reclamou de divulgação no grupo (mensagens dos outros depois da nossa última)? */
 const RE_RECLAMA = /(propaganda|spam|divulga[çc](?:[aã]o|[õo]es)|an[uú]ncio|publicidade|merchan|jab[aá]|n[aã]o (?:é|e) (?:lugar|espa[çc]o) (?:para|pra)|par(?:e|em|a|ar) de (?:mandar|postar|divulgar|anunciar)|chega de|proibid[oa]s? (?:postar|divulgar|propaganda)|regras? do grupo|vou (?:te )?remover|ser[aá] removid|stop (?:posting|spamming|advertising)|no (?:ads|spam|promo(?:tion)?s?)\b|not the place for)/i;
