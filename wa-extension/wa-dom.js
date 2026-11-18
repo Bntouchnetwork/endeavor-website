@@ -189,6 +189,14 @@
     var main = principal(); if (!main) return null;
     return $('footer div[contenteditable="true"][role="textbox"]', main) || $('footer div[contenteditable="true"]', main) || $('div[contenteditable="true"][data-tab="10"]');
   }
+  /** grupo aberto sem caixa para escrever: "removido" (não é mais participante) ou "so_admins"; "" se dá para escrever ou não sabe */
+  function semCaixa() {
+    var main = principal(); if (!main || caixa()) return '';
+    var rod = $('footer', main), t = limpo(rod ? rod.innerText || rod.textContent : '');
+    if (/admins?|administrador/i.test(t)) return 'so_admins';
+    if (/particip|n[aã]o (?:pode|é mais)|can.?t send|no longer|ya no|no puedes|removed|removid/i.test(t)) return 'removido';
+    return '';
+  }
   function textoNaCaixa() { var c = caixa(); return c ? (c.innerText || '').replace(/​/g, '').trim() : ''; }
   function limparCaixa() {
     var c = caixa(); if (!c) return false;
@@ -273,5 +281,5 @@
   }
   function pronto() { return !!(document.getElementById('pane-side') || principal()); }
 
-  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, linhaPorNome: linhaPorNome, marcarGrupo: marcarGrupo, nomeAberto: nomeAberto, abrir: abrir, pronto: pronto };
+  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, semCaixa: semCaixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, linhaPorNome: linhaPorNome, marcarGrupo: marcarGrupo, nomeAberto: nomeAberto, abrir: abrir, pronto: pronto };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

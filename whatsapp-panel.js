@@ -9,7 +9,7 @@
   'use strict';
   var ZIP = 'downloads/my-whatsapp-manager.zip';
   var FERR = { sugerir: 'Sugerir resposta', resumo: 'Resumo', prontas: 'Respostas prontas', lead: 'Lead no CRM', agendamento: 'Agendamento', proposta: 'Proposta', traduzir: 'Tradução',
-    comando: 'Comando', personalizar: 'Resposta pronta adaptada', responder: 'Takeover', takeover: 'IA Takeover', grupo: 'Grupo', fluxo: 'Fluxo → CRM' };
+    comando: 'Comando', personalizar: 'Resposta pronta adaptada', responder: 'Takeover', takeover: 'IA Takeover', grupo: 'Grupo', fluxo: 'Fluxo → CRM', conteudo_grupo: 'Dica do grupo', lembrete: 'Mensagem automática' };
   var ST = { sugerido: ['Sugerido', 'pill--report'], aprovado: ['Aprovado', 'pill--report'], enviado: ['Enviado', 'pill--live-ok'], descartado: ['Descartado', 'pill--muted'],
     escalado: ['Precisa de você', 'pill--warn'], criado: ['Criado', 'pill--report'], erro: ['Erro', 'pill--overdue'], ignorado: ['Sem resposta', 'pill--muted'] };
   var TEMPOS = [['espera_min', 'Esperar antes de digitar · mínimo (s)'], ['espera_max', 'Esperar antes de digitar · máximo (s)'], ['velocidade', 'Velocidade de digitação (caracteres/min, de 80 a 400)'],
@@ -162,13 +162,17 @@
 
   /* ---------------- ajustes ---------------- */
   function ajustes(corpo, ctx, call, d) {
+    // Ajustes: "Autoatendimento" (abre por padrão) e, ao lado, "Mensagens automáticas"
+    var v = EWaRegras.visao() === 'auto' ? 'auto' : '';
+    corpo.insertAdjacentHTML('beforebegin', EWaRegras.seg(v, 'Ajustes'));
+    if (v === 'auto') return EWaRegras.ajustesAuto(corpo, ctx, call, d);
     var esc = ctx.esc, a = d.ajustes;
     var prontas = (a.prontas || []).slice();
     corpo.innerHTML = '<form class="portal-card portal-form" id="wa-aj" novalidate>' +
-      '<h2 class="portal-h2">IA Takeover</h2>' +
-      '<label class="wa-chave"><input type="checkbox" name="takeover"' + (a.takeover ? ' checked' : '') + '><span>IA Takeover ligado (chave geral)</span></label>' +
+      '<h2 class="portal-h2">Autoatendimento</h2>' +
+      '<label class="wa-chave"><input type="checkbox" name="takeover"' + (a.takeover ? ' checked' : '') + '><span>Autoatendimento ligado (chave geral do IA Takeover)</span></label>' +
       '<label class="wa-chave"><input type="checkbox" name="takeover_individual"' + (a.takeover_individual ? ' checked' : '') + '><span>Conversas individuais novas já entram com o Takeover ligado</span></label>' +
-      '<p class="portal-muted">Grupos entram sempre com o Takeover desligado; a chave de cada grupo fica no painel da extensão. A primeira resposta automática de cada conversa começa com o aviso abaixo.</p>' +
+      '<p class="portal-muted">Grupos entram sempre com o Takeover desligado; o que a IA faz em cada grupo fica em Grupos → Autoatendimento. Desligar a chave geral também para as mensagens automáticas. A primeira resposta automática de cada conversa começa com o aviso abaixo.</p>' +
       '<div class="field"><label for="wa-aviso">Aviso de assistente virtual</label><input id="wa-aviso" name="texto_aviso" maxlength="200" value="' + esc(a.texto_aviso) + '"></div>' +
       '<h2 class="portal-h2">Tempos humanos</h2><p class="portal-muted">Cada resposta sorteia a espera e a pausa entre o mínimo e o máximo; a digitação aparece na caixa, na velocidade escolhida.</p>' +
       '<div class="wa-tempos">' + TEMPOS.map(function (t) { return '<div class="field"><label for="wa-' + t[0] + '">' + t[1] + '</label><input id="wa-' + t[0] + '" name="' + t[0] + '" type="number" step="1" value="' + esc(a[t[0]]) + '"></div>'; }).join('') + '</div>' +

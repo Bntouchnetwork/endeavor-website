@@ -139,14 +139,33 @@
   /* ================================================================ Grupos ================================================================ */
   var MODOS_G = [['aprovar', 'Sugerir e eu aprovo'], ['auto', 'Responder sozinha (com limite por dia)'], ['desligado', 'Desligado']];
   var G_PADRAO = { modo: 'aprovar', limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 };
+  /* sub-visões (Grupos e Ajustes): ?v=auto abre "Mensagens automáticas"; sem v, "Autoatendimento" */
+  function visao() { var m = location.hash.match(/[?&]v=([^&]+)/); return m ? decodeURIComponent(m[1]) : ''; }
+  function hrefV(v) { var h = location.hash.replace(/([?&])v=[^&]*&?/, '$1').replace(/[?&]$/, ''); return v ? h + (h.indexOf('?') > -1 ? '&' : '?') + 'v=' + v : h; }
+  function seg(atual, rotulo) {
+    return '<nav class="wa-seg" aria-label="' + rotulo + '">' + [['', 'Autoatendimento'], ['auto', 'Mensagens automáticas']].map(function (x) {
+      return '<a href="' + hrefV(x[0]) + '" data-v="' + (x[0] || 'auto-atendimento') + '"' + (x[0] === atual ? ' aria-current="page"' : '') + '>' + x[1] + '</a>'; }).join('') + '</nav>';
+  }
+  function gruposConhecidos(d) {
+    var cfg = d.config, lista = {}; cfg.grupos = cfg.grupos || {};
+    (d.conversas || []).filter(function (c) { return c.grupo; }).forEach(function (c) { lista[c.chave] = c.nome; });
+    Object.keys(cfg.grupos).forEach(function (k) { if (!(k in lista)) lista[k] = cfg.grupos[k].nome || k; });
+    return { lista: lista, chaves: Object.keys(lista).sort(function (a, b) { return String(lista[a]).localeCompare(String(lista[b])); }) };
+  }
   function grupos(corpo, ctx, call, d) {
+    var v = visao() === 'auto' ? 'auto' : '';
+    corpo.insertAdjacentHTML('beforebegin', seg(v, 'Grupos'));
+    if (v === 'auto') return mensagensAuto(corpo, ctx, call, d);
+    return autoatendimento(corpo, ctx, call, d);
+  }
+  function autoatendimento(corpo, ctx, call, d) {
     var esc = ctx.esc, cfg = d.config;
     cfg.grupos = cfg.grupos || {};
     var lista = {};
     (d.conversas || []).filter(function (c) { return c.grupo; }).forEach(function (c) { lista[c.chave] = c.nome; });
     Object.keys(cfg.grupos).forEach(function (k) { if (!(k in lista)) lista[k] = cfg.grupos[k].nome || k; });
     var chaves = Object.keys(lista).sort(function (a, b) { return String(lista[a]).localeCompare(String(lista[b])); });
-    corpo.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Grupos</h2>' +
+    corpo.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Autoatendimento nos grupos</h2>' +
       '<p class="portal-muted">Em cada grupo a IA escuta os assuntos ligados aos serviços, prepara respostas úteis (sem preço e sem vender), avisa quando alguém mostra interesse, com a mensagem pronta para o privado, e sugere uma dica para postar. Você escolhe o que fica ligado em cada grupo.</p>' +
       '<p class="wa-risco">Automatizar o WhatsApp Web vai contra os termos do WhatsApp e pode bloquear o número. Nos grupos, vá devagar: comece em “Sugerir e eu aprovo” e use o automático só em poucos grupos, com limite baixo.</p>' +
       '<div id="gr-lista"></div>' +
@@ -180,6 +199,100 @@
       try { await salvarConfig(call, d); cfg = d.config; msg(m, 'Grupos salvos. A extensão usa na próxima mensagem do grupo.', 'ok'); } catch (e) { msg(m, e.message, 'erro'); }
     };
     if (!d.dono) soLeitura(corpo);
+  }
+
+  /* ================================================================ Mensagens automáticas ================================================================ */
+  var DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  var INTERVALOS = [[7, '1 por semana'], [14, 'A cada 2 semanas'], [30, '1 por mês']];
+  var A_PADRAO = { ativo: false, intervalo_dias: 7, dias: [1, 2, 3, 4, 5], inicio: '10:00', fim: '17:00', tz: 'America/New_York', temas: '', tom: '' };
+  function quando(iso) { if (!iso) return '—'; try { return new Intl.DateTimeFormat('pt-BR', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)); } catch (e) { return iso; } }
+  function resumoAuto(a) {
+    var iv = INTERVALOS.filter(function (x) { return x[0] === a.intervalo_dias; })[0];
+    return (iv ? iv[1] : '1 por semana') + ' por grupo · ' + (a.dias.length ? a.dias.map(function (x) { return DIAS[x]; }).join(', ') : 'nenhum dia') + ' · ' + a.inicio + '–' + a.fim + ' (' + a.tz.split('/')[1].replace('_', ' ') + ')';
+  }
+  /** Grupos → Mensagens automáticas: liga o lembrete por grupo, prévia da próxima mensagem e histórico */
+  async function mensagensAuto(corpo, ctx, call, d) {
+    var esc = ctx.esc, cfg = d.config, a = Object.assign({}, A_PADRAO, cfg.auto || {}), g = gruposConhecidos(d);
+    var estado = {}; (d.conversas || []).forEach(function (c) { if (c.grupo) estado[c.chave] = c.lembrete || {}; });
+    corpo.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Mensagens automáticas</h2>' +
+      '<p class="portal-muted">Um lembrete dos serviços da ' + esc(d.empresa) + ', escrito pela IA e postado sozinho, sem aprovação: no máximo 1 por semana em cada grupo, em horário sorteado e com texto sempre diferente, sem preço e sem pedir dados. Quem responder entra no fluxo de interesse do Autoatendimento: privado, CRM e agendamento.</p>' +
+      '<p class="wa-risco">Postar divulgação repetida em grupos é o que mais gera denúncia e bloqueio do número, e admins costumam remover quem faz isso. Ligue só em grupos onde esse tipo de post é aceito e use o número de teste. As mensagens param sozinhas se alguém reclamar ou se o número sair do grupo.</p>' +
+      '<p class="wa-auto-geral">' + (a.ativo ? '<span class="pill pill--live-ok">Ligadas</span> ' : '<span class="pill pill--muted">Desligadas</span> ') + esc(resumoAuto(a)) +
+        ' · <a href="' + hrefV('auto').replace('aba=grupos', 'aba=ajustes') + '" id="la-ajustes">Ajustar</a></p>' +
+      (a.ativo ? '' : '<p class="portal-alert portal-alert--info">A chave geral está desligada em Ajustes → Mensagens automáticas: nada é postado até você ligar.</p>') +
+      '<div id="la-lista"></div>' +
+      (g.chaves.length ? '<div class="portal-btn-row" style="margin-top:1rem"><button class="btn btn--navy" type="button" id="la-salvar">Salvar grupos</button></div>' : '') +
+      '<p class="portal-alert" id="la-m" role="status" hidden></p></section>' +
+      '<section class="portal-card"><h2 class="portal-h2">Histórico</h2><div id="la-hist"><p class="portal-muted">Carregando…</p></div></section>';
+    var l = ctx.$('#la-lista');
+    if (!g.chaves.length) l.innerHTML = '<p class="portal-muted">Nenhum grupo ainda. Abra um grupo no WhatsApp Web com a extensão ligada e ele aparece aqui.</p>';
+    else {
+      l.innerHTML = g.chaves.map(function (k, i) {
+        var gc = Object.assign({ modo: 'aprovar', interesse: true }, cfg.grupos[k] || {}), st = estado[k] || {};
+        var situ = st.parado ? '<span class="pill pill--warn">Parado</span> ' + esc(st.motivo || '') + ' <button class="btn btn--ghost btn--xs" type="button" data-retomar>Retomar</button>'
+          : gc.lembrete ? (st.proximo ? 'Próximo envio: <b>' + quando(st.proximo) + '</b>' : 'Próximo envio: sorteado quando a extensão estiver ligada') : 'Desligado neste grupo';
+        return '<fieldset class="wa-grupo wa-lembrete" data-g="' + esc(k) + '"><legend class="wa-grupo-nome">' + esc(g.lista[k]) + '</legend>' +
+          '<label class="wa-chave"><input type="checkbox" id="lk-' + i + '" data-lk' + (gc.lembrete ? ' checked' : '') + '><span>Postar o lembrete de serviços neste grupo</span></label>' +
+          '<p class="portal-muted wa-situ">' + situ + (st.ultimo ? ' · último: ' + quando(st.ultimo) : '') + '</p>' +
+          (gc.modo === 'desligado' || gc.interesse === false ? '<p class="wa-risco wa-risco--leve">O Autoatendimento deste grupo está ' + (gc.modo === 'desligado' ? 'desligado' : 'sem o aviso de interesse') + ': quem responder ao lembrete não entra no fluxo de interesse.</p>' : '') +
+          '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" type="button" data-previa>Ver prévia da próxima mensagem</button></div><div class="wa-previa" hidden></div></fieldset>';
+      }).join('');
+      l.querySelectorAll('.wa-lembrete').forEach(function (fs) {
+        var k = fs.dataset.g;
+        fs.querySelector('[data-lk]').onchange = function () { cfg.grupos[k] = Object.assign({ modo: 'aprovar', limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 }, cfg.grupos[k] || {}, { nome: g.lista[k], lembrete: this.checked }); };
+        fs.querySelector('[data-previa]').onclick = async function () {
+          var b = this, box = fs.querySelector('.wa-previa'); b.disabled = true; box.hidden = false; box.innerHTML = '<p class="portal-muted">A IA está escrevendo…</p>';
+          try { var r = await call({ acao: 'wa_lembrete_previa', chave: k }); box.innerHTML = '<p class="wa-previa-t">' + esc(r.texto) + '</p><small class="portal-muted">Só uma prévia: o texto postado é escrito de novo na hora, sempre diferente.</small>'; }
+          catch (e) { box.innerHTML = '<p class="portal-alert portal-alert--error">' + esc(e.message) + '</p>'; }
+          b.disabled = false;
+        };
+        var rt = fs.querySelector('[data-retomar]');
+        if (rt) rt.onclick = async function () {
+          rt.disabled = true;
+          try { await call({ acao: 'wa_lembrete_retomar', chave: k }); fs.querySelector('.wa-situ').textContent = 'Retomado: o próximo envio é sorteado quando a extensão estiver ligada.'; }
+          catch (e) { msg(ctx.$('#la-m'), e.message, 'erro'); rt.disabled = false; }
+        };
+      });
+      ctx.$('#la-salvar').onclick = async function () {
+        var m = ctx.$('#la-m'); msg(m, 'Salvando…');
+        try { await salvarConfig(call, d); cfg = d.config; msg(m, 'Salvo. A extensão sorteia o próximo horário de cada grupo em até 1 minuto.', 'ok'); } catch (e) { msg(m, e.message, 'erro'); }
+      };
+    }
+    if (!d.dono) soLeitura(corpo);
+    try {
+      var h = await call({ acao: 'wa_lembretes' }), it = h.historico || [];
+      var ST_L = { enviado: ['Postado', 'pill--live-ok'], sugerido: ['Preparado', 'pill--report'], descartado: ['Não postado', 'pill--muted'], escalado: ['Parado / segurado', 'pill--warn'], erro: ['Erro', 'pill--overdue'] };
+      ctx.$('#la-hist').innerHTML = it.length ? '<div class="table-wrap"><table class="data"><thead><tr><th>Quando</th><th>Grupo</th><th>Situação</th><th>Texto</th></tr></thead><tbody>' + it.map(function (x) {
+        var p = ST_L[x.status] || [x.status, ''];
+        return '<tr><td>' + quando(x.created_at) + '</td><td>' + esc(x.nome || x.chave || '—') + '</td><td><span class="pill ' + p[1] + '">' + p[0] + '</span>' + (x.detalhes && x.detalhes.motivo ? '<br><small class="portal-muted">' + esc(x.detalhes.motivo) + '</small>' : '') + '</td><td class="wa-txt">' + esc(x.texto || '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="portal-muted">Nada postado ainda.</p>';
+    } catch (e) { ctx.$('#la-hist').innerHTML = '<p class="portal-alert portal-alert--error">' + esc(e.message) + '</p>'; }
+  }
+  /** Ajustes → Mensagens automáticas: chave geral, frequência, dias, horários, fuso, temas e tom */
+  function ajustesAuto(corpo, ctx, call, d) {
+    var esc = ctx.esc, a = Object.assign({}, A_PADRAO, d.config.auto || {});
+    corpo.innerHTML = '<form class="portal-card portal-form" id="la-aj" novalidate><h2 class="portal-h2">Mensagens automáticas</h2>' +
+      '<p class="portal-muted">Valem para todos os grupos. Em cada grupo você liga ou desliga em <a href="' + hrefV('auto').replace('aba=ajustes', 'aba=grupos') + '">Grupos → Mensagens automáticas</a>. A IA posta sozinha, sem aprovação; a chave geral do Autoatendimento e a pausa da extensão também param estas mensagens.</p>' +
+      '<label class="wa-chave"><input type="checkbox" name="ativo"' + (a.ativo ? ' checked' : '') + '><span>Mensagens automáticas ligadas (chave geral)</span></label>' +
+      '<div class="field-row"><div class="field"><label for="la-iv">Frequência em cada grupo</label><select id="la-iv" name="intervalo_dias">' + INTERVALOS.map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === a.intervalo_dias ? ' selected' : '') + '>' + x[1] + '</option>'; }).join('') + '</select></div>' +
+        '<div class="field"><label for="la-tz">Fuso</label><select id="la-tz" name="tz">' + ['America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Sao_Paulo'].map(function (z) { return '<option' + (z === a.tz ? ' selected' : '') + '>' + z + '</option>'; }).join('') + '</select></div></div>' +
+      '<fieldset class="wa-dias"><legend>Dias permitidos</legend>' + DIAS.map(function (n, i) { return '<label class="wa-chave"><input type="checkbox" data-dia="' + i + '"' + (a.dias.indexOf(i) > -1 ? ' checked' : '') + '><span>' + n + '</span></label>'; }).join('') + '</fieldset>' +
+      '<div class="field-row"><div class="field"><label for="la-ini">Das</label><input id="la-ini" name="inicio" type="time" value="' + esc(a.inicio) + '"></div><div class="field"><label for="la-fim">Até</label><input id="la-fim" name="fim" type="time" value="' + esc(a.fim) + '"></div></div>' +
+      '<p class="portal-muted">O horário de cada post é sorteado dentro dessa janela.</p>' +
+      '<div class="field"><label for="la-temas">Temas (um por linha)</label><textarea id="la-temas" name="temas" rows="4" maxlength="600" placeholder="Abertura de LLC nos EUA&#10;Bookkeeping mensal&#10;Operating Agreement">' + esc(a.temas) + '</textarea></div>' +
+      '<div class="field"><label for="la-tom">Tom</label><input id="la-tom" name="tom" maxlength="200" value="' + esc(a.tom) + '" placeholder="Ex.: cordial e leve, sem cara de anúncio"></div>' +
+      '<div class="portal-btn-row" style="margin-top:1.25rem"><button class="btn btn--navy" type="submit">Salvar</button></div><p class="portal-alert" id="la-aj-m" role="status" hidden></p></form>';
+    ctx.$('#la-aj').onsubmit = async function (e) {
+      e.preventDefault();
+      var f = this, m = ctx.$('#la-aj-m');
+      var dias = Array.prototype.slice.call(f.querySelectorAll('[data-dia]')).filter(function (x) { return x.checked; }).map(function (x) { return +x.dataset.dia; });
+      if (!dias.length) return msg(m, 'Escolha pelo menos um dia.', 'erro');
+      if (f.elements.fim.value <= f.elements.inicio.value) return msg(m, 'O horário final precisa ser depois do inicial.', 'erro');
+      d.config.auto = { ativo: f.elements.ativo.checked, intervalo_dias: +f.elements.intervalo_dias.value, dias: dias, inicio: f.elements.inicio.value, fim: f.elements.fim.value, tz: f.elements.tz.value, temas: f.elements.temas.value, tom: f.elements.tom.value };
+      msg(m, 'Salvando…');
+      try { await salvarConfig(call, d); msg(m, 'Salvo.' + (d.config.auto.ativo ? ' Os horários dos grupos ligados são sorteados de novo em até 1 minuto.' : ' Nada é postado com a chave geral desligada.'), 'ok'); } catch (x) { msg(m, x.message, 'erro'); }
+    };
+    if (!d.dono) soLeitura(ctx.$('#la-aj'));
   }
 
   /* ================================================================ Fluxos e modelos de documentos ================================================================ */
@@ -349,5 +462,5 @@
     });
   }
 
-  window.EWaRegras = { perfilRegras: perfilRegras, fluxos: fluxos, grupos: grupos, pedidos: pedidos, soLeitura: soLeitura };
+  window.EWaRegras = { ajustesAuto: ajustesAuto, seg: seg, visao: visao, perfilRegras: perfilRegras, fluxos: fluxos, grupos: grupos, pedidos: pedidos, soLeitura: soLeitura };
 })();

@@ -1,7 +1,7 @@
 // My WhatsApp Manager: regras compartilhadas (wa-extension/core.js) e regras do servidor (supabase/whatsapp/regras.ts).
 //   deno test --allow-read tests/whatsapp.test.ts
 import "../wa-extension/core.js";
-import { avisoComIA, conteudoDevido, grupoCfg, limparConfig, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/functions/whatsapp/regras.ts";
+import { avisoComIA, conteudoDevido, dentroJanela, grupoCfg, limparAuto, limparConfig, parecido, proximoDepoisDoEnvio, proximoHorario, reclamacao, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/whatsapp/regras.ts";
 // deno-lint-ignore no-explicit-any
 const C = (globalThis as any).EWaCore;
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`); };
@@ -9,7 +9,7 @@ const sim = (c: boolean, m: string) => { if (!c) throw new Error(m); };
 const fixo = (v: number) => () => v;
 
 Deno.test("cópia do core no servidor é idêntica à da extensão", async () => {
-  eq(await Deno.readTextFile(new URL("../supabase/functions/whatsapp/core.js", import.meta.url)), await Deno.readTextFile(new URL("../wa-extension/core.js", import.meta.url)), "core.js");
+  eq(await Deno.readTextFile(new URL("../supabase/whatsapp/core.js", import.meta.url)), await Deno.readTextFile(new URL("../wa-extension/core.js", import.meta.url)), "core.js");
 });
 
 Deno.test("ajustes: padrão com Takeover ligado e limites seguros", () => {
@@ -178,7 +178,7 @@ Deno.test("aviso da primeira resposta sempre diz que é assistente virtual (nome
 
 Deno.test("grupos: ajustes por grupo, interesse e dica da semana", () => {
   const cfg = limparConfig({ grupos: { "120@g.us": { nome: "Empreendedores", modo: "auto", limite_dia: 50, interesse: false, por_semana: 2 }, "x@g.us": { modo: "qualquer" } } });
-  eq(cfg.grupos["120@g.us"], { nome: "Empreendedores", modo: "auto", limite_dia: 10, interesse: false, conteudo: true, por_semana: 2 });
+  eq(cfg.grupos["120@g.us"], { nome: "Empreendedores", modo: "auto", limite_dia: 10, interesse: false, conteudo: true, por_semana: 2, lembrete: false });
   eq(cfg.grupos["x@g.us"].modo, "aprovar", "modo inválido vira aprovar");
   eq(grupoCfg(cfg, "novo@g.us").modo, "aprovar", "grupo sem ajuste: aprovar (a IA sugere, você aprova)");
   const t = Date.parse("2026-11-16T12:00:00Z");
@@ -191,4 +191,55 @@ Deno.test("grupos: ajustes por grupo, interesse e dica da semana", () => {
   eq(normalizar("conteudo_grupo", { texto: "Dica: separe as contas da LLC.", tema: "contas" }).texto, "Dica: separe as contas da LLC.");
   const e = montarEntrada("conteudo_grupo", C.limparAjustes({}), { nome: "Empreendedores", grupo: true }, [], { cfg, empresa: "Endeavor", grupo_cfg: { modo: "aprovar" }, temas_recentes: "contas" });
   eq(e.includes("<temas_recentes>contas") && !e.includes("<mensagens>"), true, "dica: sem conversa, com os temas recentes para não repetir");
+});
+
+/* ---------------- mensagens automáticas (lembrete de serviços) ---------------- */
+Deno.test("mensagens automáticas: ajustes limpos, desligadas por padrão e no máximo 1 por semana", () => {
+  const a = limparAuto({ intervalo_dias: 2, dias: [1, 9, 1, 3], inicio: "18:00", fim: "09:00", tz: "Europe/Paris", ativo: "sim" });
+  eq(a.ativo, false);
+  eq(a.intervalo_dias, 7);
+  eq(a.dias, [1, 3]);
+  eq([a.inicio, a.fim], ["10:00", "17:00"]); // fim antes do início: volta ao padrão
+  eq(a.tz, "America/New_York");
+  eq(limparAuto({ intervalo_dias: 30 }).intervalo_dias, 30);
+  const cfg = limparConfig({ grupos: { "g1@g.us": { nome: "G1", lembrete: true } }, auto: { ativo: true } });
+  eq(cfg.grupos["g1@g.us"].lembrete, true);
+  eq(cfg.auto.ativo, true);
+  eq(limparConfig({}).auto.ativo, false);
+});
+Deno.test("mensagens automáticas: horário sorteado dentro dos dias e horas permitidos (fuso de Nova York)", () => {
+  const a = limparAuto({ ativo: true, dias: [2], inicio: "10:00", fim: "12:00", tz: "America/New_York" }); // só terça
+  const seg = Date.UTC(2026, 10, 16, 15, 0); // segunda 16/11/2026 10:00 em NY
+  for (const sorte of [0, 0.5, 0.999]) {
+    const p = proximoHorario(a, seg, () => sorte);
+    const d = new Date(p);
+    eq(d.getUTCDay(), 2);
+    sim(d.getUTCHours() >= 15 && d.getUTCHours() < 17, "entre 10h e 12h em NY (15h–17h UTC no inverno)");
+    sim(dentroJanela(a, p), "falhou");
+  }
+  sim(!dentroJanela(a, seg), "falhou");
+  // horário de verão: 10h em NY = 14h UTC em julho
+  const v = proximoHorario(a, Date.UTC(2026, 6, 13, 12, 0), () => 0);
+  eq(new Date(v).getUTCHours(), 14);
+  // depois de postar: nunca antes de ~1 semana
+  const depois = proximoDepoisDoEnvio(a, Date.UTC(2026, 10, 17, 15, 30), () => 0.5);
+  sim(depois - Date.UTC(2026, 10, 17, 15, 30) >= 6.5 * 86400_000, "falhou");
+  eq(proximoHorario(limparAuto({ dias: [] }), seg), 0);
+});
+Deno.test("mensagens automáticas: reclamação de divulgação para os envios", () => {
+  const m = (texto: string, eu = false, extra = {}) => ({ eu, autor: eu ? "" : "Ana", texto, ...extra });
+  sim(!!reclamacao([m("Olá, somos a Endeavor…", true), m("Aqui não é lugar para propaganda")]), "falhou");
+  sim(!!reclamacao([m("Por favor parem de divulgar serviços aqui")]), "falhou");
+  sim(!!reclamacao([m("Isso é spam", false, { cita_eu: true })]), "falhou");
+  eq(reclamacao([m("Alguém sabe abrir LLC?"), m("Bom dia a todos")]), "");
+  eq(reclamacao([m("isso é spam?"), m("Nova mensagem nossa", true)]), ""); // antes da nossa última: já foi
+});
+Deno.test("mensagens automáticas: texto parecido com um já postado é recusado", () => {
+  const antes = ["Olá! Somos a Endeavor Business Solutions e ajudamos empreendedores a abrir empresa nos Estados Unidos. Responda aqui ou chame no privado."];
+  sim(parecido("Olá! Somos a Endeavor Business Solutions e ajudamos empreendedores a abrir empresa nos Estados Unidos. Chame no privado.", antes), "falhou");
+  sim(!parecido("Você sabia que o bookkeeping mensal evita surpresas no imposto da sua LLC? Nossa equipe cuida disso. Quer conversar?", antes), "falhou");
+});
+Deno.test("mensagens automáticas: saída da IA normalizada e reclamação sem texto", () => {
+  eq(normalizar("lembrete", { reclamacao: true, texto: "algo", motivo: "admin pediu" }), { texto: "", tema: "", reclamacao: true, motivo: "admin pediu" });
+  eq(normalizar("lembrete", { texto: "Oi, grupo!", tema: "LLC" }).reclamacao, false);
 });

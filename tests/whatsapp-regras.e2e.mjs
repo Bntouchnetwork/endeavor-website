@@ -22,13 +22,16 @@ function servidorNovo(dono) {
   function f(b) {
     chamadas.push(b);
     switch (b.acao) {
-      case "wa_painel": return { j: { ajustes: A, version: v, config: cfg, config_version: cv, ia: true, hoje: {}, dispositivos: [], conversas: [{ chave: "120363@g.us", nome: "Empreendedores FL", grupo: true }, { chave: "1555@c.us", nome: "Maria", grupo: false }], empresa: "Acme Imóveis", endeavor: false, dono, pedidos_abertos: 1 } };
+      case "wa_painel": return { j: { ajustes: A, version: v, config: cfg, config_version: cv, ia: true, hoje: {}, dispositivos: [], conversas: [{ chave: "120363@g.us", nome: "Empreendedores FL", grupo: true, lembrete: { parado: true, motivo: "Ana reclamou de divulgação no grupo" } }, { chave: "1555@c.us", nome: "Maria", grupo: false }], empresa: "Acme Imóveis", endeavor: false, dono, pedidos_abertos: 1 } };
       case "wa_ajustes": Object.assign(A, b.ajustes); v++; return { j: { ajustes: A, version: v } };
       case "wa_config": if (b.version !== cv) return { st: 409, j: { erro: "As regras mudaram." } }; cfg = b.config; cv++; return { j: { config: cfg, config_version: cv } };
       case "wa_sugerir": return { j: b.tipo === "fluxos" ? { fluxos: [{ nome: "Pós-venda", gatilho: "Cliente fechou", passos: [{ tipo: "mensagem", texto: "Boas-vindas" }, { tipo: "avisar_equipe", texto: "Avise" }] }] }
         : { regras: [{ nome: "Prazo", quando: "Perguntarem o prazo", fazer: "Explique que depende do caso", acao: "responder" }] } };
       case "wa_melhorar": return { j: { texto: b.tipo === "passo" ? "Explique com calma que a lista vai por e-mail." : "Responda com cordialidade que o prazo depende do caso e convide para agendar." } };
       case "wa_pedidos": return { j: { pedidos } };
+      case "wa_lembretes": return { j: { historico: [{ id: 9, chave: "120363@g.us", nome: "Empreendedores FL", status: "enviado", texto: "Olá, pessoal! Somos a Acme Imóveis.", detalhes: { motivo: "Mensagem automática: apresentação" }, created_at: "2026-11-17T15:00:00Z" }] } };
+      case "wa_lembrete_previa": return { j: { texto: "Olá, grupo! Aqui é o assistente virtual da Acme Imóveis. Ajudamos quem quer comprar o primeiro imóvel na Flórida. Quer conversar? Responda aqui ou chame no privado.", tema: "primeiro imóvel" } };
+      case "wa_lembrete_retomar": return { j: { lembrete: {} } };
       case "wa_pedido": pedidos[0].status = b.status; return { j: { ok: true } };
     }
     return { st: 400, j: { erro: "?" } };
@@ -143,6 +146,50 @@ try {
   const gg = srv.cfg().grupos["120363@g.us"];
   ok(gg && gg.modo === "auto" && gg.limite_dia === 2 && gg.por_semana === 2 && gg.interesse === false && gg.nome === "Empreendedores FL", "ajustes do grupo salvos na configuração");
   await page.screenshot({ path: OUT + "/wa-grupos-admin.png", fullPage: true });
+  ok(await page.getAttribute('.wa-seg a[data-v="auto-atendimento"]', "aria-current") === "page", "Grupos abre em Autoatendimento");
+
+  /* Grupos → Mensagens automáticas */
+  await page.click('.wa-seg >> text=Mensagens automáticas');
+  await page.waitForSelector(".wa-lembrete");
+  ok(/Desligadas/.test(await page.textContent(".wa-auto-geral")) && (await page.textContent("#wa-corpo")).includes("chave geral está desligada"), "chave geral desligada por padrão, com aviso");
+  ok((await page.textContent(".wa-lembrete .wa-situ")).includes("Ana reclamou"), "grupo parado mostra o motivo");
+  ok((await page.textContent(".wa-lembrete")).includes("sem o aviso de interesse"), "avisa que sem o interesse quem responder não entra no fluxo");
+  await page.click(".wa-lembrete [data-retomar]");
+  await page.waitForFunction(() => /Retomado/.test(document.querySelector(".wa-lembrete .wa-situ").textContent));
+  ok(srv.chamadas.some((x) => x.acao === "wa_lembrete_retomar" && x.chave === "120363@g.us"), "Retomar libera o grupo");
+  await page.check(".wa-lembrete [data-lk]");
+  await page.click(".wa-lembrete [data-previa]");
+  await page.waitForSelector(".wa-previa-t");
+  ok((await page.textContent(".wa-previa-t")).includes("assistente virtual"), "prévia da próxima mensagem");
+  await page.click("#la-salvar");
+  await page.waitForFunction(() => /Salvo/.test(document.getElementById("la-m").textContent));
+  const gl = srv.cfg().grupos["120363@g.us"];
+  ok(gl.lembrete === true && gl.modo === "auto" && gl.interesse === false, "lembrete ligado no grupo sem mexer no Autoatendimento");
+  await page.waitForSelector("#la-hist table");
+  ok((await page.textContent("#la-hist")).includes("Postado"), "histórico do que foi postado");
+  await page.screenshot({ path: OUT + "/wa-grupos-auto.png", fullPage: true });
+
+  /* Ajustes → Mensagens automáticas */
+  await page.click("#la-ajustes");
+  await page.waitForSelector("#la-aj");
+  ok(await page.getAttribute('.wa-seg a[data-v="auto"]', "aria-current") === "page", "Ajustar abre Ajustes → Mensagens automáticas");
+  await page.check('#la-aj [name="ativo"]');
+  await page.selectOption("#la-iv", "14");
+  await page.uncheck('#la-aj [data-dia="1"]');
+  await page.fill("#la-ini", "11:00"); await page.fill("#la-fim", "10:00");
+  await page.click('#la-aj button[type="submit"]');
+  await page.waitForFunction(() => /depois do inicial/.test(document.getElementById("la-aj-m").textContent));
+  ok(!srv.cfg().auto || !srv.cfg().auto.ativo, "não salva com o horário final antes do inicial");
+  await page.fill("#la-fim", "16:30");
+  await page.fill("#la-temas", "Primeiro imóvel\nFinanciamento para estrangeiros");
+  await page.click('#la-aj button[type="submit"]');
+  await page.waitForFunction(() => /Salvo/.test(document.getElementById("la-aj-m").textContent));
+  const au = srv.cfg().auto;
+  ok(au.ativo === true && au.intervalo_dias === 14 && au.dias.join() === "2,3,4,5" && au.inicio === "11:00" && au.fim === "16:30" && au.temas.includes("Financiamento"), "ajustes gerais salvos na configuração");
+  ok(srv.cfg().grupos["120363@g.us"].lembrete === true, "salvar os ajustes mantém os grupos");
+  await page.click('.wa-seg >> text=Autoatendimento');
+  await page.waitForSelector("#wa-aj");
+  ok((await page.textContent("#wa-aj h2")) === "Autoatendimento" && (await page.textContent("#wa-aj")).includes("Autoatendimento ligado"), "Ajustes abre em Autoatendimento (antigo IA Takeover)");
 
   await page.click(".subtabs >> text=Pedidos ao CRM");
   await page.waitForSelector("[data-ped]");

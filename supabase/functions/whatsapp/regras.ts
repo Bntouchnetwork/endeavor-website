@@ -12,7 +12,7 @@ const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
 const txt = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u001f<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
 const bloco = (v: unknown, max: number) => String(v ?? "").replace(/[\u0000-\u0008\u000b-\u001f<>]/g, " ").replace(/[ \t]+/g, " ").trim().slice(0, max);
 export const limpo = (s: unknown, max = 2000) => C.limparSensivel(String(s ?? "")).texto.slice(0, max);
-export const FERRAMENTAS = ["sugerir", "resumo", "lead", "proposta", "traduzir", "comando", "personalizar", "responder", "grupo", "conteudo_grupo"];
+export const FERRAMENTAS = ["sugerir", "resumo", "lead", "proposta", "traduzir", "comando", "personalizar", "responder", "grupo", "conteudo_grupo", "lembrete"];
 export const STATUS = ["sugerido", "aprovado", "enviado", "descartado", "escalado", "criado", "erro", "ignorado"];
 
 /* ================================================================ proteções fixas ================================================================ */
@@ -76,7 +76,7 @@ export function limparConfig(c: Any) {
     if (acao === "fluxo" && !fluxo) acao = "responder";
     return { id: id(r?.id, "regra" + (i + 1)), nome: txt(r?.nome, 80), quando: bloco(r?.quando, 400), fazer: bloco(r?.fazer, 800), acao, fluxo, ativa: r?.ativa !== false };
   }).filter((r: Any) => r.nome && r.quando));
-  return { perfil, regras, fluxos, modelos, grupos: limparGrupos(c.grupos) };
+  return { perfil, regras, fluxos, modelos, grupos: limparGrupos(c.grupos), auto: limparAuto(c.auto) };
 }
 
 /* ---------------- grupos: o que a IA faz em cada grupo ----------------
@@ -94,7 +94,7 @@ export function limparGrupos(g: Any) {
     const lim = Math.round(Number(x.limite_dia));
     o[chave] = { nome: txt(x.nome, 120), modo: MODOS_GRUPO.includes(x.modo) ? x.modo : GRUPO_PADRAO.modo,
       limite_dia: Number.isFinite(lim) ? Math.max(1, Math.min(10, lim)) : GRUPO_PADRAO.limite_dia,
-      interesse: x.interesse !== false, conteudo: x.conteudo !== false, por_semana: Number(x.por_semana) === 2 ? 2 : 1 };
+      interesse: x.interesse !== false, conteudo: x.conteudo !== false, por_semana: Number(x.por_semana) === 2 ? 2 : 1, lembrete: x.lembrete === true };
   }
   return o;
 }
@@ -106,6 +106,79 @@ export function grupoCfg(cfg: Any, chave: string) {
 export function conteudoDevido(g: Any, ultimoEnvio: number, agora = Date.now()) {
   if (!g.conteudo || g.modo === "desligado") return false;
   return !ultimoEnvio || agora - ultimoEnvio >= (7 / (g.por_semana || 1)) * 86400_000;
+}
+
+/* ---------------- mensagens automáticas (lembrete de serviços nos grupos) ----------------
+ * Ajustes gerais em config.auto; cada grupo liga ou desliga em config.grupos[chave].lembrete.
+ * Postado sem aprovação, no máximo 1 vez por semana por grupo, em horário sorteado dentro dos dias e horas permitidos.
+ * O estado (próximo envio, parado) fica em wa_chats.auto, no servidor. */
+export const INTERVALOS_AUTO = [7, 14, 30];
+export const AUTO_PADRAO = { ativo: false, intervalo_dias: 7, dias: [1, 2, 3, 4, 5], inicio: "10:00", fim: "17:00", tz: "America/New_York", temas: "", tom: "" };
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+const FUSOS = ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "America/Sao_Paulo"];
+export function limparAuto(a: Any) {
+  a = a && typeof a === "object" ? a : {};
+  const dias = (Array.isArray(a.dias) ? a.dias : AUTO_PADRAO.dias).map(Number).filter((d: number) => Number.isInteger(d) && d >= 0 && d <= 6);
+  let inicio = HORA.test(String(a.inicio)) ? String(a.inicio) : AUTO_PADRAO.inicio, fim = HORA.test(String(a.fim)) ? String(a.fim) : AUTO_PADRAO.fim;
+  if (fim <= inicio) { inicio = AUTO_PADRAO.inicio; fim = AUTO_PADRAO.fim; }
+  return { ativo: a.ativo === true, intervalo_dias: INTERVALOS_AUTO.includes(Number(a.intervalo_dias)) ? Number(a.intervalo_dias) : 7,
+    dias: [...new Set(dias)].sort() as number[], inicio, fim, tz: FUSOS.includes(a.tz) ? a.tz : AUTO_PADRAO.tz, temas: bloco(a.temas, 600), tom: txt(a.tom, 200) };
+}
+/** diferença (min) entre o horário local do fuso e o UTC no instante ms */
+function offsetMin(tz: string, ms: number) {
+  const p: Any = {};
+  new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).formatToParts(new Date(ms)).forEach((x) => { p[x.type] = x.value; });
+  return (Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute) - Math.floor(ms / 60000) * 60000) / 60000;
+}
+function localDia(ms: number, tz: string) {
+  const p: Any = {};
+  new Intl.DateTimeFormat("en-US", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }).formatToParts(new Date(ms)).forEach((x) => { p[x.type] = x.value; });
+  return { y: +p.year, m: +p.month, d: +p.day, dow: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(p.weekday) };
+}
+function utcDe(y: number, m: number, d: number, hhmm: string, tz: string) {
+  const [h, mi] = hhmm.split(":").map(Number);
+  let t = Date.UTC(y, m - 1, d, h, mi);
+  t -= offsetMin(tz, t) * 60000;
+  return Date.UTC(y, m - 1, d, h, mi) - offsetMin(tz, t) * 60000; // segunda passada acerta a virada do horário de verão
+}
+/** o instante ms está dentro dos dias e das horas permitidos? */
+export function dentroJanela(a: Any, ms: number) {
+  const x = localDia(ms, a.tz);
+  if (!a.dias.includes(x.dow)) return false;
+  return ms >= utcDe(x.y, x.m, x.d, a.inicio, a.tz) && ms < utcDe(x.y, x.m, x.d, a.fim, a.tz);
+}
+/** próximo envio: o primeiro dia permitido a partir de "desde", num horário sorteado dentro da janela */
+export function proximoHorario(a: Any, desde: number, sorte = Math.random) {
+  if (!a.dias.length) return 0;
+  for (let i = 0; i < 70; i++) {
+    const x = localDia(desde + i * 86400_000, a.tz);
+    if (!a.dias.includes(x.dow)) continue;
+    const ini = utcDe(x.y, x.m, x.d, a.inicio, a.tz), fim = utcDe(x.y, x.m, x.d, a.fim, a.tz);
+    const lo = Math.max(ini, desde + 5 * 60_000);
+    if (lo >= fim - 60_000) continue;
+    return Math.round(lo + sorte() * (fim - 60_000 - lo));
+  }
+  return 0;
+}
+/** depois de postar: o próximo fica a "intervalo_dias" do último envio (nunca menos de 7 dias) */
+export function proximoDepoisDoEnvio(a: Any, enviadoEm: number, sorte = Math.random) {
+  return proximoHorario(a, enviadoEm + Math.max(7, a.intervalo_dias) * 86400_000 - 12 * 3600_000, sorte);
+}
+/** alguém reclamou de divulgação no grupo (mensagens dos outros depois da nossa última)? */
+const RE_RECLAMA = /(propaganda|spam|divulga[çc](?:[aã]o|[õo]es)|an[uú]ncio|publicidade|merchan|jab[aá]|n[aã]o (?:é|e) (?:lugar|espa[çc]o) (?:para|pra)|par(?:e|em|a|ar) de (?:mandar|postar|divulgar|anunciar)|chega de|proibid[oa]s? (?:postar|divulgar|propaganda)|regras? do grupo|vou (?:te )?remover|ser[aá] removid|stop (?:posting|spamming|advertising)|no (?:ads|spam|promo(?:tion)?s?)\b|not the place for)/i;
+export function reclamacao(mensagens: Any[]) {
+  let ultEu = -1;
+  mensagens.forEach((m: Any, i: number) => { if (m.eu) ultEu = i; });
+  const depois = mensagens.slice(ultEu + 1).filter((m: Any) => !m.eu && m.texto);
+  const x = depois.find((m: Any) => RE_RECLAMA.test(m.texto) && (m.cita_eu || ultEu >= 0 || /\b(propaganda|spam|divulga|an[uú]ncio|publicidade|ads|promo)/i.test(m.texto)));
+  return x ? `${txt(x.autor, 60) || "Alguém"} reclamou de divulgação no grupo` : "";
+}
+const palavras = (t: string) => new Set(String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((w) => w.length > 3));
+/** texto novo parecido demais com um já postado? (semelhança de palavras > 55%) */
+export function parecido(novo: string, anteriores: string[]) {
+  const a = palavras(novo);
+  if (!a.size) return false;
+  return anteriores.some((t) => { const b = palavras(t); if (!b.size) return false; let c = 0; a.forEach((w) => { if (b.has(w)) c++; }); return c / (a.size + b.size - c) > 0.55; });
 }
 
 /** Configuração inicial: o fluxo de documentos (compliance → CRM) e o de preço/caso específico já vêm prontos. */
@@ -184,6 +257,7 @@ export function montarEntrada(f: string, a: Any, c: { nome: string; grupo: boole
   if (extra.existentes) partes.push(`<existentes>${limpo(extra.existentes, 3000)}</existentes>`);
   if (extra.continuacao) partes.push(`<continuacao>${JSON.stringify(extra.continuacao)}</continuacao>`);
   if (extra.grupo_cfg) partes.push(`<grupo_ajustes>${JSON.stringify(extra.grupo_cfg)}</grupo_ajustes>`);
+  if (extra.lembrete_ajustes) partes.push(`<lembrete_ajustes>${JSON.stringify(extra.lembrete_ajustes)}</lembrete_ajustes>`);
   if (extra.temas_recentes) partes.push(`<temas_recentes>${limpo(extra.temas_recentes, 1500)}</temas_recentes>`);
   if (mensagens.length || !["sugerir_regras", "sugerir_fluxos", "melhorar_texto", "conteudo_grupo"].includes(f)) partes.push(`<mensagens>\n${C.montarConversa(mensagens, f === "resumo" || f === "grupo" ? 60 : 30)}\n</mensagens>`);
   return partes.join("\n");
@@ -231,6 +305,7 @@ export function normalizar(f: string, r: Any, cfg?: Any): Any {
       relevante: r?.relevante === true, responder: r?.relevante === true && r?.responder === true && !!s(r?.texto), texto: s(r?.texto), motivo: s(r?.motivo, 200),
       interesse: (Array.isArray(r?.interesse) ? r.interesse : []).slice(0, 3).map((x: Any) => ({ autor: s(x?.autor, 80), motivo: s(x?.motivo, 200), mensagem: s(x?.mensagem, 800) })).filter((x: Any) => x.autor && x.mensagem) };
     case "conteudo_grupo": return { texto: s(r?.texto, 1200), tema: s(r?.tema, 120) };
+    case "lembrete": { const rec = r?.reclamacao === true; return { texto: rec ? "" : s(r?.texto, 900), tema: s(r?.tema, 120), reclamacao: rec, motivo: s(r?.motivo, 200) }; }
     case "sugerir_regras": return { regras: limparConfig({ regras: (Array.isArray(r?.regras) ? r.regras : []).map((x: Any) => ({ ...x, acao: x?.acao === "fluxo" ? "responder" : x?.acao })), fluxos: [] }).regras.slice(0, 8) };
     case "sugerir_fluxos": return { fluxos: limparConfig({ fluxos: r?.fluxos }).fluxos.slice(0, 5) };
     case "melhorar_texto": return { texto: s(r?.texto, 800) };

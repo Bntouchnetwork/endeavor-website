@@ -27,12 +27,14 @@ const ajustes = { takeover: true, takeover_individual: true, espera_min: 1, espe
   texto_aviso: "Olá! Aqui é o assistente virtual da Endeavor.", idioma: "pt-BR", negocio: "Endeavor", link_agenda: "https://endeavorbiz.com/booking.html", horario: { ativo: false, inicio: "08:00", fim: "20:00", tz: "America/New_York" },
   prontas: [{ titulo: "Saudação", texto: "Olá! Como posso ajudar?" }] };
 const conversas = {};
+let lembretes = [];
 function responder(b) {
   chamadas.push(b);
   if (b.token !== "wam_TESTE_abcdefghijklmnopqrstuvwxyz") return [401, { erro: "Este código de conexão foi desligado." }];
   switch (b.acao) {
     case "ext_iniciar": return [200, { ajustes, version: 3, conversas: Object.values(conversas), usuario: "admin@teste", ia: true }];
-    case "ext_ping": return [200, { version: 3 }];
+    case "ext_ping": return [200, { version: 3, lembretes }];
+    case "ext_lembrete_bloqueado": return [200, { ok: true, motivo: "O número não está mais no grupo" }];
     case "ext_conversa": { const c = conversas[b.conversa.chave] = { ...(conversas[b.conversa.chave] || { seguir: true, takeover: !b.conversa.grupo }), ...b.conversa, ...(typeof b.seguir === "boolean" ? { seguir: b.seguir } : {}), ...(typeof b.takeover === "boolean" ? { takeover: b.takeover } : {}) }; return [200, { conversa: c }]; }
     case "ext_ajustes": Object.assign(ajustes, b.ajustes); return [200, { ajustes, version: 4 }];
     case "ext_registrar": return [200, { ok: true }];
@@ -52,6 +54,7 @@ function responder(b) {
           interesse: [{ autor: "Carlos Novo", motivo: "quer abrir uma LLC", mensagem: "Oi Carlos, vi sua pergunta no grupo sobre LLC. Posso te ajudar? Quer agendar uma conversa?" }],
           conteudo_devido: true, usadas_hoje: 1, grupo_cfg: { modo: modoGrupo, limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 } }];
       }
+      if (f === "lembrete") { lembretes = []; return [200, { postar: true, texto: "Olá, pessoal! Somos a Endeavor e ajudamos a abrir empresa nos EUA. Quer conversar? Responda aqui ou chame no privado.", tema: "apresentação", log_id: logId }]; }
       if (f === "conteudo_grupo") return [200, { texto: "Dica: separe as contas da LLC desde o primeiro dia.", tema: "Contas da LLC", log_id: logId }];
       if (f === "comando") return [200, { acao: "escrever", texto: "Amanhã eu ligo às 10h.", log_id: logId }];
       if (f === "lead") return [200, { nome: "Maria Teste", email: "maria@exemplo.com", telefone: "", assunto: "LLC na Flórida", resumo: "Quer abrir LLC." }];
@@ -308,6 +311,15 @@ try {
   await dorme(3000);
   ok(ia("responder").length === r0, "em pausa, o Takeover não responde");
   await P("#pausar").click();
+
+  /* mensagens automáticas: o servidor diz no ping que o grupo está na hora; a extensão abre o grupo e posta sozinha */
+  await page.evaluate(() => window.abrirConversa("15551230000@c.us"));
+  lembretes = [{ chave: "120363000000000001@g.us", nome: "Grupo Empreendedores" }];
+  for (let i = 0; i < 80 && !(await enviadas()).some((e) => e.k === "120363000000000001@g.us" && /Somos a Endeavor/.test(e.t)); i++) await dorme(1000);
+  ok(ia("lembrete").length === 1 && ia("lembrete")[0].conversa.grupo === true, "mensagem automática: a IA escreve o lembrete do grupo na hora marcada");
+  ok((await enviadas()).some((e) => e.k === "120363000000000001@g.us" && /Somos a Endeavor/.test(e.t)), "mensagem automática: a extensão abriu o grupo e postou sozinha, sem aprovação");
+  await dorme(800);
+  ok(chamadas.some((c) => c.acao === "ext_registrar" && c.status === "enviado" && /Somos a Endeavor/.test(c.texto || "")), "mensagem automática: o envio fica registrado (o servidor agenda a próxima)");
 
   /* painel fixo, sem rolagem */
   const rol = await page.evaluate(() => { const c = document.getElementById("emgr-host").shadowRoot.getElementById("corpo"); return [c.scrollHeight, c.clientHeight]; });

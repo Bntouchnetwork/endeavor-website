@@ -16,7 +16,7 @@
 
   var S = {
     conectado: false, ajustes: C.limparAjustes({}), version: 0, conversas: {}, usuario: '', pausado: false, aberto: true, largura: 380,
-    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, monitorar: false, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, gst: {}, contador: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null
+    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, monitorar: false, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, gst: {}, contador: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null, lembretes: [], lembAviso: {}, lembAbrindo: null
   };
 
   /* ---------------- servidor ---------------- */
@@ -282,7 +282,7 @@
   }
   function precisaConversa() { var c = W.conversaAberta(); if (!c) { res('<p class="erro">Abra uma conversa no WhatsApp Web primeiro.</p>'); return null; } return c; }
   function ia(ferramenta, c, extra) {
-    if (!(c.mensagens || []).length && ['comando', 'traduzir'].indexOf(ferramenta) < 0)
+    if (!(c.mensagens || []).length && ['comando', 'traduzir', 'lembrete'].indexOf(ferramenta) < 0)
       return Promise.reject(new Error('Não consegui ler as mensagens desta conversa. Clique em "Copiar diagnóstico", no rodapé do painel, e cole no chat com o Claude.'));
     return api(Object.assign({ acao: 'ext_ia', ferramenta: ferramenta, conversa: ref(c), mensagens: c.mensagens }, extra || {}));
   }
@@ -589,6 +589,72 @@
     } catch (e) { agora('Takeover: ' + e.message, 'erro'); }
     finally { S.ocupado = false; S.acao = null; $('#parar').hidden = true; }
   }
+  /* ---------------- mensagens automáticas (lembrete de serviços nos grupos) ----------------
+   * O servidor diz, no ping, quais grupos estão na hora (dias, horários e frequência dos Ajustes). Com a IA livre e você
+   * fora do WhatsApp há 30 s, a extensão abre o grupo, a IA escreve um texto novo e posta sozinha, digitando como uma pessoa.
+   * Se o grupo não deixa postar (saímos ou só admins), avisa o servidor, que para as mensagens daquele grupo. */
+  // o WhatsApp atual não mostra o id do grupo: a chave pode ser o nome, então confere a chave ou o nome
+  function mesmoGrupo(c, x) { return !!c && (x.chave === c.chave || (!!x.nome && x.nome === c.nome)); }
+  function lembreteDe(c) { return c && c.grupo ? S.lembretes.filter(function (x) { return mesmoGrupo(c, x); })[0] || null : null; }
+  function lembreteDevido(c) { return !!lembreteDe(c); }
+  function tirarLembrete(chave) { S.lembretes = S.lembretes.filter(function (x) { return x.chave !== chave; }); }
+  function podeLembrete() { return S.conectado && S.ajustes.takeover && !S.pausado && !S.ocupado && Date.now() - S.humanoEm >= 30000 && !W.textoNaCaixa(); }
+  async function postarLembrete(aberta) {
+    var x = lembreteDe(aberta); if (!x) return;
+    tirarLembrete(x.chave); S.lembAbrindo = null;
+    var c = Object.assign({}, aberta, { chave: x.chave }); // a chave que o servidor conhece
+    var bloq = W.semCaixa();
+    if (bloq) {
+      api({ acao: 'ext_lembrete_bloqueado', conversa: ref(c), motivo: bloq }).then(function (r) {
+        agora('Mensagens automáticas paradas em ' + c.nome + ': ' + r.motivo, 'alerta');
+        msgBg({ tipo: 'aviso', titulo: 'Mensagens automáticas paradas', texto: c.nome + ': ' + r.motivo });
+      }).catch(function () { });
+      return;
+    }
+    if (!W.caixa()) return; // a página ainda não carregou o grupo: volta no próximo ping
+    S.ocupado = true; var ac = S.acao = { parar: false };
+    try {
+      agora('Mensagem automática para ' + c.nome + '…', 'pensando');
+      var r = await ia('lembrete', c);
+      if (!r.postar) {
+        if (r.parado) { agora('Mensagens automáticas paradas em ' + c.nome + ': ' + r.motivo, 'alerta'); msgBg({ tipo: 'aviso', titulo: 'Mensagens automáticas paradas', texto: c.nome + ': ' + r.motivo }); }
+        else zerar(r.motivo);
+        return;
+      }
+      var vou = Date.now();
+      if (!await esperar(C.espera(S.ajustes), 'Esperando para digitar', ac)) return cancelar(r, c, 'Parado por você.');
+      if (!mesmaConversa(aberta)) return cancelar(r, c, 'O grupo mudou antes de digitar.');
+      if (W.textoNaCaixa() || S.teclouEm > vou) return cancelar(r, c, 'Você começou a escrever: a IA não postou.');
+      var d = await digitarVisivel(r.texto, ac, false);
+      if (!d.ok) return cancelar(r, c, d.motivo === 'trocou' ? 'O grupo mudou: a IA parou de digitar.' : d.motivo === 'parado' ? 'Você assumiu: o texto ficou na caixa para você.' : 'A caixa estava ocupada.');
+      if (!mesmaConversa(aberta)) { W.limparCaixa(); return cancelar(r, c, 'O grupo mudou: não postei.'); }
+      W.enviar();
+      S.ultGrupo[aberta.chave] = Date.now();
+      api({ acao: 'ext_registrar', log_id: r.log_id, status: 'enviado', texto: r.texto, conversa: ref(c), aviso_incluido: !!r.aviso_incluido }).then(function () {
+        if (r.aviso_incluido && S.conversas[c.chave]) S.conversas[c.chave].aviso_enviado = true;
+      }).catch(function () { });
+      await esperar(C.pausa(S.ajustes), 'Postado ✓ · pausa', ac);
+      agora('Mensagem automática postada em ' + c.nome + ' ✓', 'ok');
+    } catch (e) { agora('Mensagem automática: ' + e.message, 'erro'); }
+    finally { S.ocupado = false; S.acao = null; $('#parar').hidden = true; }
+  }
+  /** abre o grupo do próximo lembrete (se estiver na lista do WhatsApp); o tick posta quando o grupo abrir */
+  function abrirLembrete() {
+    if (!S.lembretes.length || !podeLembrete()) return false;
+    var x = S.lembretes[0], a = W.conversaAberta();
+    if (a && mesmoGrupo(a, x)) return false;
+    if (S.lembAbrindo && S.lembAbrindo.chave === x.chave && Date.now() - S.lembAbrindo.em < 8000) return true;
+    var linha = W.linhaPorNome(x.nome);
+    if (!linha) {
+      if (!S.lembAviso[x.chave]) { S.lembAviso[x.chave] = true; agora('Mensagem automática na hora em ' + x.nome + ': abra o grupo para a IA postar.', 'alerta'); }
+      return false;
+    }
+    S.lembAbrindo = { chave: x.chave, em: Date.now() };
+    S.abertaPelaIA[x.nome] = true;
+    agora('Abrindo o grupo ' + x.nome + ' para a mensagem automática…', 'pensando');
+    W.abrir(linha);
+    return true;
+  }
   /** andamento do fluxo na conversa (ex.: Pedido de documentos · falta e-mail · enviado ao CRM) */
   function mostrarFluxo(c, f) {
     var CAMPO = { nome: 'nome', email: 'e-mail', telefone: 'telefone', tipo_caso: 'tipo de caso' };
@@ -633,6 +699,7 @@
     var pelaIA = !!S.abertaPelaIA[c.nome];
     delete S.abertaPelaIA[c.nome]; delete S.tentativas[c.nome];
     if (S.ocupado || S.pausado) return;
+    if (lembreteDevido(c) && podeLembrete()) return postarLembrete(c);
     var st = estado(c);
     if (ult && S.tratadas[c.chave] !== ult.id) {
       if (S.ajustes.takeover && !c.grupo) return responderAuto(c);
@@ -652,7 +719,7 @@
     // primeiro as conversas individuais; com "Monitorar grupos" ligado, depois os grupos com mensagem nova
     var lista = W.naoLidas(), ehGrupo = function (x) { var st = porNome(x.nome); return !!(st && st.grupo); };
     var alvo = lista.find(function (x) { return !ehGrupo(x); }) || (S.monitorar ? lista.find(ehGrupo) : null);
-    if (!alvo) return;
+    if (!alvo) { abrirLembrete(); return; }
     // não insiste: se a conversa não abrir, espera 10 min antes de tentar de novo a mesma
     var t = S.tentativas[alvo.nome] || { n: 0, em: 0, ate: 0 };
     if (Date.now() < t.ate || Date.now() - t.em < 6000) return;
@@ -725,6 +792,7 @@
     try {
       var r = await api({ acao: 'ext_ping', version: forcar ? -1 : S.version, estado: { takeover_ativo: S.ajustes.takeover && !S.pausado, pausado: S.pausado, conversa: S.atual ? S.atual.nome : '', whatsapp: W.pronto() } });
       if (r.ajustes) { S.ajustes = r.ajustes; S.version = r.version; desenharTempos(); pontos(); }
+      if (Array.isArray(r.lembretes)) S.lembretes = r.lembretes;
     } catch (e) { if (e.status === 401) iniciar(); }
   }
 

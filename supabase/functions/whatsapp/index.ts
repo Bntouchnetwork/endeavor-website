@@ -15,14 +15,19 @@
 // Painel (Authorization: sessão; admin → conta da Endeavor, ou de um cliente com clientId; cliente → a própria empresa):
 //   wa_painel | wa_ajustes { ajustes, version } | wa_config { config, version } | wa_sugerir { tipo: regras|fluxos } | wa_melhorar { tipo: regra|passo, texto, contexto }
 //   wa_conectar { nome } | wa_revogar { id } | wa_registro { antes?, ferramenta?, status? } | wa_conversa { chave, seguir?, takeover? }
-//   wa_pedidos | wa_pedido { id, status }
+//   wa_pedidos | wa_pedido { id, status } | wa_lembretes | wa_lembrete_previa { chave } | wa_lembrete_retomar { chave }
 // Extensão (body.token = código de conexão; só o hash fica no banco):
-//   ext_iniciar | ext_ping | ext_ajustes | ext_conversa | ext_ia | ext_registrar | ext_lead | ext_horarios | ext_agendar | ext_propostas
+//   ext_iniciar | ext_ping (devolve os lembretes vencidos) | ext_ajustes | ext_conversa | ext_ia | ext_registrar | ext_lead | ext_horarios | ext_agendar | ext_propostas
+//   ext_lembrete_bloqueado { conversa, motivo }
+//
+// Mensagens automáticas (lembrete de serviços nos grupos): postadas SEM aprovação, no máximo 1 por semana por grupo, em
+// horário sorteado dentro da janela, com texto sempre diferente. Param sozinhas (wa_chats.auto.parado) se alguém reclamar
+// de divulgação ou se o número sair do grupo / não puder mais postar.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { hubJson, hubOn, HubFail } from "../_shared/hub-ai.ts";
 import "./core.js";
-import { avisoComIA, conteudoDevido, FERRAMENTAS, grupoCfg, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, prontoParaCRM, STATUS, violaProtecao } from "./regras.ts";
+import { avisoComIA, conteudoDevido, dentroJanela, FERRAMENTAS, grupoCfg, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, parecido, prontoParaCRM, proximoDepoisDoEnvio, proximoHorario, reclamacao, STATUS, violaProtecao } from "./regras.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -138,6 +143,11 @@ async function salvarConfig(k: Conta, userId: string, novo: Any, version: unknow
   const base = l ? {} : { settings: (await padraoAjustes(k)), version: 0 };
   const { error } = await db.from("wa_settings").upsert({ conta: k.conta, user_id: userId, ...base, config: cfg, config_version: v, updated_at: agora() }, { onConflict: "conta" });
   if (error) throw new Erro("Não foi possível salvar as regras.", 500);
+  // mudou a janela ou a frequência das mensagens automáticas: os próximos envios são sorteados de novo
+  if (JSON.stringify({ ...atual.config.auto, temas: "", tom: "" }) !== JSON.stringify({ ...cfg.auto, temas: "", tom: "" })) {
+    const { data: cs } = await db.from("wa_chats").select("id, auto").eq("conta", k.conta).eq("grupo", true).not("auto", "is", null);
+    for (const x of cs || []) { const { proximo: _p, ...resto } = x.auto || {}; await db.from("wa_chats").update({ auto: resto }).eq("id", x.id); }
+  }
   return { config: cfg, config_version: v };
 }
 function lerConversa(c: Any) {
@@ -161,7 +171,7 @@ async function conversaDe(k: Conta, c: { chave: string; nome: string; grupo: boo
   return novo;
 }
 const conversaOut = (x: Any) => ({ chave: x.chave, nome: x.nome, grupo: x.grupo, seguir: x.seguir, takeover: x.takeover, aviso_enviado: !!x.aviso_ia_at, lead_id: x.lead_id || x.ct_contact_id, contato: x.contato || null,
-  fluxo: x.fluxo ? { id: x.fluxo.id, status: x.fluxo.status } : null, atualizado: x.updated_at });
+  fluxo: x.fluxo ? { id: x.fluxo.id, status: x.fluxo.status } : null, atualizado: x.updated_at, ...(x.grupo ? { lembrete: x.auto || null } : {}) });
 async function registrar(k: Conta, userId: string | null, deviceId: string | null, c: { chave?: string; nome?: string; grupo?: boolean } | null, ferramenta: string, status: string, texto?: unknown, detalhes: Any = {}) {
   const { data } = await db.from("wa_log").insert({ conta: k.conta, user_id: userId, device_id: deviceId, chave: c?.chave || null, nome: c?.nome || null, grupo: !!c?.grupo,
     ferramenta: LOG_FERRAMENTAS.includes(ferramenta) ? ferramenta : "comando", status: STATUS.includes(status) ? status : "sugerido",
@@ -214,6 +224,7 @@ async function ia(d: Disp, b: Any) {
     if (f === "responder") return { responder: false, eh_grupo: true, motivo: "Isto é um grupo: a IA segue o modo do grupo." };
     c.grupo = true;
   }
+  if (f === "lembrete") return await lembreteIA(k, d, c, conv, ajustes, config, mensagens, b.previa === true);
   const extra: Any = { pedido: b.pedido, base: b.base, texto: b.texto, empresa: k.nome, cfg: config };
   if (f === "traduzir") extra.idioma_destino = /^[a-z]{2}(-[A-Z]{2})?$/.test(String(b.idioma_destino || "")) ? b.idioma_destino : ajustes.idioma;
   if (!mensagens.length && !["comando", "traduzir", "conteudo_grupo"].includes(f)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");
@@ -307,6 +318,89 @@ async function ia(d: Disp, b: Any) {
     { ferramenta: f, ...(out.motivo ? { motivo: txt(out.motivo, 200) } : {}), ...(out.regra ? { regra: out.regra } : {}), ...(continuacao ? { continuacao: true, com: txt(ultRec!.autor, 60) } : {}), ...(out.fluxo_info ? { fluxo: out.fluxo_info.id, etapa: out.fluxo_info.status } : {}) });
   out.aviso_incluido = !!extra.aviso && !!out.responder;
   if (out.escalar && k.endeavor) await sino("whatsapp", `WhatsApp: ${c.nome || "conversa"} precisa de você`, out.motivo || "A IA não respondeu sozinha.", "#/whatsapp?aba=registro");
+  return out;
+}
+
+/* ---------------- mensagens automáticas (lembrete de serviços nos grupos) ---------------- */
+async function estadoLembrete(id: string, novo: Any) {
+  await db.from("wa_chats").update({ auto: novo }).eq("id", id);
+  return novo;
+}
+async function pararLembrete(k: Conta, c: Any, conv: Any, motivo: string) {
+  await estadoLembrete(conv.id, { ...(conv.auto || {}), parado: true, motivo: txt(motivo, 200), parado_em: agora(), proximo: null });
+  await registrar(k, null, null, c, "lembrete", "escalado", null, { motivo: txt("Mensagens automáticas paradas: " + motivo, 200) });
+  if (k.endeavor) await sino("whatsapp", `WhatsApp: mensagens automáticas paradas em ${c.nome || "um grupo"}`, motivo + ". Veja em Grupos → Mensagens automáticas.", "#/whatsapp?aba=grupos&v=auto");
+}
+/** gera (e confere) o lembrete do grupo. previa = só mostra o texto no admin, sem registrar nem mexer no agendamento */
+async function lembreteIA(k: Conta, d: { id: string | null; user_id: string }, c: Any, conv: Any, ajustes: Any, config: Any, mensagens: Any[], previa: boolean) {
+  const auto = config.auto, g = grupoCfg(config, c.chave), st = conv.auto || {};
+  if (!c.grupo) throw new Erro("Mensagens automáticas são só para grupos.");
+  if (!previa) {
+    if (!auto.ativo) return { postar: false, motivo: "Mensagens automáticas desligadas nos Ajustes." };
+    if (!g.lembrete) return { postar: false, motivo: "Mensagens automáticas desligadas neste grupo." };
+    if (st.parado) return { postar: false, motivo: "Paradas neste grupo: " + (st.motivo || "") };
+    if (!st.proximo || Date.parse(st.proximo) > Date.now()) return { postar: false, motivo: "Ainda não é a hora deste grupo." };
+    if (!dentroJanela(auto, Date.now())) return { postar: false, motivo: "Fora dos dias e horários permitidos." };
+    const rec = reclamacao(mensagens);
+    if (rec) { await pararLembrete(k, c, conv, rec); return { postar: false, parado: true, motivo: rec }; }
+    // trava: enquanto a extensão posta, não repete (volta a valer em 2 h se nada for enviado)
+    await estadoLembrete(conv.id, { ...st, proximo: new Date(Date.now() + 2 * 3600_000).toISOString() });
+  }
+  const { data: ant } = await db.from("wa_log").select("texto, chave").eq("conta", k.conta).eq("ferramenta", "lembrete").eq("status", "enviado").order("id", { ascending: false }).limit(30);
+  const anteriores = (ant || []).filter((x: Any) => x.texto);
+  const recentes = [...anteriores.filter((x: Any) => x.chave === c.chave).slice(0, 6), ...anteriores.filter((x: Any) => x.chave !== c.chave).slice(0, 4)].map((x: Any) => x.texto as string);
+  const extra: Any = { empresa: k.nome, cfg: config, lembrete_ajustes: { temas: auto.temas, tom: auto.tom }, temas_recentes: recentes.map((t) => txt(t, 220)).join(" | ") };
+  let out: Any = null;
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    let r: Any;
+    try { r = await chamarIA(k, d.user_id, "lembrete", montarEntrada("lembrete", ajustes, c, mensagens.slice(-40), extra), 1500); }
+    catch (e) { if (!previa) await registrar(k, d.user_id, d.id, c, "lembrete", "erro", null, { erro: e instanceof HubFail ? e.code : "erro" }); throw hubErro(e); }
+    out = normalizar("lembrete", r);
+    if (out.reclamacao || !out.texto || !parecido(out.texto, recentes)) break;
+    extra.pedido = "O texto anterior ficou parecido demais com um já postado. Escreva outro, com outro serviço, outra abertura e outra estrutura.";
+  }
+  if (out.reclamacao) {
+    if (!previa) await pararLembrete(k, c, conv, out.motivo || "Alguém reclamou de divulgação no grupo");
+    return { postar: false, parado: !previa, motivo: out.motivo || "Alguém reclamou de divulgação no grupo" };
+  }
+  const prob = !out.texto ? "A IA não trouxe um texto." : violaProtecao(out.texto) || (parecido(out.texto, recentes) ? "O texto ficou parecido demais com um já postado." : "");
+  if (prob) {
+    if (previa) throw new Erro(prob + " Tente de novo.", 422);
+    await estadoLembrete(conv.id, { ...st, proximo: new Date(Date.now() + 86400_000).toISOString() });
+    await registrar(k, d.user_id, d.id, c, "lembrete", "escalado", out.texto || null, { motivo: txt(prob, 200) });
+    return { postar: false, motivo: prob + " Fica para amanhã." };
+  }
+  // a primeira mensagem automática do grupo diz que é assistente virtual (proteção fixa)
+  const aviso = !conv.aviso_ia_at ? avisoComIA(ajustes.texto_aviso, ajustes.idioma) : "";
+  const texto = aviso && !/assistente virtual|virtual assistant|asistente virtual/i.test(out.texto) ? aviso + " " + out.texto : out.texto;
+  if (previa) return { texto, tema: out.tema, aviso_incluido: !!aviso };
+  const log_id = await registrar(k, d.user_id, d.id, c, "lembrete", "sugerido", texto, { motivo: txt("Mensagem automática" + (out.tema ? ": " + out.tema : ""), 200) });
+  return { postar: true, texto, tema: out.tema, log_id, aviso_incluido: !!aviso };
+}
+/** grupos com lembrete vencido (para o ping da extensão); sorteia o próximo horário de quem ainda não tem */
+async function lembretesDevidos(k: Conta, config: Any) {
+  const auto = config.auto;
+  const chaves = Object.keys(config.grupos || {}).filter((x) => config.grupos[x].lembrete);
+  if (!auto.ativo || !chaves.length) return [];
+  const { data: cs } = await db.from("wa_chats").select("id, chave, nome, auto").eq("conta", k.conta).eq("grupo", true).in("chave", chaves.slice(0, 200));
+  const agoraMs = Date.now(), out: Any[] = [];
+  for (const x of cs || []) {
+    const st = x.auto || {};
+    if (st.parado) continue;
+    let prox = st.proximo ? Date.parse(st.proximo) : 0;
+    if (!prox) { // ainda sem horário: sorteia (respeitando o intervalo desde o último envio)
+      prox = st.ultimo ? proximoDepoisDoEnvio(auto, Date.parse(st.ultimo)) : 0;
+      if (prox < agoraMs) prox = proximoHorario(auto, agoraMs);
+      if (prox) await estadoLembrete(x.id, { ...st, proximo: new Date(prox).toISOString() });
+      continue;
+    }
+    if (prox > agoraMs) continue;
+    if (dentroJanela(auto, agoraMs)) out.push({ chave: x.chave, nome: x.nome });
+    else if (agoraMs - prox > 3600_000) { // a janela passou (extensão fechada): sorteia o próximo horário permitido
+      const n = proximoHorario(auto, agoraMs);
+      if (n) await estadoLembrete(x.id, { ...st, proximo: new Date(n).toISOString() });
+    }
+  }
   return out;
 }
 
@@ -491,8 +585,9 @@ async function extensao(b: Any) {
     case "ext_ping": {
       const e = b.estado || {};
       await visto({ estado: { takeover_ativo: e.takeover_ativo === true, pausado: e.pausado === true, conversa: txt(e.conversa, 120), whatsapp: e.whatsapp === true, em: agora() } });
-      const a = await ajustesDe(k);
-      return Number(b.version) === a.version ? { version: a.version } : a;
+      const [a, { config }] = await Promise.all([ajustesDe(k), configDe(k)]);
+      const lembretes = await lembretesDevidos(k, config).catch(() => []);
+      return Number(b.version) === a.version ? { version: a.version, lembretes } : { ...a, lembretes };
     }
     case "ext_ajustes": return await salvarAjustes(k, d.user_id, b.ajustes, b.version, true);
     case "ext_conversa": {
@@ -514,11 +609,28 @@ async function extensao(b: Any) {
       if (logId) {
         const up: Any = { status };
         if (b.texto) up.texto = limpo(b.texto);
-        await db.from("wa_log").update(up).eq("id", logId).eq("conta", k.conta);
+        const { data: lg } = await db.from("wa_log").update(up).eq("id", logId).eq("conta", k.conta).select("ferramenta, chave").maybeSingle();
+        if (lg?.ferramenta === "lembrete" && lg.chave && (status === "enviado" || status === "descartado")) {
+          const [{ config }, { data: ch }] = await Promise.all([configDe(k), db.from("wa_chats").select("id, auto").eq("conta", k.conta).eq("chave", lg.chave).maybeSingle()]);
+          if (ch) {
+            const st = ch.auto || {};
+            if (status === "enviado") await estadoLembrete(ch.id, { ...st, ultimo: agora(), proximo: new Date(proximoDepoisDoEnvio(config.auto, Date.now()) || Date.now() + 7 * 86400_000).toISOString() });
+            else await estadoLembrete(ch.id, { ...st, proximo: new Date(Date.now() + 3 * 3600_000).toISOString() }); // você parou: tenta de novo mais tarde
+          }
+        }
       } else await registrar(k, d.user_id, d.id, c, String(b.ferramenta || "comando"), status, b.texto, b.detalhes && typeof b.detalhes === "object" ? { motivo: txt(b.detalhes.motivo, 200) } : {});
       // a primeira mensagem automática enviada leva o aviso da IA: marca a conversa
       if (c && status === "enviado" && b.aviso_incluido === true) await db.from("wa_chats").update({ aviso_ia_at: agora() }).eq("conta", k.conta).eq("chave", c.chave);
       return { ok: true };
+    }
+    case "ext_lembrete_bloqueado": {
+      // a extensão abriu o grupo e não há caixa para escrever (saímos do grupo ou só admins postam): para as mensagens automáticas
+      const c = lerConversa(b.conversa);
+      const { ajustes } = await ajustesDe(k);
+      const conv = await conversaDe(k, c, ajustes, d.user_id);
+      const motivo = b.motivo === "so_admins" ? "Só os admins podem postar neste grupo" : "O número não está mais no grupo (ou não pode postar)";
+      if (!conv.auto?.parado) await pararLembrete(k, c, conv, motivo);
+      return { ok: true, motivo };
     }
     case "ext_lead": return await criarLead(d, b);
     case "ext_horarios": {
@@ -615,6 +727,26 @@ async function painel(req: Request, b: Any) {
       const { data } = await db.from("wa_chats").update(up).eq("conta", k.conta).eq("chave", chave).select("*").maybeSingle();
       if (!data) throw new Erro("Conversa não encontrada.", 404);
       return { conversa: conversaOut(data) };
+    }
+    case "wa_lembretes": {
+      const { data, error } = await db.from("wa_log").select("id, chave, nome, status, texto, detalhes, created_at").eq("conta", k.conta).eq("ferramenta", "lembrete").order("id", { ascending: false }).limit(Math.min(300, Number(b.limite) || 100));
+      if (error) throw new Erro("Não foi possível ler o histórico.", 500);
+      return { historico: data || [] };
+    }
+    case "wa_lembrete_previa": {
+      soDono();
+      if (!hubOn()) throw new Erro("O HUB AI não está configurado no servidor.", 503);
+      const { data: ch } = await db.from("wa_chats").select("*").eq("conta", k.conta).eq("chave", txt(b.chave, 120)).eq("grupo", true).maybeSingle();
+      if (!ch) throw new Erro("Grupo não encontrado.", 404);
+      const [{ ajustes }, { config }] = await Promise.all([ajustesDe(k), configDe(k)]);
+      return await lembreteIA(k, { id: null, user_id: u.id }, { chave: ch.chave, nome: ch.nome, grupo: true }, ch, ajustes, config, [], true);
+    }
+    case "wa_lembrete_retomar": {
+      soDono();
+      const { data: ch } = await db.from("wa_chats").select("id, auto").eq("conta", k.conta).eq("chave", txt(b.chave, 120)).eq("grupo", true).maybeSingle();
+      if (!ch) throw new Erro("Grupo não encontrado.", 404);
+      const { parado: _p, motivo: _m, parado_em: _e, proximo: _x, ...resto } = ch.auto || {};
+      return { lembrete: await estadoLembrete(ch.id, resto) };
     }
     case "wa_pedidos": {
       const { data, error } = await db.from("crm_requests").select("id, tipo, nome, email, email_alt, telefone, modelo, documentos, status, resumo, eventos, created_at, updated_at, lead_id, ct_contact_id, pasta, recebidos, enviado_at, followups, reenvios")
