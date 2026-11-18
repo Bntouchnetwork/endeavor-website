@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Add-ons (teste)</title>
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../portal.css"><link rel="stylesheet" href="../../telefonia.css"><link rel="stylesheet" href="../../admin-addons.css">
+</head><body style="padding:24px">
+<!-- Página só para os testes automáticos: banco e função addon-builder simulados (Playwright). -->
+<svg width="0" height="0" style="position:absolute"><symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="currentColor"/></symbol></svg>
+<main id="view"></main><div class="overlay" id="overlay" hidden></div>
+<script>window.ERoute = { get: () => location.hash || '#/addons', go: (h) => { location.hash = h; }, set: (h) => { history.replaceState(null, '', h); } };</script>
+<script src="../../store-catalog.js"></script>
+<script src="../../admin-addons.js"></script>
+<script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function q(table) { let f = {}; const o = { select() { return o; }, order() { return o; }, limit() { return o; }, eq(k, v) { f[k] = v; return o; }, single() { o._one = true; return o; },
+    then(res) { return fetch('/db/' + table + '?' + new URLSearchParams(f)).then(r => r.json()).then(d => ({ data: o._one ? d[0] : d })).then(res); } }; return o; }
+  const ov = document.getElementById('overlay');
+  const ctx = { sb: { from: q, rpc: async () => ({ data: [{ product_code: 'crm', clientes: 3 }] }), auth: { getSession: async () => ({ data: { session: { access_token: 't' } } }) } },
+    CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, q: async p => (await p).data, fmtDT: d => String(d).slice(0, 16).replace('T', ' '),
+    openOverlay: (h, c) => { ov.innerHTML = '<div class="modal">' + h + '</div>'; ov.hidden = false; return ov; }, closeOverlay: () => { ov.hidden = true; ov.innerHTML = ''; },
+    route: () => EAddonsAdmin.render(document.getElementById('view'), ctx) };
+  window.addEventListener('hashchange', ctx.route);
+  window.confirm = () => true; window.alert = (t) => { window.__alerta = t; };
+  ctx.route();
+</script>
+</body></html>
