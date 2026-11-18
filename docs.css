@@ -27,3 +27,16 @@
 .dc-lang a { font-size: .85rem; color: #0b1f3a; }
 .dc-lang a[aria-current] { font-weight: 700; text-decoration: none; }
 @media (max-width: 520px) { .dc-item { grid-template-columns: 1fr; } .dc-bt label { width: 100%; justify-content: center; } }
+/* tudo recebido: agradecimento em destaque e botão Fechar */
+.dc-pronto { background: #fff; border: 1px solid #b9dcc6; border-radius: 14px; padding: 1.5rem 1.25rem; text-align: center; color: #1e4d2f; margin: 0 0 1rem; }
+.dc-pronto:focus { outline: none; }
+.dc-pronto svg { width: 44px; height: 44px; color: #1e6b3a; }
+.dc-pronto h2 { font: 700 1.35rem/1.25 'Source Serif 4', Georgia, serif; color: #0b1f3a; margin: .5rem 0 .4rem; }
+.dc-pronto p { margin: 0 0 1rem; }
+.dc-fechar { min-height: 2.75rem; padding: .55rem 1.6rem; border: 0; border-radius: 10px; background: #0b1f3a; color: #fff; font: 600 1rem Inter, sans-serif; cursor: pointer; }
+.dc-fechar:focus-visible { outline: 3px solid #c9a24a; outline-offset: 2px; }
+.dc-tchau h2 { margin: 0; }
+.dc-mais { margin-top: .5rem; }
+.dc-mais summary { cursor: pointer; color: #0b1f3a; font-weight: 600; padding: .5rem 0; }
+.dc-mais[open] summary { margin-bottom: .75rem; }
+@media (max-width: 520px) { .dc-fechar { width: 100%; } }
