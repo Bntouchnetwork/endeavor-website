@@ -35,6 +35,10 @@ function servidor(b) {
     case "adm_painel": return { j: { estado: { estado: "demonstracao", texto: "Provedor de demonstração." }, settings: { margem_encaminhamento_pct: 30, paises_encaminhamento: ["US", "CA"], alertas_pct: [80, 100], limite_mensal_padrao_cents: 5000 },
       planos: [{ id: "professional", nome: "Professional", tipo_numero: "local", preco_cents: 1999, minutos: 500, sms: 250, numeros_incluidos: 1, ativo: true }], acessos: [{ company_id: EMP, client_id: "c1", enabled: true, plan_id: "professional", companies: { legal_name: "ACME Holdings LLC" }, clients: { name: "ACME" } }],
       numeros: st.numeros, tarifas: [], dashboard: { numeros_ativos: 0, aguardando: st.numeros.filter((n) => n.status === "aguardando_aprovacao").length, empresas: 1, chamadas: 0, sms: 0, minutos: 0, receita_estimada: 0, custo_estimado: 0, margem_estimada: 0 } } };
+    case "adm_endeavor": case "adm_endeavor_criar": {
+      if (b.acao === "adm_endeavor_criar") st.endeavor = [{ id: "ne", e164: b.tipo === "tollfree" ? "+18885550100" : "+14075550107", tipo: b.tipo, status: "ativo", demo: true }];
+      return { j: { demo: true, endeavor: { client_id: "ci", company_id: "co-endeavor", nome: "Endeavor Business Solutions LLC", numeros: st.endeavor || [] } } };
+    }
     case "adm_aprovar": if (b.confirmacao !== "CONTRATAR") return { st: 409, j: { erro: "Para contratar, digite CONTRATAR." } }; st.numeros[0].status = "ativo"; return { j: { ok: true } };
   }
   return { st: 400, j: { erro: "ação " + b.acao } };
@@ -193,6 +197,24 @@ try {
     await adm.waitForSelector("#tel-corpo > *", { timeout: 5000 }).catch(() => {});
     ok(!(await adm.textContent("#view")).startsWith("ERRO"), "admin: aba " + aba + " abre");
   }
+  /* ---------- admin: telefone da Endeavor ---------- */
+  await adm.goto(`${BASE}/tests/fixtures/telefonia.html?admin=1#/telefonia?aba=dashboard`);
+  await adm.click("#tel-endeavor");
+  await adm.waitForSelector("#te-f");
+  ok((await adm.textContent("#te-f")).includes("WhatsApp Business"), "Endeavor: explica o WhatsApp com o código por ligação");
+  await adm.check("[name=tp][value=tollfree]");
+  await adm.click("#te-f [type=submit]");
+  await adm.waitForSelector(".tp .tp-grade");
+  ok(chamadas.some((c) => c.acao === "adm_endeavor_criar" && c.tipo === "tollfree"), "Endeavor: cria a linha 888 (demonstração)");
+  ok((await adm.textContent(".tp-saudacao")).includes("(888) 555-0100"), "Endeavor: o celular abre com o número da Endeavor");
+  await adm.click(".tp-grade [data-app=contatos]");
+  await adm.waitForSelector("text=Maria Teste");
+  ok(chamadas.some((c) => c.acao === "p_contatos" && c.company_id === "co-endeavor"), "Endeavor: o celular usa a empresa interna");
+  await adm.screenshot({ path: OUT + "/tel-admin-endeavor.png" });
+  await adm.click(".tp-bt-x");
+  await adm.click("#tel-endeavor");
+  await adm.waitForSelector(".tp .tp-grade");
+  ok(!(await adm.locator("#te-f").count()), "Endeavor: com a linha criada, o botão abre direto o telefone");
 } catch (e) { console.log("erro:", e.message); falhas.push(e.message); }
 await browser.close();
 console.log(falhas.length ? `\n${falhas.length} falha(s)` : "\ntudo certo");

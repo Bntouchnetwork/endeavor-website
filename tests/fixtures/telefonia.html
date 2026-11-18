@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Telefonia (teste)</title>
-<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../portal.css"><link rel="stylesheet" href="../../telefonia.css">
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../portal.css"><link rel="stylesheet" href="../../telefonia.css"><link rel="stylesheet" href="../../admin-addons.css">
 </head><body style="background:#f5f7fa;padding:24px">
 <!-- Página só para os testes automáticos: contexto do portal/admin simulado; a função telephony é interceptada pelo Playwright. -->
-<div id="view"></div>
+<div id="view"></div><div class="overlay" id="overlay" hidden></div>
 <script src="../../tel-phone.js"></script>
 <script src="../../client-telefonia.js"></script>
 <script src="../../admin-telefonia.js"></script>
@@ -16,7 +16,7 @@
     CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, L: 'pt', locale: 'pt-BR', $: s => document.querySelector(s),
     msg: (el, t, k) => { el.textContent = t; el.className = 'portal-alert portal-alert--' + (k || 'info'); },
     errText: e => e.message, fmtDT: d => d, q: async x => x, copy: t => { window.__copiado = t; }, download: (n, b) => { b.text().then(t => { window.__baixado = { n, t }; }); },
-    openOverlay: () => {}, closeOverlay: () => {}, siteUrl: p => location.origin + '/' + p,
+    openOverlay: (h) => { const o = document.getElementById('overlay'); o.innerHTML = '<div class="modal">' + h + '</div>'; o.hidden = false; }, closeOverlay: () => { const o = document.getElementById('overlay'); o.hidden = true; o.innerHTML = ''; }, siteUrl: p => location.origin + '/' + p,
   };
   const desenhar = () => (ADMIN ? ETelAdmin.render(document.getElementById('view'), window.ctx) : ETelPortal.render(document.getElementById('view'), window.ctx, { clientId: 'c1' }))
     .catch(e => { document.getElementById('view').textContent = 'ERRO: ' + e.message; });

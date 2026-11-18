@@ -31,12 +31,45 @@
     P = await call({ acao: 'adm_painel' });
     var e = EST[P.estado.estado] || [P.estado.estado, ''];
     view.innerHTML = '<div class="console__head"><div><h1>Telefonia</h1><p class="portal-muted">Endeavor Corporate Phone: números americanos por assinatura, ligações pelo app, SMS, voicemail e encaminhamento.</p></div>' +
-      '<div class="tel-estado">' + pill(e) + '</div></div>' +
+      '<div class="tel-estado">' + pill(e) + '<button class="btn btn--navy btn--sm" type="button" id="tel-endeavor"><svg class="icon" aria-hidden="true"><use href="#i-phone"/></svg> Telefone da Endeavor</button></div></div>' +
       (P.estado.estado === 'demonstracao' ? '<p class="portal-alert portal-alert--info tel-demo-aviso"><strong>Modo demonstração.</strong> ' + esc(P.estado.texto) + ' Números na faixa fictícia 555-01XX. A conexão com a Telnyx entra na Fase 2.</p>' : '<p class="portal-alert portal-alert--info">' + esc(P.estado.texto) + '</p>') +
       '<nav class="subtabs tel-abas" aria-label="Seções da Telefonia">' + ABAS.map(function (a) { return '<a href="' + link(a[0]) + '"' + (a[0] === aba ? ' aria-current="page"' : '') + '>' + a[1] + '</a>'; }).join('') + '</nav><div id="tel-corpo"></div>';
     var corpo = view.querySelector('#tel-corpo');
+    view.querySelector('#tel-endeavor').onclick = telefoneEndeavor;
     return ({ dashboard: dashboard, numeros: numeros, clientes: clientes, chamadas: lista('chamadas'), sms: lista('mensagens'), voicemail: lista('voicemails'), atendimento: atendimento, gravacoes: lista('gravacoes'),
       consumo: lista('consumo'), planos: planos, integracoes: integracoes, config: config })[aba](corpo);
+  }
+
+  /* ---------- linha da própria Endeavor: o mesmo celular virtual dos clientes ---------- */
+  async function telefoneEndeavor() {
+    var bt = document.getElementById('tel-endeavor'); if (bt) bt.disabled = true;
+    try {
+      var r = await call({ acao: 'adm_endeavor' }), e = r.endeavor;
+      var n = (e.numeros || []).filter(function (x) { return x.status === 'ativo'; })[0];
+      if (n) return abrirEndeavor(e, n, r.demo);
+      ctx.openOverlay('<h2 id="te-t">Linha da Endeavor</h2><p>Cria o número da própria Endeavor (' + esc(e.nome) + ') e abre o mesmo telefone virtual dos clientes: teclado, recentes, contatos, mensagens, voicemail e WhatsApp.</p>' +
+        (r.demo ? '<p class="portal-alert portal-alert--info"><strong>Modo demonstração:</strong> o número é fictício (555-01XX) e nada é cobrado. O número real vem com a Telnyx, com a sua autorização.</p>' : '') +
+        '<form id="te-f" class="portal-form"><fieldset class="ad-tipos"><legend>Tipo de número</legend><label class="ad-tipo"><input type="radio" name="tp" value="local" checked><span>Local de Orlando (407)</span></label>' +
+        '<label class="ad-tipo"><input type="radio" name="tp" value="tollfree"><span>Gratuito para quem liga (888)</span></label></fieldset>' +
+        '<p class="portal-muted" style="font-size:.88rem">WhatsApp: cadastre este número no app WhatsApp Business escolhendo receber o código por ligação; a ligação chega no telefone virtual. Depois, o ícone WhatsApp do telefone abre o WhatsApp Web com essa conta.</p>' +
+        '<p id="te-m" hidden></p><div class="portal-btn-row"><button class="btn btn--gold" type="submit">Criar a linha da Endeavor</button><button class="btn btn--ghost" type="button" id="te-c">Cancelar</button></div></form>', true);
+      document.getElementById('te-c').onclick = ctx.closeOverlay;
+      var f = document.getElementById('te-f');
+      f.onsubmit = async function (ev) {
+        ev.preventDefault(); var b = f.querySelector('[type=submit]'); b.disabled = true;
+        try {
+          var c = await call({ acao: 'adm_endeavor_criar', tipo: (f.querySelector('[name=tp]:checked') || {}).value });
+          var nn = (c.endeavor.numeros || []).filter(function (x) { return x.status === 'ativo'; })[0];
+          ctx.closeOverlay(); abrirEndeavor(c.endeavor, nn, c.demo);
+        } catch (x) { b.disabled = false; msg(document.getElementById('te-m'), x.message, 'error'); }
+      };
+    } catch (x) { alert(x.message); }
+    finally { if (bt) bt.disabled = false; }
+  }
+  function abrirEndeavor(e, n, demo) {
+    if (!window.ETelPhone) { alert('O telefone virtual não carregou. Recarregue a página.'); return; }
+    if (ETelPhone.aberto()) ETelPhone.fechar();
+    ETelPhone.abrir({ call: call, empresa: e.company_id, numero: n ? n.e164 : null, L: 'pt', demo: demo, modo: 'janela' });
   }
 
   /* ---------- dashboard ---------- */

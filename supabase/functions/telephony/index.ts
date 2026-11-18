@@ -10,7 +10,7 @@
 // bloqueada para números reais; isolamento por empresa em todas as ações (company_id conferido contra o cliente e a liberação).
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { decidirChamada, e164, estimarEncaminhamento, ehDemo, limparRouting, palavraChave, partesSms, podeEnviarSms, situacaoConsumo, tarifa, tipoDoNumero, TOLLFREE } from "./regras.ts";
+import { decidirChamada, e164, estimarEncaminhamento, ehDemo, limparRouting, numerosDemo, palavraChave, partesSms, podeEnviarSms, situacaoConsumo, tarifa, tipoDoNumero, TOLLFREE } from "./regras.ts";
 import { demo, telnyx, type Provedor } from "./provedor.ts";
 
 // deno-lint-ignore no-explicit-any
@@ -184,6 +184,36 @@ async function acao(q: Quem, b: Any) {
       const { data: ocupados } = await db.from("tel_numbers").select("e164").in("e164", lista.map((x) => x.e164)).in("status", ["aguardando_aprovacao", "ativo", "suspenso"]);
       const usados = new Set((ocupados || []).map((x: Any) => x.e164));
       return { numeros: lista.filter((x) => !usados.has(x.e164)), demo: modoDemo };
+    }
+    // Linha da própria Endeavor (cliente interno "Endeavor Business Solutions", status internal): mesmo celular virtual dos clientes
+    case "adm_endeavor":
+    case "adm_endeavor_criar": {
+      soAdmin(q);
+      const { data: cl } = await db.from("clients").select("id, name").eq("status", "internal").order("created_at").limit(1).maybeSingle();
+      if (!cl) throw new Erro("Cadastro interno da Endeavor não encontrado.", 404);
+      const { data: co } = await db.from("companies").select("id, legal_name").eq("client_id", cl.id).order("created_at").limit(1).maybeSingle();
+      if (!co) throw new Erro("Empresa interna da Endeavor não encontrada.", 404);
+      if (b.acao === "adm_endeavor_criar") {
+        const tipo = b.tipo === "tollfree" ? "tollfree" : "local";
+        const { data: tem } = await db.from("tel_numbers").select("id").eq("company_id", co.id).in("status", ["ativo", "aguardando_aprovacao"]).limit(1);
+        if (tem && tem.length) throw new Erro("A Endeavor já tem uma linha.", 409);
+        if (!modoDemo) throw new Erro("Fora do modo demonstração, o número da Endeavor segue o fluxo normal: propor e aprovar com CONTRATAR em Números.", 409);
+        await db.from("tel_access").upsert({ company_id: co.id, client_id: cl.id, enabled: true, plan_id: tipo === "tollfree" ? "business" : "professional", limite_mensal_cents: null,
+          sms_permitido: true, encaminhamento_permitido: true, gravacao_permitida: false, updated_at: agora(), updated_by: q.email }, { onConflict: "company_id" });
+        const { data: usados } = await db.from("tel_numbers").select("e164");
+        const ocupados = new Set((usados ?? []).map((x: Any) => x.e164));
+        const livre = numerosDemo(tipo, tipo === "tollfree" ? "888" : "407", 10).find((n) => !ocupados.has(n));
+        if (!livre) throw new Erro("Sem número de demonstração livre.", 409);
+        const r = await demo.comprarNumero(livre);
+        const { data: n, error } = await db.from("tel_numbers").insert({ company_id: co.id, client_id: cl.id, e164: livre, tipo, status: "ativo", demo: true, provedor: prov.nome, provider_id: r.provider_id,
+          sms_registro: "nao_aplicavel", proposto_por: q.email, aprovado_por: q.email, aprovado_em: agora() }).select().single();
+        if (error) throw new Erro("Não foi possível criar a linha.", 500);
+        await db.from("tel_routing").upsert({ number_id: n.id, company_id: co.id, greeting: {}, away: {}, horario: { ativo: false, tz: "America/New_York", dias: {} }, destino: "app" }, { onConflict: "number_id", ignoreDuplicates: true });
+        await auditar(q, "endeavor.linha_criada", "tel_number", n.id, cl.id, co.id, { e164: livre, tipo, demo: true });
+      }
+      const { data: ac } = await db.from("tel_access").select("enabled, plan_id").eq("company_id", co.id).maybeSingle();
+      const { data: nums } = await db.from("tel_numbers").select("id, e164, tipo, status, demo").eq("company_id", co.id).in("status", ["ativo", "aguardando_aprovacao", "suspenso"]).order("created_at");
+      return { endeavor: { client_id: cl.id, company_id: co.id, nome: co.legal_name, acesso: ac || null, numeros: nums || [] }, demo: modoDemo };
     }
     case "adm_propor": {
       soAdmin(q);
