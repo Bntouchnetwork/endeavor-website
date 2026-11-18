@@ -11,7 +11,8 @@ const G_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
 export const SITE = (Deno.env.get("SITE_URL") ?? "https://endeavorbiz.com").replace(/\/$/, "");
 export const SUPPORT = "support@endeavorbiz.com";
 const PHONE = "+1 (407) 436-9567", WA_NUM = "+1 (630) 689-8702";
-const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
+// SES só para o transacional quando a AWS liberar produção (secret SES_TRANSACIONAL=on); até lá, Gmail do support@
+const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS) && Deno.env.get("SES_TRANSACIONAL") === "on";
 export const mailOn = () => sesOn() || G_PASS.length >= 8;
 export type Lang = "pt" | "en" | "es";
 export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));

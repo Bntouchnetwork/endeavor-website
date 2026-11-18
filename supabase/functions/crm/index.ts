@@ -27,7 +27,8 @@ const WA_TPL = Deno.env.get("WA_TPL_CRM") ?? "endeavor_status_update";
 const WA_VERIFY = Deno.env.get("WHATSAPP_VERIFY_TOKEN") ?? "", WA_SECRET = Deno.env.get("WHATSAPP_APP_SECRET") ?? "";
 const AI_ON = hubOn() ? "hub" : ""; // AI available (HUB AI key configured)
 const SUPPORT = "support@endeavorbiz.com", PHONE = "+1 (407) 436-9567", WA_NUM = "+1 (630) 689-8702";
-const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
+// SES só para o transacional quando a AWS liberar produção (secret SES_TRANSACIONAL=on); até lá, Gmail do support@
+const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS) && Deno.env.get("SES_TRANSACIONAL") === "on";
 const mailOn = () => sesOn() || G_PASS.length >= 8;
 const waOn = () => !!(WA_TOKEN && WA_PHONE);
 const db = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });

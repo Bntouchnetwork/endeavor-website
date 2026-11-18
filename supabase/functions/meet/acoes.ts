@@ -16,7 +16,8 @@ const ANON = Deno.env.get("SUPABASE_ANON_KEY") || "sb_publishable_BXyVbQtTEpA5cm
 const SES_HOST = Deno.env.get("SES_SMTP_HOST") ?? "", SES_USER = Deno.env.get("SES_SMTP_USER") ?? "", SES_PASS = Deno.env.get("SES_SMTP_PASS") ?? "";
 const G_USER = Deno.env.get("SMTP_USER") ?? "support@endeavorbiz.com";
 const G_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
-const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
+// SES só para o transacional quando a AWS liberar produção (secret SES_TRANSACIONAL=on); até lá, Gmail do support@
+const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS) && Deno.env.get("SES_TRANSACIONAL") === "on";
 export const mailOn = () => sesOn() || G_PASS.length >= 8;
 let tr: Any = null;
 const transport = () => (tr ??= sesOn()

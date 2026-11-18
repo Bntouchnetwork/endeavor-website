@@ -47,7 +47,8 @@ async function ipHash(req: Request) {
 const INTENT = /\b(pre[cç]o|preco|valor|quanto custa|or[cç]amento|proposta|contratar|como (come[cç]o|comecar|fa[cç]o para abrir)|quero abrir|price|pricing|cost|how much|quote|proposal|get started|sign up|hire|precio|cu[aá]nto cuesta|cotizaci[oó]n|propuesta|contratar|empezar)\b/i;
 
 let tr: ReturnType<typeof nodemailer.createTransport> | null = null;
-const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
+// SES só para o transacional quando a AWS liberar produção (secret SES_TRANSACIONAL=on); até lá, Gmail do support@
+const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS) && Deno.env.get("SES_TRANSACIONAL") === "on";
 const mailOn = () => sesOn() || G_PASS.length >= 8;
 const transport = () => (tr ??= sesOn()
   ? nodemailer.createTransport({ host: SES_HOST, port: 465, secure: true, auth: { user: SES_USER, pass: SES_PASS } })

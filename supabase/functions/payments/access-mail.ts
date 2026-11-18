@@ -13,7 +13,8 @@ const SES_HOST = Deno.env.get("SES_SMTP_HOST") ?? "", SES_USER = Deno.env.get("S
 const G_USER = Deno.env.get("SMTP_USER") ?? "support@endeavorbiz.com";
 const G_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
 const SUPPORT = "support@endeavorbiz.com", PHONE = "+1 (407) 436-9567";
-const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS);
+// SES só para o transacional quando a AWS liberar produção (secret SES_TRANSACIONAL=on); até lá, Gmail do support@
+const sesOn = () => !!(SES_HOST && SES_USER && SES_PASS) && Deno.env.get("SES_TRANSACIONAL") === "on";
 export const accessMailOn = () => sesOn() || G_PASS.length >= 8;
 let tr: ReturnType<typeof nodemailer.createTransport> | null = null;
 const transport = () => (tr ??= sesOn()
