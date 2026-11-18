@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Endeavor Phone</title>
+  <meta name="theme-color" content="#0b1f3a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Endeavor Phone">
+  <link rel="manifest" href="phone.webmanifest">
+  <link rel="apple-touch-icon" href="img/phone-180.png">
+  <link rel="icon" href="img/phone-192.png">
+  <link rel="stylesheet" href="telefonia.css?v=20261201">
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b1f3a; }
+    body { font: 16px/1.4 -apple-system, BlinkMacSystemFont, Inter, system-ui, sans-serif; color: #fff; overscroll-behavior: none; }
+    #app { height: 100%; }
+    .pa-msg { max-width: 420px; margin: 0 auto; padding: calc(56px + env(safe-area-inset-top)) 24px 24px; text-align: center; }
+    .pa-msg img { width: 72px; height: 72px; border-radius: 18px; }
+    .pa-msg h1 { font-size: 1.4rem; margin: 16px 0 8px; }
+    .pa-msg p { color: #c8d3e6; }
+    .pa-bt { display: inline-block; margin-top: 12px; padding: 12px 22px; border-radius: 12px; background: #c9a227; color: #0b1f3a; font-weight: 700; text-decoration: none; border: 0; font: inherit; font-weight: 700; cursor: pointer; }
+    .pa-bt:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+    .pa-lista { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 8px; }
+    .pa-lista button { width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #2c4268; background: #13284d; color: #fff; font: inherit; cursor: pointer; text-align: left; }
+  </style>
+</head>
+<body>
+<main id="app" aria-live="polite"><div class="pa-msg"><img src="img/phone-192.png" alt=""><h1>Endeavor Phone</h1><p>Abrindo…</p></div></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="app-config.js"></script>
+<script src="tel-phone.js?v=20261201"></script>
+<script>
+(function () {
+  var CFG = window.ENDEAVOR_CFG, app = document.getElementById('app');
+  var sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'endeavor-client-auth' } });
+  var L = (navigator.language || 'pt').slice(0, 2); if (['pt', 'en', 'es'].indexOf(L) < 0) L = 'en';
+  var TX = {
+    pt: { entrar: 'Entre no portal para usar o telefone', entrarP: 'Por segurança, o Endeavor Phone usa o mesmo login e a verificação em duas etapas do portal do cliente.', bt: 'Entrar no portal', sem: 'A Telefonia não está liberada para esta conta.', semP: 'Fale com a Endeavor para contratar um número americano.', esc: 'Qual empresa?', erro: 'Não foi possível abrir o telefone.' },
+    en: { entrar: 'Sign in to the portal to use the phone', entrarP: 'For security, Endeavor Phone uses the same login and two-step verification as the client portal.', bt: 'Sign in', sem: 'Phone is not enabled for this account.', semP: 'Contact Endeavor to get a U.S. number.', esc: 'Which company?', erro: 'Could not open the phone.' },
+    es: { entrar: 'Inicia sesión en el portal para usar el teléfono', entrarP: 'Por seguridad, Endeavor Phone usa el mismo inicio de sesión y la verificación en dos pasos del portal.', bt: 'Iniciar sesión', sem: 'La Telefonía no está habilitada para esta cuenta.', semP: 'Habla con Endeavor para contratar un número estadounidense.', esc: '¿Qué empresa?', erro: 'No se pudo abrir el teléfono.' } }[L];
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+  function tela(t, p, link) {
+    app.innerHTML = '<div class="pa-msg"><img src="img/phone-192.png" alt=""><h1>' + esc(t) + '</h1><p>' + esc(p) + '</p>' + (link ? '<a class="pa-bt" href="client.html?next=phone">' + esc(TX.bt) + '</a>' : '') + '</div>';
+  }
+  var clientId = null; try { clientId = localStorage.getItem('endeavor-client-id'); } catch (e) { /* ignore */ }
+  async function call(body) {
+    var s = (await sb.auth.getSession()).data.session;
+    var r = await fetch(CFG.functionsUrl + '/telephony', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CFG.supabaseKey, Authorization: 'Bearer ' + (s ? s.access_token : CFG.supabaseKey) },
+      body: JSON.stringify(Object.assign({ clientId: clientId }, body)) });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok) { var e = new Error(j.erro || 'Erro ' + r.status); e.status = r.status; throw e; }
+    return j;
+  }
+  function abrir(emp, demo) {
+    try { localStorage.setItem('endeavor-tel-emp', emp.company_id); } catch (e) { /* ignore */ }
+    app.innerHTML = '';
+    var n = (emp.numeros || []).find(function (x) { return x.status === 'ativo'; }) || null;
+    ETelPhone.abrir({ call: call, empresa: emp.company_id, numero: n ? n.e164 : null, L: L, demo: demo, modo: 'app', aoFechar: function () { location.reload(); } });
+  }
+  async function iniciar() {
+    var s = (await sb.auth.getSession()).data.session;
+    if (!s || !clientId) return tela(TX.entrar, TX.entrarP, true);
+    var aal = await sb.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (!aal.data || aal.data.currentLevel !== 'aal2') return tela(TX.entrar, TX.entrarP, true);
+    var d;
+    try { d = await call({ acao: 'p_inicio' }); } catch (e) { return e.status === 401 || e.status === 403 ? tela(TX.entrar, TX.entrarP, true) : tela(TX.erro, e.message, false); }
+    var lista = (d.empresas || []).filter(function (x) { return (x.numeros || []).some(function (n) { return n.status === 'ativo'; }); });
+    if (!lista.length) return tela(TX.sem, TX.semP, false);
+    var salvo = null; try { salvo = localStorage.getItem('endeavor-tel-emp'); } catch (e) { /* ignore */ }
+    var pre = lista.find(function (x) { return x.company_id === salvo; });
+    if (pre || lista.length === 1) return abrir(pre || lista[0], d.demo);
+    app.innerHTML = '<div class="pa-msg"><img src="img/phone-192.png" alt=""><h1>' + esc(TX.esc) + '</h1><ul class="pa-lista">' + lista.map(function (x, i) {
+      return '<li><button type="button" data-i="' + i + '">' + esc(x.nome) + '<br><small>' + esc(ETelPhone.fone((x.numeros.find(function (n) { return n.status === 'ativo'; }) || {}).e164)) + '</small></button></li>'; }).join('') + '</ul></div>';
+    app.querySelectorAll('[data-i]').forEach(function (b) { b.onclick = function () { abrir(lista[+b.dataset.i], d.demo); }; });
+  }
+  iniciar().catch(function (e) { tela(TX.erro, e.message, false); });
+  if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('sw-phone.js', { scope: './phone' }).catch(function () {}); });
+})();
+</script>
+</body>
+</html>

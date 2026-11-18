@@ -1,0 +1,212 @@
+/* Telefonia: admin, portal e o celular virtual (Endeavor Phone) */
+
+/* ---------- admin e portal ---------- */
+.tel-estado { display: flex; gap: .5rem; align-items: center; }
+.tel-abas { flex-wrap: wrap; }
+.tel-kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .75rem; margin-bottom: .75rem; }
+.tel-kpi { border: 1px solid #e3e7ee; border-radius: 12px; padding: .75rem .9rem; background: #fff; display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.tel-kpi span { font-size: .8rem; color: #6b7280; }
+.tel-kpi strong { font-size: 1.35rem; color: #0b1f3a; overflow-wrap: anywhere; }
+.tel-kpi small { font-size: .75rem; color: #6b7280; }
+.tel-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tel-disp { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .4rem; }
+.tel-disp li { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; padding: .5rem .7rem; border: 1px solid #e3e7ee; border-radius: 10px; }
+.tel-prop { display: inline-flex; gap: .4rem; margin-left: auto; align-items: center; }
+.tel-prop select { min-height: 2.1rem; max-width: 220px; }
+.tel-aprovar { display: inline-flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.tel-aprovar input { min-height: 2rem; padding: 0 .5rem; border: 1px solid #c9d2df; border-radius: 8px; font: inherit; }
+.tel-bt-fim { align-self: flex-end; }
+.tel-planos input:not([type=checkbox]), .tel-planos select { width: 100%; min-width: 70px; min-height: 2rem; border: 1px solid #c9d2df; border-radius: 8px; padding: 0 .4rem; font: inherit; }
+.tel-planos tr.tel-novo td { background: #f8fafc; }
+.tel-check { list-style: none; padding: 0; display: grid; gap: .3rem; }
+.tel-ex { margin: .5rem 0 1rem 1.2rem; }
+.tel-acesso fieldset { border: 1px solid #e3e7ee; border-radius: 12px; padding: .9rem 1rem; margin: 0 0 1rem; }
+.tel-acesso legend { padding: 0 .35rem; }
+.tel-topo { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; justify-content: space-between; }
+.tel-linha { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; }
+.tel-numero-grande { font-size: 1.6rem; font-weight: 700; color: #0b1f3a; font-variant-numeric: tabular-nums; }
+.tel-barra { height: 8px; background: #e8edf3; border-radius: 4px; overflow: hidden; margin: .3rem 0 .15rem; }
+.tel-barra i { display: block; height: 100%; background: #1e6b3a; }
+.tel-barra.alerta i { background: #c9a227; }
+.tel-barra.cheio i { background: #b42318; }
+.tel-consumo { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+.tel-install { overflow-wrap: anywhere; border: 1px dashed #c9d2df; border-radius: 12px; padding: .9rem 1rem; margin-top: .75rem; }
+.tel-install ol { margin: .4rem 0 0 1.2rem; }
+.tel-sim { display: flex; flex-wrap: wrap; gap: .5rem; }
+.tel-dias { display: grid; gap: .35rem; }
+.tel-dia { display: grid; grid-template-columns: 5.5rem auto 1fr 1fr; gap: .5rem; align-items: center; }
+.tel-dia input[type=time] { min-height: 2.2rem; }
+.tel-idiomas { display: grid; gap: .5rem; }
+@media (max-width: 560px) { .tel-dia { grid-template-columns: 4.5rem auto 1fr 1fr; font-size: .9rem; } .tel-prop { margin-left: 0; } }
+
+/* ---------- celular virtual ---------- */
+.tp { position: fixed; right: 24px; bottom: 24px; z-index: 2147483000; width: 330px; display: flex; flex-direction: column; align-items: stretch; font: 15px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; color: #111; }
+.tp[hidden] { display: none; }
+.tp-barra { display: flex; align-items: center; gap: .35rem; justify-content: flex-end; height: 30px; padding: 0 10px; cursor: grab; touch-action: none; user-select: none; }
+.tp--arrastando .tp-barra { cursor: grabbing; }
+.tp-grip { flex: 1; height: 5px; max-width: 64px; margin: 0 auto 0 calc(50% - 32px); background: rgba(11, 31, 58, .35); border-radius: 3px; }
+.tp-bt-min, .tp-bt-x { width: 28px; height: 28px; border: 0; border-radius: 50%; background: #0b1f3a; color: #fff; font: 600 16px/1 system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.tp-bt-min:focus-visible, .tp-bt-x:focus-visible { outline: 3px solid #c9a227; outline-offset: 2px; }
+.tp-aparelho { position: relative; height: 660px; max-height: calc(100vh - 80px); border-radius: 52px; background: #0d0d0f; padding: 12px; box-shadow: 0 0 0 2px #2b2b30, 0 24px 60px rgba(11, 31, 58, .35); display: flex; flex-direction: column; }
+.tp-ilha { position: absolute; top: 22px; left: 50%; width: 104px; height: 30px; margin-left: -52px; background: #000; border-radius: 20px; z-index: 3; }
+.tp-status { position: absolute; top: 12px; left: 12px; right: 12px; height: 48px; padding: 0 30px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 14px; color: #fff; z-index: 2; border-radius: 40px 40px 0 0; pointer-events: none; }
+.tp-demo { position: absolute; left: 50%; transform: translateX(-50%); top: 40px; font-size: 10px; letter-spacing: .04em; text-transform: uppercase; background: #c9a227; color: #10203d; padding: 1px 7px; border-radius: 6px; }
+.tp-sinal { font-size: 9px; letter-spacing: 1px; }
+.tp-tela { flex: 1; border-radius: 40px; overflow: hidden; background: #f2f2f7; display: flex; flex-direction: column; position: relative; padding-top: 60px; min-height: 0; }
+.tp-home { position: absolute; bottom: 20px; left: 50%; width: 120px; height: 5px; margin-left: -60px; border: 0; border-radius: 3px; background: rgba(255, 255, 255, .85); cursor: pointer; z-index: 4; padding: 0; }
+.tp-home:focus-visible { outline: 2px solid #c9a227; outline-offset: 4px; }
+
+/* tela inicial */
+.tp-home-tela { flex: 1; display: flex; flex-direction: column; background: radial-gradient(120% 80% at 20% 10%, #2c5c9e 0%, #13284d 55%, #0b1f3a 100%); margin-top: -60px; padding: 64px 18px 18px; color: #fff; }
+.tp-saudacao { text-align: center; margin: 22px 0 26px; font-size: 13px; opacity: .85; font-variant-numeric: tabular-nums; }
+.tp-grade { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px 10px; }
+.tp-app { background: none; border: 0; color: inherit; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; padding: 0; font: inherit; }
+.tp-app:focus-visible { outline: 3px solid #c9a227; outline-offset: 3px; border-radius: 16px; }
+.tp-ico { position: relative; width: 60px; height: 60px; border-radius: 16px; display: grid; place-items: center; color: #fff; box-shadow: 0 4px 10px rgba(0, 0, 0, .25); }
+.tp-ico svg { width: 32px; height: 32px; }
+.tp-rot { font-size: 12px; text-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+.tp-app--telefone .tp-ico { background: linear-gradient(#5fe17a, #28b847); }
+.tp-app--recentes .tp-ico { background: linear-gradient(#8e9bb3, #5f6b84); }
+.tp-app--contatos .tp-ico { background: linear-gradient(#c7c7cc, #8e8e93); }
+.tp-app--mensagens .tp-ico { background: linear-gradient(#67e383, #2fbf52); }
+.tp-app--voicemail .tp-ico { background: linear-gradient(#7a7cf0, #4b4dd8); }
+.tp-app--whatsapp .tp-ico, .tp-ico.tp-app--whatsapp { background: linear-gradient(#44e07c, #1fa855); }
+.tp-dock { margin-top: auto; display: flex; justify-content: space-around; padding: 12px 10px; border-radius: 28px; background: rgba(255, 255, 255, .18); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.tp-badge { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: #ff3b30; color: #fff; font: 700 12px/22px system-ui, sans-serif; text-align: center; box-shadow: 0 0 0 2px rgba(0, 0, 0, .15); }
+.tp-badge--lista { position: static; margin-left: auto; }
+
+/* telas internas */
+.tp-topo { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 4px 12px 8px; background: #f2f2f7; border-bottom: 1px solid #e0e0e5; }
+.tp-topo h2 { margin: 0; font-size: 16px; font-weight: 600; text-align: center; color: #111; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-voltar, .tp-mais, .tp-link { background: none; border: 0; color: #0a64d8; font: inherit; cursor: pointer; padding: 6px 2px; justify-self: start; }
+.tp-mais { justify-self: end; font-size: 22px; line-height: 1; }
+.tp-mais svg { width: 20px; height: 20px; color: #0a64d8; }
+.tp-voltar:focus-visible, .tp-mais:focus-visible, .tp-link:focus-visible, .tp-item:focus-visible { outline: 2px solid #0a64d8; outline-offset: 2px; border-radius: 6px; }
+.tp-lista { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; background: #fff; }
+.tp-lista li { border-bottom: 1px solid #ececf0; }
+.tp-item { display: grid; grid-template-columns: 1fr auto; gap: 1px 8px; width: 100%; text-align: left; padding: 10px 14px; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; align-items: center; }
+.tp-item small { grid-column: 1; color: #6b6b72; font-size: 12.5px; }
+.tp-item-nome { grid-column: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-item-hora { grid-column: 2; grid-row: 1 / span 2; color: #8e8e93; font-size: 12px; }
+.tp-perdida { color: #ff3b30; }
+.tp-forte { font-weight: 700; }
+.tp-vazio { padding: 24px 16px; text-align: center; color: #8e8e93; }
+.tp-contato { display: flex; align-items: center; padding-right: 8px; }
+.tp-contato .tp-item { flex: 1; min-width: 0; }
+.tp-mini { width: 34px; height: 34px; border-radius: 50%; border: 0; display: grid; place-items: center; color: #fff; cursor: pointer; margin-left: 6px; flex: none; }
+.tp-mini svg { width: 18px; height: 18px; }
+.tp-busca { padding: 8px 12px; background: #f2f2f7; }
+.tp-busca input, .tp-para input { width: 100%; min-height: 34px; border: 0; border-radius: 10px; background: #e3e3e8; padding: 0 10px; font: inherit; }
+.tp-rodape { padding: 10px 14px 34px; background: #f2f2f7; text-align: center; }
+.tp-check { grid-template-columns: auto 1fr; cursor: pointer; }
+.tp-check input { grid-row: 1 / span 2; width: 20px; height: 20px; }
+.tp-check .tp-item-nome, .tp-check small { grid-column: 2; }
+
+/* teclado */
+.tp-discador { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 6px 18px 40px; background: #fff; }
+.tp-visor { width: 100%; text-align: center; border: 0; font: 300 30px/1.2 inherit; letter-spacing: .02em; padding: 10px 0 14px; background: none; color: #111; }
+.tp-visor:focus { outline: none; }
+.tp-visor.tp-erro { animation: tp-tremer .3s; color: #ff3b30; }
+@keyframes tp-tremer { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.tp-teclas { display: grid; grid-template-columns: repeat(3, 68px); gap: 14px 22px; }
+.tp-tecla { width: 68px; height: 68px; border-radius: 50%; border: 0; background: #e5e5ea; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font: inherit; color: #111; transition: background .1s; }
+.tp-tecla span { font-size: 28px; line-height: 1; }
+.tp-tecla small { font-size: 9px; letter-spacing: .14em; font-weight: 700; min-height: 11px; }
+.tp-tecla:active, .tp-pisca { background: #c7c7cc; }
+.tp-tecla:focus-visible, .tp-redondo:focus-visible, .tp-mini:focus-visible { outline: 3px solid #0a64d8; outline-offset: 2px; }
+.tp-acoes { display: grid; grid-template-columns: 68px 68px 68px; gap: 22px; margin-top: 16px; align-items: center; }
+.tp-apagar { background: none; border: 0; font-size: 22px; color: #8e8e93; cursor: pointer; height: 68px; }
+.tp-redondo { width: 68px; height: 68px; border-radius: 50%; border: 0; display: grid; place-items: center; cursor: pointer; color: #fff; }
+.tp-redondo svg { width: 30px; height: 30px; }
+.tp-verde { background: #34c759; }
+.tp-vermelho { background: #ff3b30; }
+.tp-azul { background: #0a84ff; }
+.tp-cinza { background: rgba(255, 255, 255, .22); }
+.tp-ligado { background: #fff; color: #111; }
+.tp-grande { width: 74px; height: 74px; }
+
+/* chamada */
+.tp-chamada { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: space-between; margin-top: -60px; padding: 84px 22px 54px; color: #fff; background: linear-gradient(180deg, #3b4a63 0%, #1d2638 100%); }
+.tp-chamada--tocando { background: linear-gradient(180deg, #1f6a3d 0%, #0e2e1b 100%); }
+.tp-quem { text-align: center; }
+.tp-quem h2 { margin: 12px 0 4px; font-size: 28px; font-weight: 400; color: #fff; }
+.tp-avatar { width: 86px; height: 86px; border-radius: 50%; margin: 0 auto; display: grid; place-items: center; background: linear-gradient(#a1a1aa, #71717a); font-size: 38px; font-weight: 500; text-transform: uppercase; }
+.tp-estado { margin: 0; opacity: .85; font-variant-numeric: tabular-nums; }
+.tp-aviso-demo { margin: 10px 0 0; font-size: 12px; background: rgba(201, 162, 39, .9); color: #10203d; padding: 3px 10px; border-radius: 8px; display: inline-block; }
+.tp-botoes { display: flex; gap: 40px; justify-content: center; }
+.tp-botoes--entrada { gap: 90px; }
+.tp-legendas { display: flex; gap: 90px; justify-content: center; font-size: 13px; margin-top: -26px; }
+.tp-legendas span { width: 68px; text-align: center; }
+.tp-dtmf { display: grid; grid-template-columns: repeat(3, 56px); gap: 10px 18px; }
+.tp-tecla--p { width: 56px; height: 56px; background: rgba(255, 255, 255, .22); color: #fff; font-size: 22px; }
+.tp-tecla--p.tp-pisca { background: rgba(255, 255, 255, .45); }
+
+/* formulário de contato */
+.tp-form { flex: 1; overflow-y: auto; padding: 12px 16px 40px; background: #fff; display: flex; flex-direction: column; gap: 4px; }
+.tp-form label { font-size: 12.5px; color: #6b6b72; margin-top: 6px; }
+.tp-form input, .tp-form textarea { border: 1px solid #d1d1d6; border-radius: 10px; min-height: 38px; padding: 6px 10px; font: inherit; }
+.tp-form-bts { display: flex; gap: 8px; margin-top: 14px; }
+.tp-bt { border: 0; border-radius: 12px; background: #0a64d8; color: #fff; font: 600 15px/1 inherit; min-height: 42px; padding: 0 18px; cursor: pointer; }
+.tp-bt--perigo { background: #fff; color: #ff3b30; border: 1px solid #ffb4ad; }
+.tp-bt:focus-visible { outline: 3px solid #c9a227; outline-offset: 2px; }
+.tp-erro-msg { color: #b42318; font-size: 13px; margin: 6px 0 0; }
+
+/* mensagens */
+.tp-para { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: #fff; border-bottom: 1px solid #ececf0; }
+.tp-para label { color: #6b6b72; font-size: 14px; }
+.tp-bolhas { flex: 1; overflow-y: auto; padding: 12px 12px 8px; background: #fff; display: flex; flex-direction: column; gap: 6px; }
+.tp-bolha { max-width: 78%; padding: 7px 12px; border-radius: 18px; position: relative; }
+.tp-bolha p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.tp-bolha time, .tp-st { font-size: 10.5px; opacity: .7; }
+.tp-st { margin-left: 6px; }
+.tp-bolha--eu { align-self: flex-end; background: #0a84ff; color: #fff; border-bottom-right-radius: 6px; }
+.tp-bolha--ele { align-self: flex-start; background: #e9e9eb; color: #111; border-bottom-left-radius: 6px; }
+.tp-aviso { margin: 0; padding: 6px 12px; font-size: 12.5px; background: #fff4d6; color: #6b4e00; }
+.tp-compor { display: flex; gap: 8px; align-items: flex-end; padding: 8px 10px 34px; background: #f2f2f7; border-top: 1px solid #e0e0e5; }
+.tp-compor textarea { flex: 1; resize: none; border: 1px solid #d1d1d6; border-radius: 18px; padding: 8px 12px; font: inherit; max-height: 96px; background: #fff; }
+.tp-enviar { width: 34px; height: 34px; border-radius: 50%; border: 0; background: #0a84ff; color: #fff; font: 700 18px/1 system-ui, sans-serif; cursor: pointer; flex: none; }
+.tp-enviar:focus-visible { outline: 3px solid #c9a227; outline-offset: 2px; }
+
+/* voicemail e WhatsApp */
+.tp-vm .tp-item { display: block; cursor: default; }
+.tp-vm--novo .tp-item-nome::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #0a84ff; margin-right: 6px; vertical-align: middle; }
+.tp-transc { margin: 6px 0 0; font-size: 13px; color: #3a3a3c; }
+.tp-vm-bts { display: flex; gap: 8px; align-items: center; margin-top: 6px; }
+.tp-vm-bts .tp-mini { margin-left: 0; }
+.tp-wa { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 20px 26px 40px; text-align: center; background: #fff; }
+.tp-ico--grande { width: 76px; height: 76px; border-radius: 20px; }
+.tp-ico--grande svg { width: 44px; height: 44px; }
+.tp-toast { position: absolute; left: 22px; right: 22px; bottom: 44px; margin: 0; padding: 10px 14px; border-radius: 14px; background: rgba(28, 28, 30, .92); color: #fff; font-size: 13px; z-index: 5; }
+
+/* minimizado */
+.tp-pilula { position: fixed; right: 24px; bottom: 24px; z-index: 2147483000; display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 18px 0 14px; border: 0; border-radius: 24px; background: #0b1f3a; color: #fff; font: 600 15px/1 Inter, system-ui, sans-serif; cursor: pointer; box-shadow: 0 10px 30px rgba(11, 31, 58, .35); }
+.tp-pilula svg { width: 22px; height: 22px; color: #34c759; }
+.tp-pilula--chamada { background: #1f7a3f; }
+.tp-pilula--chamada svg { color: #fff; }
+.tp-pilula .tp-badge { position: static; margin-left: 2px; }
+.tp-pilula:focus-visible { outline: 3px solid #c9a227; outline-offset: 3px; }
+
+/* app (phone.html) e celular pequeno: tela cheia */
+.tp--app { position: static; width: 100%; height: 100%; }
+.tp--app .tp-aparelho { height: 100%; max-height: none; border-radius: 0; padding: 0; box-shadow: none; background: #f2f2f7; }
+.tp--app .tp-tela { border-radius: 0; }
+.tp--app .tp-ilha { display: none; }
+.tp--app .tp-status { top: 0; left: 0; right: 0; padding-top: env(safe-area-inset-top); border-radius: 0; height: calc(44px + env(safe-area-inset-top)); color: #fff; mix-blend-mode: difference; }
+.tp--app .tp-tela { padding-top: calc(44px + env(safe-area-inset-top)); }
+.tp--app .tp-home-tela, .tp--app .tp-chamada { margin-top: calc(-44px - env(safe-area-inset-top)); padding-top: calc(60px + env(safe-area-inset-top)); }
+.tp--app .tp-home { bottom: calc(8px + env(safe-area-inset-bottom)); background: rgba(0, 0, 0, .35); }
+@media (max-width: 640px) {
+  .tp:not(.tp--app) { inset: 0 !important; width: auto; background: #0d0d0f; }
+  .tp:not(.tp--app) .tp-barra { background: #0b1f3a; height: 40px; cursor: default; }
+  .tp:not(.tp--app) .tp-grip { display: none; }
+  .tp:not(.tp--app) .tp-aparelho { height: auto; flex: 1; max-height: none; border-radius: 0; padding: 0; box-shadow: none; }
+  .tp:not(.tp--app) .tp-tela { border-radius: 0; }
+  .tp:not(.tp--app) .tp-ilha { display: none; }
+  .tp-pilula { right: 16px; bottom: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .tp-visor.tp-erro { animation: none; } }
+@media (prefers-color-scheme: dark) {
+  .tel-kpi { background: #111a2b; border-color: #26324a; }
+  .tel-kpi strong, .tel-numero-grande { color: #e8eef8; }
+  .tel-disp li, .tel-acesso fieldset { border-color: #26324a; }
+}

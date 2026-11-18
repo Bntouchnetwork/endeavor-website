@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Telefonia (teste)</title>
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../portal.css"><link rel="stylesheet" href="../../telefonia.css">
+</head><body style="background:#f5f7fa;padding:24px">
+<!-- Página só para os testes automáticos: contexto do portal/admin simulado; a função telephony é interceptada pelo Playwright. -->
+<div id="view"></div>
+<script src="../../tel-phone.js"></script>
+<script src="../../client-telefonia.js"></script>
+<script src="../../admin-telefonia.js"></script>
+<script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ADMIN = /admin=1/.test(location.search);
+  window.ctx = {
+    sb: { auth: { getSession: async () => ({ data: { session: { access_token: 'sessao-teste' } } }) } },
+    CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, L: 'pt', locale: 'pt-BR', $: s => document.querySelector(s),
+    msg: (el, t, k) => { el.textContent = t; el.className = 'portal-alert portal-alert--' + (k || 'info'); },
+    errText: e => e.message, fmtDT: d => d, q: async x => x, copy: t => { window.__copiado = t; }, download: (n, b) => { b.text().then(t => { window.__baixado = { n, t }; }); },
+    openOverlay: () => {}, closeOverlay: () => {}, siteUrl: p => location.origin + '/' + p,
+  };
+  const desenhar = () => (ADMIN ? ETelAdmin.render(document.getElementById('view'), window.ctx) : ETelPortal.render(document.getElementById('view'), window.ctx, { clientId: 'c1' }))
+    .catch(e => { document.getElementById('view').textContent = 'ERRO: ' + e.message; });
+  window.ctx.route = desenhar;
+  if (ADMIN) window.addEventListener('hashchange', desenhar);
+  desenhar();
+</script>
+</body></html>

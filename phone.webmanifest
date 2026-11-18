@@ -1,0 +1,17 @@
+{
+  "name": "Endeavor Phone",
+  "short_name": "Endeavor Phone",
+  "description": "Telefone da sua empresa: ligações, SMS e voicemail pelo número americano contratado na Endeavor.",
+  "start_url": "phone.html",
+  "scope": "./",
+  "id": "endeavor-phone",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1f3a",
+  "theme_color": "#0b1f3a",
+  "lang": "pt-BR",
+  "icons": [
+    { "src": "img/phone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/phone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

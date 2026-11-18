@@ -265,6 +265,8 @@
     await checkOpenInvoices(); await checkNewDocs();
     if (S.openInv.n && !S.landed) { var hh = ERoute.get(); if (!hh || hh === '#' || hh === '#/' || /^#\/overview/.test(hh)) ERoute.set('#/invoices', true); }
     S.landed = true;
+    // veio do app Endeavor Phone (phone.html) para entrar: volta para o telefone
+    if (/[?&]next=phone(&|$)/.test(location.search) && S.telOn && !PARTNER) { location.replace('phone.html'); return; }
     startShell();
   }
   function refCtx() {
@@ -316,6 +318,9 @@
     // WhatsApp Manager liberado pela Endeavor na ficha do cliente
     var wa = await sb.from('wa_access').select('enabled').eq('client_id', id).maybeSingle();
     S.waOn = !!(wa.data && wa.data.enabled);
+    // Telefonia liberada pela Endeavor em alguma empresa do cliente (RLS: só as que a pessoa pode ver)
+    var tl = await sb.from('tel_access').select('company_id').eq('client_id', id).eq('enabled', true).limit(1);
+    S.telOn = !!(tl.data && tl.data.length);
     try { localStorage.setItem('endeavor-client-id', id); } catch (e) { /* ignore */ }
   }
 
@@ -439,6 +444,7 @@
       if (S.meetOn && window.EMeetPanel) m.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
       if (S.meetOn && window.EWebinarPanel) m.push(['webinar', 'Live Webinar', 'i-live', 1]);
       if (S.waOn && window.EWaPanel) m.push(['whatsapp', 'WhatsApp Manager', 'i-wa', 1]);
+      if (S.telOn && window.ETelPortal) m.push(['telefonia', 'Telefonia', 'i-phone', 1]);
       if (S.perms.owner) m.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
       m.push(['settings', 'nav_settings', 'i-gear']);
       return m;
@@ -455,6 +461,7 @@
     if (S.meetOn && !PARTNER && window.EMeetPanel) n.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
     if (S.meetOn && !PARTNER && window.EWebinarPanel) n.push(['webinar', 'Live Webinar', 'i-live', 1]);
     if (S.waOn && !PARTNER && window.EWaPanel) n.push(['whatsapp', 'WhatsApp Manager', 'i-wa', 1]);
+    if (S.telOn && !PARTNER && window.ETelPortal) n.push(['telefonia', 'Telefonia', 'i-phone', 1]);
     n.push(['settings', 'nav_settings', 'i-gear']);
     return n;
   }
@@ -503,6 +510,7 @@
     if (window.EProjects) V.projetos = function (view) { return EProjects.view(view, refCtx()); };
     if (window.EMeetPanel && S.client && S.meetOn && !PARTNER) V.webmeeting = function (view) { return EMeetPanel.render(view, refCtx(), { scope: 'client', clientId: S.client.id, clientName: S.client.name }); };
     if (window.EWaPanel && S.client && S.waOn && !PARTNER) V.whatsapp = function (view) { return EWaPanel.render(view, refCtx(), { scope: 'client', clientId: S.client.id }); };
+    if (window.ETelPortal && S.client && S.telOn && !PARTNER) V.telefonia = function (view) { return ETelPortal.render(view, refCtx(), { clientId: S.client.id }); };
     if (window.EWebinarPanel && S.client && S.meetOn && !PARTNER) V.webinar = function (view) { return EWebinarPanel.render(view, refCtx(), { scope: 'client', clientId: S.client.id, clientName: S.client.name }); };
     if (window.ETools && S.client && !PARTNER) {
       Object.assign(V, ETools.views);

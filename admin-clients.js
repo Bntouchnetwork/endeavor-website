@@ -127,7 +127,7 @@
       var tab = (ERoute.get().match(/[?&]tab=([a-z]+)/) || [])[1] || 'empresas';
       var c = await ctx.q(sb.from('clients').select('*').eq('id', id).single());
       var companies = await ctx.q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
-      var TABS = [['empresas', 'Empresas'], ['abertura', 'Abertura'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios'], ['webmeeting', 'Web Meeting'], ['whatsapp', 'WhatsApp Manager']];
+      var TABS = [['empresas', 'Empresas'], ['abertura', 'Abertura'], ['documentos', 'Documentos'], ['prazos', 'Prazos'], ['usuarios', 'Usuários'], ['financeiro', 'Contabilidade e relatórios'], ['webmeeting', 'Web Meeting'], ['whatsapp', 'WhatsApp Manager'], ['telefonia', 'Telefonia']];
       view.innerHTML = '<p class="crumbs"><a href="#/crm?tipo=client">CRM</a> /</p>' +
         '<div class="console__head"><div><h1>' + esc(c.name) + '</h1><p class="portal-muted">' + esc(c.primary_email) + (c.phone ? ' · ' + esc(c.phone) : '') + ' · idioma ' + esc((c.language || 'pt').toUpperCase()) + '</p></div>' +
         '<div class="portal-btn-row"><a class="btn btn--navy btn--xs" href="#/pagamentos?tab=nova-proposta&client=' + id + '">Enviar proposta</a><a class="btn btn--ghost btn--xs" href="#/pagamentos?tab=nova&client=' + id + '">Nova fatura</a><button class="btn btn--ghost btn--xs" type="button" id="c-ach">Pedir débito na conta da empresa</button><button class="btn btn--ghost btn--xs" type="button" id="c-edit">Editar cliente</button></div></div>' +
@@ -138,7 +138,7 @@
       view.querySelector('#c-edit').onclick = function () { editClient(ctx, c); };
       view.querySelector('#c-ach').onclick = function () { achRequest(ctx, c); };
       var body = view.querySelector('#c-body');
-      var fn = { empresas: tabCompanies, abertura: tabOnboarding, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance, webmeeting: tabMeet, whatsapp: tabWhatsApp }[tab] || tabCompanies;
+      var fn = { empresas: tabCompanies, abertura: tabOnboarding, documentos: tabDocs, prazos: tabDeadlines, usuarios: tabUsers, financeiro: tabFinance, webmeeting: tabMeet, whatsapp: tabWhatsApp, telefonia: tabTelefonia }[tab] || tabCompanies;
       await fn(body, ctx, c, companies);
     }
   };
@@ -319,6 +319,12 @@
       var r = await ctx.sb.from('wa_access').upsert({ client_id: c.id, enabled: on, updated_at: new Date().toISOString(), updated_by: (await ctx.sb.auth.getUser()).data.user.email }, { onConflict: 'client_id' });
       ctx.msg(m, r.error ? ctx.errText(r.error) : (on ? 'Salvo. O menu WhatsApp Manager já aparece no portal do cliente.' : 'Salvo. O WhatsApp Manager está desligado para esta empresa; as extensões dela param em até 1 minuto.'), r.error ? 'error' : 'ok');
     };
+  }
+
+  /* ---------- Telefonia: liberar por empresa, com plano, limites e permissões (módulo admin-telefonia.js) ---------- */
+  async function tabTelefonia(body, ctx, c, companies) {
+    if (!window.ETelAdmin) { body.innerHTML = '<div class="portal-alert portal-alert--error">O módulo Telefonia não carregou. Recarregue a página.</div>'; return; }
+    return ETelAdmin.ficha(body, ctx, c, companies || []);
   }
 
   async function tabOnboarding(body, ctx, c, companies) {
