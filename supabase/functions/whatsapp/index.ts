@@ -233,7 +233,10 @@ async function ia(d: Disp, b: Any) {
     await db.from("wa_chats").update({ contato: ct, takeover: true, updated_at: agora() }).eq("id", conv.id);
     conv.contato = ct; conv.takeover = true;
   }
-  if (!c.grupo && conv.contato?.origem_grupo) extra.origem_grupo = { grupo: conv.contato.origem_grupo, assunto: conv.contato.assunto || "", primeira: !mensagens.some((m) => m.eu) };
+  // a extensão manda origem_grupo só ao abrir o privado: é a primeira mensagem, puxada pela IA (sai mesmo que a última
+  // mensagem da conversa seja antiga ou uma resposta automática; a trava contra loop vale nas respostas seguintes)
+  const primeiraDoGrupo = !c.grupo && f === "responder" && !!b.origem_grupo && !!conv.contato?.origem_grupo;
+  if (!c.grupo && conv.contato?.origem_grupo) extra.origem_grupo = { grupo: conv.contato.origem_grupo, assunto: conv.contato.assunto || "", primeira: primeiraDoGrupo };
   if (f === "traduzir") extra.idioma_destino = /^[a-z]{2}(-[A-Z]{2})?$/.test(String(b.idioma_destino || "")) ? b.idioma_destino : ajustes.idioma;
   if (!mensagens.length && !["comando", "traduzir", "conteudo_grupo"].includes(f) && !(f === "responder" && extra.origem_grupo)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");
   const takeover = f === "responder" || (f === "grupo" && b.takeover === true);
@@ -286,9 +289,16 @@ async function ia(d: Disp, b: Any) {
     try { const h = await horariosEndeavor(); horariosIso = h.horarios.slice(0, 6); extra.horarios = horariosIso.map((x, i) => `${i + 1}) ${legivel(x, h.timezone, ajustes.idioma)}`); } catch { /* sem agenda: a IA usa o link */ }
   }
   let r: Any;
-  try { r = await chamarIA(k, d.user_id, f, montarEntrada(f, ajustes, c, mensagens, extra)); }
+  try { r = await chamarIA(k, d.user_id, f, montarEntrada(f, ajustes, c, primeiraDoGrupo ? [] : mensagens, extra)); }
   catch (e) { await registrar(k, d.user_id, d.id, c, takeover ? "takeover" : f, "erro", null, { erro: e instanceof HubFail ? e.code : "erro" }); throw hubErro(e); }
   const out = normalizar(f, r, config);
+  if (primeiraDoGrupo && takeover && !out.escalar && (!out.responder || !out.texto || violaProtecao(out.texto))) {
+    const og = extra.origem_grupo, en = ajustes.idioma.startsWith("en"), es = ajustes.idioma.startsWith("es");
+    out.texto = en ? `Hi! I saw your message in the group ${og.grupo}${og.assunto ? " about " + og.assunto : ""} and we agreed to continue here. What's your name?`
+      : es ? `¡Hola! Vi tu mensaje en el grupo ${og.grupo}${og.assunto ? " sobre " + og.assunto : ""} y quedamos en seguir por aquí. ¿Cómo te llamas?`
+      : `Oi! Vi sua mensagem no grupo ${og.grupo}${og.assunto ? " sobre " + og.assunto : ""} e combinamos de continuar por aqui. Como posso te chamar?`;
+    out.responder = true; out.motivo = "";
+  }
   if (g && f === "grupo") {
     if (bloqueio) { if (out.responder) out.sugestao = true; out.responder = false; out.bloqueio = bloqueio; }
     if (!g.interesse) out.interesse = [];
