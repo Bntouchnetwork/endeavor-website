@@ -1,7 +1,7 @@
 // My WhatsApp Manager: regras compartilhadas (wa-extension/core.js) e regras do servidor (supabase/whatsapp/regras.ts).
 //   deno test --allow-read tests/whatsapp.test.ts
 import "../wa-extension/core.js";
-import { tipoDoPost, avisoComIA, conteudoDevido, dentroJanela, grupoCfg, limparAuto, limparConfig, parecido, proximoDepoisDoEnvio, proximoHorario, reclamacao, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/whatsapp/regras.ts";
+import { aceitouPrivado, foneDoAutor, tipoDoPost, avisoComIA, conteudoDevido, dentroJanela, grupoCfg, limparAuto, limparConfig, parecido, proximoDepoisDoEnvio, proximoHorario, reclamacao, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/whatsapp/regras.ts";
 // deno-lint-ignore no-explicit-any
 const C = (globalThis as any).EWaCore;
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`); };
@@ -254,4 +254,20 @@ Deno.test("mensagens automáticas: tipo de post (dica, lembrete ou alternar com 
   eq(tipoDoPost(alt, ["lembrete", "dica"]), "dica");
   eq(tipoDoPost(limparAuto({ tipo: "dica" }), ["dica", "dica"]), "dica");
   eq(tipoDoPost(limparAuto({ tipo: "lembrete" }), []), "lembrete");
+});
+
+Deno.test("grupo → privado: aceite reconhecido, telefone do autor e saídas da IA", () => {
+  const m = (texto: string, cita_eu = true) => ({ eu: false, autor: "Carlos", texto, cita_eu });
+  sim(aceitouPrivado(m("Sim, pode me chamar no privado")), "aceite com citação");
+  sim(aceitouPrivado(m("pode sim, me chama no pv")), "pv");
+  sim(!aceitouPrivado(m("Sim, pode me chamar no privado", false)), "sem citar a nossa mensagem não conta");
+  sim(!aceitouPrivado(m("Quanto tempo demora?")), "pergunta comum");
+  eq(foneDoAutor("+1 (407) 555-0100"), "+14075550100");
+  eq(foneDoAutor("~ Carlos"), "");
+  eq(normalizar("grupo", { privado: { autor: "Carlos", assunto: "LLC" } }).privado, { autor: "Carlos", assunto: "LLC" });
+  eq(normalizar("grupo", {}).privado, null);
+  eq(normalizar("responder", { responder: true, texto: "Vou marcar.", agendar: { opcao: 2 } }).agendar, 2);
+  eq(normalizar("responder", { responder: true, texto: "x", agendar: { opcao: 9 } }).agendar, 0);
+  const e = montarEntrada("responder", C.limparAjustes({}), { nome: "Carlos", grupo: false }, [], { origem_grupo: { grupo: "Empreendedores FL", assunto: "LLC", primeira: true } });
+  sim(e.includes("<origem_grupo>") && e.includes("Empreendedores FL"), "a IA recebe o grupo de origem");
 });

@@ -16,7 +16,7 @@
 
   var S = {
     conectado: false, ajustes: C.limparAjustes({}), version: 0, conversas: {}, usuario: '', pausado: false, aberto: true, largura: 380,
-    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, monitorar: false, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, gst: {}, contador: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null, lembretes: [], lembAviso: {}, lembAbrindo: null
+    atual: null, ocupado: false, tratadas: {}, vistas: {}, abertaPelaIA: {}, envios: [], tentativas: {}, avisados: {}, monitorar: false, ultGrupo: {}, analiseGrupo: {}, leituraGrupo: {}, dica: {}, gst: {}, contador: {}, vel: 0, humanoEm: 0, teclouEm: 0, acao: null, lembretes: [], lembAviso: {}, lembAbrindo: null, privadoPendente: null, privadoFeito: {}
   };
 
   /* ---------------- servidor ---------------- */
@@ -282,7 +282,7 @@
   }
   function precisaConversa() { var c = W.conversaAberta(); if (!c) { res('<p class="erro">Abra uma conversa no WhatsApp Web primeiro.</p>'); return null; } return c; }
   function ia(ferramenta, c, extra) {
-    if (!(c.mensagens || []).length && ['comando', 'traduzir', 'lembrete'].indexOf(ferramenta) < 0)
+    if (!(c.mensagens || []).length && ['comando', 'traduzir', 'lembrete'].indexOf(ferramenta) < 0 && !(extra && extra.origem_grupo))
       return Promise.reject(new Error('Não consegui ler as mensagens desta conversa. Clique em "Copiar diagnóstico", no rodapé do painel, e cole no chat com o Claude.'));
     return api(Object.assign({ acao: 'ext_ia', ferramenta: ferramenta, conversa: ref(c), mensagens: c.mensagens }, extra || {}));
   }
@@ -500,6 +500,8 @@
   }
   /** resultado da IA no grupo: guarda, atualiza o contador e os cartões */
   function mostrarGrupo(r, c) {
+    // alguém aceitou ir para o privado: com o Autoatendimento ligado, a extensão abre o privado e a IA continua lá
+    if (r && r.privado && r.privado.autor && S.ajustes.takeover && !S.privadoFeito[c.chave + '|' + r.privado.autor]) S.privadoPendente = { grupo: { chave: c.chave, nome: c.nome, grupo: true }, p: r.privado };
     var st = estG(c); st.r = r; st.sugFeita = !!r.enviado; st.lendo = false;
     if (r.grupo_cfg) S.contador[c.chave] = { usadas: r.usadas_hoje || 0, limite: r.grupo_cfg.limite_dia, modo: r.grupo_cfg.modo };
     contador(c);
@@ -551,13 +553,13 @@
   }
 
   /* ---------------- IA Takeover ---------------- */
-  async function responderAuto(c) {
+  async function responderAuto(c, extra) {
     var ult = C.ultimaRecebida(c.mensagens);
     S.tratadas[c.chave] = ult && ult.id;
     S.ocupado = true; var ac = S.acao = { parar: false };
     try {
       agora('Lendo a conversa com ' + c.nome + '…', 'pensando');
-      var r = await ia(c.grupo ? 'grupo' : 'responder', c, { takeover: true });
+      var r = await ia(c.grupo ? 'grupo' : 'responder', c, Object.assign({ takeover: true }, extra || {}));
       if (r.eh_grupo) { // o servidor já conhece esta conversa como grupo: nunca responde como conversa individual
         W.marcarGrupo(c.chave); S.conversas[c.chave] = Object.assign({}, estado(c), { grupo: true }); c.grupo = true; S.tratadas[c.chave] = null;
         desenharConversa(c); agora('Isto é um grupo: a IA segue o modo do grupo.', 'alerta'); return;
@@ -655,6 +657,34 @@
     W.abrir(linha);
     return true;
   }
+  /* ---------------- do grupo para o privado ----------------
+   * Abre o privado de quem aceitou, a partir do próprio grupo (clica no nome da pessoa → "Conversar"), mesmo sem conversa
+   * anterior. Lá a IA se apresenta, cita o assunto do grupo e pergunta o nome; o Autoatendimento segue até agendar. */
+  function dorme(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  async function esperarAberta(teste) { for (var i = 0; i < 24; i++) { await dorme(250); var a = W.conversaAberta(); if (a && teste(a)) return a; } return null; }
+  async function irPrivado(x) {
+    S.privadoPendente = null;
+    var autor = x.p.autor, k = x.grupo.chave + '|' + autor;
+    if (S.privadoFeito[k]) return; S.privadoFeito[k] = true;
+    var aberta = null, mesmoNome = function (a) { return !a.grupo && a.chave !== x.grupo.chave && (a.nome || '').toLowerCase().replace(/^~\s*/, '') === autor.toLowerCase().replace(/^~\s*/, ''); };
+    S.ocupado = true;
+    try {
+      agora('Abrindo o privado de ' + autor + '…', 'pensando');
+      if (!mesmaConversa(x.grupo)) { var lg = W.linhaPorNome(x.grupo.nome); if (lg) { W.abrir(lg); await esperarAberta(function (a) { return a.chave === x.grupo.chave || a.nome === x.grupo.nome; }); } }
+      if (await W.abrirPrivadoDe(autor)) aberta = await esperarAberta(function (a) { return !a.grupo && a.nome !== x.grupo.nome; });
+      if (!aberta) { var ln = W.linhaPorNome(autor); if (ln) { W.abrir(ln); aberta = await esperarAberta(mesmoNome); } }
+      if (!aberta) {
+        agora('Não consegui abrir o privado de ' + autor + '. A mensagem está no cartão Interesse.', 'alerta');
+        msgBg({ tipo: 'aviso', titulo: autor + ' aceitou o privado', texto: 'Abra o privado e use o cartão Interesse do grupo ' + x.grupo.nome + '.' });
+        return;
+      }
+      // conversa nova: não responde mensagens antigas dela; a IA começa a conversa
+      S.vistas[aberta.chave] = true; var u = C.ultimaRecebida(aberta.mensagens); S.tratadas[aberta.chave] = u && u.id;
+      S.atual = aberta; ultimaChave = aberta.chave; desenharConversa(aberta); desenharGrupo(aberta);
+    } catch (e) { agora('Privado: ' + e.message, 'erro'); return; }
+    finally { S.ocupado = false; }
+    return responderAuto(aberta, { origem_grupo: { grupo: x.grupo.nome, assunto: x.p.assunto || '', telefone: x.p.telefone || '' } });
+  }
   /** andamento do fluxo na conversa (ex.: Pedido de documentos · falta e-mail · enviado ao CRM) */
   function mostrarFluxo(c, f) {
     var CAMPO = { nome: 'nome', email: 'e-mail', telefone: 'telefone', tipo_caso: 'tipo de caso' };
@@ -699,6 +729,7 @@
     var pelaIA = !!S.abertaPelaIA[c.nome];
     delete S.abertaPelaIA[c.nome]; delete S.tentativas[c.nome];
     if (S.ocupado || S.pausado) return;
+    if (S.privadoPendente && S.ajustes.takeover) return irPrivado(S.privadoPendente);
     if (lembreteDevido(c) && podeLembrete()) return postarLembrete(c);
     var st = estado(c);
     if (ult && S.tratadas[c.chave] !== ult.id) {

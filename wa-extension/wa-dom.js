@@ -271,7 +271,9 @@
   /** Abre uma conversa da lista. O WhatsApp reage a pointer/mouse no elemento clicável da linha. */
   function abrir(linha) {
     var nomeEl = $('span[dir="auto"][title]', linha) || $('span[title]', linha) || linha;
-    var alvo = nomeEl.closest('[role="button"], [role="gridcell"], [tabindex], [role="listitem"], [role="row"]') || $('[role="gridcell"]', linha) || $('div[tabindex]', linha) || linha;
+    clicar(nomeEl.closest('[role="button"], [role="gridcell"], [tabindex], [role="listitem"], [role="row"]') || $('[role="gridcell"]', linha) || $('div[tabindex]', linha) || linha);
+  }
+  function clicar(alvo) {
     var r = alvo.getBoundingClientRect(), o = { bubbles: true, cancelable: true, view: window, button: 0, clientX: r.left + Math.min(40, r.width / 2), clientY: r.top + r.height / 2 };
     if (typeof PointerEvent === 'function') alvo.dispatchEvent(new PointerEvent('pointerdown', Object.assign({ pointerType: 'mouse', isPrimary: true }, o)));
     alvo.dispatchEvent(new MouseEvent('mousedown', o));
@@ -279,7 +281,31 @@
     alvo.dispatchEvent(new MouseEvent('mouseup', o));
     alvo.dispatchEvent(new MouseEvent('click', o));
   }
+  /** Abre o privado de quem escreveu no grupo aberto, mesmo sem conversa anterior: clica no nome (ou número) da pessoa
+   *  na mensagem do grupo e escolhe "Conversar com…"/"Message…" no menu que o WhatsApp abre. true = clicou no menu. */
+  var RE_CONVERSAR = /^(message|send message|conversar|enviar mensagem|mensagem|mensaje|chat with)\b/i;
+  function autorNoGrupo(autor) {
+    var main = principal(); if (!main || !autor) return null;
+    var alvo = norm(autor);
+    var cands = $$('span[dir="auto"]', main).filter(function (sp) {
+      return !sp.closest('header, footer, [aria-label*="uoted"], .quoted-mention') && norm(limpo(sp.textContent)) === alvo;
+    });
+    return cands.length ? cands[cands.length - 1] : null;
+  }
+  function esperarMs(ms) { return new Promise(function (ok) { setTimeout(ok, ms); }); }
+  async function abrirPrivadoDe(autor) {
+    var el = autorNoGrupo(autor); if (!el) return false;
+    clicar(el.closest('[role="button"]') || el);
+    for (var i = 0; i < 15; i++) {
+      await esperarMs(200);
+      var item = $$('[role="menuitem"], [role="application"] [role="button"], li[role="button"], div[role="button"], li').find(function (x) {
+        return !x.closest('#main footer, #pane-side') && RE_CONVERSAR.test(limpo(x.textContent)) && x.getBoundingClientRect().width > 0;
+      });
+      if (item) { clicar(item); return true; }
+    }
+    return false;
+  }
   function pronto() { return !!(document.getElementById('pane-side') || principal()); }
 
-  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, semCaixa: semCaixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, linhaPorNome: linhaPorNome, marcarGrupo: marcarGrupo, nomeAberto: nomeAberto, abrir: abrir, pronto: pronto };
+  raiz.EWaDom = { diagnostico: diagnostico, conversaAberta: conversaAberta, caixa: caixa, semCaixa: semCaixa, textoNaCaixa: textoNaCaixa, limparCaixa: limparCaixa, digitar: digitar, enviar: enviar, naoLidas: naoLidas, linhaPorNome: linhaPorNome, marcarGrupo: marcarGrupo, nomeAberto: nomeAberto, abrir: abrir, abrirPrivadoDe: abrirPrivadoDe, autorNoGrupo: autorNoGrupo, pronto: pronto };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

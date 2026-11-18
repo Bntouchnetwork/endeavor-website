@@ -53,7 +53,7 @@ function desenhar() {
     box.innerHTML = '<div role="row"><div><span>Today</span></div></div>' + (c.novo === 'sistema' ? '<div role="row"><div><span>You created group "' + c.nome + '"</span></div></div>' : '') + (c.novo ? '' : '<div role="row"><div class="perfil"><span>' + c.nome + '</span><span>Business account</span><button>Block</button></div></div>') +
       c.msgs.map(function (x) {
         return '<div role="row"><div style="display:flex' + (x.eu ? ';justify-content:flex-end' : '') + '"><div class="bolha" style="max-width:60%;padding:4px 8px;background:' + (x.eu ? '#d9fdd3' : '#eee') + '">' +
-          (c.grupo && !x.eu ? '<div><span dir="auto">' + x.autor + '</span></div>' : '') + (x.cita ? '<div role="button" aria-label="Quoted message"><span dir="auto">You</span><div><span>' + x.cita + '</span></div></div>' : '') + '<div><span dir="ltr"><span>' + x.t + '</span></span></div>' +
+          (c.grupo && !x.eu ? '<div><span dir="auto" role="button" data-autor="' + x.autor + '">' + x.autor + '</span></div>' : '') + (x.cita ? '<div role="button" aria-label="Quoted message"><span dir="auto">You</span><div><span>' + x.cita + '</span></div></div>' : '') + '<div><span dir="ltr"><span>' + x.t + '</span></span></div>' +
           '<div><span>' + (x.h || hora()) + '</span>' + (x.eu ? '<span data-icon="msg-dblcheck"></span>' : '') + '</div><button aria-label="Menu" hidden></button></div></div></div>';
       }).join('');
     return;
@@ -68,5 +68,19 @@ window.chegar = function (k, t, autor, cita) {
   if (aberta === k) desenhar(); else { c.naoLidas++; lista(); }
 };
 window.abrirConversa = abrir;
+// WhatsApp atual: clicar no nome de quem escreveu no grupo abre um menu com "Conversar com…", que abre o privado (mesmo sem conversa)
+document.addEventListener('click', function (e) {
+  var a = e.target.closest && e.target.closest('[data-autor]');
+  var item = e.target.closest && e.target.closest('#menu-autor li');
+  if (item) {
+    var nome = item.dataset.nome, k = Object.keys(conversas).find(function (x) { return conversas[x].nome === nome && !conversas[x].grupo; });
+    if (!k) { k = 'novo-' + (seq++) + '@c.us'; conversas[k] = { nome: nome, grupo: false, msgs: [], naoLidas: 0 }; }
+    window.__menuUsado = true; document.getElementById('menu-autor').remove(); abrir(k); return;
+  }
+  if (a) {
+    var m = document.getElementById('menu-autor'); if (m) m.remove();
+    document.body.insertAdjacentHTML('beforeend', '<div role="application" id="menu-autor" style="position:fixed;top:80px;left:300px;background:#fff;border:1px solid #ccc"><ul><li role="button" data-nome="' + a.dataset.autor + '">Conversar com ' + a.dataset.autor + '</li></ul></div>');
+  }
+});
 lista();
 </script></body></html>

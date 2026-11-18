@@ -27,7 +27,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { hubJson, hubOn, HubFail } from "../_shared/hub-ai.ts";
 import "./core.js";
-import { avisoComIA, conteudoDevido, dentroJanela, FERRAMENTAS, grupoCfg, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, parecido, prontoParaCRM, proximoDepoisDoEnvio, proximoHorario, reclamacao, STATUS, tipoDoPost, violaProtecao } from "./regras.ts";
+import { aceitouPrivado, avisoComIA, conteudoDevido, foneDoAutor, dentroJanela, FERRAMENTAS, grupoCfg, limparConfig, limpo, montarEntrada, normalizar, padraoConfig, parecido, prontoParaCRM, proximoDepoisDoEnvio, proximoHorario, reclamacao, STATUS, tipoDoPost, violaProtecao } from "./regras.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -226,8 +226,16 @@ async function ia(d: Disp, b: Any) {
   }
   if (f === "lembrete") return await lembreteIA(k, d, c, conv, ajustes, config, mensagens, b.previa === true);
   const extra: Any = { pedido: b.pedido, base: b.base, texto: b.texto, empresa: k.nome, cfg: config };
+  // veio de um grupo (a pessoa aceitou o privado): guarda o grupo e o assunto na conversa; a IA se apresenta e pergunta o nome
+  if (!c.grupo && f === "responder" && b.origem_grupo && typeof b.origem_grupo === "object" && txt(b.origem_grupo.grupo, 120)) {
+    const tel = fone(b.origem_grupo.telefone);
+    const ct = { ...(conv.contato || {}), origem_grupo: txt(b.origem_grupo.grupo, 120), assunto: txt(b.origem_grupo.assunto, 160), ...(/^\+[1-9]\d{6,14}$/.test(tel) && !conv.contato?.telefone ? { telefone: tel } : {}) };
+    await db.from("wa_chats").update({ contato: ct, takeover: true, updated_at: agora() }).eq("id", conv.id);
+    conv.contato = ct; conv.takeover = true;
+  }
+  if (!c.grupo && conv.contato?.origem_grupo) extra.origem_grupo = { grupo: conv.contato.origem_grupo, assunto: conv.contato.assunto || "", primeira: !mensagens.some((m) => m.eu) };
   if (f === "traduzir") extra.idioma_destino = /^[a-z]{2}(-[A-Z]{2})?$/.test(String(b.idioma_destino || "")) ? b.idioma_destino : ajustes.idioma;
-  if (!mensagens.length && !["comando", "traduzir", "conteudo_grupo"].includes(f)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");
+  if (!mensagens.length && !["comando", "traduzir", "conteudo_grupo"].includes(f) && !(f === "responder" && extra.origem_grupo)) throw new Erro("Não encontrei mensagens nesta conversa. Role a conversa até aparecerem as mensagens.");
   const takeover = f === "responder" || (f === "grupo" && b.takeover === true);
 
   // grupos: cada grupo tem o seu modo (desligado, aprovar, auto com limite por dia), aviso de interesse e dica da semana
@@ -273,8 +281,9 @@ async function ia(d: Disp, b: Any) {
     if (conv.fluxo && conv.fluxo.status !== "cancelado") extra.fluxo_atual = { id: conv.fluxo.id, dados: conv.fluxo.dados, status: conv.fluxo.status };
     extra.telefone = foneDaChave(c.chave);
   }
+  let horariosIso: string[] = [];
   if (k.endeavor && (f === "responder" || f === "comando" || f === "sugerir")) {
-    try { const h = await horariosEndeavor(); extra.horarios = h.horarios.slice(0, 6).map((x) => legivel(x, h.timezone, ajustes.idioma)); } catch { /* sem agenda: a IA usa o link */ }
+    try { const h = await horariosEndeavor(); horariosIso = h.horarios.slice(0, 6); extra.horarios = horariosIso.map((x, i) => `${i + 1}) ${legivel(x, h.timezone, ajustes.idioma)}`); } catch { /* sem agenda: a IA usa o link */ }
   }
   let r: Any;
   try { r = await chamarIA(k, d.user_id, f, montarEntrada(f, ajustes, c, mensagens, extra)); }
@@ -288,6 +297,10 @@ async function ia(d: Disp, b: Any) {
     out.grupo_cfg = g;
     out.usadas_hoje = usadas;
     out.continuacao = continuacao;
+    // a pessoa aceitou ir para o privado: a extensão abre o privado e o Autoatendimento continua lá
+    if (!out.privado && continuacao && aceitouPrivado(ultRec)) out.privado = { autor: ultRec!.autor, assunto: out.topicos?.[0]?.assunto || "" };
+    if (out.privado && (g.modo === "desligado" || !g.interesse || !ajustes.takeover)) out.privado = null;
+    if (out.privado) out.privado.telefone = foneDoAutor(out.privado.autor);
   }
   // o aviso da IA é obrigatório na primeira mensagem automática da conversa
   if (extra.aviso && out.responder && out.texto && !/assistente virtual|virtual assistant|asistente virtual/i.test(out.texto)) {
@@ -310,6 +323,31 @@ async function ia(d: Disp, b: Any) {
     await db.from("wa_chats").update({ contato: ct, updated_at: agora() }).eq("id", conv.id);
     out.contato = ct;
   }
+  // veio do grupo: com o nome, o card no CRM já nasce (nome e telefone); o e-mail entra quando a pessoa passar
+  if (takeover && !c.grupo && conv.contato?.origem_grupo) {
+    const ct = { ...(conv.contato || {}), ...(out.contato || {}) };
+    const tel = ct.telefone || foneDaChave(c.chave), leadId = conv.lead_id || conv.ct_contact_id;
+    if (!leadId && ct.nome && (tel || ct.email)) {
+      try {
+        const lr = await criarLead(d, { conversa: c, nome: ct.nome, email: ct.email || "", telefone: tel || "", assunto: ct.assunto || "", resumo: `Veio do grupo ${ct.origem_grupo} (aceitou conversar no privado).` });
+        conv.lead_id = lr.lead_id; out.lead = { id: lr.lead_id, novo: lr.novo };
+        await db.from("wa_chats").update({ contato: { ...ct, ...(tel ? { telefone: tel } : {}), email_crm: !!ct.email } }).eq("id", conv.id); // criarLead troca o contato: mantém a origem
+      } catch (e) { console.error("lead automático", e); }
+    } else if (leadId && ct.email && !ct.email_crm) {
+      await db.from(k.endeavor ? "leads" : "ct_contacts").update({ email: ct.email, updated_at: agora() }).eq("id", leadId).is("email", null);
+      await db.from("wa_chats").update({ contato: { ...ct, email_crm: true } }).eq("id", conv.id);
+    }
+  }
+  // a pessoa escolheu um dos horários oferecidos: marca na agenda (com nome, e-mail e telefone) e confirma
+  if (takeover && !c.grupo && out.responder && out.agendar && k.endeavor && horariosIso[out.agendar - 1]) {
+    const { data: atual } = await db.from("wa_chats").select("contato").eq("id", conv.id).maybeSingle();
+    const ct = { ...(atual?.contato || conv.contato || {}), ...(out.contato || {}) }, tel = ct.telefone || foneDaChave(c.chave);
+    if (ct.nome && ct.email && tel) {
+      try { const ag = await agendar(d, { conversa: c, inicio: horariosIso[out.agendar - 1], nome: ct.nome, email: ct.email, telefone: tel, assunto: ct.assunto || "Conversa pelo WhatsApp", tipo: "whatsapp" }); out.texto = ag.mensagem; out.agendado = ag.quando; }
+      catch (e) { out.texto = (e instanceof Erro ? e.message : "Não consegui marcar agora.") + " Quer escolher outro horário?"; }
+    }
+  }
+  delete out.agendar;
   if (takeover && !c.grupo && out.fluxo) out.fluxo_info = await andarFluxo(k, d, c, conv, config, out.fluxo, mensagens, ajustes);
   delete out.fluxo;
   const textoLog = out.resposta || out.texto || out.mensagem || out.traducao || out.resumo || "";

@@ -44,6 +44,8 @@ function responder(b) {
     case "ext_ia": {
       logId++;
       const f = b.ferramenta;
+      if (f === "responder" && b.origem_grupo) return [200, { responder: true, texto: "Olá! Aqui é o assistente virtual da Endeavor. Vi sua pergunta no grupo sobre LLC. Como é o seu nome?", escalar: false, log_id: logId, aviso_incluido: true }];
+      if (f === "grupo" && /privado/.test(((b.mensagens || []).slice(-1)[0] || {}).texto || "")) { const u = b.mensagens.slice(-1)[0]; return [200, { topicos: [{ assunto: "LLC", resumo: "abrir LLC" }], relevante: true, responder: false, texto: "", interesse: [], privado: { autor: u.autor, assunto: "abrir LLC" }, log_id: logId, grupo_cfg: { modo: modoGrupo, limite_dia: 3, interesse: true, conteudo: true, por_semana: 1 } }]; }
       if (f === "responder" && (b.mensagens || []).some((m) => /lista de documentos/.test(m.texto))) return [200, { responder: true, texto: "Por compliance não recebemos documentos por aqui. Qual é o seu nome completo e e-mail? Vou mandar a lista e um link seguro.", escalar: false, log_id: logId, aviso_incluido: false, fluxo_info: { id: "documentos", nome: "Pedido de documentos", status: "coletando", falta: ["nome", "email"] } }];
       if (f === "responder") return [200, { responder: true, texto: "Olá! Aqui é o assistente virtual da Endeavor. Posso te ajudar com a LLC.", escalar: false, log_id: logId, aviso_incluido: true, contato: { nome: "Maria Teste", email: "maria@exemplo.com" } }];
       if (f === "sugerir") return [200, { resposta: "Sugestão principal", alternativas: ["Alternativa curta"], log_id: logId }];
@@ -291,6 +293,17 @@ try {
   for (let i = 0; i < 80 && !ia("grupo").some((x) => /mecânico/.test(x.mensagens[x.mensagens.length - 1].texto)); i++) await dorme(1000);
   await dorme(1500);
   ok((await enviadas()).length === nEnv && (await P("#agora-txt").textContent()) === "" && (await P("#barra-pct").textContent()) === "" && (await P("#barra-box").getAttribute("aria-valuenow")) === "0", "não responde: a barra volta a zero, sem texto");
+
+  /* aceitou o privado no grupo: a extensão abre o privado da pessoa e a IA começa a conversa lá, perguntando o nome */
+  await page.evaluate(() => window.abrirConversa("120363000000000001@g.us"));
+  await dorme(1200);
+  await page.evaluate(() => window.chegar("120363000000000001@g.us", "Sim, pode me chamar no privado", "Carlos Novo", "A Endeavor pode ajudar com o EIN."));
+  for (let i = 0; i < 90 && !ia("responder").some((x) => x.origem_grupo); i++) await dorme(1000);
+  const prv = ia("responder").find((x) => x.origem_grupo);
+  ok(!!prv && prv.origem_grupo.grupo === "Grupo Empreendedores" && prv.origem_grupo.assunto === "abrir LLC" && prv.conversa.nome === "Carlos Novo" && prv.conversa.grupo === false, "aceitou o privado: a extensão abriu o privado da pessoa e chamou a IA com o grupo de origem");
+  for (let i = 0; i < 20 && !(await enviadas()).some((e) => !e.k.endsWith("@g.us") && /Como é o seu nome/.test(e.t)); i++) await dorme(500);
+  ok((await enviadas()).some((e) => !e.k.endsWith("@g.us") && /Como é o seu nome/.test(e.t)), "no privado, a IA se apresenta e pergunta o nome");
+  if (process.env.MODERNO) ok(await page.evaluate(() => window.__menuUsado === true), "abriu o privado pelo nome da pessoa no grupo (Conversar com…), sem depender da lista");
 
   /* velocidade: o controle vale na hora */
   ok(await P("#vel-n").textContent() === "400", "velocidade: mostra o padrão dos Ajustes");

@@ -171,6 +171,17 @@ export function tipoDoPost(a: Any, ultimos: string[]) {
   if (a.tipo === "dica" || a.tipo === "lembrete") return a.tipo;
   return ultimos.length >= 2 && ultimos[0] === "dica" && ultimos[1] === "dica" ? "lembrete" : "dica";
 }
+/** a pessoa aceitou ir para o privado? (resposta em cima da nossa mensagem no grupo) */
+const RE_ACEITA = /\b(sim|pode|podemos|claro|ok|okay|quero|bora|beleza|blz|perfeito|com certeza|yes|sure|please|s[ií]|por favor)\b/i;
+const RE_PRIVADO = /(privado|\bpv\b|inbox|direct|\bdm\b|me chama|me chame|pode chamar|chama (?:no|em|a[ií])|me manda (?:mensagem|msg)|me escreve|private|privada)/i;
+export function aceitouPrivado(m: Any) {
+  return !!m && !m.eu && m.cita_eu === true && RE_PRIVADO.test(m.texto || "") && RE_ACEITA.test(m.texto || "");
+}
+/** telefone (com +) se o nome que aparece no grupo é um número */
+export function foneDoAutor(autor: string) {
+  const t = String(autor || "").replace(/^~\s*/, "").trim(), d = t.replace(/[^\d]/g, "");
+  return /^[\d\s()+\-.]+$/.test(t) && d.length >= 8 && d.length <= 15 ? "+" + d : "";
+}
 /** alguém reclamou de divulgação no grupo (mensagens dos outros depois da nossa última)? */
 const RE_RECLAMA = /(propaganda|spam|divulga[çc](?:[aã]o|[õo]es)|an[uú]ncio|publicidade|merchan|jab[aá]|n[aã]o (?:é|e) (?:lugar|espa[çc]o) (?:para|pra)|par(?:e|em|a|ar) de (?:mandar|postar|divulgar|anunciar)|chega de|proibid[oa]s? (?:postar|divulgar|propaganda)|regras? do grupo|vou (?:te )?remover|ser[aá] removid|stop (?:posting|spamming|advertising)|no (?:ads|spam|promo(?:tion)?s?)\b|not the place for)/i;
 export function reclamacao(mensagens: Any[]) {
@@ -253,6 +264,7 @@ export function montarEntrada(f: string, a: Any, c: { nome: string; grupo: boole
     }
     partes.push(`<protecoes_fixas>\n${PROTECOES.map((x) => "- " + x).join("\n")}\n</protecoes_fixas>`);
   }
+  if (extra.origem_grupo) partes.push(`<origem_grupo>${JSON.stringify(extra.origem_grupo)}</origem_grupo>`);
   if (extra.fluxo_atual) partes.push(`<fluxo_atual>${JSON.stringify(extra.fluxo_atual)}</fluxo_atual>`);
   if (extra.telefone) partes.push(`<telefone_contato>${extra.telefone}</telefone_contato>`);
   if (extra.horarios?.length) partes.push(`<horarios>${extra.horarios.join(" | ")}</horarios>`);
@@ -306,11 +318,14 @@ export function normalizar(f: string, r: Any, cfg?: Any): Any {
     case "personalizar": return { texto: s(r?.texto) };
     case "responder": {
       const escalar = r?.escalar === true; const texto = s(r?.texto);
-      return { responder: !escalar && r?.responder === true && !!texto, texto, escalar, motivo: s(r?.motivo, 200), regra: txt(r?.regra, 32), fluxo: fluxoDaIA(r, cfg), contato: contatoDaIA(r?.contato) };
+      const op = Math.round(Number(r?.agendar?.opcao));
+      return { responder: !escalar && r?.responder === true && !!texto, texto, escalar, motivo: s(r?.motivo, 200), regra: txt(r?.regra, 32), fluxo: fluxoDaIA(r, cfg), contato: contatoDaIA(r?.contato),
+        agendar: op >= 1 && op <= 6 ? op : 0 };
     }
     case "grupo": return { topicos: (Array.isArray(r?.topicos) ? r.topicos : []).slice(0, 8).map((t: Any) => ({ assunto: s(t?.assunto, 120), resumo: s(t?.resumo, 300) })).filter((t: Any) => t.assunto),
       relevante: r?.relevante === true, responder: r?.relevante === true && r?.responder === true && !!s(r?.texto), texto: s(r?.texto), motivo: s(r?.motivo, 200),
-      interesse: (Array.isArray(r?.interesse) ? r.interesse : []).slice(0, 3).map((x: Any) => ({ autor: s(x?.autor, 80), motivo: s(x?.motivo, 200), mensagem: s(x?.mensagem, 800) })).filter((x: Any) => x.autor && x.mensagem) };
+      interesse: (Array.isArray(r?.interesse) ? r.interesse : []).slice(0, 3).map((x: Any) => ({ autor: s(x?.autor, 80), motivo: s(x?.motivo, 200), mensagem: s(x?.mensagem, 800) })).filter((x: Any) => x.autor && x.mensagem),
+      privado: r?.privado && typeof r.privado === "object" && s(r.privado.autor, 80) ? { autor: s(r.privado.autor, 80), assunto: s(r.privado.assunto, 160) } : null };
     case "conteudo_grupo": return { texto: s(r?.texto, 1200), tema: s(r?.tema, 120) };
     case "lembrete": { const rec = r?.reclamacao === true; return { texto: rec ? "" : s(r?.texto, 900), tema: s(r?.tema, 120), reclamacao: rec, motivo: s(r?.motivo, 200) }; }
     case "sugerir_regras": return { regras: limparConfig({ regras: (Array.isArray(r?.regras) ? r.regras : []).map((x: Any) => ({ ...x, acao: x?.acao === "fluxo" ? "responder" : x?.acao })), fluxos: [] }).regras.slice(0, 8) };
