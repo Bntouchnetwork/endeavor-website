@@ -1,0 +1,79 @@
+# Fábrica de add-ons (Admin › Add-ons): o agente de desenvolvimento faz a mudança numa branch de teste, roda os testes,
+# publica uma prévia e avisa a Endeavor. Nunca mexe na main: a publicação é feita pela plataforma, só com aprovação.
+# Segredos do repositório: ANTHROPIC_API_KEY, ENDEAVOR_HOOK_KEY (= PROJECTS_HOOK_KEY no Supabase); para a prévia com link, GCP_SA_KEY.
+# Variáveis do repositório: ADDONS_HOOK_URL (…/functions/v1/addon-builder); opcional PREVIEW_FIREBASE_PROJECT.
+name: addon-build
+on:
+  workflow_dispatch:
+    inputs:
+      build_id: { description: "Endeavor add-on build id", required: true }
+      branch: { description: "Test branch (addon/xxxxxxxx)", required: true }
+concurrency: { group: "addon-${{ inputs.build_id }}", cancel-in-progress: false }
+permissions: { contents: write }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      HOOK: ${{ vars.ADDONS_HOOK_URL }}
+      KEY: ${{ secrets.ENDEAVOR_HOOK_KEY }}
+      BID: ${{ inputs.build_id }}
+      BR: ${{ inputs.branch }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Check branch name
+        run: echo "$BR" | grep -Eq '^addon/[0-9a-f]{8}$'
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Use the test branch (never main)
+        run: |
+          git config user.name "Endeavor AI" && git config user.email "ai@endeavorbiz.com"
+          if git ls-remote --exit-code --heads origin "$BR" >/dev/null; then git checkout -B "$BR" "origin/$BR" && git merge --no-edit origin/main || true; else git checkout -b "$BR" origin/main; fi
+          curl -sS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d "{\"action\":\"building\",\"build_id\":\"$BID\",\"run_url\":\"$RUN_URL\"}" || true
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - uses: denoland/setup-deno@v2
+        with: { deno-version: v2.x }
+      - name: Get the brief from Endeavor
+        run: |
+          curl -fsS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d "{\"action\":\"brief\",\"build_id\":\"$BID\"}" | jq -r .brief > /tmp/brief.md
+          test -s /tmp/brief.md
+      - name: Develop with Claude
+        env: { ANTHROPIC_API_KEY: "${{ secrets.ANTHROPIC_API_KEY }}" }
+        run: |
+          mkdir -p .endeavor
+          npx -y @anthropic-ai/claude-code -p "$(cat /tmp/brief.md)" --output-format json --max-turns 80 --dangerously-skip-permissions > /tmp/claude.json || true
+          jq -c '{action:"usage", build_id:env.BID, model:(.modelUsage // {} | keys | first // "claude"), input_tokens:(.usage.input_tokens // 0), output_tokens:(.usage.output_tokens // 0), cost_usd:(.total_cost_usd // 0)}' /tmp/claude.json > /tmp/usage.json || echo "{\"action\":\"usage\",\"build_id\":\"$BID\"}" > /tmp/usage.json
+          curl -sS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d @/tmp/usage.json || true
+      - name: Test
+        run: |
+          cp .endeavor/summary.md /tmp/summary.md 2>/dev/null || echo "A IA não deixou resumo." > /tmp/summary.md
+          rm -rf .endeavor
+          for f in $(git diff --name-only origin/main -- '*.js'; git ls-files --others --exclude-standard -- '*.js'); do [ -f "$f" ] && node --check "$f"; done
+          if ls tests/*.test.ts >/dev/null 2>&1; then deno test --allow-read --allow-env --no-lock tests/*.test.ts; fi
+      - name: Commit to the test branch
+        run: |
+          git add -A && (git diff --cached --quiet || git commit -m "Add-ons: ${BID} (geração automática)")
+          git push origin "$BR"
+          echo "SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+          git diff --name-only origin/main...HEAD | jq -R . | jq -sc 'map(select(length>0))' > /tmp/files.json
+      - name: Preview link (Firebase preview channel)
+        if: ${{ vars.PREVIEW_FIREBASE_PROJECT != '' }}
+        env: { GCP_SA_KEY: "${{ secrets.GCP_SA_KEY }}" }
+        run: |
+          echo "$GCP_SA_KEY" > /tmp/sa.json && export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+          echo '{"hosting":{"public":".","ignore":["supabase/**","tests/**",".github/**","project-template/**","**/.*"]}}' > /tmp/firebase.json
+          cp /tmp/firebase.json ./firebase.json
+          CH="addon-$(echo "$BR" | cut -d/ -f2)"
+          npx -y firebase-tools@13 hosting:channel:deploy "$CH" --expires 7d --project "${{ vars.PREVIEW_FIREBASE_PROJECT }}" --json > /tmp/fb.json
+          rm -f firebase.json
+          echo "PREVIEW=$(jq -r '.result | to_entries[0].value.url // empty' /tmp/fb.json)" >> $GITHUB_ENV
+      - name: Report the preview to Endeavor
+        run: |
+          jq -nc --arg b "$BID" --arg u "${PREVIEW:-}" --arg s "$SHA" --arg r "$RUN_URL" --rawfile sum /tmp/summary.md --slurpfile f /tmp/files.json \
+            '{action:"preview", build_id:$b, url:(if $u=="" then null else $u end), sha:$s, run_url:$r, summary:$sum, files:$f[0]}' > /tmp/preview.json
+          curl -fsS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d @/tmp/preview.json
+      - name: Report failure
+        if: failure()
+        run: |
+          curl -sS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d "{\"action\":\"failed\",\"build_id\":\"$BID\",\"error\":\"A geração falhou (testes ou build). Veja o log no GitHub.\",\"run_url\":\"$RUN_URL\"}"

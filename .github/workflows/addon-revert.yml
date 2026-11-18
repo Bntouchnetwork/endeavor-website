@@ -1,0 +1,34 @@
+# Fábrica de add-ons: botão "Desfazer". Cria um commit que desfaz a publicação aprovada e envia para a main (GitHub Pages republica).
+name: addon-revert
+on:
+  workflow_dispatch:
+    inputs:
+      build_id: { description: "Endeavor add-on build id", required: true }
+      sha: { description: "Commit publicado (squash merge) a desfazer", required: true }
+concurrency: { group: addon-main, cancel-in-progress: false }
+permissions: { contents: write }
+jobs:
+  revert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HOOK: ${{ vars.ADDONS_HOOK_URL }}
+      KEY: ${{ secrets.ENDEAVOR_HOOK_KEY }}
+      BID: ${{ inputs.build_id }}
+      SHA: ${{ inputs.sha }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Check commit id
+        run: echo "$SHA" | grep -Eq '^[0-9a-f]{40}$'
+      - uses: actions/checkout@v4
+        with: { ref: main, fetch-depth: 0 }
+      - name: Revert and push
+        run: |
+          git config user.name "Endeavor AI" && git config user.email "ai@endeavorbiz.com"
+          git revert --no-edit "$SHA"
+          git push origin main
+          curl -fsS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d "{\"action\":\"reverted\",\"build_id\":\"$BID\",\"sha\":\"$(git rev-parse HEAD)\"}"
+      - name: Report failure
+        if: failure()
+        run: |
+          curl -sS -X POST "$HOOK" -H "Content-Type: application/json" -H "x-booking-key: $KEY" -d "{\"action\":\"failed\",\"build_id\":\"$BID\",\"error\":\"Não foi possível desfazer automaticamente (conflito com mudanças posteriores).\",\"run_url\":\"$RUN_URL\"}"

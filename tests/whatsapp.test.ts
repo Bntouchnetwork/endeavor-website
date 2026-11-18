@@ -1,7 +1,7 @@
 // My WhatsApp Manager: regras compartilhadas (wa-extension/core.js) e regras do servidor (supabase/whatsapp/regras.ts).
 //   deno test --allow-read tests/whatsapp.test.ts
 import "../wa-extension/core.js";
-import { aceitouPrivado, foneDoAutor, tipoDoPost, avisoComIA, conteudoDevido, dentroJanela, grupoCfg, limparAuto, limparConfig, parecido, proximoDepoisDoEnvio, proximoHorario, reclamacao, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/whatsapp/regras.ts";
+import { aceitouPrivado, foneDoAutor, tipoDoPost, avisoComIA, conteudoDevido, dentroJanela, grupoCfg, limparAuto, limparConfig, parecido, proximoDepoisDoEnvio, proximoHorario, reclamacao, montarEntrada, normalizar, padraoConfig, prontoParaCRM, violaProtecao } from "../supabase/functions/whatsapp/regras.ts";
 // deno-lint-ignore no-explicit-any
 const C = (globalThis as any).EWaCore;
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: esperado ${JSON.stringify(b)}, veio ${JSON.stringify(a)}`); };
@@ -9,7 +9,7 @@ const sim = (c: boolean, m: string) => { if (!c) throw new Error(m); };
 const fixo = (v: number) => () => v;
 
 Deno.test("cópia do core no servidor é idêntica à da extensão", async () => {
-  eq(await Deno.readTextFile(new URL("../supabase/whatsapp/core.js", import.meta.url)), await Deno.readTextFile(new URL("../wa-extension/core.js", import.meta.url)), "core.js");
+  eq(await Deno.readTextFile(new URL("../supabase/functions/whatsapp/core.js", import.meta.url)), await Deno.readTextFile(new URL("../wa-extension/core.js", import.meta.url)), "core.js");
 });
 
 Deno.test("ajustes: padrão com Takeover ligado e limites seguros", () => {
