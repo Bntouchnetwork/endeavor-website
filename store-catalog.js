@@ -28,6 +28,26 @@
       pt: { name: 'Registered Agent', lead: 'Registered agent na Flórida, no nosso escritório em Orlando.', feats: ['Serviço de registered agent na Flórida', 'Correspondência oficial digitalizada no seu portal', 'Lembretes do annual report'] },
       es: { name: 'Agente Registrado', lead: 'Agente registrado en Florida, en nuestra oficina de Orlando.', feats: ['Servicio de agente registrado en Florida', 'Correspondencia oficial digitalizada en su portal', 'Recordatorios del annual report'] }
     },
+    pkg_essencial: {
+      en: { name: 'Essential Formation Package', lead: 'The formation of your LLC with what the law and the banks ask for.', feats: ['LLC formation (single member or with partners)', 'EIN (federal tax ID)', 'Registered agent', 'Business address', 'Mailing address with mail management', 'Client Portal to manage your company'] },
+      pt: { name: 'Pacote Essencial de Abertura', lead: 'A abertura da sua LLC com o que a lei e os bancos pedem.', feats: ['Abertura da LLC (single member ou com sócios)', 'EIN (o CNPJ americano)', 'Registered agent', 'Endereço comercial', 'Endereço de correspondência com gestão das cartas', 'Portal do Cliente para gerenciar a sua empresa'] },
+      es: { name: 'Paquete Esencial de Apertura', lead: 'La apertura de su LLC con lo que piden la ley y los bancos.', feats: ['Apertura de la LLC (un solo miembro o con socios)', 'EIN (identificación fiscal federal)', 'Agente registrado', 'Dirección comercial', 'Dirección postal con gestión de la correspondencia', 'Portal del Cliente para gestionar su empresa'] }
+    },
+    pkg_completo: {
+      en: { name: 'Complete Formation Package', lead: 'Your company open and running, with books and a U.S. phone number.', feats: ['LLC formation (single member or with partners)', 'EIN (federal tax ID)', 'Registered agent', 'Business and mailing addresses with mail management', 'Operating Agreement', 'AI Bookkeeping', 'U.S. business phone number', 'Client Portal to manage your company'] },
+      pt: { name: 'Pacote Completo de Abertura', lead: 'Sua empresa aberta e funcionando, com contabilidade e número de telefone americano.', feats: ['Abertura da LLC (single member ou com sócios)', 'EIN (o CNPJ americano)', 'Registered agent', 'Endereço comercial e de correspondência com gestão das cartas', 'Operating Agreement', 'Bookkeeping com IA', 'Número de telefone comercial americano', 'Portal do Cliente para gerenciar a sua empresa'] },
+      es: { name: 'Paquete Completo de Apertura', lead: 'Su empresa abierta y funcionando, con contabilidad y número de teléfono estadounidense.', feats: ['Apertura de la LLC (un solo miembro o con socios)', 'EIN (identificación fiscal federal)', 'Agente registrado', 'Dirección comercial y postal con gestión de la correspondencia', 'Operating Agreement', 'Bookkeeping con IA', 'Número de teléfono comercial en EE. UU.', 'Portal del Cliente para gestionar su empresa'] }
+    },
+    operating_agreement: {
+      en: { name: 'Operating Agreement', lead: 'The internal agreement of your LLC: who the owners are, how decisions are made and what happens if someone leaves.', feats: ['Ownership and roles of each member', 'Rules for decisions and profit distribution', 'Often requested by banks', 'Helps keep your personal assets separate from the company'] },
+      pt: { name: 'Operating Agreement', lead: 'O contrato interno da sua LLC: quem são os donos, como as decisões são tomadas e o que acontece se alguém sair.', feats: ['Participação e papel de cada sócio', 'Regras para decisões e distribuição de lucros', 'Bancos costumam pedir', 'Ajuda a separar o seu patrimônio pessoal do da empresa'] },
+      es: { name: 'Operating Agreement', lead: 'El acuerdo interno de su LLC: quiénes son los dueños, cómo se toman las decisiones y qué pasa si alguien sale.', feats: ['Participación y rol de cada socio', 'Reglas para decisiones y reparto de utilidades', 'Los bancos suelen pedirlo', 'Ayuda a separar su patrimonio personal del de la empresa'] }
+    },
+    telefone: {
+      en: { name: 'Business Phone', lead: 'A U.S. number for your company that you answer in the app, on your phone or computer, from anywhere.', feats: ['Local U.S. number', '500 minutes and 250 text messages per month', 'Greeting, business hours and voicemail', 'Answer in the browser or in the Endeavor Phone app'] },
+      pt: { name: 'Telefone Comercial', lead: 'Um número americano para a sua empresa, que você atende pelo app, no celular ou no computador, de qualquer lugar.', feats: ['Número local dos EUA', '500 minutos e 250 SMS por mês', 'Saudação, horário de atendimento e caixa postal', 'Atenda pelo navegador ou pelo app Endeavor Phone'] },
+      es: { name: 'Teléfono Comercial', lead: 'Un número de EE. UU. para su empresa, que usted atiende en la app, en el celular o la computadora, desde cualquier lugar.', feats: ['Número local de EE. UU.', '500 minutos y 250 SMS por mes', 'Saludo, horario de atención y buzón de voz', 'Atienda en el navegador o en la app Endeavor Phone'] }
+    },
     virtual_address: {
       en: { name: 'Virtual Address', lead: 'A professional business address in Orlando, Florida.', feats: ['Business mailing address in Orlando, FL', 'Mail scanned and notified in your portal', 'Forwarding on request'] },
       pt: { name: 'Endereço Virtual', lead: 'Um endereço comercial profissional em Orlando, na Flórida.', feats: ['Endereço comercial em Orlando, FL', 'Correspondência digitalizada e avisada no seu portal', 'Reenvio sob pedido'] },
@@ -42,7 +62,7 @@
     money: function (cents) { return '$' + (cents / 100).toLocaleString('en-US', { minimumFractionDigits: cents % 100 ? 2 : 0 }); },
     interval: function (i, lang) { return (INT[L(lang)] || INT.en)[i] || ''; },
     loadCatalog: function (CFG) {
-      return fetch(CFG.supabaseUrl + '/rest/v1/store_products?select=code,price_cents,interval,status,sort&order=sort', { headers: { apikey: CFG.supabaseKey, Authorization: 'Bearer ' + CFG.supabaseKey } })
+      return fetch(CFG.supabaseUrl + '/rest/v1/store_products?select=code,kind,price_cents,setup_cents,member_cents,category,interval,status,sort&order=sort', { headers: { apikey: CFG.supabaseKey, Authorization: 'Bearer ' + CFG.supabaseKey } })
         .then(function (r) { if (!r.ok) throw new Error('catalog'); return r.json(); });
     },
     loadStripe: function () {

@@ -60,7 +60,8 @@
     return j;
   }
   function errMsg(e) { var k = 'e_' + (e && e.code); return D[L][k] || D.en[k] ? t(k) : t('e_generic'); }
-  function steps(n) { return '<ol class="buy__steps">' + [t('s1'), t('s2'), t('s3')].map(function (s, i) { return '<li' + (i === n ? ' class="is-on"' : '') + '><span>' + (i + 1) + '</span>' + esc(s) + '</li>'; }).join('') + '</ol>'; }
+  var PACK = null; // pacote de abertura no carrinho (comprar.html?p=pkg_essencial | pkg_completo)
+  function steps(n) { var l = [t('s1'), t('s2'), t('s3')]; if (PACK) { l.unshift(PT('s0')); n += 1; } return '<ol class="buy__steps">' + l.map(function (s, i) { return '<li' + (i === n ? ' class="is-on"' : '') + '><span>' + (i + 1) + '</span>' + esc(s) + '</li>'; }).join('') + '</ol>'; }
   function summary(code, p) {
     var info = EStore.info(code, L);
     return '<aside class="portal-card buy__sum"><p class="eyebrow">Endeavor Business Solutions</p><h1>' + esc(info.name) + '</h1><p class="portal-muted">' + esc(info.lead) + '</p>' +
@@ -81,6 +82,8 @@
     var p = rows.find(function (r) { return r.code === code; });
     if (!p || !EStore.info(code, L)) { app.innerHTML = '<div class="portal-card"><p>' + t('notFound') + '</p><a class="btn btn--navy" href="index.html?lang=' + L + '#online-services">' + t('back') + '</a></div>'; return; }
     document.title = EStore.info(code, L).name + ' | Endeavor Business Solutions';
+    if (p.kind === 'package') return packageStart(p, rows);
+    if (p.kind === 'addon') { app.innerHTML = '<div class="portal-card"><p>' + t('notFound') + '</p><a class="btn btn--navy" href="index.html?lang=' + L + '#online-services">' + t('back') + '</a></div>'; return; }
     if (p.status !== 'active') { app.innerHTML = '<div class="buy">' + summary(code, p) + '<section class="portal-card"><p>' + t('soon') + '</p><a class="btn btn--gold" href="index.html?lang=' + L + '#contact">' + t('wait') + '</a></section></div>'; return; }
     formView(p);
   }
@@ -89,7 +92,7 @@
     return '<div class="field"><label for="' + id + '">' + label + '</label><input id="' + id + '" type="' + type + '" value="' + esc(val || '') + '" ' + (extra || '') + (hint ? ' aria-describedby="' + id + '-h"' : '') + '>' + (hint ? '<p class="portal-muted" id="' + id + '-h" style="font-size:.82rem;margin:.3rem 0 0">' + hint + '</p>' : '') + '</div>';
   }
   function formView(p) {
-    app.innerHTML = '<div class="buy">' + summary(code, p) + '<section class="portal-card">' + steps(0) +
+    app.innerHTML = '<div class="buy">' + (PACK ? PACK.sum() : summary(code, p)) + '<section class="portal-card">' + steps(0) +
       '<form class="portal-form" id="f" novalidate>' +
       field('b-name', t('name'), 'text', saved.name, 'autocomplete="name" required maxlength="120"') +
       field('b-company', t('company'), 'text', saved.company, 'autocomplete="organization" required maxlength="160"') +
@@ -97,10 +100,12 @@
       '<div class="field"><label for="b-phone">' + t('phone') + '</label><div id="b-phone-box"></div><p class="portal-muted" id="b-phone-h" style="font-size:.82rem;margin:.3rem 0 0">' + t('phoneHint') + '</p></div>' +
       '<div class="hp" aria-hidden="true"><label for="b-web">Website</label><input id="b-web" tabindex="-1" autocomplete="off"></div>' +
       '<label class="buy__check"><input type="checkbox" id="b-terms"><span>' + t(p.interval === 'once' ? 'termsOnce' : 'terms') + '</span></label>' +
+      (PACK && PACK.code === 'pkg_essencial' ? '<button class="btn btn--ghost btn--sm" type="button" id="b-back-add">' + PT('changeAddons') + '</button>' : '') +
       '<div class="portal-alert" id="b-msg" role="alert"></div>' +
       '<button class="btn btn--gold btn--block" type="submit" id="b-go">' + t('cont') + '</button>' +
       '<p class="buy__secure"><span aria-hidden="true">🔒</span><span>' + t('secure') + '</span></p></form><div id="checkout" hidden></div></section></div>';
     var f = document.getElementById('f'), msg = document.getElementById('b-msg');
+    var bb = document.getElementById('b-back-add'); if (bb) bb.onclick = function () { PACK.step = 0; PACK.yes = PACK.yes.filter(function () { return false; }); PACK.items = []; PACK.offered = false; packageFlow(); };
     // country selector (U.S., Brazil and others): the number is formatted as typed and sent in international format
     var ph = EPhone.mount(document.getElementById('b-phone-box'), { id: 'b-phone', lang: L, ccLabel: t('cc'), country: L === 'pt' ? 'BR' : L === 'en' ? 'US' : undefined, value: saved.phone || '' });
     ph.input.setAttribute('aria-describedby', 'b-phone-h'); ph.input.required = true;
@@ -117,7 +122,7 @@
       try { sessionStorage.setItem('endeavor-buy', JSON.stringify(d)); } catch (x) { /* ignore */ }
       var btn = document.getElementById('b-go'); btn.disabled = true; btn.textContent = t('loading');
       try {
-        var s = await api(Object.assign({ action: 'store_checkout', product: code, lang: L, terms: true }, d));
+        var s = await api(Object.assign({ action: 'store_checkout', product: PACK ? PACK.code : code, lang: L, terms: true }, PACK ? { items: PACK.items, socios: PACK.socios } : {}, d));
         var Stripe = await EStore.loadStripe();
         f.hidden = true;
         var box = document.getElementById('checkout'); box.hidden = false;
@@ -125,7 +130,7 @@
         var co = await Stripe(s.publishable_key).initEmbeddedCheckout({ fetchClientSecret: function () { return Promise.resolve(s.client_secret); } });
         co.mount('#checkout');
         var back = document.createElement('button'); back.type = 'button'; back.className = 'btn btn--ghost btn--sm'; back.style.marginTop = '1rem'; back.textContent = t('edit');
-        back.onclick = function () { try { co.destroy(); } catch (x) { /* ignore */ } formView(p); };
+        back.onclick = function () { try { co.destroy(); } catch (x) { /* ignore */ } formView(PACK ? PACK.p : p); };
         box.after(back);
       } catch (err) { btn.disabled = false; btn.textContent = t('cont'); show(errMsg(err)); }
     };
@@ -143,6 +148,7 @@
     if (r && r.status === 'fulfilled') {
       try { sessionStorage.removeItem('endeavor-buy'); } catch (e) { /* ignore */ }
       var info = EStore.info(r.product, L) || { name: r.product };
+      if (r.items && r.items.length) info = { name: info.name + ' + ' + r.items.map(function (c) { return (EStore.info(c, L) || { name: c }).name; }).join(', ') };
       box.innerHTML = steps(2) + '<div class="buy__done"><div class="ok" aria-hidden="true">✓</div><h1 class="portal-h1">' + t('okTitle') + '</h1><p>' + t('okLead', { p: '<strong>' + esc(info.name) + '</strong>' }) + '</p>' +
         '<ol>' + t('okSteps').map(function (s) { return '<li>' + s.replace('{e}', esc(r.email_hint)) + '</li>'; }).join('') + '</ol>' +
         '<div class="portal-btn-row" style="justify-content:center"><a class="btn btn--navy" href="' + portal + '">' + t('openPortal') + '</a><a class="btn btn--ghost" href="' + portal + '&forgot=1">' + t('forgot') + '</a></div>' +
@@ -157,6 +163,96 @@
     }
   }
 
+
+  /* ---------------- pacotes de abertura: escolha do tipo de LLC, add-ons um a um (Essencial) e carrinho ---------------- */
+  var PD = {
+    en: { s0: 'Package', who: 'Who owns the company?', single: 'Only me (single member LLC)', multi: 'Me and partner(s) (multi-member LLC)', samePrice: 'Same price for both.', next: 'Continue',
+      step: 'Add-on {n} of {t}', add: 'Add', noThanks: 'No, thanks', skip: 'Skip and finish', added: 'Added', cart: 'Your order', today: 'Today', thenMonth: 'Then', perMonth: '/month', setup: 'setup', firstMonth: '1st month', once: 'one-time', included: 'Included',
+      switchT: 'Take the Complete package and save', switchL: 'With these add-ons, the Complete package costs less: {s} less in the first year, and it also includes {x}.', switchYes: 'Switch to Complete', switchNo: 'Keep Essential',
+      changeAddons: 'Change add-ons', recommended: 'Recommended',
+      why: { operating_agreement: 'Recommended for every LLC, with or without partners: banks usually ask for it, and it helps keep your personal assets separate from the company.', bookkeeping: 'Keeps the company books up to date from the first month, which makes the yearly tax return easier and cheaper.', telefone: 'A U.S. number makes your company look local to clients and banks, and you answer it from anywhere.' } },
+    pt: { s0: 'Pacote', who: 'Quem é dono da empresa?', single: 'Só eu (LLC single member)', multi: 'Eu e sócio(s) (LLC com mais de um sócio)', samePrice: 'O preço é o mesmo nos dois casos.', next: 'Continuar',
+      step: 'Adicional {n} de {t}', add: 'Adicionar', noThanks: 'Não, obrigado', skip: 'Pular e finalizar', added: 'Adicionado', cart: 'Seu pedido', today: 'Hoje', thenMonth: 'Depois', perMonth: '/mês', setup: 'abertura', firstMonth: '1º mês', once: 'pagamento único', included: 'Incluído',
+      switchT: 'Leve o Completo e economize', switchL: 'Com esses adicionais, o pacote Completo sai mais barato: {s} a menos no primeiro ano, e ainda inclui {x}.', switchYes: 'Trocar para o Completo', switchNo: 'Continuar com o Essencial',
+      changeAddons: 'Mudar os adicionais', recommended: 'Recomendado',
+      why: { operating_agreement: 'Recomendado para toda LLC, com ou sem sócio: os bancos costumam pedir, e ele ajuda a separar o seu patrimônio pessoal do da empresa.', bookkeeping: 'Mantém a contabilidade da empresa em dia desde o primeiro mês, o que deixa a declaração anual mais fácil e mais barata.', telefone: 'Um número americano faz a sua empresa parecer local para clientes e bancos, e você atende de qualquer lugar.' } },
+    es: { s0: 'Paquete', who: '¿Quién es dueño de la empresa?', single: 'Solo yo (LLC de un solo miembro)', multi: 'Yo y socio(s) (LLC de varios miembros)', samePrice: 'El precio es el mismo en los dos casos.', next: 'Continuar',
+      step: 'Adicional {n} de {t}', add: 'Agregar', noThanks: 'No, gracias', skip: 'Omitir y finalizar', added: 'Agregado', cart: 'Su pedido', today: 'Hoy', thenMonth: 'Después', perMonth: '/mes', setup: 'apertura', firstMonth: '1er mes', once: 'pago único', included: 'Incluido',
+      switchT: 'Lleve el Completo y ahorre', switchL: 'Con estos adicionales, el paquete Completo sale más barato: {s} menos en el primer año, y además incluye {x}.', switchYes: 'Cambiar al Completo', switchNo: 'Seguir con el Esencial',
+      changeAddons: 'Cambiar los adicionales', recommended: 'Recomendado',
+      why: { operating_agreement: 'Recomendado para toda LLC, con o sin socios: los bancos suelen pedirlo, y ayuda a separar su patrimonio personal del de la empresa.', bookkeeping: 'Mantiene la contabilidad de la empresa al día desde el primer mes, lo que hace la declaración anual más fácil y económica.', telefone: 'Un número de EE. UU. hace que su empresa parezca local para clientes y bancos, y usted atiende desde cualquier lugar.' } }
+  };
+  function PT(k, v) { var s = PD[L][k] != null ? PD[L][k] : PD.en[k]; if (v && typeof s === 'string') Object.keys(v).forEach(function (x) { s = s.split('{' + x + '}').join(v[x]); }); return s; }
+  var ADDONS = { pkg_essencial: ['operating_agreement', 'bookkeeping', 'telefone'], pkg_completo: [] };
+  var INCLUDED_EXTRA = ['operating_agreement', 'bookkeeping', 'telefone']; // o que o Completo tem a mais
+  function name(c) { return (EStore.info(c, L) || { name: c }).name; }
+  // mesmas contas do servidor (payments/pacotes.ts): hoje = abertura + 1º mês + únicos
+  function totals(pk, items) {
+    var p = PACK.by[pk], hoje = p.setup_cents + p.price_cents, mes = p.price_cents;
+    items.forEach(function (c) { var a = PACK.by[c]; if (!a) return; if (a.interval === 'month') { mes += a.price_cents; hoje += a.price_cents; } else hoje += a.price_cents; });
+    return { hoje: hoje, mes: mes, ano: hoje + 11 * mes };
+  }
+  function packageStart(p, rows) {
+    var by = {}; rows.forEach(function (r) { by[r.code] = r; });
+    PACK = { code: p.code, p: p, by: by, socios: saved.socios || 'single', items: [], step: -1, offered: false, yes: [] };
+    PACK.sum = cartHtml;
+    document.title = name(p.code) + ' | Endeavor Business Solutions';
+    if (p.status !== 'active') { app.innerHTML = '<div class="buy">' + cartHtml() + '<section class="portal-card"><p>' + t('soon') + '</p><a class="btn btn--gold" href="index.html?lang=' + L + '#contact">' + t('wait') + '</a></section></div>'; return; }
+    packageFlow();
+  }
+  function cartHtml() {
+    var pk = PACK.code, p = PACK.by[pk], info = EStore.info(pk, L), tt = totals(pk, PACK.items);
+    var row = function (l, v, cls) { return '<li class="cart__row' + (cls ? ' ' + cls : '') + '"><span>' + l + '</span><span>' + v + '</span></li>'; };
+    return '<aside class="portal-card buy__sum" id="cart"><p class="eyebrow">' + PT('cart') + '</p><h1>' + esc(info.name) + '</h1><p class="portal-muted">' + esc(info.lead) + '</p>' +
+      '<ul class="buy__feats">' + info.feats.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
+      '<ul class="cart">' + row(esc(name(pk)) + ' · ' + PT('setup'), EStore.money(p.setup_cents)) + row(esc(name(pk)) + ' · ' + PT('firstMonth'), EStore.money(p.price_cents)) +
+      PACK.items.map(function (c) { var a = PACK.by[c]; return row('+ ' + esc(name(c)), EStore.money(a.price_cents) + (a.interval === 'month' ? PT('perMonth') : ''), 'cart__row--add'); }).join('') + '</ul>' +
+      '<div class="cart__tot"><div><span>' + PT('today') + '</span><strong id="cart-today">' + EStore.money(tt.hoje) + '</strong></div><div><span>' + PT('thenMonth') + '</span><strong id="cart-month">' + EStore.money(tt.mes) + '<small>' + PT('perMonth') + '</small></strong></div></div>' +
+      '<p class="portal-muted" style="font-size:.85rem">' + t('perMonth') + '</p>' +
+      '<p class="portal-muted" style="font-size:.88rem;margin-top:1rem">' + t('already') + ' <a href="client.html?lang=' + L + '">' + t('signIn') + '</a></p></aside>';
+  }
+  function shell(inner) { app.innerHTML = '<div class="buy">' + cartHtml() + '<section class="portal-card" id="pk-step">' + steps(-1) + inner + '</section></div>'; var h = app.querySelector('#pk-step h2'); if (h) { h.setAttribute('tabindex', '-1'); h.focus({ preventScroll: true }); } }
+  function packageFlow() {
+    var list = ADDONS[PACK.code] || [];
+    if (PACK.step < 0) {
+      shell('<h2 class="portal-h2">' + PT('who') + '</h2><fieldset class="pk-who"><legend class="sr-only">' + PT('who') + '</legend>' +
+        ['single', 'multi'].map(function (k) { return '<label class="pk-opt"><input type="radio" name="socios" value="' + k + '"' + (PACK.socios === k ? ' checked' : '') + '><span>' + PT(k) + '</span></label>'; }).join('') +
+        '</fieldset><p class="portal-muted" style="font-size:.88rem">' + PT('samePrice') + '</p><button class="btn btn--gold btn--block" type="button" id="pk-next">' + PT('next') + '</button>');
+      app.querySelector('#pk-next').onclick = function () {
+        PACK.socios = (app.querySelector('[name=socios]:checked') || {}).value || 'single';
+        try { saved.socios = PACK.socios; sessionStorage.setItem('endeavor-buy', JSON.stringify(saved)); } catch (e) { /* ignore */ }
+        PACK.step = 0; packageFlow();
+      };
+      return;
+    }
+    // depois de dois "sim", oferece a troca para o Completo, só se ele sair mais barato no primeiro ano
+    if (PACK.code === 'pkg_essencial' && !PACK.offered && PACK.yes.length >= 2 && PACK.by.pkg_completo && PACK.by.pkg_completo.status === 'active') {
+      PACK.offered = true;
+      var ess = totals('pkg_essencial', PACK.items), comp = totals('pkg_completo', []);
+      if (comp.ano < ess.ano) {
+        var falta = INCLUDED_EXTRA.filter(function (c) { return PACK.items.indexOf(c) < 0; });
+        shell('<div class="pk-offer"><h2 class="portal-h2">' + PT('switchT') + '</h2><p>' + PT('switchL', { s: '<strong>' + EStore.money(ess.ano - comp.ano) + '</strong>', x: falta.length ? falta.map(name).join(', ') : esc(name('pkg_completo')) }) + '</p>' +
+          '<p class="pk-offer__price"><strong>' + EStore.money(PACK.by.pkg_completo.setup_cents) + '</strong> ' + PT('setup') + ' + <strong>' + EStore.money(PACK.by.pkg_completo.price_cents) + '</strong>' + PT('perMonth') + '</p>' +
+          '<div class="portal-btn-row"><button class="btn btn--gold" type="button" id="pk-switch">' + PT('switchYes') + '</button><button class="btn btn--ghost" type="button" id="pk-keep">' + PT('switchNo') + '</button></div></div>');
+        app.querySelector('#pk-switch').onclick = function () { PACK.code = 'pkg_completo'; PACK.p = PACK.by.pkg_completo; PACK.items = []; code = 'pkg_completo'; history.replaceState(null, '', '?p=pkg_completo&lang=' + L); formView(PACK.p); };
+        app.querySelector('#pk-keep').onclick = function () { packageFlow(); };
+        return;
+      }
+    }
+    if (PACK.step >= list.length) return formView(PACK.p);
+    var c = list[PACK.step], a = PACK.by[c], info = EStore.info(c, L);
+    if (!a || a.status !== 'active') { PACK.step++; return packageFlow(); }
+    shell('<p class="pk-count">' + PT('step', { n: PACK.step + 1, t: list.length }) + '</p><div class="pk-addon">' + (c === 'operating_agreement' ? '<span class="pill pill--report">' + PT('recommended') + '</span>' : '') +
+      '<h2 class="portal-h2">' + esc(info.name) + '</h2><p>' + esc(info.lead) + '</p><p class="portal-muted">' + esc(PD[L].why[c]) + '</p>' +
+      '<ul class="buy__feats">' + info.feats.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
+      '<p class="pk-addon__price"><strong>+ ' + EStore.money(a.price_cents) + '</strong> ' + (a.interval === 'month' ? PT('perMonth') : PT('once')) + '</p>' +
+      '<div class="portal-btn-row"><button class="btn btn--gold" type="button" id="pk-add">' + PT('add') + '</button><button class="btn btn--ghost" type="button" id="pk-no">' + PT('noThanks') + '</button></div></div>' +
+      '<button class="pk-skip" type="button" id="pk-skip">' + PT('skip') + ' →</button>');
+    app.querySelector('#pk-add').onclick = function () { if (PACK.items.indexOf(c) < 0) PACK.items.push(c); PACK.yes.push(c); PACK.step++; packageFlow(); };
+    app.querySelector('#pk-no').onclick = function () { PACK.step++; packageFlow(); };
+    app.querySelector('#pk-skip').onclick = function () { PACK.step = list.length; PACK.offered = true; formView(PACK.p); };
+  }
+
   // the checkout script expects EStore (store-catalog.js)
-  if (!window.EStore) { var s = document.createElement('script'); s.src = 'store-catalog.js?v=20261114'; s.onload = start; document.head.appendChild(s); } else start();
+  if (!window.EStore) { var s = document.createElement('script'); s.src = 'store-catalog.js?v=20261201'; s.onload = start; document.head.appendChild(s); } else start();
 })();

@@ -1359,3 +1359,13 @@ tr.is-archived td { opacity: .6; }
 .wm-sum pre { white-space: pre-wrap; font: inherit; font-size: .9rem; margin: .6rem 0; }
 .btn.is-copied { border-color: var(--success); color: var(--success); }
 .pill--muted { background: var(--gray-100); color: var(--muted); }
+
+/* Add-ons: busca, filtro por tipo e plano do cliente */
+.ad-tools { display: grid; gap: .75rem; margin: 0 0 1.25rem; }
+.ad-tools input[type=search] { width: 100%; max-width: 28rem; min-height: 2.75rem; padding: 0 .9rem; border: 1px solid var(--line); border-radius: 10px; font: inherit; background: #fff; }
+.ad-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
+.ad-chip { min-height: 2.25rem; padding: 0 .95rem; border-radius: 999px; border: 1px solid var(--line); background: #fff; color: var(--navy-900); font: 600 .88rem/1 inherit; cursor: pointer; }
+.ad-chip[aria-pressed="true"] { background: var(--navy-900); border-color: var(--navy-900); color: #fff; }
+.ad-chip:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.ad-cat { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; margin: .35rem 0 0; }
+.ad-plan { border-left: 4px solid var(--gold); margin-bottom: 1.25rem; }

@@ -9,6 +9,7 @@
   'use strict';
   var T = {
     en: {
+      nav_addons: 'Add-ons', ad_title: 'Add-ons', ad_lead: 'Tools and services to add to your account, with the same login. New add-ons appear here as they launch.', ad_search: 'Search add-ons…', ad_all: 'All', cat_empresa: 'Company', cat_vendas: 'Sales', cat_comunicacao: 'Communication', cat_financeiro: 'Finance', cat_documentos: 'Documents', ad_member: 'Client price', ad_plan: 'Your plan', ad_included: 'Included in your plan', ad_request: 'Request activation', ad_requested: 'Request sent. Our team will contact you to turn it on.', ad_quote: 'On request', ad_none: 'No add-ons match your search.', e_included_in_package: 'This service is part of your package and is cancelled together with it.', cancelledNow: 'Add-on removed. The unused part of the month becomes a credit on your next invoice.', inPackage: 'In your package', x_webmeeting: 'Video meetings in the browser with your own room link, recording and notes.', x_webinar: 'Live webinars with registration page, reminders and replay.', x_whatsapp: 'Organize your WhatsApp conversations, groups and automatic replies.',
       nav_services: 'Services', nav_crm: 'CRM', nav_agenda: 'Scheduling', nav_esign: 'E-signature', nav_books: 'Bookkeeping',
       sv_title: 'Services', sv_lead: 'The Endeavor services on your account. Add more whenever you want, with the same login.', active: 'Active', past_due: 'Payment pending', soon: 'Coming soon', open: 'Open', buy: 'Add to my account', cancelSub: 'Cancel subscription',
       cancelQ: 'Cancel {p}? You keep access until the end of the period already paid.', cancelled: 'Cancellation scheduled. You keep access until the end of the paid period.', paying: 'Secure payment', checking: 'Confirming the payment…', activated: '{p} is active on your account.', payErr: 'The payment could not be started',
@@ -32,6 +33,7 @@
       k_checking: 'checking', k_savings: 'savings', k_credit_card: 'credit card', k_other: 'account', loading: 'Loading…', close: 'Close', generic: 'Something went wrong. Please try again.'
     },
     pt: {
+      nav_addons: 'Add-ons', ad_title: 'Add-ons', ad_lead: 'Ferramentas e serviços para adicionar à sua conta, com o mesmo login. Os novos add-ons aparecem aqui conforme forem lançados.', ad_search: 'Buscar add-ons…', ad_all: 'Todos', cat_empresa: 'Empresa', cat_vendas: 'Vendas', cat_comunicacao: 'Comunicação', cat_financeiro: 'Financeiro', cat_documentos: 'Documentos', ad_member: 'Preço de cliente', ad_plan: 'Seu plano', ad_included: 'Incluído no seu plano', ad_request: 'Pedir ativação', ad_requested: 'Pedido enviado. A nossa equipe entra em contato para ativar.', ad_quote: 'Sob consulta', ad_none: 'Nenhum add-on encontrado.', e_included_in_package: 'Este serviço faz parte do seu pacote e só é cancelado junto com ele.', cancelledNow: 'Add-on removido. A parte não usada do mês vira crédito na próxima fatura.', inPackage: 'No seu pacote', x_webmeeting: 'Reuniões por vídeo no navegador, com sala própria, gravação e anotações.', x_webinar: 'Webinars ao vivo com página de inscrição, lembretes e replay.', x_whatsapp: 'Organize as conversas, os grupos e as respostas automáticas do seu WhatsApp.',
       nav_services: 'Serviços', nav_crm: 'CRM', nav_agenda: 'Agenda', nav_esign: 'Assinatura eletrônica', nav_books: 'Bookkeeping',
       sv_title: 'Serviços', sv_lead: 'Os serviços da Endeavor na sua conta. Contrate mais quando quiser, com o mesmo login.', active: 'Ativo', past_due: 'Pagamento pendente', soon: 'Em breve', open: 'Abrir', buy: 'Contratar', cancelSub: 'Cancelar assinatura',
       cancelQ: 'Cancelar {p}? Você continua com acesso até o fim do período já pago.', cancelled: 'Cancelamento agendado. O acesso continua até o fim do período pago.', paying: 'Pagamento seguro', checking: 'Confirmando o pagamento…', activated: '{p} está ativo na sua conta.', payErr: 'Não foi possível iniciar o pagamento',
@@ -55,6 +57,7 @@
       k_checking: 'conta corrente', k_savings: 'poupança', k_credit_card: 'cartão de crédito', k_other: 'conta', loading: 'Carregando…', close: 'Fechar', generic: 'Algo deu errado. Tente de novo.'
     },
     es: {
+      nav_addons: 'Add-ons', ad_title: 'Add-ons', ad_lead: 'Herramientas y servicios para agregar a su cuenta, con el mismo login. Los nuevos add-ons aparecen aquí a medida que se lanzan.', ad_search: 'Buscar add-ons…', ad_all: 'Todos', cat_empresa: 'Empresa', cat_vendas: 'Ventas', cat_comunicacao: 'Comunicación', cat_financeiro: 'Finanzas', cat_documentos: 'Documentos', ad_member: 'Precio de cliente', ad_plan: 'Su plan', ad_included: 'Incluido en su plan', ad_request: 'Pedir activación', ad_requested: 'Pedido enviado. Nuestro equipo lo contactará para activarlo.', ad_quote: 'A consultar', ad_none: 'Ningún add-on encontrado.', e_included_in_package: 'Este servicio es parte de su paquete y solo se cancela junto con él.', cancelledNow: 'Add-on eliminado. La parte no usada del mes queda como crédito en la próxima factura.', inPackage: 'En su paquete', x_webmeeting: 'Reuniones por video en el navegador, con sala propia, grabación y notas.', x_webinar: 'Webinars en vivo con página de inscripción, recordatorios y repetición.', x_whatsapp: 'Organice las conversaciones, grupos y respuestas automáticas de su WhatsApp.',
       nav_services: 'Servicios', nav_crm: 'CRM', nav_agenda: 'Agenda', nav_esign: 'Firma electrónica', nav_books: 'Bookkeeping',
       sv_title: 'Servicios', sv_lead: 'Los servicios de Endeavor en su cuenta. Contrate más cuando quiera, con el mismo login.', active: 'Activo', past_due: 'Pago pendiente', soon: 'Próximamente', open: 'Abrir', buy: 'Contratar', cancelSub: 'Cancelar suscripción',
       cancelQ: '¿Cancelar {p}? Mantiene el acceso hasta el fin del período ya pagado.', cancelled: 'Cancelación programada. El acceso sigue hasta el fin del período pagado.', paying: 'Pago seguro', checking: 'Confirmando el pago…', activated: '{p} está activo en su cuenta.', payErr: 'No se pudo iniciar el pago',
@@ -78,7 +81,7 @@
       k_checking: 'cuenta corriente', k_savings: 'ahorro', k_credit_card: 'tarjeta de crédito', k_other: 'cuenta', loading: 'Cargando…', close: 'Cerrar', generic: 'Algo salió mal. Intente de nuevo.'
     }
   };
-  var TOOL_VIEW = { crm: 'crm', agenda: 'agenda', esign: 'assinaturas', bookkeeping: 'bookkeeping' };
+  var TOOL_VIEW = { crm: 'crm', agenda: 'agenda', esign: 'assinaturas', bookkeeping: 'bookkeeping', telefone: 'telefonia' };
   var STAGES = ['new', 'contacted', 'proposal', 'won', 'lost'];
   var C, L, t;
   function init(ctx) { C = ctx; L = T[ctx.L] ? ctx.L : 'en'; t = function (k, v) { var s = T[L][k] != null ? T[L][k] : T.en[k]; if (v && typeof s === 'string') Object.keys(v).forEach(function (x) { s = s.split('{' + x + '}').join(v[x]); }); return s; }; }
@@ -102,6 +105,7 @@
     if (has('agenda')) n.push(['agenda', 'nav_agenda', 'i-cal']);
     if (has('esign')) n.push(['assinaturas', 'nav_esign', 'i-file']);
     if (has('bookkeeping')) n.push(['bookkeeping', 'nav_books', 'i-chart']);
+    n.push(['addons', 'nav_addons', 'i-plus']);
     n.push(['servicos', 'nav_services', 'i-grid']);
     return n.map(function (x) { return [x[0], t(x[1]), x[2]]; });
   }
@@ -124,20 +128,22 @@
     var rows = await C.q(C.sb.from('store_products').select('*').neq('status', 'hidden').order('sort'));
     var mine = await C.q(C.sb.from('client_services').select('*').eq('client_id', C.S.client.id));
     var by = {}; mine.forEach(function (s) { by[s.product_code] = s; });
+    // pacotes de abertura só aparecem para quem tem; add-ons do carrinho (Operating Agreement) só se a conta tiver
+    rows = rows.filter(function (p) { var s = by[p.code], on = s && s.status !== 'canceled'; return on || (p.kind !== 'package' && p.kind !== 'addon'); });
     view.innerHTML = C.head(t('sv_title'), t('sv_lead')) + '<div class="portal-alert" id="sv-m" role="status"></div><div class="tl-grid">' + rows.map(function (p) {
       var i = (window.EStore && EStore.info(p.code, L)) || { name: p.code, lead: '', feats: [] }, s = by[p.code], on = s && s.status !== 'canceled';
       return '<section class="portal-card tl-card' + (on ? ' tl-card--on' : '') + '"><div style="display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start"><h2 class="portal-h2" style="margin:0">' + esc(i.name) + '</h2>' +
         (on ? '<span class="pill pill--report">' + t(s.status === 'past_due' ? 'past_due' : 'active') + '</span>' : p.status === 'coming_soon' ? '<span class="pill">' + t('soon') + '</span>' : '') + '</div>' +
         '<p class="portal-muted" style="margin:.4rem 0 .6rem">' + esc(i.lead) + '</p><ul class="tl-feats">' + (i.feats || []).map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
         '<p class="tl-price"><strong>' + EStore.money(p.price_cents) + '</strong> <span class="portal-muted">' + esc(EStore.interval(p.interval, L)) + '</span></p>' +
-        '<div class="portal-btn-row">' + (on ? (TOOL_VIEW[p.code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[p.code] + '">' + t('open') + '</a>' : '') + '<button class="btn btn--ghost btn--sm" type="button" data-cancel="' + p.code + '">' + t('cancelSub') + '</button>'
+        '<div class="portal-btn-row">' + (on ? (TOOL_VIEW[p.code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[p.code] + '">' + t('open') + '</a>' : '') + (s.included_in ? '<span class="portal-muted" style="font-size:.85rem">' + t('inPackage') + '</span>' : p.interval === 'once' ? '' : '<button class="btn btn--ghost btn--sm" type="button" data-cancel="' + p.code + '">' + t('cancelSub') + '</button>')
           : p.status === 'active' ? '<button class="btn btn--gold btn--sm" type="button" data-buy="' + p.code + '">' + t('buy') + '</button>' : '') + '</div></section>';
     }).join('') + '</div>';
     view.querySelectorAll('[data-buy]').forEach(function (b) { b.onclick = function () { buy(b.dataset.buy); }; });
     view.querySelectorAll('[data-cancel]').forEach(function (b) { b.onclick = async function () {
       if (!confirm(t('cancelQ', { p: svcName(b.dataset.cancel) }))) return;
       b.disabled = true;
-      try { await fn('payments', { action: 'store_cancel', client_id: C.S.client.id, product: b.dataset.cancel }); C.msg(document.getElementById('sv-m'), t('cancelled'), 'ok'); }
+      try { var rc = await fn('payments', { action: 'store_cancel', client_id: C.S.client.id, product: b.dataset.cancel }); C.msg(document.getElementById('sv-m'), t(rc.now ? 'cancelledNow' : 'cancelled'), 'ok'); if (rc.now) setTimeout(function () { C.reload(); }, 1500); }
       catch (e) { b.disabled = false; C.msg(document.getElementById('sv-m'), e.message, 'error'); }
     }; });
     if (orderBack) waitOrder(orderBack, null);
@@ -166,6 +172,58 @@
     C.closeOverlay();
     await C.reload();
     if (r && r.status === 'fulfilled') setTimeout(function () { var mm = document.getElementById('sv-m'); if (mm) C.msg(mm, t('activated', { p: svcName(r.product) }), 'ok'); }, 300);
+  }
+
+
+  /* ---------------- Add-ons: catálogo com busca por tipo e preço de cliente ---------------- */
+  var EXTRA = [['webmeeting', 'Web Meeting', 'comunicacao', 'meetOn'], ['webinar', 'Live Webinar', 'comunicacao', 'meetOn'], ['whatsapp', 'WhatsApp Manager', 'vendas', 'waOn']];
+  var CATS = ['empresa', 'vendas', 'comunicacao', 'financeiro', 'documentos'];
+  async function addons(view) {
+    var cid = C.S.client.id;
+    var res = await Promise.all([C.q(C.sb.from('store_products').select('*').neq('status', 'hidden').order('sort')), C.q(C.sb.from('client_services').select('*').eq('client_id', cid)),
+      C.sb.rpc('client_is_member', { p_client: cid })]);
+    var by = {}; res[1].forEach(function (x) { if (x.status !== 'canceled') by[x.product_code] = x; });
+    var member = !!(res[2] && res[2].data), plan = ['pkg_completo', 'pkg_essencial'].filter(function (c) { return by[c]; })[0];
+    var items = res[0].filter(function (p) { return p.kind !== 'package'; }).map(function (p) {
+      var i = (window.EStore && EStore.info(p.code, L)) || { name: p.code, lead: '', feats: [] };
+      var price = member && p.member_cents != null && p.member_cents < p.price_cents ? p.member_cents : p.price_cents;
+      return { code: p.code, name: i.name, lead: i.lead, cat: p.category || 'empresa', p: p, price: price, full: price < p.price_cents ? p.price_cents : null, mine: by[p.code] };
+    }).filter(function (x) { return x.p.kind !== 'addon' || x.mine; }).concat(EXTRA.map(function (e) {
+      return { code: e[0], name: e[1], lead: t('x_' + e[0]), cat: e[2], extra: true, on: !!C.S[e[3]] };
+    }));
+    var q = '', cat = '';
+    view.innerHTML = C.head(t('ad_title'), t('ad_lead')) + '<div class="portal-alert" id="ad-m" role="status"></div>' +
+      (plan ? '<section class="portal-card ad-plan"><p class="eyebrow" style="margin:0">' + t('ad_plan') + '</p><h2 class="portal-h2" style="margin:.2rem 0 .5rem">' + esc(svcName(plan)) + '</h2><p class="portal-muted" style="margin:0">' + t('ad_included') + ': ' +
+        res[1].filter(function (x) { return x.included_in === plan && x.status !== 'canceled'; }).map(function (x) { return esc(svcName(x.product_code)); }).join(', ') + '</p></section>' : '') +
+      '<div class="ad-tools"><label class="sr-only" for="ad-q">' + t('ad_search') + '</label><input id="ad-q" type="search" placeholder="' + t('ad_search') + '" autocomplete="off">' +
+      '<div class="ad-chips" role="group" aria-label="' + t('ad_all') + '">' + [''].concat(CATS).map(function (c) { return '<button type="button" class="ad-chip" data-cat="' + c + '" aria-pressed="' + (c === '' ? 'true' : 'false') + '">' + t(c ? 'cat_' + c : 'ad_all') + '</button>'; }).join('') + '</div></div>' +
+      '<div class="tl-grid" id="ad-grid"></div>';
+    var grid = view.querySelector('#ad-grid');
+    function card(x) {
+      var on = x.extra ? x.on : !!x.mine, soon = !x.extra && x.p.status === 'coming_soon';
+      var btn = on ? (x.extra ? '<a class="btn btn--navy btn--sm" href="#/' + x.code + '">' + t('open') + '</a>' : TOOL_VIEW[x.code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[x.code] + '">' + t('open') + '</a>' : '')
+        : x.extra ? '<button class="btn btn--ghost btn--sm" type="button" data-req="' + x.code + '">' + t('ad_request') + '</button>'
+        : soon ? '' : '<button class="btn btn--gold btn--sm" type="button" data-buy="' + x.code + '">' + t('buy') + '</button>';
+      var pill = on ? '<span class="pill pill--report">' + (x.mine && x.mine.included_in ? t('inPackage') : t('active')) + '</span>' : soon ? '<span class="pill">' + t('soon') + '</span>' : '';
+      var price = x.extra ? '<p class="tl-price"><strong>' + t('ad_quote') + '</strong></p>' : (x.mine && x.mine.included_in) ? '' :
+        '<p class="tl-price">' + (x.full ? '<s class="portal-muted">' + EStore.money(x.full) + '</s> ' : '') + '<strong>' + EStore.money(x.price) + '</strong> <span class="portal-muted">' + esc(EStore.interval(x.p.interval, L)) + '</span>' + (x.full ? ' <span class="pill pill--report">' + t('ad_member') + '</span>' : '') + '</p>';
+      return '<section class="portal-card tl-card' + (on ? ' tl-card--on' : '') + '"><div style="display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start"><h2 class="portal-h2" style="margin:0">' + esc(x.name) + '</h2>' + pill + '</div>' +
+        '<p class="portal-muted ad-cat">' + t('cat_' + x.cat) + '</p><p style="margin:.2rem 0 .6rem">' + esc(x.lead) + '</p>' + price + '<div class="portal-btn-row">' + btn + '</div></section>';
+    }
+    function draw() {
+      var k = q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+      var list = items.filter(function (x) { return (!cat || x.cat === cat) && (!k || (x.name + ' ' + x.lead + ' ' + t('cat_' + x.cat)).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').indexOf(k) > -1); });
+      grid.innerHTML = list.length ? list.map(card).join('') : '<div class="portal-card empty-state"><p>' + t('ad_none') + '</p></div>';
+      grid.querySelectorAll('[data-buy]').forEach(function (b) { b.onclick = function () { buy(b.dataset.buy); }; });
+      grid.querySelectorAll('[data-req]').forEach(function (b) { b.onclick = async function () {
+        b.disabled = true;
+        try { await fn('payments', { action: 'store_request', client_id: cid, product: b.dataset.req }); C.msg(view.querySelector('#ad-m'), t('ad_requested'), 'ok'); }
+        catch (e) { b.disabled = false; C.msg(view.querySelector('#ad-m'), e.message, 'error'); }
+      }; });
+    }
+    view.querySelector('#ad-q').oninput = function (e) { q = e.target.value; draw(); };
+    view.querySelectorAll('.ad-chip').forEach(function (b) { b.onclick = function () { cat = b.dataset.cat; view.querySelectorAll('.ad-chip').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); draw(); }; });
+    draw();
   }
 
   /* ---------------- CRM ---------------- */
@@ -386,6 +444,6 @@
 
   window.ETools = {
     init: init, nav: nav, has: has, overview: overview,
-    views: { servicos: services, crm: crm, agenda: agenda, assinaturas: esign, bookkeeping: books }
+    views: { servicos: services, addons: addons, crm: crm, agenda: agenda, assinaturas: esign, bookkeeping: books }
   };
 })();

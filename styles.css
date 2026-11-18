@@ -381,6 +381,22 @@ h1, h2 { overflow-wrap: anywhere; }
 .shop-card__wait { display: inline-block; margin-top: 0.6rem; font-size: 0.88rem; font-weight: 600; color: var(--navy-900); text-align: center; }
 .shop-card__badge { position: absolute; top: 1rem; right: 1rem; padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--gray-100); color: var(--navy-800); font-size: 0.75rem; font-weight: 700; letter-spacing: .02em; }
 .shop-card--soon { background: var(--gray-50); }
+/* formation packages (Essential, Complete, Operating + Holding) */
+.pkgs { margin-bottom: var(--space-4); }
+.pkgs__title { font-family: var(--font-serif); font-size: var(--step-2); color: var(--ink); margin: 0 0 0.4rem; }
+.pkgs__title--tools { margin-top: clamp(2rem, 1.6rem + 1.5vw, 3rem); }
+.pkgs__lead { color: var(--muted); max-width: 46rem; margin: 0 0 var(--space-3); }
+.pkgs__grid { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); align-items: stretch; }
+@media (min-width: 900px) { .pkgs__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-4); } }
+.pkg h3 { font-family: var(--font-serif); font-size: var(--step-2); }
+.pkg--top { border: 2px solid var(--gold); box-shadow: var(--shadow-lg); }
+.pkg__badge { position: absolute; top: -0.8rem; left: 50%; transform: translateX(-50%); padding: 0.25rem 0.8rem; border-radius: 999px; background: var(--gold); color: var(--navy-900); font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.pkg__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 0.5rem; margin: 0 0 var(--space-3); color: var(--ink); }
+.pkg__setup { font-family: var(--font-serif); font-size: var(--step-3); font-weight: 700; line-height: 1; }
+.pkg__unit { font-family: var(--font-sans, inherit); font-size: 0.9rem; font-weight: 400; color: var(--muted); }
+.pkg__plus { color: var(--muted); font-weight: 600; }
+.pkg__month .shop-card__amount { font-size: var(--step-2); }
+.pkgs__note { color: var(--muted); font-size: 0.88rem; margin: var(--space-3) 0 0; }
 .shop__note { display: flex; gap: 0.5rem; align-items: center; margin-top: var(--space-3); color: var(--muted); font-size: 0.88rem; }
 .shop__note .icon { width: 1rem; height: 1rem; flex: none; color: var(--gold-ink); }
 

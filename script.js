@@ -427,11 +427,12 @@
   /* ---------- Hire online: current prices from the catalog (Admin > Pagamentos > Loja) ---------- */
   (function () {
     var C = window.ENDEAVOR_CFG; if (!C || !document.querySelector('[data-price]') || !window.fetch) return;
-    fetch(C.supabaseUrl + '/rest/v1/store_products?select=code,price_cents,interval,status', { headers: { apikey: C.supabaseKey, Authorization: 'Bearer ' + C.supabaseKey } })
+    fetch(C.supabaseUrl + '/rest/v1/store_products?select=code,price_cents,setup_cents,interval,status', { headers: { apikey: C.supabaseKey, Authorization: 'Bearer ' + C.supabaseKey } })
       .then(function (r) { return r.ok ? r.json() : []; }).then(function (rows) {
         (rows || []).forEach(function (p) {
           var card = document.querySelector('.shop-card[data-product="' + p.code + '"]'); if (!card) return;
           var a = card.querySelector('[data-price]'); if (a) a.textContent = '$' + (p.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: p.price_cents % 100 ? 2 : 0 });
+          var st = card.querySelector('[data-setup]'); if (st && p.setup_cents) st.textContent = '$' + (p.setup_cents / 100).toLocaleString('en-US', { minimumFractionDigits: p.setup_cents % 100 ? 2 : 0 });
           card.querySelectorAll('[data-int]').forEach(function (x) { x.hidden = x.getAttribute('data-int') !== p.interval; });
         });
       }).catch(function () { /* keep the printed prices */ });
