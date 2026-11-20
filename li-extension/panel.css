@@ -1,0 +1,26 @@
+#eli { position: fixed; right: 16px; bottom: 16px; width: 340px; max-height: 76vh; overflow-y: auto; z-index: 2147483000; background: #fff; color: #111827; border: 1px solid #d5dbe5; border-radius: 14px; box-shadow: 0 16px 44px rgba(11, 31, 58, .28); font: 14px/1.4 -apple-system, "Segoe UI", Inter, system-ui, sans-serif; }
+#eli.eli-min { width: auto; overflow: visible; }
+#eli header { position: sticky; top: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: #0b1f3a; color: #fff; border-radius: 13px 13px 0 0; }
+#eli.eli-min header { border-radius: 13px; }
+#eli header strong { flex: 1; font-size: 14px; }
+#eli header button { width: 28px; height: 28px; border: 0; border-radius: 8px; background: rgba(255, 255, 255, .16); color: #fff; font-weight: 700; cursor: pointer; }
+#eli button:focus-visible, #eli textarea:focus-visible { outline: 3px solid #c9a227; outline-offset: 2px; }
+.eli-modo { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #dcfce7; color: #14532d; }
+.eli-modo--auto { background: #fee2e2; color: #7f1d1d; }
+#eli article { padding: 10px 12px; border-bottom: 1px solid #eef1f5; display: grid; gap: 6px; }
+.eli-top { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.eli-tag { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: #eef1f5; color: #334155; }
+.eli-lead { background: #fef3c7; color: #78350f; }
+.eli-kw { font-size: 11px; color: #5b6676; }
+.eli-txt { margin: 0; font-size: 13px; color: #374151; overflow-wrap: anywhere; }
+#eli textarea { width: 100%; box-sizing: border-box; border: 1px solid #d5dbe5; border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 13px; resize: vertical; }
+.eli-bts { display: flex; flex-wrap: wrap; gap: 6px; }
+.eli-bt { min-height: 32px; padding: 0 12px; border-radius: 8px; border: 1px solid #c9d2df; background: #fff; color: #0b1f3a; font: 600 13px/1 inherit; cursor: pointer; }
+.eli-bt--p { background: #0b1f3a; border-color: #0b1f3a; color: #fff; }
+.eli-bt--x { margin-left: auto; color: #6b7280; }
+.eli-bt[disabled] { opacity: .6; cursor: default; }
+.eli-vazio, .eli-nota { margin: 0; padding: 10px 12px; color: #5b6676; font-size: 13px; }
+.eli-nota { padding: 0; }
+.eli-risco { margin: 0; padding: 8px 12px; background: #fef2f2; color: #7f1d1d; font-size: 12px; }
+#eli > .eli-bt { margin: 0 12px 12px; }
+@media (max-width: 700px) { #eli { left: 8px; right: 8px; width: auto; max-height: 50vh; } }

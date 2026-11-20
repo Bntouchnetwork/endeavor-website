@@ -381,7 +381,8 @@
       '<div class="portal-grid2">' + select('co-type', 'Tipo', ENTITY, co.entity_type) + select('co-state', 'Estado', Object.assign(US_STATES[co.state || 'FL'] ? {} : (function () { var o = {}; o[co.state] = co.state; return o; })(), US_STATES), co.state || 'FL') +
       field('co-date', 'Data de constituição', co.formation_date, 'date') + select('co-status', 'Status', { in_formation: 'Em formação', active: 'Ativa', inactive: 'Inativa', dissolved: 'Dissolvida' }, co.status) +
       field('co-doc', 'Número do documento (Sunbiz)', co.document_number) + field('co-ein', 'EIN', co.ein ? einFmt(co.ein) : '', 'text', false, ' placeholder="12-3456789" inputmode="numeric" maxlength="10" autocomplete="off" pattern="[0-9]{2}-[0-9]{7}"') +
-      field('co-fye', 'Fim do ano fiscal (MM-DD)', co.fiscal_year_end) + field('co-ra', 'Registered agent', co.registered_agent) + '</div>' +
+      field('co-fye', 'Fim do ano fiscal (MM-DD)', co.fiscal_year_end) + field('co-ra', 'Registered agent', co.registered_agent) +
+      '<div class="field"><label for="co-act">Atividade da empresa</label><select id="co-act"><option value="' + ctx.esc(co.activity_code || '') + '" selected>' + ctx.esc(co.activity_code || 'Escolha…') + '</option></select></div></div>' +
       field('co-addr', 'Endereço principal', co.address) +
       '<fieldset class="perm-box logo-box"><legend>Logo nos relatórios (opcional)</legend>' + (co.id ? '<div class="logo-prev" id="co-logo-prev"><span class="portal-muted">Sem logo</span></div>' +
         '<div class="portal-btn-row"><label class="btn btn--ghost btn--xs" tabindex="0" role="button">Subir logo<input type="file" id="co-logo" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden></label><button class="btn btn--ghost btn--xs btn--danger-text" type="button" id="co-logo-rm"' + (co.logo_path ? '' : ' hidden') + '>Remover logo</button></div>' +
@@ -390,6 +391,7 @@
       '<div class="portal-alert" id="co-msg" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit">Salvar</button>' +
       (co.id ? '<button class="btn btn--danger" type="button" id="co-del">Excluir empresa</button>' : '') + '</div></form>');
     if (co.id) logoField(ctx, c, co);
+    if (window.ELiPanel) ELiPanel.atividades(ctx.sb, $('#co-act'), 'pt', co.activity_code || '');
     $('#co-ein').addEventListener('input', function () { var el = this, pos = el.selectionStart, before = el.value.length; el.value = einFmt(el.value); var np = Math.max(0, pos + el.value.length - before); try { el.setSelectionRange(np, np); } catch (er) { /* ignore */ } });
     $('#co-form').onsubmit = async function (e) {
       e.preventDefault();
@@ -397,7 +399,7 @@
       if (einV && !/^\d{2}-\d{7}$/.test(einV)) { $('#co-ein').focus(); return ctx.msg($('#co-msg'), 'O EIN precisa ter 9 números (12-3456789).', 'error'); }
       var row = { legal_name: $('#co-name').value.trim(), entity_type: $('#co-type').value, state: ($('#co-state').value.trim() || 'FL').toUpperCase(), formation_date: $('#co-date').value || null,
         status: $('#co-status').value, document_number: $('#co-doc').value.trim() || null, ein: einV || null, fiscal_year_end: $('#co-fye').value.trim() || null,
-        registered_agent: $('#co-ra').value.trim() || null, address: $('#co-addr').value.trim() || null, notes: $('#co-notes').value };
+        registered_agent: $('#co-ra').value.trim() || null, address: $('#co-addr').value.trim() || null, notes: $('#co-notes').value, activity_code: $('#co-act').value || null };
       if (row.legal_name.length < 2) return ctx.msg($('#co-msg'), 'Informe a razão social.', 'error');
       var r = co.id ? await ctx.sb.from('companies').update(row).eq('id', co.id) : await ctx.sb.from('companies').insert(Object.assign(row, { client_id: c.id }));
       if (r.error) return ctx.msg($('#co-msg'), ctx.errText(r.error), 'error');

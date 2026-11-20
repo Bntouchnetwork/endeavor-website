@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LinkedIn Manager (teste)</title>
+<link rel="stylesheet" href="../../styles.css"><link rel="stylesheet" href="../../portal.css"><link rel="stylesheet" href="../../linkedin-panel.css"></head>
+<body style="padding:24px;background:#f5f7fa">
+<!-- Página só para os testes automáticos: a função linkedin é simulada pelo Playwright. -->
+<main id="view"></main>
+<script src="../../linkedin-panel.js"></script>
+<script>
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const L = (location.search.match(/L=(\w\w)/) || [])[1] || 'pt';
+  const ctx = { sb: { auth: { getSession: async () => ({ data: { session: { access_token: 't' } } }) }, from: () => ({ select: () => ({ order: async () => ({ data: [{ code: 'formation', label_pt: 'Abertura de empresas', label_en: 'Company formation', label_es: 'Apertura de empresas' }] }) }) }) },
+    CFG: { functionsUrl: location.origin + '/fn', supabaseKey: 'anon' }, esc, L };
+  ELiPanel.render(document.getElementById('view'), ctx, { scope: 'client', clientId: 'c1' }).catch(e => { document.getElementById('view').textContent = 'ERRO ' + e.message; });
+</script></body></html>

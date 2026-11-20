@@ -386,8 +386,11 @@ async function handleUser(req: Request, body: Any) {
     const state = /^[A-Z]{2}$/.test(String(body.state || "")) ? String(body.state) : null;
     const existing = body.existing === true;
     const books = body.bookkeeping === true;
+    // atividade da empresa (dropdown trilíngue): só um código que existe em business_activities
+    let activity: string | null = null;
+    if (/^[a-z_]{2,40}$/.test(String(body.activity_code || ""))) { const { data: at } = await db.from("business_activities").select("code").eq("code", body.activity_code).maybeSingle(); activity = at?.code || null; }
     const { data: co, error } = await db.from("companies").insert({ client_id: clientId, legal_name: name, state, status: existing ? "active" : "in_formation", entity_type: ["llc", "llc_foreign", "corp", "other"].includes(body.entity_type) ? body.entity_type : "llc",
-      ein: existing && /^\d{2}-?\d{7}$/.test(String(body.ein || "")) ? String(body.ein).replace("-", "") : null, books_service: books ? "requested" : "none", requested_by: u.user.id }).select("id, legal_name").single();
+      ein: existing && /^\d{2}-?\d{7}$/.test(String(body.ein || "")) ? String(body.ein).replace("-", "") : null, books_service: books ? "requested" : "none", requested_by: u.user.id, activity_code: activity }).select("id, legal_name").single();
     if (error) throw new Fail("db_error", 500, error.message);
     const { data: cl } = await db.from("clients").select("name").eq("id", clientId).single();
     await bell("company_added", `Nova empresa cadastrada pelo cliente: ${name}`, `${cl?.name || ""} · ${existing ? "empresa existente" : "quer abrir"}${books ? " · pediu o serviço de Bookkeeping (enviar proposta da assinatura)" : ""}.`, `#/clientes?id=${clientId}`);

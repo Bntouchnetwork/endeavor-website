@@ -208,7 +208,7 @@
 
   /* ---------- console shell ---------- */
   var NAV = [
-    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'], ['webmeeting', 'Web Meeting', 'i-video'], ['webinar', 'Live Webinar', 'i-live'], ['whatsapp', 'WhatsApp Manager', 'i-wa'], ['telefonia', 'Telefonia', 'i-phone'],
+    ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'], ['webmeeting', 'Web Meeting', 'i-video'], ['webinar', 'Live Webinar', 'i-live'], ['whatsapp', 'WhatsApp Manager', 'i-wa'], ['linkedin', 'LinkedIn Manager', 'i-linkedin'], ['telefonia', 'Telefonia', 'i-phone'],
     ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['instagram', 'Instagram', 'i-ig'], ['projetos', 'AI Projects', 'i-code'], ['addons', 'Add-ons', 'i-plus'], ['agentes', 'Agentes IA', 'i-bot'], ['hubai', 'Hub AI', 'i-db'], ['conectores', 'Conectores', 'i-link'], ['bookkeeping', 'Bookkeeping', 'i-book'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
@@ -244,6 +244,7 @@
       webinar: function (vw) { return window.EWebinarPanel ? EWebinarPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Live Webinar não carregou. Recarregue a página.')); },
       addons: function (vw) { return window.EAddonsAdmin ? EAddonsAdmin.render(vw, clientsCtx()) : Promise.reject(new Error('O módulo Add-ons não carregou. Recarregue a página.')); },
       telefonia: function (vw) { return window.ETelAdmin ? ETelAdmin.render(vw, clientsCtx()) : Promise.reject(new Error('O módulo Telefonia não carregou. Recarregue a página.')); },
+      linkedin: function (vw) { return window.ELiPanel ? ELiPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo LinkedIn Manager não carregou. Recarregue a página.')); },
       whatsapp: function (vw) { var cl = (location.hash.match(/[?&]cliente=([0-9a-f-]{36})/) || [])[1]; return window.EWaPanel ? EWaPanel.render(vw, clientsCtx(), { scope: 'admin', clientId: cl }) : Promise.reject(new Error('O módulo WhatsApp Manager não carregou. Recarregue a página.')); } })[v](view).catch(function (e) {
       view.innerHTML = '<div class="portal-alert portal-alert--error">' + esc(errText(e)) + '</div>';
     });

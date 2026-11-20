@@ -130,16 +130,18 @@
       '<div class="field"><label for="ac-n">' + tr('coName') + '</label><input id="ac-n" maxlength="200" required></div>' +
       '<div class="portal-grid2"><div class="field"><label for="ac-s">' + tr('coState') + '</label><input id="ac-s" maxlength="2" style="text-transform:uppercase" value="FL"></div><div class="field"><label for="ac-t">' + tr('coType') + '</label><select id="ac-t"><option value="llc">LLC</option><option value="corp">Corporation</option><option value="other">Other</option></select></div></div>' +
       '<div class="send-opts" role="radiogroup"><label class="check-row"><input type="radio" name="ac-x" value="1" checked> ' + tr('coExisting') + '</label><label class="check-row"><input type="radio" name="ac-x" value="0"> ' + tr('coNew') + '</label></div>' +
+      '<div class="field"><label for="ac-a">' + (window.ELiPanel ? ELiPanel.rotuloAtividade(X.L) : 'Business activity') + '</label><select id="ac-a"><option value=""></option></select></div>' +
       '<div class="field" id="ac-einw"><label for="ac-e">' + tr('coEin') + '</label><input id="ac-e" maxlength="10" inputmode="numeric" placeholder="12-3456789"></div>' +
       '<div class="check-row"><input type="checkbox" id="ac-b"><label for="ac-b">' + tr('coBooks') + '</label></div><div class="portal-alert" id="ac-m" role="alert"></div>' +
       '<div class="portal-btn-row"><button class="btn btn--navy" type="submit">' + tr('coSave') + '</button><button class="btn btn--ghost close-x" type="button">×</button></div></form>', true);
     o.querySelectorAll('.close-x').forEach(function (x) { x.onclick = X.closeOverlay; });
+    if (window.ELiPanel) ELiPanel.atividades(X.sb, X.$('#ac-a', o), X.L, '');
     o.querySelectorAll('input[name=ac-x]').forEach(function (r) { r.onchange = function () { X.$('#ac-einw', o).hidden = this.value !== '1'; }; });
     X.$('#ac', o).onsubmit = async function (e) {
       e.preventDefault(); var n = X.$('#ac-n', o).value.trim(); if (n.length < 2) return X.$('#ac-n', o).focus();
       this.querySelector('button').disabled = true;
       try {
-        await call({ action: 'add_company', client_id: X.S.client.id, legal_name: n, state: X.$('#ac-s', o).value.trim().toUpperCase(), entity_type: X.$('#ac-t', o).value, existing: o.querySelector('input[name=ac-x]:checked').value === '1', ein: X.$('#ac-e', o).value.trim(), bookkeeping: X.$('#ac-b', o).checked });
+        await call({ action: 'add_company', client_id: X.S.client.id, legal_name: n, state: X.$('#ac-s', o).value.trim().toUpperCase(), entity_type: X.$('#ac-t', o).value, existing: o.querySelector('input[name=ac-x]:checked').value === '1', ein: X.$('#ac-e', o).value.trim(), bookkeeping: X.$('#ac-b', o).checked, activity_code: X.$('#ac-a', o).value || null });
         var r = await X.sb.from('companies').select('*').eq('client_id', X.S.client.id).order('legal_name'); if (!r.error) X.S.companies = r.data;
         X.msg(X.$('#ac-m', o), tr('coDone'), 'ok'); setTimeout(function () { X.closeOverlay(); if (after) after(); }, 900);
       } catch (x) { this.querySelector('button').disabled = false; X.msg(X.$('#ac-m', o), tr('err'), 'error'); }

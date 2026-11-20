@@ -1,0 +1,37 @@
+/* LinkedIn Manager (admin e portal) */
+.li-topo { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: space-between; align-items: flex-end; }
+.li-topo select { min-height: 2.6rem; max-width: 100%; }
+.li-barra { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; margin: 1rem 0; }
+.li-nota { font-size: .88rem; flex: 1 1 16rem; }
+.li-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr)); }
+.li-card { background: #fff; border: 1px solid var(--line, #e3e7ee); border-top: 5px solid #94a3b8; border-radius: 14px; padding: .9rem 1rem 1rem; display: flex; flex-direction: column; gap: .55rem; min-width: 0; }
+.li-card header { display: flex; justify-content: space-between; align-items: center; gap: .5rem; font-size: .85rem; }
+.li-card time { color: var(--muted, #5b6676); font-variant-numeric: tabular-nums; }
+.li-st { font-weight: 700; padding: .15rem .6rem; border-radius: 999px; background: #eef1f5; color: #334155; }
+.li-card--draft { border-top-color: #94a3b8; }
+.li-card--approved { border-top-color: #1d4ed8; } .li-card--approved .li-st { background: #dbeafe; color: #1e3a8a; }
+.li-card--posted { border-top-color: #1e6b3a; } .li-card--posted .li-st { background: #dcfce7; color: #14532d; }
+.li-card--failed { border-top-color: #b42318; } .li-card--failed .li-st { background: #fee2e2; color: #7f1d1d; }
+.li-card--rejected { border-top-color: #6b7280; opacity: .75; } .li-card--rejected .li-st { background: #e5e7eb; color: #374151; text-decoration: line-through; }
+.li-tema { margin: 0; font-weight: 600; color: var(--ink, #0b1f3a); font-size: .92rem; }
+.li-card textarea, .li-com textarea { width: 100%; border: 1px solid var(--line, #d5dbe5); border-radius: 10px; padding: .6rem .7rem; font: inherit; font-size: .93rem; line-height: 1.45; resize: vertical; background: #fff; }
+.li-card textarea[readonly] { background: #f6f7f9; }
+.li-quando { display: grid; gap: .25rem; font-size: .85rem; color: var(--muted, #5b6676); }
+.li-quando input { min-height: 2.4rem; border: 1px solid var(--line, #d5dbe5); border-radius: 8px; padding: 0 .5rem; font: inherit; max-width: 100%; }
+.li-bts { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.li-rej { margin-left: auto; color: #b42318; }
+.li-erro { margin: 0; color: #b42318; font-size: .85rem; overflow-wrap: anywhere; }
+.li-com { background: #fff; border: 1px solid var(--line, #e3e7ee); border-left: 4px solid #cbd5e1; border-radius: 12px; padding: .9rem 1rem; margin-bottom: .8rem; display: grid; gap: .5rem; }
+.li-com--lead { border-left-color: #c9a227; }
+.li-com blockquote { margin: 0; padding: .5rem .75rem; background: #f6f7f9; border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.li-com label { font-size: .85rem; font-weight: 600; }
+.li-motivo, .li-resp { margin: 0; font-size: .88rem; }
+.li-form { display: grid; gap: .25rem 1.25rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); }
+.li-form .field small { display: block; margin-top: .25rem; }
+.li-form output { margin-left: .5rem; font-variant-numeric: tabular-nums; }
+.li-horas { display: flex; flex-wrap: wrap; gap: .4rem; }
+.li-horas input { min-height: 2.5rem; }
+.li-h3 { font-size: .95rem; margin: 1.1rem 0 .4rem; }
+.li-devs { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+#li-codbox { margin-top: .9rem; }
+#li-codbox input { width: 100%; font-family: ui-monospace, monospace; font-size: .85rem; }

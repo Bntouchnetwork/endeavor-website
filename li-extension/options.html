@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LinkedIn Manager · Endeavor</title>
+<style>
+  body { margin: 0; background: #f5f7fa; color: #111827; font: 16px/1.45 -apple-system, "Segoe UI", Inter, system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; color: #0b1f3a; margin: 0 0 4px; } h2 { font-size: 1.05rem; color: #0b1f3a; margin: 0 0 12px; }
+  section { background: #fff; border: 1px solid #e3e7ee; border-radius: 14px; padding: 18px; margin-top: 16px; }
+  label { display: block; font-weight: 600; font-size: .9rem; margin: 12px 0 4px; }
+  input[type=text], input[type=url], input[type=password], input[type=number], select, textarea { width: 100%; box-sizing: border-box; min-height: 42px; padding: 8px 10px; border: 1px solid #c9d2df; border-radius: 10px; font: inherit; background: #fff; }
+  input[type=range] { width: 100%; } input[readonly] { background: #f6f7f9; color: #5b6676; }
+  .linha { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; } @media (max-width: 520px) { .linha { grid-template-columns: 1fr; } }
+  small, .nota { color: #5b6676; font-size: .85rem; }
+  .risco { background: #fef2f2; border: 1px solid #fecaca; color: #7f1d1d; border-radius: 10px; padding: 12px; margin-top: 12px; font-size: .92rem; }
+  .risco label { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; margin: 8px 0 0; }
+  button { min-height: 44px; padding: 0 22px; border: 0; border-radius: 10px; background: #0b1f3a; color: #fff; font: 700 1rem/1 inherit; cursor: pointer; margin-top: 18px; }
+  :focus-visible { outline: 3px solid #c9a227; outline-offset: 2px; }
+  #msg { margin-left: 12px; font-weight: 600; } .ok { color: #1e6b3a; } .erro { color: #b42318; }
+</style>
+</head>
+<body>
+<main>
+  <h1>LinkedIn Manager</h1>
+  <p class="nota" data-t="sub"></p>
+  <form id="f">
+    <section>
+      <h2 data-t="conexao"></h2>
+      <label for="url" data-t="url"></label><input id="url" type="url" autocomplete="off" spellcheck="false">
+      <label for="token" data-t="token"></label><input id="token" type="password" autocomplete="off" spellcheck="false">
+      <small data-t="tokenDica"></small>
+      <p class="nota" id="estado" role="status"></p>
+    </section>
+    <section>
+      <h2 data-t="modoT"></h2>
+      <label for="modo" data-t="modo"></label>
+      <select id="modo"><option value="manual" data-t="manual"></option><option value="auto" data-t="auto"></option></select>
+      <div class="risco" id="risco" hidden><span data-t="risco"></span><label><input type="checkbox" id="aceito"> <span data-t="aceito"></span></label></div>
+      <label for="vel"><span data-t="vel"></span>: <output id="velo"></output></label><input id="vel" type="range" min="80" max="400" step="10">
+      <div class="linha"><div><label for="imin" data-t="imin"></label><input id="imin" type="number" min="30" max="3600"></div><div><label for="imax" data-t="imax"></label><input id="imax" type="number" min="30" max="7200"></div></div>
+      <label for="lim" data-t="lim"></label><input id="lim" type="number" min="1" max="50">
+      <small data-t="servidor"></small>
+    </section>
+    <section>
+      <h2 data-t="oport"></h2>
+      <label for="pal" data-t="pal"></label><textarea id="pal" rows="3"></textarea>
+      <div class="linha"><div><label for="wa" data-t="wa"></label><input id="wa" type="text" readonly></div><div><label for="ag" data-t="ag"></label><input id="ag" type="text" readonly></div></div>
+      <small data-t="links"></small>
+    </section>
+    <button type="submit" data-t="salvar"></button><span id="msg" role="status"></span>
+  </form>
+</main>
+<script src="core.js"></script>
+<script src="options.js"></script>
+</body>
+</html>
