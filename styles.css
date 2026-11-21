@@ -1196,3 +1196,6 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
   .shop__carousel .shop__seta { position: absolute; top: 50%; margin-top: -1.45rem; right: -3.65rem; left: auto; }
   .shop__carousel .shop__seta--ant { left: -3.65rem; right: auto; }
 }
+/* Contato: itens só com o valor ao lado do ícone (o nome fica para leitores de tela) */
+.contact__list li:has(> .contact__solo) { align-items: center; }
+.contact__list .contact__solo strong.sr-only { display: block; margin: -1px; }
