@@ -1208,3 +1208,5 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
 .shop__pausa-ico { width: 0.7rem; height: 0.8rem; border-left: 0.24rem solid currentColor; border-right: 0.24rem solid currentColor; box-sizing: border-box; }
 .shop__pausa[aria-pressed="true"] .shop__pausa-ico { width: 0; height: 0; border: 0.42rem solid transparent; border-left: 0.7rem solid currentColor; border-right: 0; margin-left: 0.15rem; }
 @media (min-width: 1340px) { .shop__carousel .shop__pausa { display: grid; margin: 0.6rem auto 0; } }
+/* No computador a fileira só muda pelas flechas ou sozinha: não rola ao arrastar nem com dois dedos no trackpad (no celular, o dedo continua arrastando) */
+@media (hover: hover) and (pointer: fine) { .shop__track { overflow-x: hidden; } }
