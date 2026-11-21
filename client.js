@@ -486,7 +486,7 @@
       '<div class="console__nav-title">' + t('portal') + '</div>' +
       (S.ref ? '<div style="padding:0 .85rem .75rem;color:#fff;font-weight:600">' + esc(S.partner.company || S.partner.name) + '<div style="font-weight:400;font-size:.8rem;color:var(--on-dark-muted)">' + esc(t('p_partnerLead')) + '</div></div>' : clientBox) +
       '<ul>' + navItems().map(navLi).join('') + '</ul>' +
-      '<div class="console__nav-foot">' + (CFG.whatsapp ? '<a class="wa-nav" href="https://wa.me/' + CFG.whatsapp + '?text=' + encodeURIComponent(t('waText')) + '" target="_blank" rel="noopener" aria-label="' + t('waLabel') + '" title="WhatsApp"><svg class="icon" aria-hidden="true"><use href="#i-wa"/></svg></a><br>' : '') + 'Endeavor Business Solutions<br><a href="mailto:support@endeavorbiz.com" style="color:inherit">support@endeavorbiz.com</a></div></nav><div class="nav-backdrop" id="nav-backdrop"></div>' +
+      '<div class="console__nav-foot">' + 'Endeavor Business Solutions<br><a href="mailto:support@endeavorbiz.com" style="color:inherit">support@endeavorbiz.com</a></div></nav><div class="nav-backdrop" id="nav-backdrop"></div>' +
       '<main class="console__content" id="view" tabindex="-1"></main></div><div class="overlay" id="overlay" hidden></div>';
     var tgl = $('#nav-toggle'), con = $('#console');
     tgl.hidden = false;

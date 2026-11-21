@@ -78,7 +78,7 @@ try {
   }
   { const ct = await home.textContent("#contact"), ft = await home.textContent("footer");
     const hrefs = await home.locator("a.js-wa").evaluateAll((l) => l.map((a) => a.href));
-    ok(hrefs.length === 2 && hrefs.every((h) => h === "https://wa.me/16306898702?text=" + encodeURIComponent("Preciso de informações.")), "contatos: o ícone do WhatsApp abre a conversa com a mensagem pronta (PT)");
+    ok(hrefs.length === 1 && !(await home.locator("footer a.js-wa, footer .wa-ico").count()) && hrefs.every((h) => h === "https://wa.me/16306898702?text=" + encodeURIComponent("Preciso de informações.")), "contatos: o ícone do WhatsApp abre a conversa com a mensagem pronta (PT)");
     ok(!/630\D*689/.test(ct + ft) && /407\) 436-9567/.test(ct) && ct.includes("support@endeavorbiz.com") && ft.includes("support@endeavorbiz.com"), "contatos: sem o número do WhatsApp escrito; telefone e e-mail aparecem");
     ok((await home.locator("#contact a.js-wa").getAttribute("aria-label")).includes("WhatsApp") && await home.locator("#contact a.js-wa svg").isVisible(), "contatos: ícone com nome acessível");
     await home.locator("#contact .contact__list").screenshot({ path: OUT + "/contatos.png" }); }
