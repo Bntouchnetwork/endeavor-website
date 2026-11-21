@@ -55,7 +55,8 @@ try {
   await home.waitForTimeout(800);
   const txt = await home.textContent(".pkgs");
   ok(txt.includes("Essencial") && txt.includes("Completo") && txt.includes("Operacional + Holding"), "home PT: três pacotes");
-  ok(txt.includes("$999") && txt.includes("$1,497") && txt.includes("$199"), "home: preços dos pacotes vindos do catálogo");
+  ok(txt.includes("$999") && txt.includes("$1,497") && !/\$59|\$199/.test(txt) && (txt.match(/\+ assinatura mensal/g) || []).length === 2, "home: pacotes com o preço de abertura e a nota + assinatura mensal, sem o valor mensal");
+  { const tel = home.locator('.shop-card[data-product="telefone"]'), tt = await tel.textContent(); ok(tt.includes("Número virtual dos EUA") && tt.includes("$19.99") && tt.includes("500 minutos e 250 SMS por mês"), "home: card Número virtual dos EUA com o preço da loja ($19.99/mês)"); }
   ok(txt.includes("Portal do Cliente para gerenciar a sua empresa"), "home: os cards citam o Portal do Cliente");
   ok(txt.includes("Pedir orçamento") && !/\$3,?500/.test(txt), "holding: pedir orçamento, sem preço");
   ok(!(await home.locator('.shop-card[data-product="formation"]').count()), "abertura sozinha não é vendida");

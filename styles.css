@@ -1199,3 +1199,4 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
 /* Contato: itens só com o valor ao lado do ícone (o nome fica para leitores de tela) */
 .contact__list li:has(> .contact__solo) { align-items: center; }
 .contact__list .contact__solo strong.sr-only { display: block; margin: -1px; }
+.pkg__note { flex-basis: 100%; font-size: 0.95rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
