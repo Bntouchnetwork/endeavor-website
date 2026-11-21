@@ -10,12 +10,14 @@
 <script src="../../client-tools.js"></script>
 <script>
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const DATA = { client_services: [
+  const HOLD = /plano=holding/.test(location.search);
+  const DATA = { client_services: HOLD ? [{ client_id: 'c1', product_code: 'pkg_holding', status: 'active', included_in: null }, { client_id: 'c1', product_code: 'bookkeeping', status: 'active', included_in: 'pkg_holding' },
+    { client_id: 'c1', product_code: 'registered_agent', status: 'active', included_in: 'pkg_holding' }, { client_id: 'c1', product_code: 'virtual_address', status: 'active', included_in: 'pkg_holding' }] : [
     { client_id: 'c1', product_code: 'pkg_essencial', status: 'active', included_in: null },
     { client_id: 'c1', product_code: 'registered_agent', status: 'active', included_in: 'pkg_essencial' },
     { client_id: 'c1', product_code: 'virtual_address', status: 'active', included_in: 'pkg_essencial' },
     { client_id: 'c1', product_code: 'crm', status: 'active', included_in: null }] };
-  function q(table) { const o = { _t: table, select() { return o; }, neq() { return o; }, eq() { return o; }, order() { return o; },
+  function q(table) { const o = { _t: table, select() { return o; }, in() { return o; }, neq() { return o; }, eq() { return o; }, order() { return o; },
     then(res) { const p = table === 'store_products' ? fetch('/rest/v1/store_products').then(r => r.json()).then(d => ({ data: d })) : Promise.resolve({ data: DATA[table] || [] }); return p.then(res); } }; return o; }
   const C = {
     sb: { from: q, rpc: async (n) => ({ data: n === 'client_is_member' }), auth: { getSession: async () => ({ data: { session: { access_token: 't' } } }) } },

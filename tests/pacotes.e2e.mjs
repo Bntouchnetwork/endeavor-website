@@ -10,6 +10,7 @@ const ok = (c, n) => { console.log((c ? "✓ " : "✗ ") + n); if (!c) falhas.pu
 const CAT = [
   { code: "pkg_essencial", kind: "package", price_cents: 5900, setup_cents: 99900, member_cents: null, category: "empresa", interval: "month", status: "active", sort: 1 },
   { code: "pkg_completo", kind: "package", price_cents: 19900, setup_cents: 149700, member_cents: null, category: "empresa", interval: "month", status: "active", sort: 2 },
+  { code: "pkg_holding", kind: "package", price_cents: 24900, setup_cents: 0, member_cents: null, category: "empresa", interval: "month", status: "hidden", sort: 3 },
   { code: "crm", kind: "tool", price_cents: 2900, setup_cents: 0, member_cents: 2300, category: "vendas", interval: "month", status: "active", sort: 10 },
   { code: "agenda", kind: "tool", price_cents: 1900, setup_cents: 0, member_cents: 1500, category: "vendas", interval: "month", status: "active", sort: 20 },
   { code: "esign", kind: "tool", price_cents: 1900, setup_cents: 0, member_cents: 1500, category: "documentos", interval: "month", status: "active", sort: 30 },
@@ -151,6 +152,17 @@ try {
   ok(n2 > n1 && await semRolagem(ad) && await cabeTudo(ad), `tela maior: mais cards por página (${n2}), ainda sem rolagem`);
   await ad.goto(`${BASE}/tests/fixtures/addons.html#/addons`); await ad.waitForSelector("#ad-q");
   ok((await ad.textContent(".subtabs [aria-current]")) === "Add-ons", "link antigo #/addons abre a aba Add-ons de Serviços");
+  const ho = await pagina({ viewport: { width: 1280, height: 720 } });
+  await ho.goto(`${BASE}/tests/fixtures/addons.html?plano=holding#/servicos`); await ho.waitForSelector("#sv-grid .sv-card"); await ho.waitForTimeout(300);
+  const ht = await ho.textContent("#sv-grid");
+  ok((await ho.textContent(".subtabs [aria-current]")) === "Meu plano" && ht.includes("Pacote Operacional + Holding") && ht.includes("$249") && ht.includes("duas empresas"), "Holding: Meu plano mostra o pacote com $249/mês");
+  ok(await ho.locator("#sv-grid .sv-card").count() === 4 && (ht.match(/No seu pacote/g) || []).length === 3 && ht.includes("Bookkeeping") && ht.includes("Registered Agent") && ht.includes("Endereço Virtual") && !ht.includes("Cancelar"), "Holding: bookkeeping, registered agent e endereço como ativos no pacote, sem cancelar avulso");
+  ok(await semRolagem(ho) && await cabeTudo(ho), "Holding: sem rolagem, cards inteiros");
+  await ho.screenshot({ path: OUT + "/servicos-holding.png" });
+  await ho.click('.subtabs a[href$="tab=addons"]'); await ho.waitForSelector("#ad-q"); await ho.fill("#ad-q", "book");
+  ok((await ho.textContent("#sv-grid")).includes("No seu pacote") && !(await ho.locator("#sv-grid [data-buy]").count()), "Holding: na aba Add-ons o bookkeeping aparece ativo, sem contratar");
+  await ho.fill("#ad-q", "crm");
+  ok(await ho.locator('#sv-grid [data-buy="crm"]').count() === 1 && (await ho.textContent("#sv-grid")).includes("Preço de cliente"), "Holding: o resto fica aberto para contratar, com preço de cliente");
   const cel = await pagina({ ...devices["iPhone 13"] });
   await cel.goto(`${BASE}/tests/fixtures/addons.html#/servicos?tab=addons`); await cel.waitForSelector("#sv-grid .sv-card"); await cel.waitForTimeout(300);
   ok(await cel.locator("#sv-grid .sv-card").count() === total && await cel.locator("#sv-pager").isHidden(), "celular: todos os cards, um embaixo do outro, sem páginas");

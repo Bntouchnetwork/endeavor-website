@@ -129,7 +129,7 @@
      calculada pelo tamanho da tela. No celular os cards ficam um embaixo do outro, com rolagem normal. */
   var EXTRA = [['webmeeting', 'Web Meeting', 'comunicacao', 'meetOn'], ['webinar', 'Live Webinar', 'comunicacao', 'meetOn'], ['whatsapp', 'WhatsApp Manager', 'vendas', 'waOn']];
   var CATS = ['empresa', 'vendas', 'comunicacao', 'financeiro', 'documentos'];
-  var PACOTES = ['pkg_completo', 'pkg_essencial'];
+  var PACOTES = ['pkg_holding', 'pkg_completo', 'pkg_essencial'];
   var CARD_W = 224, CARD_H = 216, CARD_MAX = 280, GAP = 16, svObs = null;
   /** Quantos cards cabem: colunas × linhas no espaço livre (0 = celular, mostra todos). */
   function cabem(w, h) {
@@ -141,8 +141,11 @@
   async function services(view, forcarAba) {
     var cid = C.S.client.id, orderBack = C.param('order');
     var res = await Promise.all([C.q(C.sb.from('store_products').select('*').neq('status', 'hidden').order('sort')), C.q(C.sb.from('client_services').select('*').eq('client_id', cid)),
-      C.sb.rpc('client_is_member', { p_client: cid })]);
+      C.sb.rpc('client_is_member', { p_client: cid }),
+      // o pacote da conta, mesmo quando é vendido só por proposta (escondido na loja)
+      C.sb.from('store_products').select('*').in('code', PACOTES)]);
     var prod = {}; res[0].forEach(function (p) { prod[p.code] = p; });
+    ((res[3] && res[3].data) || []).forEach(function (p) { prod[p.code] = p; });
     var by = {}; res[1].forEach(function (x) { if (x.status !== 'canceled') by[x.product_code] = x; });
     var member = !!(res[2] && res[2].data), plan = PACOTES.filter(function (c) { return by[c]; })[0];
     var meus = res[1].filter(function (x) { return x.status !== 'canceled' && PACOTES.indexOf(x.product_code) < 0; });
@@ -164,7 +167,7 @@
       var p = prod[plan] || {}, inc = res[1].filter(function (x) { return x.included_in === plan && x.status !== 'canceled'; });
       return '<section class="portal-card tl-card tl-card--on sv-card sv-card--plano' + (medida.cols >= 2 ? ' sv-card--largo' : '') + '"><div class="sv-top"><h2 class="portal-h2">' + esc(svcName(plan)) + '</h2><span class="pill pill--report">' + t(by[plan].status === 'past_due' ? 'past_due' : 'active') + '</span></div>' +
         '<p class="ad-cat portal-muted">' + t('ad_plan') + '</p>' + (p.price_cents != null ? '<p class="tl-price"><strong>' + EStore.money(p.price_cents) + '</strong> <span class="portal-muted">' + esc(EStore.interval(p.interval, L)) + '</span></p>' : '') +
-        '<p class="sv-lead"><strong>' + t('ad_included') + ':</strong> ' + inc.map(function (x) { return esc(svcName(x.product_code)); }).join(', ') + '</p></section>';
+        (info(plan).lead ? '<p class="sv-lead">' + esc(info(plan).lead) + '</p>' : '') + '<p class="sv-lead"><strong>' + t('ad_included') + ':</strong> ' + inc.map(function (x) { return esc(svcName(x.product_code)); }).join(', ') + '</p></section>';
     }
     function cardMeu(s) {
       var code = s.product_code, p = prod[code] || {}, i = info(code);

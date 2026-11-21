@@ -254,5 +254,5 @@
   }
 
   // the checkout script expects EStore (store-catalog.js)
-  if (!window.EStore) { var s = document.createElement('script'); s.src = 'store-catalog.js?v=20261201'; s.onload = start; document.head.appendChild(s); } else start();
+  if (!window.EStore) { var s = document.createElement('script'); s.src = 'store-catalog.js?v=20261208'; s.onload = start; document.head.appendChild(s); } else start();
 })();
