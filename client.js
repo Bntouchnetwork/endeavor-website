@@ -336,6 +336,8 @@
     // "Forgot my password" button of the access e-mail / checkout page
     if (/[?&]forgot=1/.test(location.search)) { history.replaceState(null, '', location.pathname + location.search.replace(/[?&]forgot=1/, '').replace(/^&/, '?')); return renderForgot(false); }
     if (AUTH_ERR) { var e0 = AUTH_ERR; AUTH_ERR = null; history.replaceState(null, '', location.pathname + location.search); return renderForgot(true, e0); }
+    // login único: quem não está logado entra por login.html (os links de convite e de nova senha continuam abrindo aqui)
+    if (/^https?:$/.test(location.protocol) && !window.ENDEAVOR_NO_LOGIN_REDIRECT) return location.replace('login.html?lang=' + L);
     authShell('<h1 class="portal-h1">' + t('loginTitle') + '</h1><p class="portal-muted">' + t('loginLead') + '</p>' +
       '<form class="portal-form" id="f-login" novalidate><div class="field"><label for="l-email">' + t('email') + '</label><input id="l-email" type="email" autocomplete="username" required></div>' +
       pwField('l-pass', t('password'), 'current-password') +

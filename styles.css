@@ -1150,3 +1150,4 @@ fieldset.field.att-set legend{padding:0;margin-bottom:.4rem;font-weight:600;font
 .site-footer .wa-ico { color: #fff; margin-left: .35rem; }
 html.a11y-contrast .wa-ico { background: #000; border: 2px solid #fff; }
 [data-lang-only][hidden] { display: none !important; }
+a.login__toggle, a.login__toggle:hover { text-decoration: none; }

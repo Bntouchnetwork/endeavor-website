@@ -22,50 +22,36 @@
     </nav>
   </div>
 </header>
-<main class="portal-main" id="main" style="max-width:64rem">
-  <h1 class="portal-h1" data-t="title">Sign in</h1>
-  <p class="portal-muted" data-t="lead" style="margin-bottom:1.5rem">Choose how you want to access Endeavor.</p>
-  <div class="portal-alert portal-alert--info" id="tok-note" hidden></div>
-  <div class="choice">
-    <a href="client.html" data-keep-lang>
-      <span class="choice__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M8.5 7V5.5A1.5 1.5 0 0110 4h4a1.5 1.5 0 011.5 1.5V7M3 12.5h18" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></span>
-      <strong data-t="client">Client portal</strong>
-      <span data-t="clientText">Your companies, formation documents, tax deadlines, financial reports and document uploads.</span>
-    </a>
-    <a href="partner.html" data-keep-lang>
-      <span class="choice__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12l3-3 4 1 3-2 3 1 5 3M7 15l2 2a1.5 1.5 0 002 0l1-1M10 17.5l1 1a1.5 1.5 0 002 0l2-2M14 16l1 1a1.5 1.5 0 002-2l-4-4M3 12l4 4M21 12l-3 3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <strong data-t="partner">Partner portal</strong>
-      <span data-t="partnerText">For referral partners, and for accountants, bookkeepers and property managers invited by a client.</span>
-    </a>
-    <a href="admin.html">
-      <span class="choice__ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-      <strong data-t="admin">Endeavor team</strong>
-      <span data-t="adminText">Admin console for the Endeavor team.</span>
-    </a>
+<main class="portal-main portal-main--auth" id="main">
+  <div class="auth portal-card" id="card">
+    <h1 class="portal-h1" data-t="title">Sign in</h1>
+    <p class="portal-muted" id="lead" data-t="lead">One sign-in for every Endeavor account.</p>
+    <form class="portal-form" id="f-login" novalidate>
+      <div class="field"><label for="l-email" data-t="email">E-mail</label><input id="l-email" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="l-pass" data-t="password">Password</label><div class="pw-wrap"><input id="l-pass" type="password" autocomplete="current-password" required>
+        <button type="button" class="pw-eye" id="l-eye" data-t-aria="showPass" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/></svg></button></div></div>
+      <div class="portal-alert" id="l-msg" role="alert"></div>
+      <button class="btn btn--navy btn--block" type="submit" id="l-go" data-t="signIn">Sign in</button>
+      <p class="auth-links"><a href="#" id="l-forgot" data-t="forgot">Forgot my password</a></p>
+    </form>
+    <form class="portal-form" id="f-forgot" novalidate hidden>
+      <p class="portal-muted" data-t="forgotLead">Enter your e-mail and we will send a link to create a new password.</p>
+      <div class="portal-alert portal-alert--error" id="fg-exp" hidden data-t="linkExpired">This link has expired or was already used. Ask for a new one below.</div>
+      <div class="field"><label for="fg-email" data-t="email">E-mail</label><input id="fg-email" type="email" autocomplete="username" required></div>
+      <div class="portal-alert" id="fg-msg" role="status"></div>
+      <button class="btn btn--navy btn--block" type="submit" id="fg-go" data-t="sendLink">Send the link</button>
+      <p class="auth-links"><a href="#" id="fg-back" data-t="backLogin">Back to sign in</a></p>
+    </form>
+    <div id="pick" hidden>
+      <p class="portal-muted" id="pick-lead"></p>
+      <div class="portal-btn-row" id="pick-list" style="flex-direction:column;align-items:stretch"></div>
+    </div>
+    <p class="portal-muted auth-help" data-t="help">Need access? Write to support@endeavorbiz.com.</p>
   </div>
-  <p class="portal-muted" style="margin-top:1.5rem;font-size:.85rem" data-t="help">Need access? Write to support@endeavorbiz.com.</p>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <script src="app-config.js?v=20261212"></script>
 <script src="portal-common.js?v=20261212"></script>
-<script>
-  var T = EP.init({
-    en: { tokNote: 'Choose your portal to create your new password.' },
-    pt: { docTitle: 'Entrar | Endeavor Business Hub', title: 'Entrar', lead: 'Escolha como você quer acessar a Endeavor.', client: 'Portal do cliente',
-      clientText: 'Suas empresas, documentos de formação, prazos fiscais, relatórios financeiros e envio de documentos.', admin: 'Equipe Endeavor',
-      adminText: 'Console administrativo da equipe Endeavor.', tokNote: 'Escolha o seu portal para criar a nova senha.', partner: 'Portal do parceiro', partnerText: 'Para parceiros de indicação e para contadores, bookkeepers e administradores de imóveis convidados por um cliente.', help: 'Precisa de acesso? Escreva para support@endeavorbiz.com.' },
-    es: { docTitle: 'Ingresar | Endeavor Business Hub', title: 'Ingresar', lead: 'Elija cómo quiere acceder a Endeavor.', client: 'Portal del cliente',
-      clientText: 'Sus empresas, documentos de constitución, plazos fiscales, reportes financieros y envío de documentos.', admin: 'Equipo Endeavor',
-      adminText: 'Consola administrativa del equipo Endeavor.', tokNote: 'Elija su portal para crear la nueva contraseña.', partner: 'Portal de socios', partnerText: 'Para socios de referidos y para contadores, bookkeepers y administradores de propiedades invitados por un cliente.', help: '¿Necesita acceso? Escriba a support@endeavorbiz.com.' }
-  });
-  // a password/invitation link arrived here: keep its token when the person picks a portal
-  (function () {
-    var h = location.hash;
-    if (!/[#&](access_token|error_code)=/.test(h)) return;
-    var n = document.getElementById('tok-note'); n.hidden = false; n.style.display = 'block'; n.textContent = T('tokNote');
-    Array.prototype.forEach.call(document.querySelectorAll('.choice a'), function (a) {
-      a.addEventListener('click', function (e) { e.preventDefault(); location.href = a.href.split('#')[0] + h; });
-    });
-  })();
-</script>
+<script src="login.js?v=20261215"></script>
 </body>
 </html>

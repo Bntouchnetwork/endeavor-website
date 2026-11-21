@@ -77,6 +77,7 @@
     document.querySelectorAll('.js-sched').forEach(function (l) { l.href = 'schedule.html?lang=' + lang; });
     document.querySelectorAll('.js-partners').forEach(function (l) { l.href = 'partners.html?lang=' + lang; });
     document.querySelectorAll('.js-partners-signup').forEach(function (l) { l.href = 'partners.html?lang=' + lang + '#cadastro'; });
+    document.querySelectorAll('.js-login').forEach(function (l) { l.href = 'login.html?lang=' + lang; });
     document.querySelectorAll('.js-client').forEach(function (l) { l.href = 'client.html?lang=' + lang; });
     document.querySelectorAll('.js-buy').forEach(function (l) { l.href = 'comprar.html?p=' + l.getAttribute('data-p') + '&lang=' + lang; });
     document.querySelectorAll('.js-partner').forEach(function (l) { l.href = 'partner.html?lang=' + lang; });

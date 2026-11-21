@@ -90,6 +90,8 @@
   function wireEyes() { $$('[data-eye]').forEach(function (b) { b.onclick = function () { var i = document.getElementById(b.dataset.eye), on = i.type === 'password'; i.type = on ? 'text' : 'password'; b.setAttribute('aria-pressed', String(on)); }; }); }
   function renderLogin() {
     if (AUTH_ERR) { AUTH_ERR = false; history.replaceState(null, '', location.pathname); return renderForgot(true); }
+    // login único: quem não está logado entra por login.html (o link de nova senha continua abrindo aqui)
+    if (/^https?:$/.test(location.protocol) && !window.ENDEAVOR_NO_LOGIN_REDIRECT) return location.replace('login.html');
     authShell(
       '<h1 class="portal-h1">Console Admin</h1><p class="portal-muted">Acesso restrito à equipe da Endeavor.</p>' +
       '<form class="portal-form" id="f-login" novalidate>' +

@@ -402,7 +402,7 @@ async function sendAccess(email: string, page: string, lang: string, o: { kind?:
 // "Forgot password" on the portals: same branded e-mail; never says whether the address exists; at most 3 per hour per address
 async function accessReset(body: any) {
   const email = String(body.email || "").trim().toLowerCase();
-  const page = body.page === "partner.html" ? "partner.html" : "client.html";
+  const page = ["partner.html", "login.html"].includes(body.page) ? String(body.page) : "client.html"; // login.html = login único, que leva ao portal da conta
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Fail("invalid_email");
   const since = new Date(Date.now() - 36e5).toISOString();
   const { count } = await admin.from("access_mail_log").select("id", { count: "exact", head: true }).eq("email", email).gte("sent_at", since);
