@@ -433,7 +433,20 @@
     var esc = ctx.esc;
     if (!companies.length) { body.innerHTML = '<div class="portal-card empty-state"><strong>Cadastre uma empresa primeiro</strong>Os documentos ficam organizados por empresa.</div>'; return; }
     var docs = await ctx.q(ctx.sb.from('company_documents').select('*').eq('client_id', c.id).order('created_at', { ascending: false }));
-    body.innerHTML = '<section class="portal-card"><h2 class="portal-h2">Adicionar documento</h2><form class="portal-form" id="up-form">' +
+    var reqs = (await ctx.sb.from('portal_doc_requests').select('*').eq('client_id', c.id).order('created_at', { ascending: false }).limit(100)).data || [];
+    var RS = { pending: 'Pendente', received: 'Recebido', cancelled: 'Cancelado' };
+    var coNome = function (id) { var x = companies.find(function (k) { return k.id === id; }); return x ? x.legal_name : ''; };
+    body.innerHTML = '<section class="portal-card" id="rq-card"><h2 class="portal-h2">Pedir documentos ao cliente</h2><p class="portal-muted" style="margin:-.25rem 0 .6rem">O cliente recebe o aviso por e-mail e vê o pedido no topo da página Documentos do portal. Peça só o arquivo; nunca números de documentos.</p>' +
+      '<form class="portal-form" id="rq-form"><div class="portal-grid2">' + field('rq-title', 'Nome do documento', '', 'text', true, ' maxlength="160" placeholder="Ex.: Extrato bancário de outubro"') +
+      '<div class="field"><label for="rq-co">Empresa (opcional)</label><select id="rq-co"><option value="">—</option>' + companies.map(function (co) { return '<option value="' + co.id + '">' + esc(co.legal_name) + '</option>'; }).join('') + '</select></div>' +
+      field('rq-due', 'Prazo (opcional)', '', 'date', false) + field('rq-note', 'Observação (opcional)', '', 'text', false, ' maxlength="300"') + '</div>' +
+      '<div class="portal-alert" id="rq-msg" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">Pedir e avisar por e-mail</button></form>' +
+      (reqs.length ? '<ul class="doclist" id="rq-list" style="margin-top:.9rem">' + reqs.map(function (r) {
+        return '<li><span class="ficon" aria-hidden="true">' + (r.status === 'received' ? '✓' : r.status === 'cancelled' ? '×' : '!') + '</span><div><div class="dname">' + esc(r.title) + '</div><div class="dmeta"><strong>' + RS[r.status] + '</strong>' +
+          [coNome(r.company_id), r.due_date ? 'prazo ' + r.due_date.split('-').reverse().join('/') : '', r.note || '', 'pedido em ' + ctx.fmtDT(r.created_at), r.status === 'received' && r.received_at ? 'recebido em ' + ctx.fmtDT(r.received_at) : '', r.status === 'pending' && !r.notified_at ? 'e-mail não enviado' : ''].filter(Boolean).map(function (x) { return ' · ' + esc(x); }).join('') + '</div></div>' +
+          '<div class="portal-btn-row">' + (r.status === 'received' && r.document_id ? '<button class="btn btn--ghost btn--xs" type="button" data-rq-ver="' + r.document_id + '">Ver</button>' : '') +
+          (r.status === 'pending' ? (r.notified_at ? '' : '<button class="btn btn--ghost btn--xs" type="button" data-rq-mail="1">Enviar e-mail</button>') + '<button class="btn btn--ghost btn--xs" type="button" data-rq-cancel="' + r.id + '">Cancelar</button>' : '') + '</div></li>'; }).join('') + '</ul>' : '') + '</section>' +
+      '<section class="portal-card"><h2 class="portal-h2">Adicionar documento</h2><form class="portal-form" id="up-form">' +
       '<div class="portal-grid2"><div class="field"><label for="up-co">Empresa</label><select id="up-co">' + companies.map(function (co) { return '<option value="' + co.id + '">' + esc(co.legal_name) + '</option>'; }).join('') + '</select></div>' +
       select('up-cat', 'Categoria', { formation: DOC_CAT.formation, onboarding: DOC_CAT.onboarding, tax_return: DOC_CAT.tax_return, compliance: DOC_CAT.compliance, report: DOC_CAT.report, other: DOC_CAT.other }, 'formation') +
       field('up-title', 'Título', '', 'text', true, ' placeholder="Ex.: Articles of Organization"') + field('up-year', 'Ano (opcional)', '', 'number', false, ' min="1990" max="2100"') + '</div>' +
@@ -442,6 +455,24 @@
       '<div class="portal-alert" id="up-msg" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">Enviar documento</button></form></section>' +
       '<section class="portal-card"><div class="toolbar" style="justify-content:space-between"><h2 class="portal-h2" style="margin:0">Documentos</h2>' +
       '<select id="dl-filter" aria-label="Filtrar por empresa"><option value="">Todas as empresas</option>' + companies.map(function (co) { return '<option value="' + co.id + '">' + esc(co.legal_name) + '</option>'; }).join('') + '</select></div><ul class="doclist" id="doc-list"></ul></section>';
+    var avisar = async function (m) {
+      try { var j = await payCall(ctx, { action: 'doc_request_notify', client_id: c.id }); return j && j.sent; }
+      catch (err) { if (m) ctx.msg(m, 'Pedido criado, mas o e-mail não saiu: ' + ctx.errText(err), 'error'); return -1; }
+    };
+    body.querySelector('#rq-form').onsubmit = async function (e) {
+      e.preventDefault();
+      var m = body.querySelector('#rq-msg'), title = body.querySelector('#rq-title').value.trim();
+      if (!title) return ctx.msg(m, 'Escreva o nome do documento.', 'error');
+      ctx.msg(m, 'Enviando…', 'info');
+      var r = await ctx.sb.from('portal_doc_requests').insert({ client_id: c.id, company_id: body.querySelector('#rq-co').value || null, title: title, due_date: body.querySelector('#rq-due').value || null, note: body.querySelector('#rq-note').value.trim() || null, created_by: ((await ctx.sb.auth.getUser()).data.user || {}).email || null });
+      if (r.error) return ctx.msg(m, ctx.errText(r.error), 'error');
+      if ((await avisar(m)) !== -1) ctx.route();
+    };
+    body.querySelectorAll('[data-rq-mail]').forEach(function (b) { b.onclick = async function () { b.disabled = true; if ((await avisar(body.querySelector('#rq-msg'))) !== -1) ctx.route(); else b.disabled = false; }; });
+    body.querySelectorAll('[data-rq-cancel]').forEach(function (b) { b.onclick = async function () {
+      if (!confirm('Cancelar este pedido? Ele sai da lista do cliente.')) return;
+      var r = await ctx.sb.from('portal_doc_requests').update({ status: 'cancelled' }).eq('id', b.dataset.rqCancel); if (!r.error) ctx.route(); }; });
+    body.querySelectorAll('[data-rq-ver]').forEach(function (b) { b.onclick = function () { var d = docs.find(function (x) { return x.id === b.dataset.rqVer; }); if (d) ctx.viewFile('client-docs', d.path, d.title, { mime: d.mime }); }; });
     var fileIn = body.querySelector('#up-file');
     fileIn.onchange = function () { var f = fileIn.files[0]; body.querySelector('#up-fname').textContent = f ? f.name + ' · ' + Math.round(f.size / 1024) + ' KB' : ''; if (f && !body.querySelector('#up-title').value) body.querySelector('#up-title').value = f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' '); };
     body.querySelector('#up-form').onsubmit = async function (e) {
@@ -468,7 +499,7 @@
       body.querySelector('#doc-list').innerHTML = rows.length ? rows.map(function (d) {
         var co = companies.find(function (x) { return x.id === d.company_id; });
         return '<li><span class="ficon" aria-hidden="true">' + fileIcon(d.path) + '</span><div><div class="dname">' + esc(d.title) + (d.year ? ' (' + d.year + ')' : '') + '</div>' +
-          '<div class="dmeta"><span class="pill pill--' + d.category + '">' + esc(DOC_CAT[d.category]) + '</span> ' + esc(co ? co.legal_name : '') + ' · ' + esc(ctx.fmtDT(d.created_at)) + ' · ' + esc(d.uploaded_by_email || '') + (d.visible_to_client ? '' : ' · <strong>oculto do cliente</strong>') + '</div></div>' +
+          '<div class="dmeta"><span class="pill pill--' + d.category + '">' + esc(DOC_CAT[d.category]) + '</span> ' + esc(co ? co.legal_name : '') + ' · ' + esc(ctx.fmtDT(d.created_at)) + ' · ' + esc(d.uploaded_by_email || '') + (d.visible_to_client ? '' : ' · <strong>oculto do cliente</strong>') + (d.deleted_at ? ' · <strong>excluído pelo cliente</strong>' : '') + '</div></div>' +
           '<div class="portal-btn-row"><button class="btn btn--ghost btn--xs" data-view="' + d.id + '">Ver</button><button class="btn btn--ghost btn--xs" data-vis="' + d.id + '">' + (d.visible_to_client ? 'Ocultar' : 'Mostrar') + '</button><button class="btn btn--ghost btn--xs" data-log="' + d.id + '">Acessos</button><button class="btn btn--danger btn--xs" data-del="' + d.id + '">Excluir</button></div></li>';
       }).join('') : '<li><div class="empty-state" style="grid-column:1/-1"><strong>Nenhum documento</strong></div></li>';
       var find = function (id) { return docs.find(function (x) { return x.id === id; }); };

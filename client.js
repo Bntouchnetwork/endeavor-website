@@ -283,7 +283,8 @@
   }
   // documents the user has not opened yet (blue counter next to "Documents")
   async function checkNewDocs() {
-    S.docSeen = {}; S.docNew = 0;
+    S.docSeen = {}; S.docNew = 0; S.docReq = 0;
+    if (S.client && S.perms.upload) { var pr = await sb.from('portal_doc_requests').select('id').eq('client_id', S.client.id).eq('status', 'pending'); S.docReq = (pr.data || []).length; }
     if (!S.client || !S.perms.view) return;
     var r = await Promise.all([sb.rpc('my_doc_views', { p_client: S.client.id }), sb.from('company_documents').select('id, uploaded_by').eq('client_id', S.client.id)]);
     (r[0].data || []).forEach(function (x) { S.docSeen[x.document_id || x] = 1; });
@@ -291,8 +292,9 @@
   }
   function isNewDoc(d) { return S.docSeen && !S.docSeen[d.id] && d.uploaded_by !== (S.user && S.user.id); }
   function updateDocBadge() {
-    var n = S.docNew || 0, b = document.getElementById('doc-badge');
-    if (b) { b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n); b.setAttribute('aria-label', t('newDocs', { n: n })); b.title = t('newDocs', { n: n }); }
+    // documentos pedidos pela equipe têm prioridade no contador; sem pedidos, ele mostra os documentos novos
+    var pend = S.docReq || 0, n = pend || S.docNew || 0, b = document.getElementById('doc-badge'), dica = pend ? dx('pedidos') + ': ' + pend : t('newDocs', { n: n });
+    if (b) { b.hidden = !n; b.textContent = n > 9 ? '9+' : String(n); b.setAttribute('aria-label', dica); b.title = dica; }
   }
   async function checkOpenInvoices() {
     S.openInv = { n: 0, cents: 0 };
@@ -575,10 +577,25 @@
       return '<li><span class="ficon" aria-hidden="true">' + fileIcon(d.path) + '</span><div><div class="dname">' + esc(d.title) + (d.year ? ' (' + d.year + ')' : '') + (isNewDoc(d) ? ' <span class="pill pill--new" data-new="' + d.id + '">' + t('isNew') + '</span>' : '') + '</div>' +
         '<div class="dmeta"><span class="pill pill--' + d.category + '">' + esc(t('cat_' + d.category)) + '</span> ' + (showCompany && co ? esc(co.legal_name) + ' · ' : '') + esc(fmtDate(d.created_at)) +
         (d.category === 'uploaded' && d.uploaded_by_email ? ' · ' + esc(t('uploadedBy', { e: d.uploaded_by_email })) : '') + '</div></div>' +
-        '<button class="btn btn--ghost btn--xs" type="button" data-doc="' + d.id + '">' + t('view') + '</button></li>';
+        '<div class="doc-acoes"><button class="btn btn--ghost btn--xs" type="button" data-doc="' + d.id + '">' + t('view') + '</button><button class="btn btn--ghost btn--xs" type="button" data-dl="' + d.id + '">' + dx('baixar') + '</button>' +
+        (d.category === 'uploaded' && S.user && d.uploaded_by === S.user.id ? '<button class="btn btn--ghost btn--xs doc-del" type="button" data-del="' + d.id + '">' + dx('excluir') + '</button>' : '') + '</div></li>';
     }).join('') + '</ul>';
   }
-  function wireDocs(root, docs) { $$('[data-doc]', root).forEach(function (b) { b.onclick = function () { viewDoc(docs.find(function (d) { return d.id === b.dataset.doc; })); }; }); }
+  function wireDocs(root, docs) {
+    var acha = function (id) { return docs.find(function (d) { return d.id === id; }); };
+    $$('[data-doc]', root).forEach(function (b) { b.onclick = function () { viewDoc(acha(b.dataset.doc)); }; });
+    $$('[data-dl]', root).forEach(function (b) { b.onclick = async function () {
+      var d = acha(b.dataset.dl); if (!d) return; b.disabled = true;
+      try { var r = await sb.storage.from('client-docs').createSignedUrl(d.path, 300); if (r.error) throw r.error; var blob = await (await fetch(r.data.signedUrl)).blob();
+        download(d.title.replace(/[\\/:*?"<>|]+/g, '-') + ((d.path.match(/\.[a-z0-9]+$/i) || [''])[0]), blob); logAccess(d, 'download'); }
+      catch (e) { alert(t('viewErr')); }
+      b.disabled = false; }; });
+    $$('[data-del]', root).forEach(function (b) { b.onclick = async function () {
+      var d = acha(b.dataset.del); if (!d || !confirm(dx('excluirQ', { t: d.title }))) return; b.disabled = true;
+      var r = await sb.rpc('portal_doc_delete', { p_doc: d.id });
+      if (r.error) { b.disabled = false; return alert(errText(r.error)); }
+      route(); }; });
+  }
 
   /* ---------------- views ---------------- */
   async function vOverview(view) {
@@ -645,18 +662,23 @@
     } else body.innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
   }
 
-  var DOCX = { en: { novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
-    pt: { novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
-    es: { novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
-  function dx(k) { return (DOCX[L] || DOCX.en)[k]; }
+  var DOCX = { en: { baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
+    pt: { baixar: 'Baixar', excluir: 'Excluir', excluirQ: 'Excluir "{t}"? Ele sai da sua lista. Não dá para desfazer por aqui.', pedidos: 'Documentos solicitados', pedidosLead: 'A Endeavor pediu estes documentos. Envie cada um por aqui.', enviar: 'Enviar', prazo: 'Prazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
+    es: { baixar: 'Descargar', excluir: 'Eliminar', excluirQ: '¿Eliminar "{t}"? Sale de su lista. No se puede deshacer aquí.', pedidos: 'Documentos solicitados', pedidosLead: 'Endeavor pidió estos documentos. Envíe cada uno por aquí.', enviar: 'Enviar', prazo: 'Plazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
+  function dx(k, v) { var x = (DOCX[L] || DOCX.en)[k]; Object.keys(v || {}).forEach(function (n) { x = x.split('{' + n + '}').join(v[n]); }); return x; }
   async function vDocuments(view) {
     // o envio de documentos mora aqui dentro: botão "Novo documento" (o endereço antigo #/upload também abre esta tela)
     if (param('new') && S.perms.upload) return vUpload(view);
     var docs = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).order('created_at', { ascending: false }));
-    view.innerHTML = head(t('nav_documents'), t('privacyNote'), S.perms.upload ? '<a class="btn btn--gold btn--sm" id="d-new" href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</a>' : '') +
-      '<div class="toolbar"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
+    var pedidos = S.perms.upload ? ((await sb.from('portal_doc_requests').select('*').eq('client_id', S.client.id).eq('status', 'pending').order('created_at')).data || []) : [];
+    S.docReq = pedidos.length; updateDocBadge();
+    view.innerHTML = head(t('nav_documents'), t('privacyNote')) +
+      (pedidos.length ? '<section class="portal-card doc-pedidos" id="d-req"><h2 class="portal-h2">' + dx('pedidos') + ' <span class="nav-badge" style="position:static;display:inline-grid">' + pedidos.length + '</span></h2><p class="portal-muted" style="margin:-.25rem 0 .6rem">' + dx('pedidosLead') + '</p><ul class="doclist">' + pedidos.map(function (r) { var co = r.company_id && coById(r.company_id);
+        return '<li><span class="ficon" aria-hidden="true">!</span><div><div class="dname">' + esc(r.title) + '</div><div class="dmeta">' + [co ? esc(co.legal_name) : '', r.due_date ? esc(dx('prazo', { d: fmtDate(r.due_date) })) : '', r.note ? esc(r.note) : ''].filter(Boolean).join(' · ') + '</div></div><a class="btn btn--navy btn--xs" href="#/documents?new=1&req=' + r.id + '">' + dx('enviar') + '</a></li>'; }).join('') + '</ul></section>' : '') +
+      '<div class="toolbar doc-barra"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
       '<select id="d-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
-      '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select></div>' +
+      '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select>' +
+      (S.perms.upload ? '<a class="btn btn--gold btn--sm doc-novo" id="d-new" href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</a>' : '') + '</div>' +
       '<div id="d-list"></div>';
     function draw() {
       var s = $('#d-q').value.trim().toLowerCase(), co = $('#d-co').value, cat = $('#d-cat').value;
@@ -769,7 +791,8 @@
     var mine = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).eq('category', 'uploaded').eq('uploaded_by', S.user.id).order('created_at', { ascending: false }).limit(50));
     var y = new Date().getFullYear();
     var tipos = S.perms.cats.filter(function (c) { return c !== 'uploaded'; });
-    view.innerHTML = volta + head(dx('novo'), t('uploadLead')) +
+    var reqId = param('req'), pedido = reqId ? ((await sb.from('portal_doc_requests').select('*').eq('id', reqId).eq('status', 'pending').maybeSingle()).data || null) : null;
+    view.innerHTML = volta + head(dx('novo'), pedido ? dx('paraPedido', { t: pedido.title }) : t('uploadLead')) +
       '<section class="portal-card"><form class="portal-form" id="u-form" novalidate><div class="portal-grid2"><div class="field"><label for="u-co">' + t('company') + '</label><select id="u-co">' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="u-year">' + t('yearOpt') + '</label><select id="u-year"><option value="">—</option>' + [y, y - 1, y - 2, y - 3].map(function (v) { return '<option' + (v === y - 1 ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></div></div>' +
       '<div class="field"><label for="u-tipo">' + dx('tipo') + '</label><select id="u-tipo"><option value="">' + dx('outro') + '</option>' + tipos.map(function (c) { return '<option value="' + c + '">' + esc(t('cat_' + c)) + '</option>'; }).join('') + '</select></div>' +
@@ -778,6 +801,7 @@
       '<div class="portal-alert" id="u-msg" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('send') + '</button></form></section>' +
       '<section class="portal-card"><h2 class="portal-h2">' + t('myUploads') + '</h2>' + docItems(mine, true) + '</section>';
     wireDocs(view, mine);
+    if (pedido) { $('#u-title').value = pedido.title; if (pedido.company_id && coById(pedido.company_id)) $('#u-co').value = pedido.company_id; }
     var input = $('#u-file'), zone = $('#u-zone'), files = [];
     var show = function () { $('#u-names').textContent = files.length ? files.map(function (f) { return f.name; }).join(', ') : t('fileHint'); };
     input.onchange = function () { files = Array.prototype.slice.call(input.files); show(); };
@@ -802,12 +826,13 @@
           var tp = $('#u-tipo') && $('#u-tipo').value; if (tp) title = (t('cat_' + tp) + ' · ' + title).slice(0, 160);
           var row = await q(sb.from('company_documents').insert({ company_id: co, client_id: S.client.id, category: 'uploaded', title: title, year: year, path: path, mime: f.type || null, size_bytes: f.size, sha256: await sha256Hex(buf), uploaded_by: S.user.id }).select('id').single());
           sb.from('doc_access_log').insert({ document_id: row.id, action: 'upload' }).then(function () {});
+          if (pedido && i === 0) await sb.rpc('portal_doc_request_done', { p_id: pedido.id, p_doc: row.id });
           names.push(f.name);
         }
         fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ _subject: 'Client portal upload: ' + S.client.name + ' (' + names.length + ' file' + (names.length > 1 ? 's' : '') + ')', _template: 'table', _captcha: 'false',
           client: S.client.name, company: (coById(co) || {}).legal_name, uploaded_by: S.user.email, files: names.join(', '), tax_year: year || '', note: 'Open the admin console > Clientes > Documentos.' }) }).catch(function () {});
         msg(m, t('sent'), 'ok'); files = []; input.value = ''; show();
-        setTimeout(route, 1200);
+        setTimeout(function () { ERoute.set('#/documents', true); route(); }, 1200);
       } catch (err) { msg(m, errText(err), 'error'); }
     };
   }

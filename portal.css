@@ -1479,3 +1479,16 @@ body.app-shell .console__content .ck-um, .ck-um { max-width: 46rem !important; m
 #bkp-lista .table-wrap { overflow-x: auto; }
 @media (min-width: 1100px) { .bkp-grid { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr) !important; } }
 .bkp-ytd .kpis { margin: 0; }
+
+/* Documentos: barra numa linha (busca menor, filtros e o botão no fim), ações de cada documento e documentos solicitados */
+.doc-barra { align-items: center; flex-wrap: nowrap; }
+.doc-barra input[type="search"] { flex: 0 1 14rem; min-width: 8rem; }
+.doc-barra select { flex: 0 1 13rem; min-width: 0; }
+.doc-barra .doc-novo { margin-left: auto; flex: none; min-height: 2.75rem; }
+@media (max-width: 760px) { .doc-barra { flex-wrap: wrap; } .doc-barra input[type="search"], .doc-barra select { flex: 1 1 100%; } .doc-barra .doc-novo { margin-left: 0; width: 100%; justify-content: center; } }
+.doc-acoes { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
+.doc-del { color: #8a2a20; }
+.doc-del:hover { background: #fbecea; border-color: #e3b4ae; color: #8a2a20; }
+.doc-pedidos { border-left: 4px solid var(--gold, #c8a45d); }
+.doc-pedidos .ficon { background: #fbf3e2; color: #7a5a12; font-weight: 700; }
+.doc-pedidos { margin-bottom: 1rem; }

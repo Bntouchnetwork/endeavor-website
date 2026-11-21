@@ -9,7 +9,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { accessEmail, accessMailOn, sendAccessMail, sendMail, sendWa, type AccessKind } from "./access-mail.ts";
 import { store, type StoreDeps } from "./store.ts";
-import { achEmail, failedEmail, intakeEmail, invoiceEmail, money as fmtMoney, proposalEmail, receiptEmail, teamEmail } from "./billing-mail.ts";
+import { achEmail, docRequestEmail, failedEmail, intakeEmail, invoiceEmail, money as fmtMoney, proposalEmail, receiptEmail, teamEmail } from "./billing-mail.ts";
 import { billingPortal } from "./billing-portal.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -702,6 +702,23 @@ async function handle(req: Request, body: any) {
     if (!cl) throw new Fail("not_found", 404);
     const q: any = await ensureIntake(cl.id, null, cl.language || "pt", true);
     return { ok: true, url: `${SITE}/intake.html?t=${q.token}&lang=${q.language}` };
+  }
+  // aviso por e-mail dos documentos pedidos pela equipe (os que ainda não foram avisados)
+  if (a === "doc_request_notify") {
+    needAdmin(c);
+    const { data: cl } = await admin.from("clients").select("id, name, language, primary_email").eq("id", String(body.client_id || "")).single();
+    if (!cl) throw new Fail("not_found", 404);
+    const { data: rs } = await admin.from("portal_doc_requests").select("id, title, note, due_date, company_id").eq("client_id", cl.id).eq("status", "pending").is("notified_at", null).order("created_at");
+    if (!rs?.length) return { ok: true, sent: 0 };
+    if (!cl.primary_email) throw new Fail("no_email", 400);
+    const ids = [...new Set(rs.map((r: any) => r.company_id).filter(Boolean))];
+    const { data: cos } = ids.length ? await admin.from("companies").select("id, legal_name").in("id", ids) : { data: [] as any[] };
+    const lang = cl.language || "pt";
+    const dia = (d: string | null) => d ? new Date(d + "T12:00:00Z").toLocaleDateString(lang === "en" ? "en-US" : lang === "es" ? "es" : "pt-BR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : null;
+    const m = docRequestEmail({ lang, name: cl.name, url: `${SITE}/login.html#/documents`, items: rs.map((r: any) => ({ title: r.title, note: r.note, due: dia(r.due_date), company: (cos || []).find((x: any) => x.id === r.company_id)?.legal_name })) });
+    await sendMail(cl.primary_email, m.subject, m.html, m.text);
+    await admin.from("portal_doc_requests").update({ notified_at: new Date().toISOString() }).in("id", rs.map((r: any) => r.id));
+    return { ok: true, sent: rs.length };
   }
   if (a === "ach_request") {
     needAdmin(c);

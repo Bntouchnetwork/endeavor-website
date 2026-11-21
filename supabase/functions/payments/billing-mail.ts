@@ -71,6 +71,18 @@ export function failedEmail(o: { lang: unknown; name: string; number: string; am
   return out(T.s, `<p style="${P}">${esc(T.hi)}</p>${H1(esc(T.s))}<p style="${P}">${esc(T.lead)}</p>${btn(o.payUrl, T.b)}${foot(l)}`);
 }
 
+/* ---------- documents requested by the team (portal > Documents) ---------- */
+export function docRequestEmail(o: { lang: unknown; name: string; items: { title: string; company?: string | null; due?: string | null; note?: string | null }[]; url: string }) {
+  const l = L(o.lang), n = first(o.name), um = o.items.length === 1;
+  const T = {
+    pt: { s: um ? "Precisamos de um documento seu" : "Precisamos de alguns documentos seus", hi: n ? `Olá, ${n}!` : "Olá!", lead: "Para seguir com o seu atendimento, envie pelo portal:", due: "Prazo", b: "Enviar pelo portal", safe: "Envie somente pelo portal, que é privado. Não mande documentos nem números de documentos por e-mail ou WhatsApp." },
+    en: { s: um ? "We need a document from you" : "We need a few documents from you", hi: n ? `Hi ${n},` : "Hi,", lead: "To move forward with your service, please send through the portal:", due: "Due", b: "Send through the portal", safe: "Please send only through the portal, which is private. Do not send documents or document numbers by e-mail or WhatsApp." },
+    es: { s: um ? "Necesitamos un documento suyo" : "Necesitamos algunos documentos suyos", hi: n ? `¡Hola, ${n}!` : "¡Hola!", lead: "Para seguir con su servicio, envíe por el portal:", due: "Plazo", b: "Enviar por el portal", safe: "Envíe solo por el portal, que es privado. No mande documentos ni números de documentos por e-mail o WhatsApp." },
+  }[l];
+  const li = o.items.map((i) => `<strong>${esc(i.title)}</strong>` + [i.company ? esc(i.company) : "", i.due ? `${T.due}: ${esc(i.due)}` : "", i.note ? esc(i.note) : ""].filter(Boolean).map((x) => `<br><span style="color:#55607a">${x}</span>`).join("")).join("<br><br>");
+  return out(T.s, `<p style="${P}">${esc(T.hi)}</p>${H1(esc(T.s))}<p style="${P}">${esc(T.lead)}</p>${box(li)}${btn(o.url, T.b)}<p style="${P};color:#55607a;font-size:13px">${esc(T.safe)}</p>${foot(l)}`);
+}
+
 /* ---------- proposal (with the invoice inside) ---------- */
 export function proposalEmail(o: { lang: unknown; name: string; title: string; intro?: string | null; included: string[]; items: Any[]; cur: string; oneTime: number; monthly: number; validUntil: string | null; acceptUrl: string; rejectUrl: string; number: string }) {
   const l = L(o.lang), n = first(o.name);
