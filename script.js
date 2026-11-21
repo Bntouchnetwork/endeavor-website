@@ -62,6 +62,17 @@
     });
     // dynamic UI
     if (typeof toggleLabel !== 'undefined' && toggleLabel) toggleLabel.textContent = nav.classList.contains('is-open') ? ui('close') : ui('menu');
+    // seções que só aparecem em alguns idiomas (data-lang-only="pt es"): somem também os links do menu que levam a elas
+    document.querySelectorAll('[data-lang-only]').forEach(function (sec) {
+      var off = sec.getAttribute('data-lang-only').split(/\s+/).indexOf(lang) < 0;
+      sec.hidden = off;
+      if (sec.id) document.querySelectorAll('a[href="#' + sec.id + '"]').forEach(function (l) { var li = l.closest('li'); (li && li.children.length === 1 ? li : l).hidden = off; });
+    });
+    // bandeira de origem na seção do Paraguai: Brasil em português, EUA nos outros idiomas
+    document.querySelectorAll('[data-flag-pt]').forEach(function (u) { u.setAttribute('href', u.getAttribute(lang === 'pt' ? 'data-flag-pt' : 'data-flag')); });
+    // a numeração das seções de serviço segue só as que estão à mostra
+    var numSec = 0;
+    document.querySelectorAll('.eyebrow__num').forEach(function (n) { if (n.closest('[hidden]')) return; numSec++; n.textContent = (numSec < 10 ? '0' : '') + numSec; });
     // WhatsApp links carry a greeting in the current language
     document.querySelectorAll('.js-sched').forEach(function (l) { l.href = 'schedule.html?lang=' + lang; });
     document.querySelectorAll('.js-partners').forEach(function (l) { l.href = 'partners.html?lang=' + lang; });

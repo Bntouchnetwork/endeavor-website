@@ -1149,3 +1149,4 @@ fieldset.field.att-set legend{padding:0;margin-bottom:.4rem;font-weight:600;font
 .contact__list .wa-ico { margin-top: .2rem; }
 .site-footer .wa-ico { color: #fff; margin-left: .35rem; }
 html.a11y-contrast .wa-ico { background: #000; border: 2px solid #fff; }
+[data-lang-only][hidden] { display: none !important; }
