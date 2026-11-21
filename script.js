@@ -434,6 +434,13 @@
           var a = card.querySelector('[data-price]'); if (a) a.textContent = '$' + (p.price_cents / 100).toLocaleString('en-US', { minimumFractionDigits: p.price_cents % 100 ? 2 : 0 });
           var st = card.querySelector('[data-setup]'); if (st && p.setup_cents) st.textContent = '$' + (p.setup_cents / 100).toLocaleString('en-US', { minimumFractionDigits: p.setup_cents % 100 ? 2 : 0 });
           card.querySelectorAll('[data-int]').forEach(function (x) { x.hidden = x.getAttribute('data-int') !== p.interval; });
+          // cards que seguem a situação da loja: "Em breve" (sem compra) ou "À venda"; escondido some do site
+          if (card.hasAttribute('data-live')) {
+            var vende = p.status === 'active';
+            card.hidden = p.status === 'hidden';
+            card.classList.toggle('shop-card--soon', !vende);
+            card.querySelectorAll('[data-when]').forEach(function (x) { x.hidden = (x.getAttribute('data-when') === 'active') !== vende; });
+          }
         });
       }).catch(function () { /* keep the printed prices */ });
   })();

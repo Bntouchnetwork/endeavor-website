@@ -127,7 +127,8 @@
   /* ---------------- Serviços: uma página só, com as abas "Meu plano" e "Add-ons" ----------------
      No computador a página não rola: os cards vêm em páginas (flechas e "1/3"), e a quantidade por página é
      calculada pelo tamanho da tela. No celular os cards ficam um embaixo do outro, com rolagem normal. */
-  var EXTRA = [['webmeeting', 'Web Meeting', 'comunicacao', 'meetOn'], ['webinar', 'Live Webinar', 'comunicacao', 'meetOn'], ['whatsapp', 'WhatsApp Manager', 'vendas', 'waOn']];
+  /* Web Meeting, Live Webinar e WhatsApp Manager são produtos da loja; quem já tem o acesso liberado pela Endeavor vê "Ativo". */
+  var LIBERADO = { webmeeting: 'meetOn', webinar: 'meetOn', whatsapp: 'waOn' };
   var CATS = ['empresa', 'vendas', 'comunicacao', 'financeiro', 'documentos'];
   var PACOTES = ['pkg_holding', 'pkg_completo', 'pkg_essencial'];
   var CARD_W = 224, CARD_H = 216, CARD_MAX = 280, GAP = 16, svObs = null;
@@ -177,20 +178,19 @@
         (s.included_in || p.interval === 'once' ? '' : '<button class="btn btn--ghost btn--sm" type="button" data-cancel="' + code + '" aria-label="' + t('cancelSub') + ': ' + esc(i.name) + '">' + t('cancelShort') + '</button>') + '</div></section>';
     }
     function cardAddon(x) {
-      var on = x.extra ? x.on : !!x.mine, soon = !x.extra && x.p.status === 'coming_soon';
-      var btn = on ? (x.extra ? '<a class="btn btn--navy btn--sm" href="#/' + x.code + '">' + t('open') + '</a>' : TOOL_VIEW[x.code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[x.code] + '">' + t('open') + '</a>' : '')
-        : x.extra ? '<button class="btn btn--ghost btn--sm" type="button" data-req="' + x.code + '">' + t('ad_request') + '</button>'
+      var on = !!x.mine || x.lib, soon = x.p.status === 'coming_soon', tela = x.lib ? x.code : TOOL_VIEW[x.code];
+      var btn = on ? (tela ? '<a class="btn btn--navy btn--sm" href="#/' + tela + '">' + t('open') + '</a>' : '')
         : soon ? '' : '<button class="btn btn--gold btn--sm" type="button" data-buy="' + x.code + '">' + t('buy') + '</button>';
       var pill = on ? '<span class="pill pill--report">' + (x.mine && x.mine.included_in ? t('inPackage') : t('active')) + '</span>' : soon ? '<span class="pill">' + t('soon') + '</span>' : '';
-      var price = x.extra ? '<p class="tl-price"><strong>' + t('ad_quote') + '</strong></p>' : (x.mine && x.mine.included_in) ? '' :
+      var price = (x.mine && x.mine.included_in) ? '' :
         '<p class="tl-price">' + (x.full ? '<s class="portal-muted">' + EStore.money(x.full) + '</s> ' : '') + '<strong>' + EStore.money(x.price) + '</strong> <span class="portal-muted">' + esc(EStore.interval(x.p.interval, L)) + '</span>' + (x.full ? ' <span class="pill pill--report">' + t('ad_member') + '</span>' : '') + '</p>';
       return '<section class="portal-card tl-card sv-card' + (on ? ' tl-card--on' : '') + '"><div class="sv-top"><h2 class="portal-h2">' + esc(x.name) + '</h2>' + pill + '</div>' +
         '<p class="portal-muted ad-cat">' + t('cat_' + x.cat) + '</p><p class="sv-lead">' + esc(x.lead) + '</p>' + price + '<div class="portal-btn-row">' + btn + '</div></section>';
     }
     var catalogo = res[0].filter(function (p) { return p.kind !== 'package'; }).map(function (p) {
       var i = info(p.code), price = member && p.member_cents != null && p.member_cents < p.price_cents ? p.member_cents : p.price_cents;
-      return { code: p.code, name: i.name, lead: i.lead, cat: p.category || 'empresa', p: p, price: price, full: price < p.price_cents ? p.price_cents : null, mine: by[p.code] };
-    }).filter(function (x) { return x.p.kind !== 'addon' || x.mine; }).concat(EXTRA.map(function (e) { return { code: e[0], name: e[1], lead: t('x_' + e[0]), cat: e[2], extra: true, on: !!C.S[e[3]] }; }));
+      return { code: p.code, name: i.name, lead: i.lead, cat: p.category || 'empresa', p: p, price: price, full: price < p.price_cents ? p.price_cents : null, mine: by[p.code], lib: !!(LIBERADO[p.code] && C.S[LIBERADO[p.code]]) };
+    }).filter(function (x) { return x.p.kind !== 'addon' || x.mine; });
     var semAc = function (v) { return String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
     function lista() {
       // o card do plano ocupa duas colunas quando há espaço (o item vazio guarda o lugar na conta da página)
@@ -212,11 +212,6 @@
       view.querySelector('#sv-pg').textContent = (pag + 1) + '/' + pags;
       view.querySelector('#sv-ant').disabled = pag === 0; view.querySelector('#sv-prox').disabled = pag >= pags - 1;
       grid.querySelectorAll('[data-buy]').forEach(function (b) { b.onclick = function () { buy(b.dataset.buy); }; });
-      grid.querySelectorAll('[data-req]').forEach(function (b) { b.onclick = async function () {
-        b.disabled = true;
-        try { await fn('payments', { action: 'store_request', client_id: cid, product: b.dataset.req }); C.msg(m, t('ad_requested'), 'ok'); }
-        catch (e) { b.disabled = false; C.msg(m, e.message, 'error'); }
-      }; });
       grid.querySelectorAll('[data-cancel]').forEach(function (b) { b.onclick = async function () {
         if (!confirm(t('cancelQ', { p: svcName(b.dataset.cancel) }))) return;
         b.disabled = true;

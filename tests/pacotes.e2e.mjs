@@ -17,6 +17,9 @@ const CAT = [
   { code: "bookkeeping", kind: "tool", price_cents: 19900, setup_cents: 0, member_cents: null, category: "financeiro", interval: "month", status: "active", sort: 40 },
   { code: "operating_agreement", kind: "addon", price_cents: 29700, setup_cents: 0, member_cents: null, category: "documentos", interval: "once", status: "active", sort: 45 },
   { code: "telefone", kind: "tool", price_cents: 1999, setup_cents: 0, member_cents: null, category: "comunicacao", interval: "month", status: "active", sort: 46 },
+  { code: "webmeeting", kind: "tool", price_cents: 1900, setup_cents: 0, member_cents: null, category: "comunicacao", interval: "month", status: "coming_soon", sort: 47 },
+  { code: "webinar", kind: "tool", price_cents: 9900, setup_cents: 0, member_cents: null, category: "comunicacao", interval: "month", status: "coming_soon", sort: 48 },
+  { code: "whatsapp", kind: "tool", price_cents: 7900, setup_cents: 0, member_cents: null, category: "vendas", interval: "month", status: "coming_soon", sort: 49 },
   { code: "registered_agent", kind: "tool", price_cents: 14900, setup_cents: 0, member_cents: null, category: "empresa", interval: "year", status: "coming_soon", sort: 50 },
   { code: "virtual_address", kind: "tool", price_cents: 4900, setup_cents: 0, member_cents: null, category: "empresa", interval: "month", status: "coming_soon", sort: 60 },
 ];
@@ -57,6 +60,22 @@ try {
   ok(txt.includes("Pedir orçamento") && !/\$3,?500/.test(txt), "holding: pedir orçamento, sem preço");
   ok(!(await home.locator('.shop-card[data-product="formation"]').count()), "abertura sozinha não é vendida");
   await home.locator(".pkgs").screenshot({ path: OUT + "/pacotes-home.png" });
+  for (const [c, nome, preco] of [["webmeeting", "Web Meeting", "$19"], ["webinar", "Live Webinar", "$99"], ["whatsapp", "WhatsApp Manager", "$79"]]) {
+    const card = home.locator(`.shop-card[data-product="${c}"]`), tx = await card.textContent();
+    ok(tx.includes(nome) && tx.includes(preco) && tx.includes("/mês") && tx.includes("Em breve") && await card.locator(".js-buy").isHidden() && await card.locator(".shop-card__wait").isVisible(), `home: ${nome} em breve, ${preco}/mês, sem botão de contratar`);
+  }
+  ok(!/Video meetings|Live webinars with|Organize your WhatsApp/.test(await home.textContent(".shop__grid")), "home PT: textos dos três traduzidos");
+  await home.locator('.shop-card[data-product="webmeeting"]').scrollIntoViewIfNeeded(); await home.waitForTimeout(700);
+  await home.locator(".shop").screenshot({ path: OUT + "/loja-home.png" });
+  { // "À venda" no admin: o card do site troca sozinho para o botão de contratar
+    const v = await pagina(); await v.unroute("**/rest/v1/store_products*");
+    await v.route("**/rest/v1/store_products*", (r) => r.fulfill({ json: CAT.map((p) => p.code === "webinar" ? { ...p, status: "active" } : p.code === "whatsapp" ? { ...p, status: "hidden" } : p) }));
+    await v.goto(`${BASE}/index.html?lang=pt`); await v.waitForSelector(".shop__grid"); await v.waitForTimeout(800);
+    const w = v.locator('.shop-card[data-product="webinar"]');
+    ok(await w.locator(".js-buy").isVisible() && await w.locator(".shop-card__badge").isHidden() && await w.locator(".shop-card__wait").isHidden() && (await w.locator(".js-buy").getAttribute("href")).includes("p=webinar"), "home: À venda mostra o botão de contratar");
+    ok(await v.locator('.shop-card[data-product="whatsapp"]').isHidden() && await v.locator('.shop-card[data-product="webmeeting"] .js-buy').isHidden(), "home: Escondido some do site; os outros seguem em breve");
+    await v.close();
+  }
   await home.click('[data-product="pkg_holding"] .shop-card__cta');
   ok(await home.inputValue("#f-assist") === "Operating LLC + Holding", "holding: abre o contato com o tipo já escolhido (vira lead no CRM)");
 
@@ -126,7 +145,7 @@ try {
   await ad.screenshot({ path: OUT + "/servicos-plano.png" });
   await ad.click('.subtabs a[href$="tab=addons"]');
   await ad.waitForSelector("#ad-q"); await ad.waitForTimeout(300);
-  const total = 10; // 7 produtos (sem pacotes e sem o Operating Agreement, que a conta não tem) + 3 sob consulta
+  const total = 10; // 7 produtos (sem pacotes e sem o Operating Agreement, que a conta não tem) + Web Meeting, Live Webinar e WhatsApp Manager
   const n1 = await ad.locator("#sv-grid .sv-card").count(), pg = await ad.textContent("#sv-pg");
   ok(n1 < total && n1 >= 4 && pg === "1/" + Math.ceil(total / n1), `Add-ons: ${n1} cards por página, indicador ${pg}`);
   ok(await semRolagem(ad) && await cabeTudo(ad), "Add-ons: sem rolagem, cards inteiros na tela");
@@ -137,15 +156,17 @@ try {
   await ad.click("#sv-prox");
   ok((await ad.textContent("#sv-pg")).startsWith("2/") && (await ad.textContent("#sv-grid")) !== primeira, "flecha passa para a próxima página");
   let vistos = n1; while (!(await ad.locator("#sv-prox").isDisabled())) { vistos += 0; await ad.click("#sv-prox"); }
-  ok((await ad.textContent("#sv-grid")).includes("WhatsApp Manager") && await ad.locator("#sv-prox").isDisabled(), "última página: sob consulta e flecha próxima desligada");
+  ok((await ad.textContent("#sv-grid")).includes("Endereço Virtual") && await ad.locator("#sv-prox").isDisabled(), "última página: flecha próxima desligada");
   await ad.fill("#ad-q", "whats");
   ok(await ad.locator("#sv-grid .sv-card").count() === 1 && await ad.locator("#sv-pager").isHidden(), "busca refaz as páginas (1 resultado, sem flechas)");
   await ad.fill("#ad-q", ""); await ad.click('.ad-chip[data-cat="financeiro"]');
   ok((await ad.locator("#sv-grid .sv-card").count()) === 1 && (await ad.textContent("#sv-grid")).includes("Bookkeeping"), "filtro por tipo refaz as páginas");
   await ad.click('.ad-chip[data-cat="vendas"]');
-  await ad.click('[data-req="whatsapp"]');
-  await ad.waitForSelector("#sv-m:has-text('Pedido enviado')");
-  ok(pedidos.some((b) => b.action === "store_request" && b.product === "whatsapp"), "pedir ativação continua funcionando");
+  const wa = ad.locator("#sv-grid .sv-card", { hasText: "WhatsApp Manager" }), txWa = await wa.textContent();
+  ok(txWa.includes("Em breve") && txWa.includes("$79") && txWa.includes("/mês") && await wa.locator("button, a.btn").count() === 0, "WhatsApp Manager: Em breve, com $79/mês e sem botão");
+  await ad.click('.ad-chip[data-cat="comunicacao"]');
+  const txCom = await ad.textContent("#sv-grid");
+  ok(/Web Meeting[\s\S]*\$19[\s\S]*Live Webinar[\s\S]*\$99/.test(txCom) && !txCom.includes("Sob consulta") && await ad.locator("#sv-grid .sv-card", { hasText: /Web Meeting|Live Webinar/ }).locator("button, a.btn").count() === 0 && await ad.locator("#sv-grid .sv-card", { hasText: /Web Meeting|Live Webinar/ }).filter({ hasText: "Em breve" }).count() === 2, "Web Meeting $19 e Live Webinar $99: Em breve, sem contratar e sem pedir ativação");
   await ad.click('.ad-chip[data-cat=""]');
   await ad.setViewportSize({ width: 1700, height: 1000 }); await ad.waitForTimeout(400);
   const n2 = await ad.locator("#sv-grid .sv-card").count();

@@ -1137,3 +1137,4 @@ fieldset.field.att-set legend{padding:0;margin-bottom:.4rem;font-weight:600;font
 .att-wk__day.check-row{margin:0;align-items:center}.att-wk__day.check-row label{margin:0;font-weight:600}
 .att-wk__p2:has(input:placeholder-shown){}
 #atc-bio{min-height:4.2rem}
+.shop-card[hidden], .shop-card [hidden] { display: none !important; }

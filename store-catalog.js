@@ -53,6 +53,21 @@
       pt: { name: 'Telefone Comercial', lead: 'Um número americano para a sua empresa, que você atende pelo app, no celular ou no computador, de qualquer lugar.', feats: ['Número local dos EUA', '500 minutos e 250 SMS por mês', 'Saudação, horário de atendimento e caixa postal', 'Atenda pelo navegador ou pelo app Endeavor Phone'] },
       es: { name: 'Teléfono Comercial', lead: 'Un número de EE. UU. para su empresa, que usted atiende en la app, en el celular o la computadora, desde cualquier lugar.', feats: ['Número local de EE. UU.', '500 minutos y 250 SMS por mes', 'Saludo, horario de atención y buzón de voz', 'Atienda en el navegador o en la app Endeavor Phone'] }
     },
+    webmeeting: {
+      en: { name: 'Web Meeting', lead: 'Video meetings in the browser, with your own room link, recording and AI notes.', feats: ['Your own meeting room link', 'Guests join from the browser, nothing to install', 'Recording and screen sharing', 'AI summary with the next actions'] },
+      pt: { name: 'Web Meeting', lead: 'Reuniões por vídeo no navegador, com sala própria, gravação e anotações com IA.', feats: ['Link próprio da sua sala de reunião', 'O convidado entra pelo navegador, sem instalar nada', 'Gravação e compartilhamento de tela', 'Resumo com IA e as próximas ações'] },
+      es: { name: 'Web Meeting', lead: 'Reuniones por video en el navegador, con sala propia, grabación y notas con IA.', feats: ['Enlace propio de su sala de reunión', 'El invitado entra desde el navegador, sin instalar nada', 'Grabación y pantalla compartida', 'Resumen con IA y las próximas acciones'] }
+    },
+    webinar: {
+      en: { name: 'Live Webinar', lead: 'Live webinars with registration page, reminders and replay.', feats: ['Registration page for each webinar', 'Automatic e-mail reminders', 'Live room with chat and questions', 'Replay for those who registered'] },
+      pt: { name: 'Live Webinar', lead: 'Webinars ao vivo com página de inscrição, lembretes e replay.', feats: ['Página de inscrição para cada webinar', 'Lembretes automáticos por e-mail', 'Sala ao vivo com chat e perguntas', 'Replay para quem se inscreveu'] },
+      es: { name: 'Live Webinar', lead: 'Webinars en vivo con página de inscripción, recordatorios y repetición.', feats: ['Página de inscripción para cada webinar', 'Recordatorios automáticos por correo', 'Sala en vivo con chat y preguntas', 'Repetición para quienes se inscribieron'] }
+    },
+    whatsapp: {
+      en: { name: 'WhatsApp Manager', lead: 'Organize your WhatsApp conversations, groups and replies in one panel.', feats: ['Conversations and groups organized', 'Saved replies for common questions', 'AI-suggested replies that you approve', 'Contacts connected to your CRM'] },
+      pt: { name: 'WhatsApp Manager', lead: 'Organize as conversas, os grupos e as respostas do seu WhatsApp num painel só.', feats: ['Conversas e grupos organizados', 'Respostas prontas para as dúvidas comuns', 'Respostas sugeridas pela IA, que você aprova', 'Contatos ligados ao seu CRM'] },
+      es: { name: 'WhatsApp Manager', lead: 'Organice las conversaciones, grupos y respuestas de su WhatsApp en un solo panel.', feats: ['Conversaciones y grupos organizados', 'Respuestas guardadas para las dudas comunes', 'Respuestas sugeridas por la IA, que usted aprueba', 'Contactos conectados a su CRM'] }
+    },
     virtual_address: {
       en: { name: 'Virtual Address', lead: 'A professional business address in Orlando, Florida.', feats: ['Business mailing address in Orlando, FL', 'Mail scanned and notified in your portal', 'Forwarding on request'] },
       pt: { name: 'Endereço Virtual', lead: 'Um endereço comercial profissional em Orlando, na Flórida.', feats: ['Endereço comercial em Orlando, FL', 'Correspondência digitalizada e avisada no seu portal', 'Reenvio sob pedido'] },
