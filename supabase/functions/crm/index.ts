@@ -12,6 +12,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
 import { HubFail, hubAsk, hubJson, hubOn } from "../_shared/hub-ai.ts"; // all AI goes through Endeavor's central HUB AI
 import { FOOT_BRAND } from "../_shared/brand.ts";
+import { runNext as deadlinesNext } from "./deadlines.ts"; // skill "Prazos fiscais" do Agente Admin
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
@@ -432,6 +433,8 @@ Deno.serve(async (req) => {
       const email = (await user.auth.getUser()).data.user?.email ?? "admin";
       if (body.action === "status") return json({ email: mailOn(), via: sesOn() ? "ses" : mailOn() ? "gmail" : null, whatsapp: waOn(), whatsapp_webhook: !!(WA_VERIFY && WA_SECRET), ai: !!AI_ON });
       if (body.action === "run_now") return json(await tick());
+      // skill Prazos fiscais: verifica agora a próxima empresa da fila (ou a empresa indicada)
+      if (body.action === "deadlines_run") return json(await deadlinesNext(db, { companyId: body.company_id ? String(body.company_id) : undefined, force: true }));
       if (body.action === "agent_human_reply") {
         // the team answers a partner from the Agents page (portal chat; WhatsApp too when the 24-hour window is open)
         const { data: p } = await db.from("partners").select("*").eq("id", String(body.partner_id || "")).single();
@@ -462,7 +465,13 @@ Deno.serve(async (req) => {
     }
     const { data: ok } = await db.rpc("booking_hook_key_ok", { p_key: req.headers.get("x-booking-key") ?? "" });
     if (!ok) return json({ error: "forbidden" }, 403);
-    if (body.event === "tick") return json(await tick());
+    if (body.event === "tick") {
+      const out: Row = await tick();
+      // uma empresa por rodada, para não estourar o tempo nem o consumo de IA
+      try { out.deadlines = await deadlinesNext(db); } catch (e) { console.error("deadlines tick", e); }
+      return json(out);
+    }
+    if (body.event === "deadlines") return json(await deadlinesNext(db, { companyId: body.company_id ? String(body.company_id) : undefined, force: true }));
     return json({ error: "event" }, 400);
   } catch (e) {
     console.error(e);

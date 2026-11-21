@@ -189,11 +189,14 @@
       '<div class="ag-grid">' +
       '<section class="portal-card ag-card ag-card--on"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-bot"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente Admin</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Onboarding dos parceiros e operação da plataforma</p></div></div>' +
         '<p class="mk-status">' + chip(st.ai, 'IA ativa', 'IA não configurada') + ' ' + chip(st.email, 'E-mail', 'E-mail não configurado') + ' ' + chip(st.whatsapp && s.whatsapp_enabled, 'WhatsApp ligado', 'WhatsApp: aguardando a Meta') + ' ' + chip(st.whatsapp_webhook, 'Respostas do WhatsApp', 'Webhook do WhatsApp pendente') + '</p>' +
-        '<ul class="ag-does"><li>Acompanha cada parceiro na linha do tempo do onboarding.</li><li>Quando ele trava, escreve um e-mail personalizado (e WhatsApp) sobre o passo que falta.</li><li>Sem avanço, avisa você no sino para um contato pessoal.</li><li>Responde dúvidas no chat do portal e, com a Meta liberada, no WhatsApp.</li></ul>' +
+        '<ul class="ag-does"><li>Acompanha cada parceiro na linha do tempo do onboarding.</li><li>Quando ele trava, escreve um e-mail personalizado (e WhatsApp) sobre o passo que falta.</li><li>Sem avanço, avisa você no sino para um contato pessoal.</li><li>Responde dúvidas no chat do portal e, com a Meta liberada, no WhatsApp.</li><li><strong>Skill Prazos fiscais:</strong> busca em páginas oficiais (IRS, estado e condado) os prazos de cada empresa, do ano atual e do próximo, e publica direto no portal do cliente, com a fonte.</li></ul>' +
         '<form class="portal-form" id="ag-f" novalidate><div class="check-row"><input type="checkbox" id="ag-on"' + (s.agent_enabled !== false ? ' checked' : '') + '><label for="ag-on">Agente ligado</label></div>' +
         '<div class="check-row"><input type="checkbox" id="ag-chat"' + (s.agent_chat_enabled !== false ? ' checked' : '') + '><label for="ag-chat">Chat no Portal do Parceiro</label></div>' +
         '<div class="portal-grid2"><div class="field"><label for="ag-stuck">Lembrar após (dias sem avanço)</label><input id="ag-stuck" type="number" min="1" max="14" value="' + (s.agent_stuck_days || 2) + '"></div>' +
         '<div class="field"><label for="ag-esc">Avisar a equipe após (dias)</label><input id="ag-esc" type="number" min="2" max="30" value="' + (s.agent_escalate_days || 6) + '"></div></div>' +
+        '<div class="check-row"><input type="checkbox" id="ag-dl"' + (s.deadline_agent_enabled !== false ? ' checked' : '') + '><label for="ag-dl">Skill Prazos fiscais ligada (uma empresa por rodada, a cada 10 minutos, até verificar todas)</label></div>' +
+        '<div class="portal-grid2"><div class="field"><label for="ag-dl-d">Verificar cada empresa de novo a cada (dias)</label><input id="ag-dl-d" type="number" min="7" max="180" value="' + (s.deadline_agent_days || 30) + '"></div>' +
+        '<div class="field" style="align-self:end"><button class="btn btn--ghost btn--xs" type="button" id="ag-dl-run">Buscar prazos agora (próxima empresa)</button></div></div>' +
         '<div class="portal-alert" id="ag-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy btn--xs" type="submit">Salvar</button><button class="btn btn--ghost btn--xs" type="button" id="ag-run">Rodar agora</button><a class="btn btn--ghost btn--xs" href="#/crm?auto=1">Vídeo e automações</a></div></form></section>' +
       '<section class="portal-card ag-card ag-card--on"><div class="ag-card__head"><span class="ag-ico" aria-hidden="true"><svg class="icon"><use href="#i-users"/></svg></span><div><h2 class="portal-h2" style="margin:0">Agente de Vendas</h2><p class="portal-muted" style="margin:0;font-size:.88rem">Chat do site com IA: tira dúvidas e capta pedidos de proposta</p></div></div>' +
         '<p class="mk-status">' + chip(st.ai, 'IA ativa', 'IA não configurada') + ' ' + chip(s.site_chat_enabled !== false, 'No ar no site', 'Desligado') + '</p>' +
@@ -220,7 +223,7 @@
     ctx.$('#ag-f').onsubmit = async function (e) {
       e.preventDefault();
       var a = Math.max(1, Math.min(14, +ctx.$('#ag-stuck').value || 2)), b = Math.max(a + 1, Math.min(30, +ctx.$('#ag-esc').value || 6));
-      var r = await sb.from('crm_settings').update({ agent_enabled: ctx.$('#ag-on').checked, agent_chat_enabled: ctx.$('#ag-chat').checked, agent_stuck_days: a, agent_escalate_days: b, updated_at: new Date().toISOString() }).eq('id', 1);
+      var r = await sb.from('crm_settings').update({ agent_enabled: ctx.$('#ag-on').checked, agent_chat_enabled: ctx.$('#ag-chat').checked, agent_stuck_days: a, agent_escalate_days: b, deadline_agent_enabled: ctx.$('#ag-dl').checked, deadline_agent_days: Math.max(7, Math.min(180, Math.round(+ctx.$('#ag-dl-d').value || 30))), updated_at: new Date().toISOString() }).eq('id', 1);
       ctx.msg(m, r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
     };
     ctx.$('#sc-f').onsubmit = async function (e) {
@@ -230,6 +233,18 @@
       ctx.msg(ctx.$('#sc-m'), r.error ? ctx.errText(r.error) : 'Salvo.', r.error ? 'error' : 'ok');
     };
     view.querySelectorAll('[data-sc]').forEach(function (el) { var go = function () { siteChat(ctx, el.dataset.sc); }; el.onclick = go; el.onkeydown = function (e) { if (e.key === 'Enter') go(); }; });
+    // skill Prazos fiscais: verifica agora a próxima empresa da fila e mostra o que encontrou
+    ctx.$('#ag-dl-run').onclick = async function () {
+      var b = this; b.disabled = true; ctx.msg(m, 'Buscando nas fontes oficiais… pode levar até um minuto.', 'info');
+      try {
+        var r = await call(ctx, { action: 'deadlines_run' }), fontes = (r.sources || []).filter(function (x) { return x.ok; }).length, falhas = (r.sources || []).filter(function (x) { return !x.ok; }).length;
+        ctx.msg(m, r.done ? 'Todas as empresas já foram verificadas dentro do intervalo.' : r.skipped === 'no_ai' ? 'A IA (HUB AI) não está configurada.' :
+          r.error ? 'Não deu para verificar ' + (r.company || 'a empresa') + ': ' + (r.error === 'no_sources' ? 'nenhuma fonte oficial abriu.' : r.error) :
+          (r.company || 'Empresa') + ': ' + (r.created || 0) + ' prazo(s) novo(s), ' + (r.changed || 0) + ' alterado(s), ' + (r.confirmed || 0) + ' confirmado(s), ' + (r.already_by_team || 0) + ' já cadastrado(s) pela equipe, ' + (r.rejected || 0) + ' descartado(s) na conferência. Fontes lidas: ' + fontes + (falhas ? ' (' + falhas + ' não abriram).' : '.'),
+          r.error || r.skipped ? 'error' : 'ok');
+      } catch (x) { ctx.msg(m, err(ctx, x), 'error'); }
+      b.disabled = false;
+    };
     ctx.$('#ag-run').onclick = async function () { var b = this; b.disabled = true; ctx.msg(m, 'Rodando…', 'info'); try { var r = await call(ctx, { action: 'run_now' }); ctx.msg(m, 'Pronto: ' + (r.agent || 0) + ' lembrete(s) do agente, ' + (r.escalated || 0) + ' aviso(s) à equipe, ' + (r.activated || 0) + ' conta(s) ativada(s).', 'ok'); } catch (x) { ctx.msg(m, err(ctx, x), 'error'); } b.disabled = false; };
     view.querySelectorAll('[data-p]').forEach(function (el) { var go = function () { conversation(ctx, el.dataset.p); }; el.onclick = go; el.onkeydown = function (e) { if (e.key === 'Enter') go(); }; });
     var pq = (ERoute.get().match(/[?&]partner=([0-9a-f-]{36})/) || [])[1]; if (pq) conversation(ctx, pq);
