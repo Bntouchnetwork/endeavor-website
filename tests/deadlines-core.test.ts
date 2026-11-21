@@ -33,17 +33,17 @@ Deno.test("mesma obrigação não duplica", () => {
 Deno.test("valida a resposta da IA", () => {
   const sources = [{ url: "https://www.irs.gov/publications/p509", text: "Partnerships. File a 2025 calendar year return (Form 1065) by March 16, 2026." }];
   const r = validate({ deadlines: [
-    { title: "Form 1065", category: "federal_tax", due_date: "2026-03-16", source: 1, quote: "File a 2025 calendar year return (Form 1065) by March 16, 2026." },
+    { title: "Form 1065", category: "federal_tax", due_date: "2026-03-16", source: 1, quote: "File a 2025 calendar year return (Form 1065) by March 16, 2026.", note: "Declaração da sociedade referente a 2025. <b>x</b> https://x.com/y" },
     { title: "Form 1120", category: "federal_tax", due_date: "2026-04-15", source: 1, quote: "File Form 1120 by April 15, 2026." },   // trecho não está na fonte
     { title: "Form 1065", category: "federal_tax", due_date: "2029-03-15", source: 1, quote: "File a 2025 calendar year return (Form 1065)" }, // ano fora
     { title: "X", category: "nope", due_date: "2026-01-01", source: 1, quote: "File a 2025 calendar year return" },
     { title: "Form 1065 again", category: "federal_tax", due_date: "2026-02-30", source: 1, quote: "File a 2025 calendar year return (Form 1065)" }, // data que não existe
   ] }, sources, [2026, 2027]);
-  eq(r.ok.length, 1); eq(r.rejected, 4); eq(r.ok[0].source_url, "https://www.irs.gov/publications/p509");
+  eq(r.ok.length, 1); eq(r.rejected, 4); eq(r.ok[0].note, "Declaração da sociedade referente a 2025. x"); eq(r.ok[0].source_url, "https://www.irs.gov/publications/p509");
   eq(validate("lixo", sources, [2026]).ok.length, 0);
 });
 Deno.test("não duplica nem mexe no que a equipe cadastrou", () => {
-  const f = (title: string, due: string) => ({ title, category: "federal_tax", due_date: due, source_url: "https://www.irs.gov/publications/p509", basis: "stated" as const });
+  const f = (title: string, due: string) => ({ title, category: "federal_tax", due_date: due, source_url: "https://www.irs.gov/publications/p509", basis: "stated" as const, note: "" });
   const p = plan([f("Form 1065", "2026-03-16"), f("Form 5472", "2026-04-15"), f("Form 1099-NEC", "2026-02-02"), f("Form 7004 extension", "2026-09-15")], [
     { id: "m1", title: "Form 1065 + K-1 (2025)", category: "federal_tax", due_date: "2026-03-16", origin: "manual", status: "pending" },
     { id: "a1", title: "Form 5472", category: "federal_tax", due_date: "2026-04-14", origin: "agent", status: "pending" },

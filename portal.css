@@ -1592,3 +1592,29 @@ body.app-shell .console__content .co-fit .bkp-grid > .fp-card { flex: 1 1 auto; 
 .set-e2__l input { flex: 1 1 14rem; min-width: 0; min-height: 2.5rem; border: 1px solid #c9ced8; border-radius: 8px; padding: 0 .7rem; font: inherit; }
 .set-e2__h { font-size: .84rem; margin: 0; }
 .set-e2 #e2-make { justify-self: start; }
+
+/* Prazos fiscais: lista única em página fixa, com a anotação do que vence em cada data */
+.deadline__nota { font-size: .92rem; color: var(--ink, #1c2536); margin: .1rem 0 .15rem; line-height: 1.4; }
+.dl-mes { font: 700 1rem/1.3 var(--serif, Georgia, serif); color: var(--navy-900, #0b1f3a); padding: .7rem 0 .2rem; }
+.dl-mes:first-child { padding-top: 0; }
+.dl-fit .dl-bar { margin-bottom: .9rem; }
+.dl-fit .dl-bar .dl-sum { margin-left: auto; }
+.dl-card { padding: .9rem 1.25rem; }
+@media (min-width: 1000px) and (min-height: 560px) {
+  body.app-shell .console__content .dl-fit > * { flex: none; }
+  body.app-shell .console__content .dl-fit > .dl-card { flex: 1 1 auto; }
+  /* AI Projects: a apresentação desce até perto do fim da tela, com os blocos acompanhando a altura */
+  body.app-shell .console__content .pj-land > .pj-hero { flex: 1.45 1 0; overflow: hidden; min-height: 0; align-items: center; padding: clamp(1.5rem, 3.2vh, 3rem) clamp(1.5rem, 3vw, 3.5rem); }
+  body.app-shell .console__content .pj-land > .pj-como { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; justify-content: center; padding: clamp(1.25rem, 2.6vh, 2.5rem) clamp(1.5rem, 3vw, 3.5rem); margin-bottom: clamp(.5rem, 2vh, 1.5rem); }
+  body.app-shell .console__content .pj-land .pj-hero__h { font-size: clamp(1.7rem, 1.1rem + 1.9vh + 0.6vw, 3rem); }
+  body.app-shell .console__content .pj-land .pj-hero__p { font-size: clamp(1.02rem, .8rem + .55vh, 1.3rem); margin-bottom: clamp(1rem, 2.4vh, 2rem); }
+  body.app-shell .console__content .pj-land .pj-bens { gap: clamp(.6rem, 1.6vh, 1.25rem); }
+  body.app-shell .console__content .pj-land .pj-bens li { padding: clamp(.5rem, 1.2vh, 1.1rem) 1.1rem; }
+  body.app-shell .console__content .pj-land .pj-bens li strong { font-size: clamp(1rem, .85rem + .4vh, 1.2rem); }
+  body.app-shell .console__content .pj-land .pj-como .portal-h2 { font-size: clamp(1.15rem, .9rem + .7vh, 1.6rem); margin-bottom: clamp(.8rem, 2vh, 1.6rem); }
+  body.app-shell .console__content .pj-land .pj-passos { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: clamp(1rem, 2vw, 2.25rem); }
+  body.app-shell .console__content .pj-land .pj-passos li { font-size: clamp(.9rem, .75rem + .35vh, 1.05rem); gap: .4rem; }
+  body.app-shell .console__content .pj-land .pj-passos li strong { font-size: clamp(1rem, .82rem + .45vh, 1.2rem); }
+  body.app-shell .console__content .pj-land .pj-n { width: clamp(2rem, 1.4rem + 1.4vh, 2.9rem); height: clamp(2rem, 1.4rem + 1.4vh, 2.9rem); font-size: clamp(1rem, .8rem + .5vh, 1.3rem); }
+  body.app-shell .console__content .pj-land #pj-cta { min-height: clamp(2.75rem, 2.2rem + 1.4vh, 3.4rem); padding-inline: clamp(1.25rem, 2vw, 2.25rem); font-size: clamp(1rem, .85rem + .4vh, 1.15rem); }
+}

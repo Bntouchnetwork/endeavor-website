@@ -214,7 +214,8 @@
   function deadlineRow(it, co) {
     var p = it.due_date.split('-'), mon = new Intl.DateTimeFormat(EP.locale, { month: 'short' }).format(new Date(+p[0], +p[1] - 1, 15)).replace('.', '');
     return '<div class="deadline"><div class="deadline__date"><b>' + p[2] + '</b><span>' + esc(mon) + ' ' + p[0] + '</span></div>' +
-      '<div><strong>' + esc(it.title) + '</strong><div class="portal-muted" style="font-size:.85rem">' + esc(co ? co.legal_name : '') + ' · ' + esc(t('dl_' + it.category)) + (it.notes ? ' · ' + esc(it.notes) : '') + (it.source_url && /^https:\/\//.test(it.source_url) ? ' · <a class="dl-fonte" href="' + esc(it.source_url) + '" target="_blank" rel="noopener noreferrer">' + dx('fonte') + '</a>' : '') + '</div></div>' + pill(it) + '</div>';
+      '<div><strong>' + esc(it.title) + '</strong>' + (it.notes ? '<div class="deadline__nota">' + esc(it.notes) + '</div>' : '') +
+      '<div class="portal-muted" style="font-size:.85rem">' + esc(co ? co.legal_name : '') + ' · ' + esc(t('dl_' + it.category)) + (it.source_url && /^https:\/\//.test(it.source_url) ? ' · <a class="dl-fonte" href="' + esc(it.source_url) + '" target="_blank" rel="noopener noreferrer">' + dx('fonte') + '</a>' : '') + '</div></div>' + pill(it) + '</div>';
   }
 
   /* ---------------- auth ---------------- */
@@ -803,52 +804,26 @@
     var items = await q(sb.from('compliance_items').select('*').eq('client_id', S.client.id).order('due_date'));
     var years = items.map(function (i) { return +i.due_date.slice(0, 4); }).filter(function (y, k, a) { return a.indexOf(y) === k; }).sort();
     var cy = new Date().getFullYear(); [cy, cy + 1].forEach(function (y) { if (years.indexOf(y) < 0) years.push(y); }); years.sort();
-    var mode = 'list'; try { mode = localStorage.getItem('endeavor-dl-view') || 'list'; } catch (e) { /* ignore */ }
     view.innerHTML = head(t('nav_compliance'), t('complianceLead'), '<button class="btn btn--ghost btn--xs" type="button" id="ics">' + t('addCal') + '</button>') +
-      '<div class="toolbar dl-bar"><select id="c-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
+      '<div class="sv-fit dl-fit"><div class="toolbar dl-bar"><select id="c-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
       '<select id="c-yr" aria-label="' + t('dl_year') + '">' + years.map(function (y) { return '<option' + (y === cy ? ' selected' : '') + '>' + y + '</option>'; }).join('') + '</select>' +
-      '<div class="seg" role="group" aria-label="' + t('nav_compliance') + '"><button type="button" data-m="list">' + t('v_list') + '</button><button type="button" data-m="cal">' + t('v_cal') + '</button></div></div>' +
-      '<div class="dl-sum" id="c-sum"></div><div id="c-list"></div><p class="portal-muted dl-info" id="c-info">' + dx('prazoInfo') + '</p>';
-    function rowsNow() { var co = $('#c-co').value, yr = $('#c-yr').value; return items.filter(function (i) { return (!co || i.company_id === co) && i.due_date.slice(0, 4) === yr; }); }
+      '<div class="dl-sum dl-sum--mini" id="c-sum"></div></div>' +
+      '<section class="portal-card fp-card dl-card"><div id="c-list"></div></section><p class="portal-muted dl-info" id="c-info">' + dx('prazoInfo') + '</p></div>';
+    var refaz = null;
     function draw() {
-      var rows = rowsNow(), cnt = { done: 0, pend: 0, over: 0 };
+      var co = $('#c-co').value, yr = $('#c-yr').value, cnt = { done: 0, pend: 0, over: 0 };
+      var rows = items.filter(function (i) { return (!co || i.company_id === co) && i.due_date.slice(0, 4) === yr; });
       rows.forEach(function (i) { var s0 = dlState(i); if (cnt[s0] != null) cnt[s0]++; });
-      $('#c-sum').innerHTML = [['done', 'sum_done'], ['pend', 'sum_pend'], ['over', 'sum_over']].map(function (x) { return '<div class="dl-sum__i dl-sum__i--' + x[0] + '"><b>' + cnt[x[0]] + '</b><span>' + t(x[1]) + '</span></div>'; }).join('');
-      $$('.seg button', view).forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.m === mode)); });
-      if (!rows.length) { $('#c-list').innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDeadlinesYear') + '</strong></div>'; return; }
-      if (mode === 'cal') return drawCal(rows);
-      var byMonth = {};
-      rows.forEach(function (i) { var k = i.due_date.slice(0, 7); (byMonth[k] = byMonth[k] || []).push(i); });
-      $('#c-list').innerHTML = Object.keys(byMonth).sort().map(function (k) {
-        var p = k.split('-'), title = new Intl.DateTimeFormat(EP.locale, { month: 'long', year: 'numeric' }).format(new Date(+p[0], +p[1] - 1, 15));
-        return '<section class="portal-card"><h2 class="portal-h2">' + esc(title.charAt(0).toUpperCase() + title.slice(1)) + '</h2>' + byMonth[k].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') + '</section>';
-      }).join('');
+      $('#c-sum').innerHTML = [['done', 'sum_done'], ['pend', 'sum_pend'], ['over', 'sum_over']].map(function (x) { return '<span class="dl-sum__i dl-sum__i--' + x[0] + '"><b>' + cnt[x[0]] + '</b> <span>' + t(x[1]) + '</span></span>'; }).join('');
+      // uma lista só, em ordem de data; o título do mês entra como linha
+      var mes = '';
+      $('#c-list').innerHTML = rows.length ? rows.map(function (i) {
+        var k = i.due_date.slice(0, 7), sep = '';
+        if (k !== mes) { mes = k; var pp = k.split('-'), tit = new Intl.DateTimeFormat(EP.locale, { month: 'long', year: 'numeric' }).format(new Date(+pp[0], +pp[1] - 1, 15)); sep = '<div class="dl-mes d-sep">' + esc(tit.charAt(0).toUpperCase() + tit.slice(1)) + '</div>'; }
+        return sep + deadlineRow(i, coById(i.company_id));
+      }).join('') : '<div class="empty-state"><strong>' + t('noDeadlinesYear') + '</strong></div>';
+      if (refaz) refaz(); else refaz = fitPager($('#c-list'), '.dl-mes, .deadline');
     }
-    function drawCal(rows) {
-      var yr = +$('#c-yr').value, byDay = {};
-      rows.forEach(function (i) { (byDay[i.due_date] = byDay[i.due_date] || []).push(i); });
-      var wd = []; for (var w = 0; w < 7; w++) wd.push(new Intl.DateTimeFormat(EP.locale, { weekday: 'narrow' }).format(new Date(2026, 1, 1 + w)));
-      var html = '<div class="dl-cal">';
-      for (var m = 0; m < 12; m++) {
-        var first = new Date(yr, m, 1), days = new Date(yr, m + 1, 0).getDate(), name = new Intl.DateTimeFormat(EP.locale, { month: 'long' }).format(first);
-        html += '<section class="portal-card dl-month"><h3>' + esc(name.charAt(0).toUpperCase() + name.slice(1)) + '</h3><div class="dl-grid">' + wd.map(function (x) { return '<span class="dl-wd">' + esc(x) + '</span>'; }).join('');
-        for (var b = 0; b < first.getDay(); b++) html += '<span></span>';
-        for (var d = 1; d <= days; d++) {
-          var key = yr + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0'), its = byDay[key];
-          if (!its) { html += '<span class="dl-d">' + d + '</span>'; continue; }
-          var st = its.some(function (i) { return dlState(i) === 'over'; }) ? 'over' : its.every(function (i) { return dlState(i) === 'done' || dlState(i) === 'na'; }) ? 'done' : 'pend';
-          html += '<button type="button" class="dl-d dl-d--' + st + '" data-day="' + key + '" aria-label="' + esc(fmtDate(key + 'T12:00:00') + ': ' + its.map(function (i) { return i.title; }).join(', ')) + '">' + d + '</button>';
-        }
-        html += '</div></section>';
-      }
-      $('#c-list').innerHTML = html + '</div><section class="portal-card dl-detail" id="c-day" aria-live="polite"><p class="portal-muted" style="margin:0">' + t('dl_pickDay') + '</p></section>';
-      $$('[data-day]', view).forEach(function (bt) { bt.onclick = function () {
-        $$('[data-day]', view).forEach(function (x) { x.classList.toggle('is-on', x === bt); });
-        var its = byDay[bt.dataset.day] || [];
-        $('#c-day').innerHTML = '<h2 class="portal-h2">' + esc(fmtDate(bt.dataset.day + 'T12:00:00')) + '</h2>' + (its.length ? its.map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<p>' + t('dl_none_day') + '</p>');
-      }; });
-    }
-    $$('.seg button', view).forEach(function (b) { b.onclick = function () { mode = b.dataset.m; try { localStorage.setItem('endeavor-dl-view', mode); } catch (e) { /* ignore */ } draw(); }; });
     $('#c-co').onchange = draw; $('#c-yr').onchange = draw; draw();
     $('#ics').onclick = function () {
       var d = function (s) { return s.replace(/-/g, ''); };

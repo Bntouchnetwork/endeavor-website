@@ -78,7 +78,7 @@ export function sameObligation(a: { title: string; category: string; due_date: s
   return d === 0 && norm(a.title).slice(0, 24) === norm(b.title).slice(0, 24);
 }
 
-export type Found = { title: string; category: string; due_date: string; source_url: string; basis: "stated" | "rule" };
+export type Found = { title: string; category: string; due_date: string; source_url: string; basis: "stated" | "rule"; note: string };
 // confere o que a IA devolveu: categoria, data nos dois anos, fonte válida e o trecho copiado da fonte
 export function validate(raw: unknown, sources: { url: string; text: string }[], years: number[]): { ok: Found[]; rejected: number } {
   const list = Array.isArray((raw as Row)?.deadlines) ? (raw as Row).deadlines as Row[] : [];
@@ -89,7 +89,9 @@ export function validate(raw: unknown, sources: { url: string; text: string }[],
     const dateOk = /^\d{4}-\d{2}-\d{2}$/.test(due) && !isNaN(Date.parse(due + "T12:00:00Z")) && new Date(due + "T12:00:00Z").toISOString().slice(0, 10) === due && years.includes(+due.slice(0, 4));
     if (title.length < 3 || !CATS.includes(d?.category) || !dateOk || !src || !quoteInSource(d?.quote, src.text)) { rejected++; continue; }
     if (ok.some((x) => sameObligation(x, { title, category: d.category, due_date: due }))) continue;
-    ok.push({ title, category: d.category, due_date: due, source_url: src.url, basis: d?.basis === "rule" ? "rule" : "stated" });
+    // anotação curta do que vence (o que é e a que período se refere), escrita pela IA só com o que está na fonte
+    const note = String(d?.note || "").replace(/<[^>]*>/g, "").replace(/https?:\/\/\S+/g, "").replace(/\s+/g, " ").trim().slice(0, 280);
+    ok.push({ title, category: d.category, due_date: due, source_url: src.url, basis: d?.basis === "rule" ? "rule" : "stated", note });
   }
   return { ok, rejected };
 }
