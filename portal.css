@@ -4,7 +4,7 @@ body.portal { background: var(--gray-50); min-height: 100vh; }
   position: sticky; top: 0; z-index: 50; background: var(--white); border-bottom: 1px solid var(--line);
 }
 .portal-top__inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 4rem; padding-inline: var(--gutter); }
-.portal-top__logo { height: 2rem; width: auto; display: block; }
+.portal-top__logo { height: 2.3rem; width: auto; display: block; }
 .portal-top__right { display: flex; align-items: center; gap: .75rem; font-size: .9rem; color: var(--muted); }
 .portal-main { max-width: 72rem; margin: 0 auto; padding: clamp(1.5rem, 1rem + 2vw, 3rem) var(--gutter) 4rem; }
 .portal-card { background: var(--white); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: clamp(1.25rem, 1rem + 1vw, 2rem); }

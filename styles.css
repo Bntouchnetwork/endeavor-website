@@ -875,11 +875,13 @@ html.a11y-contrast .wa-float { background: #000; border: 2px solid #fff; }
 
 
 /* ---------- Official logo (gold + navy, for light backgrounds; light variant in the navy footer) ---------- */
-.brand__logo { display: block; width: auto; height: 1.85rem; }
+.brand__logo { display: block; width: auto; height: 1.95rem; }
+@media (min-width: 400px) { .brand__logo { height: 1.85rem; } }
 @media (min-width: 440px) { .brand__logo { height: 2.15rem; } }
 @media (min-width: 768px) { .brand__logo { height: 2.5rem; } }
-@media (min-width: 1360px) { .brand__logo { height: 2.35rem; } }
-@media (min-width: 1600px) { .brand__logo { height: 2.6rem; } }
+@media (min-width: 820px) { .brand__logo { height: 2.88rem; } }
+@media (min-width: 1360px) { .brand__logo { height: 2.5rem; } }
+@media (min-width: 1600px) { .brand__logo { height: 3rem; } }
 .brand__logo--footer { height: 3rem; }
 @media (max-width: 359.98px) { .lang__code { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } }
 
@@ -937,7 +939,7 @@ html.a11y-contrast .wa-float { background: #000; border: 2px solid #fff; }
 }
 @media (max-width: 399.98px) { .lang__toggle .lang__caret { display: none; } .lang__toggle { padding: 0 0.45rem; } }
 @media (min-width: 1360px) { html:not(.a11y-large) .login { order: 4; } }
-@media (max-width: 359.98px) { .brand__logo { height: 1.55rem; } .header__inner { gap: 0.35rem; } .menu-toggle { padding: 0 0.55rem; } }
+@media (max-width: 359.98px) { .brand__logo { height: 1.78rem; } .header__inner { gap: 0.35rem; } .menu-toggle { padding: 0 0.55rem; } }
 @media (max-width: 700px) { .header__partners { display: none; } }
 .header__partners { background: var(--white); color: var(--navy-900); border: 1.5px solid var(--navy-900); }
 .header__partners:hover { background: var(--navy-900); color: var(--white); }
