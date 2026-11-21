@@ -1190,7 +1190,9 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
 .shop__carousel .shop__seta { position: static; margin: 0; grid-area: prox; justify-self: start; }
 .shop__carousel .shop__seta--ant { grid-area: ant; justify-self: end; }
 .shop__carousel .shop__seta:disabled { opacity: 0.35; pointer-events: none; box-shadow: none; }
-@media (min-width: 640px) {
-  .shop__carousel { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "ant trilho prox"; }
-  .shop__carousel .shop__seta, .shop__carousel .shop__seta--ant { justify-self: center; }
+/* a fileira ocupa a largura toda (alinhada com os pacotes); com margem na página, as flechas ficam para fora, dos lados */
+@media (min-width: 1340px) {
+  .shop__carousel { display: block; position: relative; }
+  .shop__carousel .shop__seta { position: absolute; top: 50%; margin-top: -1.45rem; right: -3.65rem; left: auto; }
+  .shop__carousel .shop__seta--ant { left: -3.65rem; right: auto; }
 }
