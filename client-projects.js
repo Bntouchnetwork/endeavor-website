@@ -57,6 +57,28 @@
       events: 'Historial', due: 'hasta', invoices: 'Facturas del proyecto', noInv: 'Aún no hay facturas.', paid: 'Pagada', open: 'Abierta', void: 'Anulada', draft: 'Borrador', back: 'Mis proyectos', err: 'Algo salió mal. Intente de nuevo.',
       addCo: 'Agregar empresa', addCoT: 'Agregar nueva empresa', coName: 'Nombre de la empresa', coState: 'Estado (ej.: FL)', coExisting: 'La empresa ya existe', coNew: 'Quiero constituir esta empresa', coEin: 'EIN (opcional)', coBooks: 'Quiero el servicio de Bookkeeping para esta empresa (suscripción y facturación propias)', coSave: 'Agregar', coDone: 'Empresa agregada. El equipo de Endeavor fue avisado.', coType: 'Tipo' }
   };
+  // página de apresentação (quem ainda não tem projeto)
+  var LP = {
+    en: { h: 'A tool built for your business, with AI', p: 'Need a platform, a portal or a tool for your work or your company? Endeavor builds it for you, with AI features, without you writing a line of code.',
+      b: [['Made for the way you work', 'Client portals, scheduling, internal tools, dashboards, automations.'], ['With AI inside', 'Assistants, document reading, automatic answers and reports, where they help.'], ['You approve every step', 'Scope, timeline and price before starting; each version is tested by you before going live.']],
+      how: 'How it works', s: [['Talk to the AI Project Manager', 'Describe what you need. It asks the right questions and writes the scope.'], ['Receive the proposal', 'Endeavor reviews and sends scope, timeline and price.'], ['Development', 'After approval and payment, the build starts.'], ['Test', 'You try each version on a test address and ask for adjustments.'], ['Launch', 'Approved, it goes live on the official address.']],
+      cta: 'New Project', note: 'No commitment: the price only comes with the proposal.' },
+    pt: { h: 'Uma ferramenta feita para o seu negócio, com IA', p: 'Precisa de uma plataforma, um portal ou uma ferramenta para o seu trabalho ou a sua empresa? A Endeavor constrói para você, com funções de IA, sem você escrever uma linha de código.',
+      b: [['Feita para o seu jeito de trabalhar', 'Portais de clientes, agendamento, ferramentas internas, painéis, automações.'], ['Com IA por dentro', 'Assistentes, leitura de documentos, respostas e relatórios automáticos, onde ajudam.'], ['Você aprova cada etapa', 'Escopo, prazo e preço antes de começar; cada versão é testada por você antes de ir ao ar.']],
+      how: 'Como funciona', s: [['Converse com o AI Project Manager', 'Conte o que você precisa. Ele faz as perguntas certas e escreve o escopo.'], ['Receba a proposta', 'A Endeavor revisa e envia escopo, prazo e preço.'], ['Desenvolvimento', 'Depois da aprovação e do pagamento, a construção começa.'], ['Teste', 'Você experimenta cada versão num endereço de teste e pede ajustes.'], ['Publicação', 'Aprovada, ela vai ao ar no endereço oficial.']],
+      cta: 'Novo projeto', note: 'Sem compromisso: o preço só vem com a proposta.' },
+    es: { h: 'Una herramienta hecha para su negocio, con IA', p: '¿Necesita una plataforma, un portal o una herramienta para su trabajo o su empresa? Endeavor la construye para usted, con funciones de IA, sin que escriba una línea de código.',
+      b: [['Hecha para su forma de trabajar', 'Portales de clientes, agenda, herramientas internas, paneles, automatizaciones.'], ['Con IA por dentro', 'Asistentes, lectura de documentos, respuestas e informes automáticos, donde ayudan.'], ['Usted aprueba cada etapa', 'Alcance, plazo y precio antes de empezar; usted prueba cada versión antes de publicarla.']],
+      how: 'Cómo funciona', s: [['Hable con el AI Project Manager', 'Cuente lo que necesita. Él hace las preguntas correctas y escribe el alcance.'], ['Reciba la propuesta', 'Endeavor revisa y envía alcance, plazo y precio.'], ['Desarrollo', 'Después de la aprobación y del pago, empieza la construcción.'], ['Prueba', 'Usted prueba cada versión en una dirección de prueba y pide ajustes.'], ['Publicación', 'Aprobada, se publica en la dirección oficial.']],
+      cta: 'Nuevo proyecto', note: 'Sin compromiso: el precio solo llega con la propuesta.' }
+  };
+  function landing(el) {
+    var t = LP[L] || LP.en, esc = X.esc;
+    el.innerHTML = X.head(tr('title'), '') + '<div class="sv-fit pj-land" id="pj-land"><section class="portal-card pj-hero"><div><h2 class="pj-hero__h">' + esc(t.h) + '</h2><p class="pj-hero__p">' + esc(t.p) + '</p>' +
+      '<div class="portal-btn-row" style="align-items:center"><a class="btn btn--gold" id="pj-cta" href="#/projetos?new=1">' + esc(t.cta) + '</a><span class="portal-muted" style="font-size:.88rem">' + esc(t.note) + '</span></div></div>' +
+      '<ul class="pj-bens">' + t.b.map(function (x) { return '<li><strong>' + esc(x[0]) + '</strong><span>' + esc(x[1]) + '</span></li>'; }).join('') + '</ul></section>' +
+      '<section class="portal-card pj-como"><h2 class="portal-h2">' + esc(t.how) + '</h2><ol class="pj-passos">' + t.s.map(function (x, i) { return '<li><span class="pj-n" aria-hidden="true">' + (i + 1) + '</span><strong>' + esc(x[0]) + '</strong><span>' + esc(x[1]) + '</span></li>'; }).join('') + '</ol></section></div>';
+  }
   var X, L, T;
   function tr(k, v) { var s = k.split('.').reduce(function (o, x) { return o && o[x]; }, T); if (s == null) s = k.split('.').reduce(function (o, x) { return o && o[x]; }, D.en) || k; if (v) Object.keys(v).forEach(function (x) { s = String(s).replace('{' + x + '}', v[x]); }); return s; }
   function money(c) { return new Intl.NumberFormat(X.locale || 'en-US', { style: 'currency', currency: 'USD' }).format((c || 0) / 100); }
@@ -76,6 +98,7 @@
     if (ctx.param('new')) return newProject(el);
     if (id) return detail(el, id);
     var esc = X.esc, rows = await X.q(X.sb.from('ai_projects').select('id, title, status, weeks, created_at, staging_url, prod_url, companies(legal_name)').eq('client_id', X.S.client.id).order('created_at', { ascending: false }));
+    if (!rows.length) return landing(el);
     el.innerHTML = X.head(tr('title'), tr('lead'), '<a class="btn btn--navy" href="#/projetos?new=1">' + tr('newP') + '</a>') +
       '<h2 class="portal-h2">' + tr('my') + '</h2>' + (rows.length ? '<div class="cards">' + rows.map(function (p) {
         return '<a class="co-card" href="#/projetos?id=' + p.id + '"><h3>' + esc(p.title) + '</h3><div class="meta">' + esc(p.companies ? p.companies.legal_name : '') + '</div><div class="row"><span>' + (p.weeks ? p.weeks + ' ' + tr('weeks') : '') + '</span>' + pill(p.status, tr('st.' + p.status)) + '</div></a>';
@@ -84,23 +107,26 @@
 
   async function newProject(el) {
     var esc = X.esc, cos = X.S.companies || [];
-    el.innerHTML = X.head(tr('newP'), tr('lead')) + '<section class="portal-card"><form class="portal-form" id="np" novalidate>' +
-      '<div class="portal-grid2"><div class="field"><label for="np-t">' + tr('f_title') + '</label><input id="np-t" maxlength="160" required></div>' +
-      '<div class="field"><label for="np-co">' + tr('f_company') + '</label><select id="np-co">' + cos.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select><button class="btn btn--ghost btn--xs" type="button" id="np-addco" style="margin-top:.4rem">+ ' + tr('addCo') + '</button></div></div>' +
-      '<div class="field"><label for="np-b">' + tr('f_brief') + '</label><textarea id="np-b" rows="4" maxlength="8000" placeholder="' + esc(tr('f_brief_ph')) + '" required></textarea></div>' +
-      '<div class="field"><label for="np-f">' + tr('f_features') + '</label><textarea id="np-f" rows="3" maxlength="4000"></textarea></div>' +
-      '<fieldset class="perm-box"><legend>' + tr('f_conn') + '</legend><div id="np-conn" class="pj-conn"><p class="portal-muted">…</p></div></fieldset>' +
-      '<div class="field"><label for="np-i">' + tr('f_integr') + '</label><input id="np-i" maxlength="2000"></div>' +
-      '<div class="portal-grid2"><div class="field"><label for="np-u">' + tr('f_users') + '</label><input id="np-u" maxlength="1000"></div><div class="field"><label for="np-d">' + tr('f_deadline') + '</label><input id="np-d" maxlength="100"></div></div>' +
-      '<div class="field"><label for="np-in">' + tr('f_instr') + '</label><textarea id="np-in" rows="3" maxlength="4000"></textarea></div>' +
-      '<div class="field"><label for="np-r">' + tr('f_refs') + '</label><input id="np-r" maxlength="2000"></div>' +
-      '<div class="portal-grid2"><div class="field"><label for="np-logo">' + tr('f_logo') + '</label><input type="file" id="np-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp"></div><div class="field"><label for="np-docs">' + tr('f_docs') + '</label><input type="file" id="np-docs" multiple accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx,.txt,.zip"></div></div>' +
-      '<div class="portal-alert" id="np-m" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit">' + tr('f_create') + '</button><a class="btn btn--ghost" href="#/projetos">' + tr('back') + '</a></div></form></section>';
+    // tudo numa tela só: três colunas no computador (o projeto, quem usa e conexões, estilo e arquivos)
+    el.innerHTML = X.head(tr('newP'), '') + '<div class="sv-fit pj-novo"><section class="portal-card"><form class="portal-form" id="np" novalidate><div class="np-cols">' +
+      '<div class="np-col"><div class="field"><label for="np-t">' + tr('f_title') + '</label><input id="np-t" maxlength="160" required></div>' +
+        '<div class="field"><label for="np-co">' + tr('f_company') + '</label><div class="np-co"><select id="np-co">' + cos.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select><button class="btn btn--ghost btn--xs" type="button" id="np-addco">+ ' + tr('addCo') + '</button></div></div>' +
+        '<div class="field"><label for="np-b">' + tr('f_brief') + '</label><textarea id="np-b" rows="2" maxlength="8000" placeholder="' + esc(tr('f_brief_ph')) + '" required></textarea></div>' +
+        '<div class="field"><label for="np-f">' + tr('f_features') + '</label><textarea id="np-f" rows="2" maxlength="4000"></textarea></div></div>' +
+      '<div class="np-col"><div class="field"><label for="np-u">' + tr('f_users') + '</label><input id="np-u" maxlength="1000"></div>' +
+        '<div class="field"><label for="np-d">' + tr('f_deadline') + '</label><input id="np-d" maxlength="100"></div>' +
+        '<fieldset class="perm-box np-conn"><legend>' + tr('f_conn') + '</legend><div id="np-conn" class="pj-conn"><p class="portal-muted">…</p></div></fieldset>' +
+        '<div class="field"><label for="np-i">' + tr('f_integr') + '</label><input id="np-i" maxlength="2000"></div></div>' +
+      '<div class="np-col"><div class="field"><label for="np-in">' + tr('f_instr') + '</label><textarea id="np-in" rows="3" maxlength="4000"></textarea></div>' +
+        '<div class="field"><label for="np-r">' + tr('f_refs') + '</label><input id="np-r" maxlength="2000"></div>' +
+        '<div class="field"><label for="np-logo">' + tr('f_logo') + '</label><input type="file" id="np-logo" accept="image/png,image/jpeg,image/svg+xml,image/webp"></div>' +
+        '<div class="field"><label for="np-docs">' + tr('f_docs') + '</label><input type="file" id="np-docs" multiple accept=".pdf,.png,.jpg,.jpeg,.docx,.xlsx,.txt,.zip"></div></div></div>' +
+      '<div class="portal-alert" id="np-m" role="alert"></div><div class="portal-btn-row np-fim"><a class="btn btn--ghost" href="#/projetos">' + tr('back') + '</a><button class="btn btn--navy" type="submit">' + tr('f_create') + '</button></div></form></section></div>';
     var loadConn = async function () {
       var co = X.$('#np-co').value, box = X.$('#np-conn');
       if (!co) { box.innerHTML = '<p class="portal-muted">' + tr('noConn') + '</p>'; return; }
       var r = await X.sb.rpc('project_connectors', { p_company: co }), list = r.data || [];
-      box.innerHTML = list.length ? list.map(function (c) { return '<label class="check-row"><input type="checkbox" value="' + esc(c.key) + '"> <span><strong>' + esc(c.name) + '</strong><span class="portal-muted" style="display:block;font-size:.84rem">' + esc(c.description || '') + '</span></span></label>'; }).join('') : '<p class="portal-muted">' + tr('noConn') + '</p>';
+      box.innerHTML = list.length ? list.map(function (c) { return '<label class="check-row np-chip" title="' + esc(c.description || '') + '"><input type="checkbox" value="' + esc(c.key) + '"> <span>' + esc(c.name) + '</span></label>'; }).join('') : '<p class="portal-muted">' + tr('noConn') + '</p>';
     };
     loadConn(); X.$('#np-co').onchange = loadConn;
     X.$('#np-addco').onclick = function () { addCompany(function () { X.route(); }); };

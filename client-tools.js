@@ -183,6 +183,7 @@
     }
     function cardAddon(x) {
       var on = !!x.mine || x.lib, soon = x.p.status === 'coming_soon', tela = x.lib ? x.code : TOOL_VIEW[x.code];
+      if (x.abre) return '<section class="portal-card tl-card sv-card" data-addon="' + x.code + '"><div class="sv-top"><h2 class="portal-h2">' + esc(x.name) + '</h2></div><p class="portal-muted ad-cat">' + t('cat_' + x.cat) + '</p><p class="sv-lead">' + esc(x.lead) + '</p><div class="portal-btn-row"><a class="btn btn--navy btn--sm" href="#/' + x.abre + '">' + t('open') + '</a></div></section>';
       var btn = on ? (tela ? '<a class="btn btn--navy btn--sm" href="#/' + tela + '">' + t('open') + '</a>' : '')
         : soon ? '' : '<button class="btn btn--gold btn--sm" type="button" data-buy="' + x.code + '">' + t('buy') + '</button>';
       var pill = on ? '<span class="pill pill--report">' + t('active') + '</span>' : soon ? '<span class="pill">' + t('soon') + '</span>' : '';
@@ -195,6 +196,8 @@
       var i = info(p.code), price = member && p.member_cents != null && p.member_cents < p.price_cents ? p.member_cents : p.price_cents;
       return { code: p.code, name: i.name, lead: i.lead, cat: p.category || 'empresa', p: p, price: price, full: price < p.price_cents ? p.price_cents : null, mine: by[p.code], lib: !!(LIBERADO[p.code] && C.S[LIBERADO[p.code]]) };
     }).filter(function (x) { return x.p.kind !== 'addon' || x.mine; });
+    // AI Projects: serviço sob medida, sem preço na loja (o valor sai na proposta); o botão abre o AI Projects
+    if (window.EProjects && C.S.perms.owner && !window.PORTAL_MODE) { var ia = info('aiprojects'); catalogo.push({ code: 'aiprojects', name: ia.name, lead: ia.lead, cat: 'empresa', p: { status: 'active', interval: 'once' }, price: null, full: null, mine: null, lib: false, abre: 'projetos' }); }
     var semAc = function (v) { return String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
     function lista() {
       // o card do plano ocupa duas colunas quando há espaço (o item vazio guarda o lugar na conta da página)

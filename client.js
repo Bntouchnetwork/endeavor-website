@@ -305,6 +305,11 @@
   async function selectClient(id) {
     S.client = (await q(sb.from('clients').select('*').eq('id', id).single()));
     var me = (await q(sb.from('client_users').select('*').eq('client_id', id).eq('user_id', S.user.id).eq('status', 'active')))[0] || {};
+    // o e-mail de login foi trocado (confirmado pelo link): o cadastro acompanha
+    if (me.email && S.user.email && String(me.email).toLowerCase() !== String(S.user.email).toLowerCase()) {
+      var sy = await sb.rpc('client_email_sync');
+      if (!sy.error) { me.email = S.user.email; S.client = (await q(sb.from('clients').select('*').eq('id', id).single())); }
+    }
     S.role = me.role; S.me = me;
     var own = me.role === 'owner', cats = own ? ['formation', 'onboarding', 'tax_return', 'report', 'compliance', 'other'] : (me.perm_doc_categories || []);
     S.perms = { owner: own, cats: cats, view: own || cats.length > 0, reports: own || cats.indexOf('report') > -1,
@@ -616,11 +621,9 @@
       (S.perms.view ? kpi(t('k_docs'), res[2].count || 0) : '') + (S.perms.reports && S.books ? kpi(t('k_reports'), res[3].count || 0) : '');
     var topo = function (tit, href) { return '<div class="toolbar ov-top"><h2 class="portal-h2" style="margin:0">' + tit + '</h2><a href="' + href + '">' + t('seeAll') + '</a></div>'; };
     // página fixa: indicadores e andamento em cima; embaixo, prazos, documentos e atalhos lado a lado, cada lista em páginas com flechas
-    var atalhos = (S.perms.upload ? '<a class="btn btn--gold btn--sm" href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</a>' : '') +
-      (S.perms.owner ? '<a class="btn btn--ghost btn--sm" href="#/collaborators?invite=1"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg> ' + t('qInvite') + '</a>' : '');
-    view.innerHTML = head(t('hello', { n: first }), PARTNER ? t('p_overviewLead', { c: S.client.name }) : t('overviewLead'), atalhos ? '<span class="ov-links portal-btn-row">' + atalhos + '</span>' : '') +
+    view.innerHTML = head(t('hello', { n: first }), PARTNER ? t('p_overviewLead', { c: S.client.name }) : t('overviewLead')) +
       '<div class="sv-fit ov-fit">' +
-      (S.openInv && S.openInv.n ? '<div class="portal-alert portal-alert--info ov-aviso"><strong>' + esc(t('inv_banner', { n: S.openInv.n, a: money(S.openInv.cents) })) + '</strong><a class="btn btn--navy btn--xs" href="#/invoices">' + t('inv_bannerBtn') + '</a></div>' : '') +
+      (S.openInv && S.openInv.n ? '<div class="portal-alert portal-alert--info ov-aviso"><strong>' + esc(t('inv_banner', { n: S.openInv.n, a: money(S.openInv.cents) })) + '</strong><a class="btn btn--danger btn--xs" id="ov-pagar" href="#/invoices">' + t('inv_bannerBtn') + '</a></div>' : '') +
       '<div class="kpis">' + kp + '</div>' + (PARTNER ? '<p class="perm-sum ov-perm"><strong>' + t('myAccess') + ':</strong> ' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</p>' : '') +
       '<div class="ov-cols"><div class="ov-col"><div id="tl-ov"></div>' +
         (!S.perms.deadlines ? '' : '<section class="portal-card fp-card" id="ov-dl">' + topo(t('nextDeadlines'), '#/compliance') +
@@ -722,9 +725,12 @@
     } else body.innerHTML = vazio;
   }
 
-  var DOCX = { en: { cancelar: 'Cancel', solicitados: 'Requested', categoria: 'Category', paginas: 'Document pages', anterior: 'Previous page', proxima: 'Next page', baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
-    pt: { cancelar: 'Cancelar', solicitados: 'Solicitados', categoria: 'Categoria', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Próxima página', baixar: 'Baixar', excluir: 'Excluir', excluirQ: 'Excluir "{t}"? Ele sai da sua lista. Não dá para desfazer por aqui.', pedidos: 'Documentos solicitados', pedidosLead: 'A Endeavor pediu estes documentos. Envie cada um por aqui.', enviar: 'Enviar', prazo: 'Prazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
-    es: { cancelar: 'Cancelar', solicitados: 'Solicitados', categoria: 'Categoría', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Página siguiente', baixar: 'Descargar', excluir: 'Eliminar', excluirQ: '¿Eliminar "{t}"? Sale de su lista. No se puede deshacer aquí.', pedidos: 'Documentos solicitados', pedidosLead: 'Endeavor pidió estos documentos. Envíe cada uno por aquí.', enviar: 'Enviar', prazo: 'Plazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
+  var DOCX = { en: { e_main: 'Main e-mail (sign-in)', e_two: 'Second e-mail', e_twoHint: 'Receives a copy of the automatic notices. Sign-in and password reset stay on the main e-mail.', e_save: 'Save', e_remove: 'Remove', e_saved: 'Second e-mail saved.', e_removed: 'Second e-mail removed.', e_bad: 'Enter a valid e-mail, different from the main one.',
+      e_make: 'Make this the main e-mail', e_makeLead: 'To change your sign-in to {e}, confirm your current password. We send a confirmation link to {e}; the sign-in only changes after the click.', e_pass: 'Current password', e_send: 'Send confirmation link', e_wrong: 'Incorrect password.', e_sent: 'We sent a confirmation link to {e}. Your sign-in only changes after you click it; until then, keep using {o}.', e_fail: 'We could not start the change. The e-mail may already be used by another account.', prazoInfo: 'These deadlines are for information only, gathered from official sources. Confirm them with your accountant.', cancelar: 'Cancel', solicitados: 'Requested', categoria: 'Category', paginas: 'Document pages', anterior: 'Previous page', proxima: 'Next page', baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
+    pt: { e_main: 'E-mail principal (login)', e_two: 'Segundo e-mail', e_twoHint: 'Recebe cópia dos avisos automáticos. O login e a redefinição de senha continuam no e-mail principal.', e_save: 'Salvar', e_remove: 'Remover', e_saved: 'Segundo e-mail salvo.', e_removed: 'Segundo e-mail removido.', e_bad: 'Digite um e-mail válido, diferente do principal.',
+      e_make: 'Tornar este o e-mail principal', e_makeLead: 'Para trocar o seu login para {e}, confirme a senha atual. Enviamos um link de confirmação para {e}; o login só muda depois do clique.', e_pass: 'Senha atual', e_send: 'Enviar link de confirmação', e_wrong: 'Senha incorreta.', e_sent: 'Enviamos um link de confirmação para {e}. O login só muda depois do clique; até lá, continue usando {o}.', e_fail: 'Não foi possível iniciar a troca. O e-mail pode já estar em uso por outra conta.', prazoInfo: 'Estes prazos são informativos, buscados em fontes oficiais. Confirme com o seu contador.', cancelar: 'Cancelar', solicitados: 'Solicitados', categoria: 'Categoria', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Próxima página', baixar: 'Baixar', excluir: 'Excluir', excluirQ: 'Excluir "{t}"? Ele sai da sua lista. Não dá para desfazer por aqui.', pedidos: 'Documentos solicitados', pedidosLead: 'A Endeavor pediu estes documentos. Envie cada um por aqui.', enviar: 'Enviar', prazo: 'Prazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
+    es: { e_main: 'Correo principal (ingreso)', e_two: 'Segundo correo', e_twoHint: 'Recibe copia de los avisos automáticos. El ingreso y el cambio de contraseña siguen en el correo principal.', e_save: 'Guardar', e_remove: 'Quitar', e_saved: 'Segundo correo guardado.', e_removed: 'Segundo correo eliminado.', e_bad: 'Escriba un correo válido, distinto del principal.',
+      e_make: 'Hacer de este el correo principal', e_makeLead: 'Para cambiar su ingreso a {e}, confirme la contraseña actual. Enviamos un enlace de confirmación a {e}; el ingreso solo cambia después del clic.', e_pass: 'Contraseña actual', e_send: 'Enviar enlace de confirmación', e_wrong: 'Contraseña incorrecta.', e_sent: 'Enviamos un enlace de confirmación a {e}. Su ingreso solo cambia después del clic; hasta entonces, siga usando {o}.', e_fail: 'No pudimos iniciar el cambio. El correo puede estar en uso por otra cuenta.', prazoInfo: 'Estos plazos son informativos, obtenidos de fuentes oficiales. Confírmelos con su contador.', cancelar: 'Cancelar', solicitados: 'Solicitados', categoria: 'Categoría', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Página siguiente', baixar: 'Descargar', excluir: 'Eliminar', excluirQ: '¿Eliminar "{t}"? Sale de su lista. No se puede deshacer aquí.', pedidos: 'Documentos solicitados', pedidosLead: 'Endeavor pidió estos documentos. Envíe cada uno por aquí.', enviar: 'Enviar', prazo: 'Plazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
   function dx(k, v) { var x = (DOCX[L] || DOCX.en)[k]; Object.keys(v || {}).forEach(function (n) { x = x.split('{' + n + '}').join(v[n]); }); return x; }
   async function vDocuments(view) {
     // o envio de documentos mora aqui dentro: botão "Novo documento" (o endereço antigo #/upload também abre esta tela)
@@ -796,13 +802,13 @@
   async function vCompliance(view) {
     var items = await q(sb.from('compliance_items').select('*').eq('client_id', S.client.id).order('due_date'));
     var years = items.map(function (i) { return +i.due_date.slice(0, 4); }).filter(function (y, k, a) { return a.indexOf(y) === k; }).sort();
-    var cy = new Date().getFullYear(); if (years.indexOf(cy) < 0) years.push(cy); years.sort();
+    var cy = new Date().getFullYear(); [cy, cy + 1].forEach(function (y) { if (years.indexOf(y) < 0) years.push(y); }); years.sort();
     var mode = 'list'; try { mode = localStorage.getItem('endeavor-dl-view') || 'list'; } catch (e) { /* ignore */ }
     view.innerHTML = head(t('nav_compliance'), t('complianceLead'), '<button class="btn btn--ghost btn--xs" type="button" id="ics">' + t('addCal') + '</button>') +
       '<div class="toolbar dl-bar"><select id="c-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
       '<select id="c-yr" aria-label="' + t('dl_year') + '">' + years.map(function (y) { return '<option' + (y === cy ? ' selected' : '') + '>' + y + '</option>'; }).join('') + '</select>' +
       '<div class="seg" role="group" aria-label="' + t('nav_compliance') + '"><button type="button" data-m="list">' + t('v_list') + '</button><button type="button" data-m="cal">' + t('v_cal') + '</button></div></div>' +
-      '<div class="dl-sum" id="c-sum"></div><div id="c-list"></div>';
+      '<div class="dl-sum" id="c-sum"></div><div id="c-list"></div><p class="portal-muted dl-info" id="c-info">' + dx('prazoInfo') + '</p>';
     function rowsNow() { var co = $('#c-co').value, yr = $('#c-yr').value; return items.filter(function (i) { return (!co || i.company_id === co) && i.due_date.slice(0, 4) === yr; }); }
     function draw() {
       var rows = rowsNow(), cnt = { done: 0, pend: 0, over: 0 };
@@ -1173,14 +1179,56 @@
 
   async function vSettings(view) {
     var u = (await sb.auth.getUser()).data.user;
+    var doisEmails = !!(S.client && S.perms.owner && !PARTNER), e2 = doisEmails ? (S.client.email2 || '') : '';
     var contas = S.client && S.perms.owner && !PARTNER && S.books === 'pacote' && window.ETools && ETools.accounts && S.companies.some(function (c) { return c.books_provider === 'endeavor'; });
-    view.innerHTML = head(t('nav_settings'), t('settingsLead')) + (contas ? '<div class="set-grid"><div>' : '') +
-      '<section class="portal-card"><h2 class="portal-h2">' + t('account') + '</h2><dl class="kv"><dt>' + t('email') + '</dt><dd>' + esc(u.email) + '</dd><dt>' + t('lastLogin') + '</dt><dd>' + esc(fmtDT(u.last_sign_in_at)) + '</dd>' +
-      '<dt>' + t('yourRole') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : [S.partner ? t('p_partnerLead') : '', S.client ? t('c_' + (S.me.collab_type || 'other')) : ''].filter(Boolean).join(' · ')) + '</dd>' + (PARTNER && S.client ? '<dt>' + t('sharedBy') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('myAccess') + '</dt><dd>' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</dd>' : '') + '<dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
+    view.innerHTML = head(t('nav_settings'), t('settingsLead')) + '<div class="set-grid"><div>' +
+      '<section class="portal-card"><h2 class="portal-h2">' + t('account') + '</h2><dl class="kv"><dt>' + (doisEmails ? dx('e_main') : t('email')) + '</dt><dd id="set-email">' + esc(u.email) + '</dd><dt>' + t('lastLogin') + '</dt><dd>' + esc(fmtDT(u.last_sign_in_at)) + '</dd>' +
+      '<dt>' + t('yourRole') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : [S.partner ? t('p_partnerLead') : '', S.client ? t('c_' + (S.me.collab_type || 'other')) : ''].filter(Boolean).join(' · ')) + '</dd>' + (PARTNER && S.client ? '<dt>' + t('sharedBy') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('myAccess') + '</dt><dd>' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</dd>' : '') + '<dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl>' +
+      (doisEmails ? '<form class="set-e2" id="e2-form" novalidate><label for="e2-in">' + dx('e_two') + '</label><div class="set-e2__l"><input id="e2-in" type="email" autocomplete="email" maxlength="200" value="' + esc(e2) + '" aria-describedby="e2-h"><button class="btn btn--navy btn--sm" type="submit">' + dx('e_save') + '</button>' +
+        (e2 ? '<button class="btn btn--ghost btn--sm" type="button" id="e2-del">' + dx('e_remove') + '</button>' : '') + '</div><p class="portal-muted set-e2__h" id="e2-h">' + dx('e_twoHint') + '</p>' +
+        (e2 ? '<button class="btn btn--ghost btn--xs" type="button" id="e2-make">' + dx('e_make') + '</button>' : '') +
+        '<div class="portal-alert" id="e2-m" role="status"></div></form>' : '') + '</section></div><div>' + (contas ? '<section class="portal-card" id="set-contas"></section>' : '') +
       '<section class="portal-card"><h2 class="portal-h2">' + t('changePass') + '</h2><form class="portal-form" id="pw"><div class="field"><label for="pw-n">' + t('newPass') + '</label><input id="pw-n" type="password" autocomplete="new-password" minlength="8" required></div>' +
-      '<div class="portal-alert" id="pw-m" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('savePass') + '</button></form></section>' + (contas ? '</div><section class="portal-card" id="set-contas"></section></div>' : '');
+      '<div class="portal-alert" id="pw-m" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('savePass') + '</button></form></section></div></div>';
     // contas que alimentam o bookkeeping incluído no pacote (quem comprou a ferramenta avulsa conecta dentro dela)
     if (contas) ETools.accounts($('#set-contas', view));
+    if (doisEmails) {
+      var gravaE2 = async function (v) {
+        var r = await sb.rpc('client_set_email2', { p_client: S.client.id, p_email: v });
+        if (r.error) return msg($('#e2-m'), /same_as_primary|invalid_email/.test(r.error.message || '') ? dx('e_bad') : errText(r.error), 'error');
+        S.client.email2 = v || null; await vSettings(view); msg($('#e2-m'), dx(v ? 'e_saved' : 'e_removed'), 'ok');
+      };
+      $('#e2-form').onsubmit = function (e) {
+        e.preventDefault(); var v = $('#e2-in').value.trim().toLowerCase();
+        if (!v) return e2 ? gravaE2('') : msg($('#e2-m'), dx('e_bad'), 'error');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) || v === String(u.email).toLowerCase()) return msg($('#e2-m'), dx('e_bad'), 'error');
+        gravaE2(v);
+      };
+      if ($('#e2-del')) $('#e2-del').onclick = function () { gravaE2(''); };
+      if ($('#e2-make')) {
+        $('#e2-make').onclick = function () {
+          openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + dx('e_make') + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div><div id="e2-troca"><p style="margin:0 0 .9rem">' + esc(dx('e_makeLead', { e: e2 })) + '</p>' +
+            '<div class="field"><label for="e2-pass">' + dx('e_pass') + '</label><input id="e2-pass" type="password" autocomplete="current-password"></div><div class="portal-alert" id="e2-tm" role="alert"></div>' +
+            '<div class="portal-btn-row" style="justify-content:flex-end"><button class="btn btn--navy" type="button" id="e2-go">' + dx('e_send') + '</button></div></div>', true);
+          $('#e2-pass').focus(); $('#e2-go').onclick = trocar;
+        };
+        // troca do login: confere a senha atual e pede a confirmação no e-mail novo; o login só muda depois do clique
+        var trocar = async function () {
+          var b = this, pw = $('#e2-pass').value, m = $('#e2-tm'); if (!pw) return msg(m, dx('e_wrong'), 'error');
+          b.disabled = true;
+          try {
+            var tmp = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'endeavor-check-tmp' } });
+            var ck = await tmp.auth.signInWithPassword({ email: u.email, password: pw });
+            if (ck.error || !ck.data.session) { b.disabled = false; return msg(m, dx('e_wrong'), 'error'); }
+            tmp.auth.signOut({ scope: 'local' }).catch(function () {});
+            var back = 'https://endeavorbiz.com/login.html'; try { if (/^https?:/.test(location.protocol)) back = new URL('login.html', location.href).href.split(/[?#]/)[0]; } catch (e0) { /* ignore */ }
+            var r = await sb.auth.updateUser({ email: e2 }, { emailRedirectTo: back + '?lang=' + L });
+            if (r.error) { b.disabled = false; return msg(m, dx('e_fail'), 'error'); }
+            closeOverlay(); msg($('#e2-m'), dx('e_sent', { e: e2, o: u.email }), 'ok');
+          } catch (er) { b.disabled = false; msg(m, dx('e_fail'), 'error'); }
+        };
+      }
+    }
     $('#pw').onsubmit = async function (e) {
       e.preventDefault(); var p = $('#pw-n').value; if (p.length < 8) return msg($('#pw-m'), t('passShort'), 'error');
       var r = await sb.auth.updateUser({ password: p }); msg($('#pw-m'), r.error ? errText(r.error) : t('passChanged'), r.error ? 'error' : 'ok');

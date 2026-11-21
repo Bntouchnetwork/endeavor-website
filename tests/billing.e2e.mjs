@@ -182,7 +182,8 @@ try {
   await p.screenshot({ path: OUT + "/empresa-relatorios.png" });
   // Visão geral fixa
   await p.click('#console-nav a[data-view="overview"]'); await p.waitForSelector(".ov-cols"); await p.waitForTimeout(500);
-  ok(await p.locator("#ov-docs .doclist li").count() >= 3 && await p.locator(".ov-links a").count() >= 2 && await p.locator("#tl-ov .tl-row").count() === 1 && await semRolar(), "Visão geral: indicadores, andamento, prazos, documentos e atalhos numa página fixa, sem rolagem");
+  ok(await p.locator("#ov-docs .doclist li").count() >= 3 && !(await p.locator(".ov-links, .console__head .btn").count()) && await p.locator("#tl-ov .tl-row").count() === 1 && await semRolar(), "Visão geral: só resumo (sem botões no topo), com indicadores, andamento, prazos e documentos numa página fixa, sem rolagem");
+  ok(await p.evaluate(() => { const b = document.querySelector("#ov-pagar"); return !!b && getComputedStyle(b).backgroundColor === "rgb(180, 35, 24)" && getComputedStyle(b).color === "rgb(255, 255, 255)"; }), "fatura em aberto: o botão de pagar fica vermelho");
   await p.screenshot({ path: OUT + "/visao-geral.png" });
   await p.setViewportSize({ width: 1366, height: 600 }); await p.waitForTimeout(500);
   const og = await p.evaluate(() => ({ nav: !document.querySelector("#ov-docs .fp-nav").hidden, pg: document.querySelector("#ov-docs .fp-nav span").textContent, vis: [...document.querySelectorAll("#ov-docs .doclist li")].filter((x) => !x.hidden).length }));
@@ -190,6 +191,37 @@ try {
   await p.screenshot({ path: OUT + "/visao-geral-baixa.png" });
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(400);
   ok(await p.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1 && [...document.querySelectorAll("#ov-docs .doclist li")].every((x) => !x.hidden)), "Visão geral no celular: tudo visível, rolagem normal, sem rolagem horizontal");
+  await p.setViewportSize({ width: 1366, height: 900 });
+  // Prazos fiscais: ano atual e o próximo sempre no seletor; aviso de que são informativos
+  await p.click('#console-nav a[data-view="compliance"]'); await p.waitForSelector("#c-yr");
+  const anos = await p.locator("#c-yr option").evaluateAll((l) => l.map((o) => o.textContent)), ay = new Date().getFullYear();
+  ok(anos.includes(String(ay)) && anos.includes(String(ay + 1)) && (await p.inputValue("#c-yr")) === String(ay) && (await p.textContent("#c-info")).includes("informativos"), "Prazos fiscais: o seletor traz o ano atual (selecionado) e o próximo; aviso de prazos informativos (" + anos.join(",") + ")");
+  await p.selectOption("#c-yr", String(ay + 1)); ok((await p.textContent("#c-list")).length > 0, "escolher o próximo ano mostra os prazos dele (ou o aviso de que não há)");
+  // Configurações: segundo e-mail
+  await p.click('#console-nav a[data-view="settings"]'); await p.waitForSelector("#e2-form");
+  ok((await p.textContent("#view")).includes("E-mail principal (login)") && !(await p.locator("#e2-make").count()), "Configurações: e-mail principal e campo do segundo e-mail");
+  await p.fill("#e2-in", "dono@acme.com"); await p.click('#e2-form button[type="submit"]'); ok((await p.textContent("#e2-m")).includes("diferente do principal"), "segundo e-mail igual ao principal é recusado");
+  await p.fill("#e2-in", "financeiro@acme.com"); await p.click('#e2-form button[type="submit"]'); await p.waitForSelector("#e2-make");
+  ok(await p.evaluate(() => (window.__rpc || []).some((x) => x[0] === "client_set_email2" && x[1].p_email === "financeiro@acme.com")) && (await p.inputValue("#e2-in")) === "financeiro@acme.com" && await p.locator("#e2-del").count() === 1, "salvar grava o segundo e-mail; aparecem Remover e Tornar principal");
+  ok(await semRolar(), "Configurações com o segundo e-mail: página sem rolagem");
+  await p.screenshot({ path: OUT + "/configuracoes-email.png" });
+  await p.click("#e2-make"); ok(await p.locator("#overlay #e2-pass").isVisible() && (await p.textContent("#e2-troca")).includes("financeiro@acme.com"), "tornar principal abre a janela que pede a senha atual e explica a confirmação por link");
+  await p.keyboard.press("Escape");
+  // AI Projects: apresentação do serviço para quem não tem projeto, e formulário numa tela só
+  await p.click('#console-nav a[data-view="projetos"]'); await p.waitForSelector("#pj-land");
+  ok((await p.textContent("#pj-land")).includes("com IA") && await p.locator(".pj-passos li").count() === 5 && (await p.textContent("#pj-cta")).includes("Novo projeto") && await semRolar(), "AI Projects sem projetos: página de apresentação, com os 5 passos e o botão Novo projeto, sem rolagem");
+  await p.screenshot({ path: OUT + "/ai-projects.png" });
+  await p.click("#pj-cta"); await p.waitForSelector("#np");
+  const cols = await p.locator(".np-col").evaluateAll((l) => new Set(l.map((c) => Math.round(c.getBoundingClientRect().left))).size);
+  ok(cols === 3 && await p.locator("#np-t, #np-co, #np-b, #np-f, #np-u, #np-d, #np-i, #np-in, #np-r, #np-logo, #np-docs").count() === 11 && await semRolar(), "Novo projeto: todos os campos numa tela só, em 3 colunas, sem rolagem");
+  await p.screenshot({ path: OUT + "/ai-projects-novo.png" });
+  await p.setViewportSize({ width: 1366, height: 680 }); await p.waitForTimeout(300);
+  ok(await semRolar(), "Novo projeto em tela de notebook (680 px de altura): ainda sem rolagem");
+  // Add-ons: card do AI Projects
+  await p.setViewportSize({ width: 1366, height: 900 });
+  await p.goto("about:blank"); await p.goto(BASE + "/client.html?lang=pt#/servicos?tab=addons"); await p.waitForSelector("#ad-q");
+  await p.fill("#ad-q", "AI Projects"); await p.waitForSelector('[data-addon="aiprojects"]');
+  ok(await p.locator('[data-addon="aiprojects"] a[href="#/projetos"]').count() === 1 && !/\$\d/.test(await p.textContent('[data-addon="aiprojects"]')), "Add-ons: card do AI Projects sem preço, com o botão que abre o AI Projects");
 } catch (e) { console.log("erro:", e.message.slice(0, 400), (e.stack || "").split("\n").filter((x) => x.includes("billing.e2e")).slice(0, 2).join(" ")); falhas.push("erro"); }
 await browser.close();
 console.log(falhas.length ? falhas.length + " falha(s)" : "tudo certo");

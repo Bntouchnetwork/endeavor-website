@@ -3,7 +3,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { PDFDocument, StandardFonts, rgb } from "npm:pdf-lib@1.17.1";
 import { safe, wrap, cleanFields, validateValues, stampFields, stampEnvelopeId } from "./stamp.mjs";
-import { layout, btn, sendMail } from "../payments/access-mail.ts";
+import { layout, btn, sendMail, clientTo } from "../payments/access-mail.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       // the client who sent it gets a notice with the link to the signed copy in the portal
       if (env.client_id) {
         try {
-          const { data: cl } = await admin.from("clients").select("name, primary_email, language").eq("id", env.client_id).maybeSingle();
+          const { data: cl } = await admin.from("clients").select("name, primary_email, email2, language").eq("id", env.client_id).maybeSingle();
           if (cl?.primary_email) {
             const pt = cl.language !== "en" && cl.language !== "es", es = cl.language === "es";
             const url = `https://endeavorbiz.com/client.html?lang=${cl.language || "pt"}#/assinaturas`;
@@ -187,7 +187,7 @@ Deno.serve(async (req) => {
             const body = pt ? `${env.signer_name} assinou o documento "${env.title}". A cópia assinada, com o certificado, está no seu portal em Assinatura eletrônica.`
               : es ? `${env.signer_name} firmó el documento "${env.title}". La copia firmada, con el certificado, está en su portal en Firma electrónica.`
               : `${env.signer_name} signed "${env.title}". The signed copy, with the certificate, is in your portal under Electronic signature.`;
-            await sendMail(cl.primary_email, subj, layout(`<p>${body.replace(/[<>&]/g, "")}</p>${btn(url, pt ? "Abrir no portal" : es ? "Abrir en el portal" : "Open in the portal")}`), `${body}\n${url}`);
+            await sendMail(clientTo(cl), subj, layout(`<p>${body.replace(/[<>&]/g, "")}</p>${btn(url, pt ? "Abrir no portal" : es ? "Abrir en el portal" : "Open in the portal")}`), `${body}\n${url}`);
           }
         } catch (e) { console.error("client notice", e); }
       }

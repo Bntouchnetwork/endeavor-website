@@ -7,7 +7,7 @@
 //   PAYMENTS_RETURN_ORIGINS      (optional) comma-separated site origins allowed as return URLs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { accessEmail, accessMailOn, sendAccessMail, sendMail, sendWa, type AccessKind } from "./access-mail.ts";
+import { accessEmail, accessMailOn, clientTo, sendAccessMail, sendMail, sendWa, type AccessKind } from "./access-mail.ts";
 import { store, type StoreDeps } from "./store.ts";
 import { achEmail, docRequestEmail, failedEmail, intakeEmail, invoiceEmail, money as fmtMoney, proposalEmail, receiptEmail, teamEmail } from "./billing-mail.ts";
 import { billingPortal } from "./billing-portal.ts";
@@ -154,19 +154,19 @@ async function deliverInvoice(row: any, reminder = 0) {
     row = { ...row, ...invoiceFields(fin) };
   }
   if (row.status !== "open") return;
-  const { data: cl } = await admin.from("clients").select("name, primary_email, phone, language").eq("id", row.client_id).single();
+  const { data: cl } = await admin.from("clients").select("name, primary_email, email2, phone, language").eq("id", row.client_id).single();
   const lang = cl?.language || "pt", url = await payUrlFor(row, lang);
   const due = row.total_cents - (row.amount_paid_cents || 0);
   const daysLate = row.due_date ? Math.max(1, Math.floor((Date.now() - new Date(row.due_date + "T12:00:00Z").getTime()) / 864e5)) : 0;
   const m = invoiceEmail({ lang, name: cl?.name || "", number: row.number || "", total: due, cur: row.currency, due: row.due_date, items: row.items || [], description: row.description, payUrl: url, pdfUrl: row.invoice_pdf, reminder, daysLate });
-  await sendMail(cl?.primary_email || row.customer_email, m.subject, m.html, m.text);
+  await sendMail(clientTo(cl) || row.customer_email, m.subject, m.html, m.text);
   await sendWa(cl?.phone, reminder ? "endeavor_invoice_reminder" : "endeavor_invoice", lang, [firstName(cl?.name), row.number || "", fmtMoney(due, row.currency, lang), url]);
   const now = new Date().toISOString();
   await admin.from("invoices").update(reminder ? { reminders_sent: reminder, last_reminder_at: now } : { sent_at: now, scheduled_send_at: null }).eq("id", row.id);
 }
 // paid: books (Endeavor's own company), receipt to the client, notice to the team, then the proposal follow-up (portal + opening documents)
 async function afterPaid(id: string) {
-  const { data: r } = await admin.from("invoices").select("*, clients(name, primary_email, phone, language, monthly_cents, subscription_started_at)").eq("id", id).single();
+  const { data: r } = await admin.from("invoices").select("*, clients(name, primary_email, email2, phone, language, monthly_cents, subscription_started_at)").eq("id", id).single();
   if (!r) return;
   try { await admin.rpc("bk_record_invoice_payment", { p_invoice: id }); } catch (e) { console.error("books", e); }
   try { await admin.rpc("bk_record_vendor_costs", { p_invoice: id }); } catch (e) { console.error("payables", e); }
@@ -184,7 +184,7 @@ async function afterPaid(id: string) {
     const portal = `${SITE}/client.html?lang=${lang}#/invoices`;
     const m = receiptEmail({ lang, name: cl.name, number: r.number || "", amount: r.amount_paid_cents, cur: r.currency, paidAt: r.paid_at, items: r.items || [], receiptUrl, pdfUrl: r.invoice_pdf, portalUrl: portal,
       monthly: r.kind === "proposal" && cl.monthly_cents ? { cents: cl.monthly_cents, first: cl.subscription_started_at } : null });
-    await sendMail(cl.primary_email || r.customer_email, m.subject, m.html, m.text);
+    await sendMail(clientTo(cl) || r.customer_email, m.subject, m.html, m.text);
     await sendWa(cl.phone, "endeavor_payment_receipt", lang, [firstName(cl.name), r.number || "", fmtMoney(r.amount_paid_cents, r.currency, lang), receiptUrl || portal]);
     await admin.from("invoices").update({ receipt_sent_at: new Date().toISOString() }).eq("id", id);
     await team(`Pagamento recebido: ${fmtMoney(r.amount_paid_cents, r.currency)} · ${cl.name || ""}`, [["Fatura", r.number || ""], ["Cliente", `${cl.name || ""} (${cl.primary_email || ""})`], ["Lançado no Bookkeeping", "Endeavor Business Solutions LLC"]], "#/pagamentos?tab=faturas");
@@ -200,7 +200,7 @@ async function afterProposalPaid(r: any) {
 // opening documents request (secure link, no login)
 async function ensureIntake(clientId: string, proposalId: string | null, lang: string, resend: boolean) {
   let { data: q } = await admin.from("intake_requests").select("*").eq("client_id", clientId).neq("status", "closed").order("created_at", { ascending: false }).limit(1).maybeSingle();
-  const { data: cl } = await admin.from("clients").select("name, primary_email, phone, language").eq("id", clientId).single();
+  const { data: cl } = await admin.from("clients").select("name, primary_email, email2, phone, language").eq("id", clientId).single();
   if (!cl) throw new Fail("not_found", 404);
   if (!q) {
     let { data: co } = await admin.from("companies").select("id").eq("client_id", clientId).eq("status", "in_formation").order("created_at", { ascending: false }).limit(1).maybeSingle();
@@ -212,7 +212,7 @@ async function ensureIntake(clientId: string, proposalId: string | null, lang: s
   if (q.status === "complete" && !resend) return q;
   const url = `${SITE}/intake.html?t=${q.token}&lang=${q.language}`;
   const m = intakeEmail({ lang: q.language, name: cl.name, url, reminder: !!q.sent_at });
-  await sendMail(cl.primary_email, m.subject, m.html, m.text);
+  await sendMail(clientTo(cl), m.subject, m.html, m.text);
   await sendWa(cl.phone, "endeavor_documents_request", q.language, [firstName(cl.name), url]);
   await admin.from("intake_requests").update({ sent_at: new Date().toISOString() }).eq("id", q.id);
   return { ...q, url };
@@ -524,7 +524,7 @@ async function sendProposal(p: any) {
   let mailed = false;
   try {
     const m = proposalEmail({ lang, name: client.name, title: p.title, intro: p.intro, included: p.included || [], items, cur: p.currency || "usd", oneTime, monthly: monthlyCents, validUntil: valid, acceptUrl: url + "&a=pay", rejectUrl: url + "&a=reject", number });
-    await sendMail(client.primary_email, m.subject, m.html, m.text); mailed = true;
+    await sendMail(clientTo(client), m.subject, m.html, m.text); mailed = true;
   } catch (e) { console.error("proposal mail", e); }
   await sendWa(client.phone, "endeavor_proposal", lang, [firstName(client.name), p.title, url]);
   return { ok: true, url, mailed };
@@ -706,7 +706,7 @@ async function handle(req: Request, body: any) {
   // aviso por e-mail dos documentos pedidos pela equipe (os que ainda não foram avisados)
   if (a === "doc_request_notify") {
     needAdmin(c);
-    const { data: cl } = await admin.from("clients").select("id, name, language, primary_email").eq("id", String(body.client_id || "")).single();
+    const { data: cl } = await admin.from("clients").select("id, name, language, primary_email, email2").eq("id", String(body.client_id || "")).single();
     if (!cl) throw new Fail("not_found", 404);
     const { data: rs } = await admin.from("portal_doc_requests").select("id, title, note, due_date, company_id").eq("client_id", cl.id).eq("status", "pending").is("notified_at", null).order("created_at");
     if (!rs?.length) return { ok: true, sent: 0 };
@@ -716,7 +716,7 @@ async function handle(req: Request, body: any) {
     const lang = cl.language || "pt";
     const dia = (d: string | null) => d ? new Date(d + "T12:00:00Z").toLocaleDateString(lang === "en" ? "en-US" : lang === "es" ? "es" : "pt-BR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : null;
     const m = docRequestEmail({ lang, name: cl.name, url: `${SITE}/login.html#/documents`, items: rs.map((r: any) => ({ title: r.title, note: r.note, due: dia(r.due_date), company: (cos || []).find((x: any) => x.id === r.company_id)?.legal_name })) });
-    await sendMail(cl.primary_email, m.subject, m.html, m.text);
+    await sendMail(clientTo(cl), m.subject, m.html, m.text);
     await admin.from("portal_doc_requests").update({ notified_at: new Date().toISOString() }).in("id", rs.map((r: any) => r.id));
     return { ok: true, sent: rs.length };
   }
@@ -728,7 +728,7 @@ async function handle(req: Request, body: any) {
     const { data: br } = await admin.from("billing_requests").insert({ client_id: cl.id, token: newToken(), language: cl.language || "pt", created_by: c.email }).select("*").single();
     const url = `${SITE}/autorizar.html?t=${br!.token}&lang=${br!.language}`;
     const m = achEmail({ lang: br!.language, name: cl.name, url, monthly: cl.monthly_cents || 0, cur: "usd" });
-    await sendMail(cl.primary_email, m.subject, m.html, m.text);
+    await sendMail(clientTo(cl), m.subject, m.html, m.text);
     await sendWa(cl.phone, "endeavor_ach_request", br!.language, [firstName(cl.name), url]);
     await admin.from("billing_requests").update({ sent_at: new Date().toISOString() }).eq("id", br!.id);
     return { ok: true, url };
@@ -773,11 +773,11 @@ async function webhook(raw: string, sig: string) {
       await syncInvoice(o);
       if (ev.type === "invoice.payment_failed") {
         await admin.from("admin_events").insert({ kind: "payment_failed", title: `Pagamento recusado: fatura ${o.number || ""}`, body: o.customer_email || null, link: "#/pagamentos?tab=faturas" });
-        const { data: r } = await admin.from("invoices").select("id, client_id, number, currency, clients(name, primary_email, phone, language)").eq("stripe_invoice_id", o.id).maybeSingle();
+        const { data: r } = await admin.from("invoices").select("id, client_id, number, currency, clients(name, primary_email, email2, phone, language)").eq("stripe_invoice_id", o.id).maybeSingle();
         const cl: any = r?.clients;
         if (cl && o.hosted_invoice_url) {
           const m = failedEmail({ lang: cl.language || "pt", name: cl.name, number: o.number || "", amount: o.amount_due, cur: o.currency, payUrl: o.hosted_invoice_url });
-          await sendMail(cl.primary_email, m.subject, m.html, m.text).catch((e) => console.error("failed mail", e));
+          await sendMail(clientTo(cl), m.subject, m.html, m.text).catch((e) => console.error("failed mail", e));
           await sendWa(cl.phone, "endeavor_payment_failed", cl.language || "pt", [firstName(cl.name), o.number || "", fmtMoney(o.amount_due, o.currency, cl.language), o.hosted_invoice_url]);
         }
       }

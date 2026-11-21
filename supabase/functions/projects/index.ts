@@ -8,7 +8,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { record } from "../_shared/ai-meter.ts";
 import { hubExecute, hubOn, parseJsonLoose } from "../_shared/hub-ai.ts";
-import { btn, esc, layout, sendMail } from "../payments/access-mail.ts";
+import { btn, esc, layout, sendMail, clientTo } from "../payments/access-mail.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -81,7 +81,7 @@ async function pmTurn(p: Any, lang: string) {
 
 // ---------------- e-mails to the client ----------------
 async function clientMail(p: Any, kind: "proposal" | "staging" | "published" | "quote" | "started", extra: Any = {}) {
-  const { data: c } = await db.from("clients").select("name, primary_email, language").eq("id", p.client_id).single();
+  const { data: c } = await db.from("clients").select("name, primary_email, email2, language").eq("id", p.client_id).single();
   if (!c?.primary_email) return;
   const lang = ["pt", "en", "es"].includes(c.language) ? c.language : "pt";
   const link = `${SITE}/client.html#/projetos?id=${p.id}`;
@@ -93,7 +93,7 @@ async function clientMail(p: Any, kind: "proposal" | "staging" | "published" | "
     quote: { pt: ["Orçamento da sua solicitação", `A solicitação "${extra.title || ""}" de "${p.title}" foi orçada em ${money(extra.price || 0)}. A fatura está no seu portal; o trabalho começa após o pagamento.`, "Ver no portal"], en: ["Quote for your request", `Request "${extra.title || ""}" of "${p.title}" was quoted at ${money(extra.price || 0)}. The invoice is in your portal; work starts after payment.`, "View in portal"], es: ["Presupuesto de su solicitud", `La solicitud "${extra.title || ""}" de "${p.title}" fue presupuestada en ${money(extra.price || 0)}. La factura está en su portal; el trabajo empieza tras el pago.`, "Ver en el portal"] },
   };
   const [subj, body, cta] = T[kind][lang];
-  try { await sendMail(c.primary_email, subj, layout(`<p style="margin:0 0 12px">${esc(c.name)},</p><p style="margin:0 0 16px">${esc(body)}</p>${btn(link, cta)}`), `${body}\n\n${link}`); } catch (e) { console.error("client mail", e); }
+  try { await sendMail(clientTo(c), subj, layout(`<p style="margin:0 0 12px">${esc(c.name)},</p><p style="margin:0 0 16px">${esc(body)}</p>${btn(link, cta)}`), `${body}\n\n${link}`); } catch (e) { console.error("client mail", e); }
 }
 
 // ---------------- GitHub ----------------

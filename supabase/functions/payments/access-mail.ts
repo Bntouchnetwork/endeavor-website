@@ -154,6 +154,12 @@ export async function sendAccessMail(to: string, m: { subject: string; html: str
 }
 
 // generic sender used by the billing e-mails (invoice, reminders, receipt, proposal, opening documents, ACH)
+// destinatários dos avisos do cliente: o e-mail principal e, se houver, o segundo e-mail (login e senha continuam só no principal)
+export function clientTo(c: { primary_email?: string | null; email2?: string | null } | null | undefined): string {
+  const ok = (e: unknown) => typeof e === "string" && /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e);
+  const l = [c?.primary_email, c?.email2].filter(ok).map((e) => String(e).toLowerCase());
+  return l.filter((e, i) => l.indexOf(e) === i).join(", ");
+}
 export async function sendMail(to: string | string[], subject: string, html: string, text: string, opts: { replyTo?: string; bcc?: string } = {}) {
   const from = sesOn() ? SUPPORT : G_USER;
   await transport().sendMail({ from: { name: "Endeavor Business Hub", address: from }, to, subject, html, text, replyTo: opts.replyTo || SUPPORT, bcc: opts.bcc });

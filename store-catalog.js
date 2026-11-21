@@ -68,6 +68,11 @@
       pt: { name: 'WhatsApp Manager', lead: 'Organize as conversas, os grupos e as respostas do seu WhatsApp num painel só.', feats: ['Conversas e grupos organizados', 'Respostas prontas para as dúvidas comuns', 'Respostas sugeridas pela IA, que você aprova', 'Contatos ligados ao seu CRM'] },
       es: { name: 'WhatsApp Manager', lead: 'Organice las conversaciones, grupos y respuestas de su WhatsApp en un solo panel.', feats: ['Conversaciones y grupos organizados', 'Respuestas guardadas para las dudas comunes', 'Respuestas sugeridas por la IA, que usted aprueba', 'Contactos conectados a su CRM'] }
     },
+    aiprojects: {
+      en: { name: 'AI Projects', lead: 'Custom platforms and tools for your business, built with AI. Price by proposal.', feats: ['Portals, internal tools and automations', 'AI features where they help your work', 'You approve scope, price and each version'] },
+      pt: { name: 'AI Projects', lead: 'Plataformas e ferramentas sob medida para o seu negócio, com IA. Preço por proposta.', feats: ['Portais, ferramentas internas e automações', 'Funções de IA onde elas ajudam o seu trabalho', 'Você aprova o escopo, o preço e cada versão'] },
+      es: { name: 'AI Projects', lead: 'Plataformas y herramientas a medida para su negocio, con IA. Precio por propuesta.', feats: ['Portales, herramientas internas y automatizaciones', 'Funciones de IA donde ayudan a su trabajo', 'Usted aprueba el alcance, el precio y cada versión'] }
+    },
     virtual_address: {
       en: { name: 'Virtual Address', lead: 'A professional business address in Orlando, Florida.', feats: ['Business mailing address in Orlando, FL', 'Mail scanned and notified in your portal', 'Forwarding on request'] },
       pt: { name: 'Endereço Virtual', lead: 'Um endereço comercial profissional em Orlando, na Flórida.', feats: ['Endereço comercial em Orlando, FL', 'Correspondência digitalizada e avisada no seu portal', 'Reenvio sob pedido'] },
