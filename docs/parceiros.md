@@ -32,7 +32,7 @@
 - Arquivo: `supabase/functions/partner-invite/partner-contract.js`, versão 2026-11-06, em inglês.
 - **Rascunho: precisa da revisão de um advogado antes do uso com parceiros reais.**
 - Confirmar com o advogado:
-  - a razão social (Endeavor Tax Solutions LLC d/b/a Endeavor Business Solutions);
+  - a razão social (Endeavor Tax Solutions LLC d/b/a Endeavor Business Hub);
   - a base de cálculo da comissão;
   - o foro (Orange County, FL);
   - as regras de referral fee para corretores e advogados.

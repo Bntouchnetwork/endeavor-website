@@ -105,7 +105,7 @@
     enviarIc: svg('<path d="M4 12l16-8-6 16-2-7z"/>'),
     reacao: svg('<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>')
   };
-  const LOGO = '<img class="noir" src="' + BASE.replace(/meet\/$/, "") + 'logo-endeavor-light.svg" alt="Endeavor Business Solutions" width="150" height="28">';
+  const LOGO = '<img class="noir" src="' + BASE.replace(/meet\/$/, "") + 'logo-endeavor-light.svg" alt="Endeavor Business Hub" width="150" height="28">';
   const REACOES = ["👍", "👏", "❤️", "😂", "🎉", "😮"];
   const ini = n => (n || "?").trim().split(/\s+/).map(p => p[0]).slice(0, 2).join("").toUpperCase();
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

@@ -29,27 +29,27 @@ const T = {
     how: "Como vai ser", video: "Videochamada", phone: "Ligação telefônica", in_person: "Presencial", cancelQ: "Precisa cancelar?", cancelBtn: "Cancelar o agendamento",
     newT: (n: string, w: string) => `Novo agendamento: ${n} · ${w}`, newLead: "Alguém marcou um horário pela sua página de agendamento.", openPortal: "Ver na minha agenda",
     canT: (b: string) => `Agendamento cancelado com ${b}`, canLead: (b: string, w: string) => `O horário com <strong>${b}</strong> em <strong>${w}</strong> foi cancelado.`, canOwnerT: (n: string, w: string) => `Cancelado: ${n} · ${w}`,
-    rebook: "Marcar outro horário", sign: "Enviado pela plataforma Endeavor Business Solutions", name: "Nome", email: "E-mail", phoneL: "Telefone", notes: "Observações",
-    esT: (c: string, t: string) => `${c} enviou "${t}" para você assinar`, esLead: (c: string, t: string) => `<strong>${c}</strong> enviou o documento <strong>${t}</strong> para a sua assinatura eletrônica, pela plataforma da Endeavor Business Solutions.`,
+    rebook: "Marcar outro horário", sign: "Enviado pela plataforma Endeavor Business Hub", name: "Nome", email: "E-mail", phoneL: "Telefone", notes: "Observações",
+    esT: (c: string, t: string) => `${c} enviou "${t}" para você assinar`, esLead: (c: string, t: string) => `<strong>${c}</strong> enviou o documento <strong>${t}</strong> para a sua assinatura eletrônica, pela plataforma da Endeavor Business Hub.`,
     esBtn: "Revisar e assinar", esExp: (d: string) => `Link pessoal, válido até ${d}. Não encaminhe este e-mail.` },
   en: { conf: (b: string) => `Your appointment with ${b} is confirmed`, hi: (n: string) => `Hello, ${n}!`, confLead: (b: string, w: string) => `Your time with <strong>${b}</strong> is confirmed for <strong>${w}</strong>.`,
     how: "How it works", video: "Video call", phone: "Phone call", in_person: "In person", cancelQ: "Need to cancel?", cancelBtn: "Cancel the appointment",
     newT: (n: string, w: string) => `New booking: ${n} · ${w}`, newLead: "Someone booked a time on your scheduling page.", openPortal: "See my schedule",
     canT: (b: string) => `Appointment with ${b} cancelled`, canLead: (b: string, w: string) => `Your time with <strong>${b}</strong> on <strong>${w}</strong> was cancelled.`, canOwnerT: (n: string, w: string) => `Cancelled: ${n} · ${w}`,
-    rebook: "Book another time", sign: "Sent through the Endeavor Business Solutions platform", name: "Name", email: "E-mail", phoneL: "Phone", notes: "Notes",
-    esT: (c: string, t: string) => `${c} sent you "${t}" to sign`, esLead: (c: string, t: string) => `<strong>${c}</strong> sent you <strong>${t}</strong> for electronic signature through the Endeavor Business Solutions platform.`,
+    rebook: "Book another time", sign: "Sent through the Endeavor Business Hub platform", name: "Name", email: "E-mail", phoneL: "Phone", notes: "Notes",
+    esT: (c: string, t: string) => `${c} sent you "${t}" to sign`, esLead: (c: string, t: string) => `<strong>${c}</strong> sent you <strong>${t}</strong> for electronic signature through the Endeavor Business Hub platform.`,
     esBtn: "Review and sign", esExp: (d: string) => `Personal link, valid until ${d}. Do not forward this e-mail.` },
   es: { conf: (b: string) => `Cita confirmada con ${b}`, hi: (n: string) => `¡Hola, ${n}!`, confLead: (b: string, w: string) => `Su horario con <strong>${b}</strong> está confirmado para <strong>${w}</strong>.`,
     how: "Cómo será", video: "Videollamada", phone: "Llamada telefónica", in_person: "Presencial", cancelQ: "¿Necesita cancelar?", cancelBtn: "Cancelar la cita",
     newT: (n: string, w: string) => `Nueva cita: ${n} · ${w}`, newLead: "Alguien reservó un horario en su página de agenda.", openPortal: "Ver mi agenda",
     canT: (b: string) => `Cita cancelada con ${b}`, canLead: (b: string, w: string) => `Su horario con <strong>${b}</strong> el <strong>${w}</strong> fue cancelado.`, canOwnerT: (n: string, w: string) => `Cancelada: ${n} · ${w}`,
-    rebook: "Reservar otro horario", sign: "Enviado por la plataforma de Endeavor Business Solutions", name: "Nombre", email: "Correo", phoneL: "Teléfono", notes: "Notas",
-    esT: (c: string, t: string) => `${c} le envió "${t}" para firmar`, esLead: (c: string, t: string) => `<strong>${c}</strong> le envió el documento <strong>${t}</strong> para firma electrónica, por la plataforma de Endeavor Business Solutions.`,
+    rebook: "Reservar otro horario", sign: "Enviado por la plataforma de Endeavor Business Hub", name: "Nombre", email: "Correo", phoneL: "Teléfono", notes: "Notas",
+    esT: (c: string, t: string) => `${c} le envió "${t}" para firmar`, esLead: (c: string, t: string) => `<strong>${c}</strong> le envió el documento <strong>${t}</strong> para firma electrónica, por la plataforma de Endeavor Business Hub.`,
     esBtn: "Revisar y firmar", esExp: (d: string) => `Enlace personal, válido hasta ${d}. No reenvíe este correo.` },
 };
 // mails that go out "on behalf of" a client: reply goes to the client, never to Endeavor's support
 async function mail(to: string, subject: string, inner: string, text: string, replyTo?: string | null) {
-  await sendMail(to, subject, layout(inner + `<p style="margin:22px 0 0;font-size:12px;color:#6b7280">Endeavor Business Solutions · endeavorbiz.com</p>`), text, replyTo ? { replyTo } : {})
+  await sendMail(to, subject, layout(inner + `<p style="margin:22px 0 0;font-size:12px;color:#6b7280">Endeavor Business Hub · endeavorbiz.com</p>`), text, replyTo ? { replyTo } : {})
     .catch((e) => console.error("mail", subject, e));
 }
 

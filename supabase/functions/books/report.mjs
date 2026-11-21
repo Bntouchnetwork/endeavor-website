@@ -45,7 +45,7 @@ export async function reportPdf(PDFLib, { report, type, companyName, periodLabel
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const pdf = await PDFDocument.create();
   pdf.setTitle(`${REPORTS[type]} - ${companyName} - ${periodLabel}`);
-  pdf.setProducer("Endeavor Business Solutions");
+  pdf.setProducer("Endeavor Business Hub");
   const font = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
   const navy = rgb(0.04, 0.12, 0.23), gold = rgb(0.78, 0.64, 0.36), grey = rgb(0.42, 0.45, 0.5), ink = rgb(0.1, 0.1, 0.12);
@@ -93,7 +93,7 @@ export async function reportPdf(PDFLib, { report, type, companyName, periodLabel
   const footer = () => {
     const pages = pdf.getPages();
     pages.forEach((p, i) => {
-      p.drawText(safe(`Prepared by Endeavor Business Solutions from the company's ${SRC === "QuickBooks Online" ? "QuickBooks Online" : "books kept in Endeavor Bookkeeping"} data on ${generatedAt}. Unaudited. Page ${i + 1} of ${pages.length}`), { x: M, y: 28, size: 7, font, color: grey });
+      p.drawText(safe(`Prepared by Endeavor Business Hub from the company's ${SRC === "QuickBooks Online" ? "QuickBooks Online" : "books kept in Endeavor Bookkeeping"} data on ${generatedAt}. Unaudited. Page ${i + 1} of ${pages.length}`), { x: M, y: 28, size: 7, font, color: grey });
     });
   };
 

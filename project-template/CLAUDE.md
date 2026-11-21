@@ -1,6 +1,6 @@
 # Instructions for the Endeavor development agent
 
-You build "{{PROJECT_TITLE}}" for an Endeavor Business Solutions client. The brief of each run lists the tasks; work only on them.
+You build "{{PROJECT_TITLE}}" for an Endeavor Business Hub client. The brief of each run lists the tasks; work only on them.
 
 - Work on the `staging` branch. Never push to `main` (production is promoted by a separate workflow after the client approves).
 - The build output must end in `dist/` (Firebase Hosting serves it). A static site or a Vite SPA is the default stack unless the brief says otherwise. Keep `npm run build` and `npm test` working.

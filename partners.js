@@ -12,8 +12,8 @@
       generic: 'Something went wrong. Please try again or write to support@endeavorbiz.com.', doneText: 'We sent an email to {email} with the link to create your password and open the Partner Portal.'
     },
     pt: {
-      docTitle: 'Programa de Parceiros | Endeavor Business Solutions', skip: 'Pular para o conteúdo', login: 'Entrar no portal', kicker: 'PROGRAMA DE PARCEIROS',
-      title: 'Cresça junto com a Endeavor Business Solutions', lead: 'Indique clientes que precisam de empresa nos Estados Unidos. A gente cuida de tudo, você acompanha cada etapa pelo seu portal e recebe a sua comissão automaticamente.',
+      docTitle: 'Programa de Parceiros | Endeavor Business Hub', skip: 'Pular para o conteúdo', login: 'Entrar no portal', kicker: 'PROGRAMA DE PARCEIROS',
+      title: 'Cresça junto com a Endeavor Business Hub', lead: 'Indique clientes que precisam de empresa nos Estados Unidos. A gente cuida de tudo, você acompanha cada etapa pelo seu portal e recebe a sua comissão automaticamente.',
       cta: 'Quero ser parceiro', howBtn: 'Como funciona', benTitle: 'Por que ser parceiro',
       b1t: 'Comissão em cada indicação', b1: 'Você ganha sobre os serviços contratados pelos clientes que indicar. Sem custo para participar e sem meta mínima.',
       b2t: 'Pagamento automático', b2: 'Conecte a sua conta Stripe uma vez e a sua parte cai direto para você quando o cliente paga. O Stripe também cuida dos seus formulários fiscais.',
@@ -42,8 +42,8 @@
       openPortal: 'Abrir o Portal do Parceiro'
     },
     es: {
-      docTitle: 'Programa de Socios | Endeavor Business Solutions', skip: 'Saltar al contenido', login: 'Entrar al portal', kicker: 'PROGRAMA DE SOCIOS',
-      title: 'Crezca junto a Endeavor Business Solutions', lead: 'Recomiende clientes que necesitan una empresa en Estados Unidos. Nosotros nos encargamos de todo, usted sigue cada etapa en su portal y recibe su comisión automáticamente.',
+      docTitle: 'Programa de Socios | Endeavor Business Hub', skip: 'Saltar al contenido', login: 'Entrar al portal', kicker: 'PROGRAMA DE SOCIOS',
+      title: 'Crezca junto a Endeavor Business Hub', lead: 'Recomiende clientes que necesitan una empresa en Estados Unidos. Nosotros nos encargamos de todo, usted sigue cada etapa en su portal y recibe su comisión automáticamente.',
       cta: 'Quiero ser socio', howBtn: 'Cómo funciona', benTitle: 'Por qué ser socio',
       b1t: 'Comisión por cada recomendación', b1: 'Usted gana sobre los servicios que contraten los clientes que recomiende. Sin costo para participar y sin metas mínimas.',
       b2t: 'Pago automático', b2: 'Conecte su cuenta Stripe una vez y su parte le llega directo cuando el cliente paga. Stripe también se encarga de sus formularios fiscales.',

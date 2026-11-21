@@ -91,9 +91,9 @@ export function store(d: StoreDeps) {
     const label = productName(p.code, lang), recurring = carrinho ? true : p.interval !== "once";
     const meta = { order_id: order.id, product: p.code, store: "1" };
     const line = (code: string, cents: number, rec: boolean, setup = false) => ({ quantity: 1, price_data: { currency: p.currency || "usd", unit_amount: cents,
-      product_data: { name: `${productName(code, lang)}${setup ? " (" + ABERTURA[lang] + ")" : ""} · Endeavor Business Solutions`, metadata: { product: code, setup: setup ? "1" : "0" } }, ...(rec ? { recurring: { interval: "month" } } : {}) } });
+      product_data: { name: `${productName(code, lang)}${setup ? " (" + ABERTURA[lang] + ")" : ""} · Endeavor Business Hub`, metadata: { product: code, setup: setup ? "1" : "0" } }, ...(rec ? { recurring: { interval: "month" } } : {}) } });
     const lineItems = carrinho ? carrinho.linhas.map((l) => line(l.code, l.cents, l.recorrente, !!l.abertura))
-      : [{ quantity: 1, price_data: { currency: p.currency || "usd", unit_amount: preco, product_data: { name: `${label} · Endeavor Business Solutions`, metadata: { product: p.code } }, ...(recurring ? { recurring: { interval: p.interval } } : {}) } }];
+      : [{ quantity: 1, price_data: { currency: p.currency || "usd", unit_amount: preco, product_data: { name: `${label} · Endeavor Business Hub`, metadata: { product: p.code } }, ...(recurring ? { recurring: { interval: p.interval } } : {}) } }];
     const ret = portal ? `${SITE}/client.html?lang=${lang}#/servicos?order=${order.id}` : `${SITE}/comprar.html?lang=${lang}&o=${order.id}&session_id={CHECKOUT_SESSION_ID}`;
     const session = await stripe("POST", "/checkout/sessions", {
       ui_mode: "embedded", mode: recurring ? "subscription" : "payment",
@@ -204,7 +204,7 @@ export function store(d: StoreDeps) {
       en: { s: `${name} is active in your portal`, h: `Hello, ${first}!`, b: `We received your payment and ${name} is now available in your Client Portal.`, btn: "Open the portal" },
       es: { s: `${name} activado en su portal`, h: `¡Hola, ${first}!`, b: `Recibimos su pago y ${name} ya está disponible en su Portal del Cliente.`, btn: "Abrir el portal" },
     }[l];
-    const html = `<div style="font:15px/1.6 Arial,sans-serif;color:#1f2937;max-width:560px"><p>${T.h}</p><p>${T.b}</p><p><a href="${url}" style="display:inline-block;background:#0b1f3a;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:700">${T.btn}</a></p><p style="color:#6b7280;font-size:13px">Endeavor Business Solutions · support@endeavorbiz.com</p></div>`;
+    const html = `<div style="font:15px/1.6 Arial,sans-serif;color:#1f2937;max-width:560px"><p>${T.h}</p><p>${T.b}</p><p><a href="${url}" style="display:inline-block;background:#0b1f3a;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:700">${T.btn}</a></p><p style="color:#6b7280;font-size:13px">Endeavor Business Hub · support@endeavorbiz.com</p></div>`;
     await sendMail(o.email, T.s, html, `${T.h}\n\n${T.b}\n${url}`).catch((e) => console.error("activated mail", e));
   }
 

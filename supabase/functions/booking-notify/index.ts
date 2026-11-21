@@ -4,6 +4,7 @@
 // E-mail: support Gmail over SMTP (port 465). WhatsApp: Meta Cloud API, only when WHATSAPP_TOKEN and WHATSAPP_PHONE_ID exist.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
+import { FOOT_BRAND } from "../_shared/brand.ts";
 
 const SB_URL = Deno.env.get("SUPABASE_URL")!;
 const SB_SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -12,7 +13,7 @@ const SITE = (Deno.env.get("SITE_URL") ?? "https://endeavorbiz.com").replace(/\/
 const SMTP_USER = Deno.env.get("SMTP_USER") ?? "support@endeavorbiz.com";
 const SMTP_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
 const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.gmail.com";
-const FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Endeavor Business Solutions";
+const FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Endeavor Business Hub";
 const WA_TOKEN = Deno.env.get("WHATSAPP_TOKEN") ?? "";
 const WA_PHONE = Deno.env.get("WHATSAPP_PHONE_ID") ?? "";
 const WA_VER = Deno.env.get("WHATSAPP_API_VERSION") ?? "v21.0";
@@ -40,7 +41,7 @@ const json = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: 
 /* ---------------- texts ---------------- */
 const T: Record<Lang, Record<string, string>> = {
   pt: {
-    hi: "Olá, {n}!", sign: "Equipe Endeavor Business Solutions",
+    hi: "Olá, {n}!", sign: "Equipe Endeavor Business Hub",
     s_confirmation: "Confirmado: sua conversa com a Endeavor em {w}", s_reminder: "Lembrete: sua conversa com a Endeavor é {r}",
     s_cancelled: "Cancelado: sua conversa com a Endeavor em {w}", s_rescheduled: "Remarcado: sua conversa com a Endeavor agora é em {w}",
     h_confirmation: "Sua conversa está confirmada.", h_reminder: "Sua conversa com a Endeavor é {r}.", h_cancelled: "Sua conversa foi cancelada.", h_rescheduled: "Sua conversa foi remarcada.",
@@ -51,7 +52,7 @@ const T: Record<Lang, Record<string, string>> = {
     tomorrow: "amanhã", in_d: "em {x} dias", in_h: "em {x} horas", in_1h: "em 1 hora", in_m: "em {x} minutos", your: "seu horário",
   },
   en: {
-    hi: "Hi {n},", sign: "Endeavor Business Solutions team",
+    hi: "Hi {n},", sign: "Endeavor Business Hub team",
     s_confirmation: "Confirmed: your call with Endeavor on {w}", s_reminder: "Reminder: your call with Endeavor is {r}",
     s_cancelled: "Cancelled: your call with Endeavor on {w}", s_rescheduled: "Rescheduled: your call with Endeavor is now on {w}",
     h_confirmation: "Your call is confirmed.", h_reminder: "Your call with Endeavor is {r}.", h_cancelled: "Your call was cancelled.", h_rescheduled: "Your call was rescheduled.",
@@ -62,7 +63,7 @@ const T: Record<Lang, Record<string, string>> = {
     tomorrow: "tomorrow", in_d: "in {x} days", in_h: "in {x} hours", in_1h: "in 1 hour", in_m: "in {x} minutes", your: "your time",
   },
   es: {
-    hi: "¡Hola, {n}!", sign: "Equipo de Endeavor Business Solutions",
+    hi: "¡Hola, {n}!", sign: "Equipo de Endeavor Business Hub",
     s_confirmation: "Confirmado: su llamada con Endeavor el {w}", s_reminder: "Recordatorio: su llamada con Endeavor es {r}",
     s_cancelled: "Cancelado: su llamada con Endeavor el {w}", s_rescheduled: "Reprogramado: su llamada con Endeavor ahora es el {w}",
     h_confirmation: "Su llamada está confirmada.", h_reminder: "Su llamada con Endeavor es {r}.", h_cancelled: "Su llamada fue cancelada.", h_rescheduled: "Su llamada fue reprogramada.",
@@ -124,9 +125,9 @@ function gcalUrl(b: Row, title: string, details: string) {
 }
 function ics(b: Row, title: string, details: string, cancel: boolean) {
   const fold = (s: string) => s.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
-  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Endeavor Business Solutions//Agenda//EN", "METHOD:" + (cancel ? "CANCEL" : "PUBLISH"), "BEGIN:VEVENT",
+  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Endeavor Business Hub//Agenda//EN", "METHOD:" + (cancel ? "CANCEL" : "PUBLISH"), "BEGIN:VEVENT",
     "UID:" + b.id + "@endeavorbiz.com", "SEQUENCE:" + (b.schedule_version ?? 1), "DTSTAMP:" + icsDate(new Date()), "DTSTART:" + icsDate(new Date(b.starts_at)), "DTEND:" + icsDate(new Date(b.ends_at)),
-    "SUMMARY:" + fold(title), "DESCRIPTION:" + fold(details), "STATUS:" + (cancel ? "CANCELLED" : "CONFIRMED"), "ORGANIZER;CN=Endeavor Business Solutions:mailto:" + SMTP_USER,
+    "SUMMARY:" + fold(title), "DESCRIPTION:" + fold(details), "STATUS:" + (cancel ? "CANCELLED" : "CONFIRMED"), "ORGANIZER;CN=Endeavor Business Hub:mailto:" + SMTP_USER,
     ...(cancel ? [] : ["BEGIN:VALARM", "TRIGGER:-PT30M", "ACTION:DISPLAY", "DESCRIPTION:" + fold(title), "END:VALARM"]), "END:VEVENT", "END:VCALENDAR"].join("\r\n");
 }
 
@@ -144,9 +145,9 @@ const btn = (href: string, label: string, primary = false) =>
 function layout(inner: string) {
   return `<!doctype html><html><body style="margin:0;background:#f4f6f9"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fff;border-radius:12px;border:1px solid #e3e7ee">
-<tr><td style="padding:22px 28px;border-bottom:3px solid #c9a24a"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="190" style="display:block;width:190px;height:auto"></td></tr>
+<tr><td style="padding:22px 28px;border-bottom:3px solid #c9a24a"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="190" style="display:block;width:190px;height:auto"></td></tr>
 <tr><td style="padding:26px 28px;font:15px/1.6 Arial,sans-serif;color:#1f2937">${inner}</td></tr>
-<tr><td style="padding:16px 28px;border-top:1px solid #e3e7ee;font:12px/1.5 Arial,sans-serif;color:#6b7280">Endeavor Business Solutions · Orlando, FL · ${PHONE} · <a href="mailto:${SMTP_USER}" style="color:#6b7280">${SMTP_USER}</a></td></tr>
+<tr><td style="padding:16px 28px;border-top:1px solid #e3e7ee;font:12px/1.5 Arial,sans-serif;color:#6b7280">${FOOT_BRAND} · Orlando, FL · ${PHONE} · <a href="mailto:${SMTP_USER}" style="color:#6b7280">${SMTP_USER}</a></td></tr>
 </table></td></tr></table></body></html>`;
 }
 
@@ -179,7 +180,7 @@ async function deliver(b: Row, s: Row, kind: Kind, off = 0) {
   const first = String(b.name || "").split(" ")[0] || b.name;
   const w = when(b, lang, org), r = kind === "reminder" ? rel(lang, off) : "";
   const manage = `${SITE}/booking.html?t=${b.manage_token}&lang=${lang}`, rebook = `${SITE}/schedule.html?lang=${lang}`;
-  const title = lang === "pt" ? "Conversa com a Endeavor Business Solutions" : lang === "es" ? "Llamada con Endeavor Business Solutions" : "Call with Endeavor Business Solutions";
+  const title = lang === "pt" ? "Conversa com a Endeavor Business Hub" : lang === "es" ? "Llamada con Endeavor Business Hub" : "Call with Endeavor Business Hub";
   const typ = t[b.meeting_type] || b.meeting_type;
   const details = `${typ}${b.topic ? " · " + b.topic : ""}\n${s.meeting_note || ""}\n${t.resched} / ${t.cancel}: ${manage}\n${SMTP_USER} · ${PHONE}`;
   const out: Row = {};

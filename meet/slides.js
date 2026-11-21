@@ -71,7 +71,7 @@
   const semNotas = ap => ({ ...ap, slides: ap.slides.map(({ notas, roteiro, ...s }) => s) });
 
   /* ---------------- renderização ---------------- */
-  const MARCA = '<span class="sl-marca" aria-hidden="true">Endeavor Business Solutions</span>';
+  const MARCA = '<span class="sl-marca" aria-hidden="true">Endeavor Business Hub</span>';
   const REDE = '<svg class="sl-rede" viewBox="0 0 400 300" aria-hidden="true"><g stroke="currentColor" stroke-width="1.2"><line x1="40" y1="60" x2="130" y2="40"/><line x1="130" y1="40" x2="210" y2="110"/><line x1="40" y1="60" x2="90" y2="160"/><line x1="90" y1="160" x2="210" y2="110"/><line x1="210" y1="110" x2="320" y2="70"/><line x1="210" y1="110" x2="260" y2="210"/><line x1="90" y1="160" x2="170" y2="250"/><line x1="170" y1="250" x2="260" y2="210"/><line x1="260" y1="210" x2="360" y2="190"/><line x1="320" y1="70" x2="360" y2="190"/></g><g fill="currentColor"><circle cx="40" cy="60" r="5"/><circle cx="130" cy="40" r="4"/><circle cx="210" cy="110" r="7"/><circle cx="90" cy="160" r="4"/><circle cx="320" cy="70" r="5"/><circle cx="260" cy="210" r="6"/><circle cx="170" cy="250" r="4"/><circle cx="360" cy="190" r="4"/></g></svg>';
 
   function h(tag, cls, texto) {
@@ -205,7 +205,7 @@
     ].filter(Boolean);
     const meio = pool.slice(0, Math.max(1, n - 2));
     return [
-      { layout: "capa", titulo: tema, subtitulo: "Endeavor Business Solutions · " + (contexto.encontro || "Web Meeting") },
+      { layout: "capa", titulo: tema, subtitulo: "Endeavor Business Hub · " + (contexto.encontro || "Web Meeting") },
       ...meio,
       { layout: "encerramento", titulo: "Próximos passos", subtitulo: "Leve uma ação prática para a sua semana." }
     ].slice(0, n).map(s => ({ id: novoIdSlide(), ...s }));

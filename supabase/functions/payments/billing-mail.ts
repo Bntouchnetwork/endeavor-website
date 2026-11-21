@@ -17,7 +17,7 @@ const box = (inner: string, gold = false) => `<table role="presentation" cellpad
 const btn2 = (href: string, label: string, ghost = false) => `<a href="${esc(href)}" style="display:inline-block;margin:6px 8px 6px 0;padding:13px 22px;border-radius:8px;font:700 15px Arial,sans-serif;text-decoration:none;${ghost ? "background:#fff;color:#0b1f3a;border:1.5px solid #0b1f3a" : "background:#0b1f3a;color:#fff"}">${esc(label)}</a>`;
 const itemsTable = (items: Any[], cur: string, l: Lang, extra = "") => `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:4px 0 12px;font:14px/1.5 Arial,sans-serif">${(items || []).map((i: Any) =>
   `<tr><td style="padding:7px 0;border-bottom:1px solid #eef1f5">${esc(i.description)}${(i.quantity || 1) > 1 ? ` <span style="color:#6b7280">× ${i.quantity}</span>` : ""}${i.recurring === "month" ? ` <span style="color:#7a5d1f">(${({ pt: "mensal", en: "monthly", es: "mensual" } as Record<Lang, string>)[l]})</span>` : ""}</td><td style="padding:7px 0;border-bottom:1px solid #eef1f5;text-align:right;white-space:nowrap">${esc(money((i.amount_cents || 0) * (i.quantity || 1), cur, l))}${i.recurring === "month" ? ({ pt: "/mês", en: "/mo", es: "/mes" } as Record<Lang, string>)[l] : ""}</td></tr>`).join("")}${extra}</table>`;
-const sign: Record<Lang, string> = { pt: "Equipe Endeavor Business Solutions", en: "The Endeavor Business Solutions team", es: "Equipo de Endeavor Business Solutions" };
+const sign: Record<Lang, string> = { pt: "Equipe Endeavor Business Hub", en: "The Endeavor Business Hub team", es: "Equipo de Endeavor Business Hub" };
 const help: Record<Lang, string> = { pt: "Dúvidas? Responda este e-mail ou fale pelo WhatsApp +1 (630) 689-8702.", en: "Questions? Reply to this e-mail or WhatsApp us at +1 (630) 689-8702.", es: "¿Dudas? Responda este correo o escríbanos por WhatsApp al +1 (630) 689-8702." };
 const foot = (l: Lang) => `<p style="margin:20px 0 0;font-size:13px;color:#4b5563">${esc(help[l])}</p><p style="margin:14px 0 0">${esc(sign[l])}</p>`;
 const strip = (h: string) => h.replace(/<br\s*\/?>/g, "\n").replace(/<\/(p|tr|h1|h2|li)>/g, "\n").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/\n{3,}/g, "\n\n").trim();
@@ -32,13 +32,13 @@ const METHODS: Record<Lang, string> = {
 export function invoiceEmail(o: { lang: unknown; name: string; number: string; total: number; cur: string; due: string | null; items: Any[]; description?: string | null; payUrl: string; pdfUrl?: string | null; reminder?: number; daysLate?: number }) {
   const l = L(o.lang), n = first(o.name), r = o.reminder || 0;
   const T = {
-    pt: { s: r ? `Lembrete: fatura ${o.number} em aberto` : `Fatura ${o.number} da Endeavor Business Solutions`, hi: n ? `Olá, ${n}!` : "Olá!",
+    pt: { s: r ? `Lembrete: fatura ${o.number} em aberto` : `Fatura ${o.number} da Endeavor Business Hub`, hi: n ? `Olá, ${n}!` : "Olá!",
       lead: r ? `A fatura ${o.number} venceu ${o.daysLate && o.daysLate > 1 ? `há ${o.daysLate} dias` : "ontem"} e ainda aparece em aberto. Se você já pagou, pode ignorar este lembrete.` : "Segue a sua fatura. Você pode pagar pelo botão abaixo, num ambiente seguro do Stripe.",
       due: "Vencimento", total: "Total", pay: "Pagar fatura", pdf: "Baixar PDF da fatura", h: r ? `${r}º lembrete` : "Fatura" },
-    en: { s: r ? `Reminder: invoice ${o.number} is open` : `Invoice ${o.number} from Endeavor Business Solutions`, hi: n ? `Hi ${n},` : "Hi,",
+    en: { s: r ? `Reminder: invoice ${o.number} is open` : `Invoice ${o.number} from Endeavor Business Hub`, hi: n ? `Hi ${n},` : "Hi,",
       lead: r ? `Invoice ${o.number} was due ${o.daysLate && o.daysLate > 1 ? `${o.daysLate} days ago` : "yesterday"} and is still open. If you already paid, please ignore this reminder.` : "Here is your invoice. You can pay with the button below on Stripe's secure page.",
       due: "Due date", total: "Total", pay: "Pay invoice", pdf: "Download the invoice PDF", h: r ? `Reminder ${r}` : "Invoice" },
-    es: { s: r ? `Recordatorio: factura ${o.number} pendiente` : `Factura ${o.number} de Endeavor Business Solutions`, hi: n ? `¡Hola, ${n}!` : "¡Hola!",
+    es: { s: r ? `Recordatorio: factura ${o.number} pendiente` : `Factura ${o.number} de Endeavor Business Hub`, hi: n ? `¡Hola, ${n}!` : "¡Hola!",
       lead: r ? `La factura ${o.number} venció ${o.daysLate && o.daysLate > 1 ? `hace ${o.daysLate} días` : "ayer"} y sigue pendiente. Si ya pagó, ignore este recordatorio.` : "Le enviamos su factura. Puede pagar con el botón de abajo, en la página segura de Stripe.",
       due: "Vencimiento", total: "Total", pay: "Pagar factura", pdf: "Descargar el PDF de la factura", h: r ? `Recordatorio ${r}` : "Factura" },
   }[l];

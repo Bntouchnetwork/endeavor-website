@@ -58,7 +58,7 @@ Then test it in Agenda → Disponibilidade → **Enviar e-mail de teste**. As so
    | `endeavor_booking_rescheduled` | {{1}} first name, {{2}} new date/time, {{3}} link |
    | `endeavor_booking_admin_alert` (pt_BR) | {{1}} event, {{2}} name, {{3}} date/time ET, {{4}} contact |
 
-   Example (pt_BR, confirmation): "Olá, {{1}}! Sua conversa com a Endeavor Business Solutions está confirmada para {{2}}. Para reagendar ou cancelar: {{3}}"
+   Example (pt_BR, confirmation): "Olá, {{1}}! Sua conversa com a Endeavor Business Hub está confirmada para {{2}}. Para reagendar ou cancelar: {{3}}"
 3. In Supabase → Edge Functions → Secrets, add `WHATSAPP_TOKEN` (permanent System User token) and `WHATSAPP_PHONE_ID`. Optionally add `WA_TPL_*` if the names are different.
 
 The Agenda shows **WhatsApp: Ativo** after the next call to the function (at most 5 minutes).

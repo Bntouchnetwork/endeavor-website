@@ -11,6 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
 import { HubFail, hubAsk, hubJson, hubOn } from "../_shared/hub-ai.ts"; // all AI goes through Endeavor's central HUB AI
+import { FOOT_BRAND } from "../_shared/brand.ts";
 
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
@@ -48,7 +49,7 @@ const transport = () => (tr ??= sesOn()
 let FROM = SUPPORT;
 async function loadFrom() { if (!sesOn()) { FROM = G_USER; return; } const { data } = await db.from("mkt_settings").select("from_email").eq("id", 1).maybeSingle(); FROM = data?.from_email || SUPPORT; }
 
-const SIGN: Record<Lang, string> = { pt: "Equipe Endeavor Business Solutions", en: "The Endeavor Business Solutions team", es: "Equipo de Endeavor Business Solutions" };
+const SIGN: Record<Lang, string> = { pt: "Equipe Endeavor Business Hub", en: "The Endeavor Business Hub team", es: "Equipo de Endeavor Business Hub" };
 function shell(l: Lang, o: { kicker: string; h1: string; pre: string; paras: string[]; cta?: string; url?: string; foot?: string; sign?: boolean }) {
   const navy = "#0b1f3a", gold = "#c9a24a";
   const btn = o.cta && o.url ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 4px"><tr><td style="border-radius:10px;background:${navy}"><a href="${esc(o.url)}" style="display:inline-block;padding:14px 24px;font:700 15px Arial,sans-serif;color:#fff;text-decoration:none;border-radius:10px">${esc(o.cta)}</a></td></tr></table>` : "";
@@ -56,11 +57,11 @@ function shell(l: Lang, o: { kicker: string; h1: string; pre: string; paras: str
 <body style="margin:0;padding:0;background:#eef1f6"><div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(o.pre)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f6;padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e3e7ee">
-<tr><td style="padding:22px 30px;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="190" style="display:block;width:190px;height:auto;border:0"></td></tr>
+<tr><td style="padding:22px 30px;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="190" style="display:block;width:190px;height:auto;border:0"></td></tr>
 <tr><td style="background:${navy};padding:30px 30px 26px"><div style="font:700 12px/1 Arial,sans-serif;letter-spacing:.14em;color:${gold};margin:0 0 12px">${esc(o.kicker)}</div><div style="font:700 24px/1.25 Georgia,serif;color:#fff">${esc(o.h1)}</div></td></tr>
 <tr><td style="padding:26px 30px 8px;font:15px/1.65 Arial,sans-serif;color:#1f2937">${o.paras.map((p) => `<p style="margin:0 0 12px">${p}</p>`).join("")}${btn}</td></tr>
 <tr><td style="padding:12px 30px 26px;font:15px/1.6 Arial,sans-serif;color:#1f2937">${o.sign === false ? "" : `<p style="margin:0;font-weight:700;color:${navy}">${SIGN[l]}</p>`}${o.foot ? `<p style="margin:12px 0 0;font:13px/1.55 Arial,sans-serif;color:#6b7280">${esc(o.foot)}</p>` : ""}</td></tr>
-<tr><td style="padding:16px 30px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">Endeavor Business Solutions · Orlando, FL · ${PHONE} · WhatsApp ${WA_NUM} · <a href="mailto:${SUPPORT}" style="color:#6b7280">${SUPPORT}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a></td></tr>
+<tr><td style="padding:16px 30px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">${FOOT_BRAND} · Orlando, FL · ${PHONE} · WhatsApp ${WA_NUM} · <a href="mailto:${SUPPORT}" style="color:#6b7280">${SUPPORT}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a></td></tr>
 </table></td></tr></table></body></html>`;
 }
 const textOf = (o: { h1: string; paras: string[]; cta?: string; url?: string; foot?: string; sign?: boolean }, l: Lang) =>
@@ -72,7 +73,7 @@ async function deliver(m: { dedupe: string; kind: string; name?: string; lead_id
   const ins = await db.from("crm_messages").insert({ dedupe: m.dedupe + ":email", kind: m.kind, channel: "email", lead_id: m.lead_id ?? null, partner_id: m.partner_id ?? null, referral_id: m.referral_id ?? null, to_addr: m.to, subject: m.subject, created_by: m.by ?? "system" }).select("id").single();
   if (!ins.error) {
     try {
-      await transport().sendMail({ from: { name: "Endeavor Business Solutions", address: FROM }, to: m.to, replyTo: SUPPORT, subject: m.subject, html: shell(m.l, m.mail), text: textOf(m.mail, m.l) });
+      await transport().sendMail({ from: { name: "Endeavor Business Hub", address: FROM }, to: m.to, replyTo: SUPPORT, subject: m.subject, html: shell(m.l, m.mail), text: textOf(m.mail, m.l) });
       await db.from("crm_messages").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", ins.data.id); out.email = "sent";
     } catch (e) { await db.from("crm_messages").update({ status: "failed", error: String((e as Error).message).slice(0, 800) }).eq("id", ins.data.id); out.email = "failed"; }
   } else out.email = "dup";
@@ -108,7 +109,7 @@ const T: Record<Lang, Record<string, string>> = {
     paidSubj: "Pagamento confirmado: {c}", paidH1: "{c} pagou a fatura", paidP: "A fatura {i} de {c} foi paga. A sua comissão é de <strong>{a}</strong>.",
     paidAuto: "Ela vai automaticamente para a sua conta Stripe.", paidManual: "Vamos fazer o repasse e avisamos quando for enviado.", paidStripe: "Conecte a sua conta Stripe no portal para receber.",
     commSubj: "Comissão enviada: {a}", commH1: "Sua comissão foi enviada", commP: "Enviamos <strong>{a}</strong> referente à fatura {i} de {c}.", commStripe: "O valor está no seu saldo Stripe e vai para o seu banco no próximo saque automático.", commOther: "O valor deve chegar na sua conta nos próximos dias úteis.",
-    kLead: "ENDEAVOR BUSINESS SOLUTIONS", f1Subj: "{n}, podemos conversar?", f1Subj0: "Podemos conversar?", f1H1: "Vamos conversar sobre o seu projeto?", f1P: "Recebemos o seu contato e queremos entender melhor o que você precisa. A forma mais rápida é uma conversa de 30 minutos, por vídeo, telefone ou WhatsApp, no horário que for melhor para você.",
+    kLead: "ENDEAVOR BUSINESS HUB", f1Subj: "{n}, podemos conversar?", f1Subj0: "Podemos conversar?", f1H1: "Vamos conversar sobre o seu projeto?", f1P: "Recebemos o seu contato e queremos entender melhor o que você precisa. A forma mais rápida é uma conversa de 30 minutos, por vídeo, telefone ou WhatsApp, no horário que for melhor para você.",
     f1Pp: "Recebemos o seu interesse no Programa de Parceiros. Para combinar os detalhes e a sua comissão, o próximo passo é uma conversa de 30 minutos com a nossa equipe.", f2Subj: "Ainda podemos ajudar?", f2H1: "Ainda podemos ajudar?", f2P: "Passando para saber se ainda faz sentido conversarmos. Se preferir, é só responder este e-mail com a sua dúvida ou chamar no WhatsApp.",
     fCta: "Agendar uma conversa", fStop: "Se não quiser mais receber estes lembretes, responda com \"parar\".",
     kPartner: "PORTAL DO PARCEIRO", invSubj: "Seu acesso ao Portal do Parceiro está esperando", invH1: "Seu acesso está pronto", invP: "Você ainda não criou a sua senha do Portal do Parceiro. Use o link do e-mail de convite. Se ele expirou, responda este e-mail que enviamos um novo.", invCta: "Abrir o portal",
@@ -118,7 +119,7 @@ const T: Record<Lang, Record<string, string>> = {
     paidSubj: "Payment confirmed: {c}", paidH1: "{c} paid the invoice", paidP: "Invoice {i} from {c} was paid. Your commission is <strong>{a}</strong>.",
     paidAuto: "It goes automatically to your Stripe account.", paidManual: "We will send your payout and let you know when it is on the way.", paidStripe: "Connect your Stripe account in the portal to get paid.",
     commSubj: "Commission sent: {a}", commH1: "Your commission was sent", commP: "We sent <strong>{a}</strong> for invoice {i} from {c}.", commStripe: "It is in your Stripe balance and goes to your bank with the next automatic payout.", commOther: "It should reach your account in the next business days.",
-    kLead: "ENDEAVOR BUSINESS SOLUTIONS", f1Subj: "{n}, can we talk?", f1Subj0: "Can we talk?", f1H1: "Shall we talk about your project?", f1P: "We received your message and want to understand what you need. The fastest way is a 30-minute call, by video, phone or WhatsApp, at the time that works best for you.",
+    kLead: "ENDEAVOR BUSINESS HUB", f1Subj: "{n}, can we talk?", f1Subj0: "Can we talk?", f1H1: "Shall we talk about your project?", f1P: "We received your message and want to understand what you need. The fastest way is a 30-minute call, by video, phone or WhatsApp, at the time that works best for you.",
     f1Pp: "We received your interest in the Partner Program. To agree on the details and your commission, the next step is a 30-minute call with our team.", f2Subj: "Can we still help?", f2H1: "Can we still help?", f2P: "Just checking whether it still makes sense to talk. You can also reply to this email with your question or message us on WhatsApp.",
     fCta: "Schedule a call", fStop: "If you do not want these reminders, reply \"stop\".",
     kPartner: "PARTNER PORTAL", invSubj: "Your Partner Portal access is waiting", invH1: "Your access is ready", invP: "You have not created your Partner Portal password yet. Use the link in the invitation email. If it expired, reply to this email and we will send a new one.", invCta: "Open the portal",
@@ -128,7 +129,7 @@ const T: Record<Lang, Record<string, string>> = {
     paidSubj: "Pago confirmado: {c}", paidH1: "{c} pagó la factura", paidP: "La factura {i} de {c} fue pagada. Su comisión es de <strong>{a}</strong>.",
     paidAuto: "Va automáticamente a su cuenta Stripe.", paidManual: "Haremos la transferencia y le avisaremos cuando salga.", paidStripe: "Conecte su cuenta Stripe en el portal para recibir.",
     commSubj: "Comisión enviada: {a}", commH1: "Su comisión fue enviada", commP: "Enviamos <strong>{a}</strong> de la factura {i} de {c}.", commStripe: "Está en su saldo Stripe y va a su banco con el próximo retiro automático.", commOther: "Debe llegar a su cuenta en los próximos días hábiles.",
-    kLead: "ENDEAVOR BUSINESS SOLUTIONS", f1Subj: "{n}, ¿conversamos?", f1Subj0: "¿Conversamos?", f1H1: "¿Conversamos sobre su proyecto?", f1P: "Recibimos su mensaje y queremos entender lo que necesita. Lo más rápido es una conversación de 30 minutos, por video, teléfono o WhatsApp, en el horario que le quede mejor.",
+    kLead: "ENDEAVOR BUSINESS HUB", f1Subj: "{n}, ¿conversamos?", f1Subj0: "¿Conversamos?", f1H1: "¿Conversamos sobre su proyecto?", f1P: "Recibimos su mensaje y queremos entender lo que necesita. Lo más rápido es una conversación de 30 minutos, por video, teléfono o WhatsApp, en el horario que le quede mejor.",
     f1Pp: "Recibimos su interés en el Programa de Socios. Para acordar los detalles y su comisión, el siguiente paso es una conversación de 30 minutos con nuestro equipo.", f2Subj: "¿Todavía podemos ayudar?", f2H1: "¿Todavía podemos ayudar?", f2P: "Solo queríamos saber si todavía tiene sentido conversar. También puede responder este correo con su pregunta o escribirnos por WhatsApp.",
     fCta: "Agendar una conversación", fStop: "Si no desea recibir estos recordatorios, responda \"parar\".",
     kPartner: "PORTAL DE SOCIOS", invSubj: "Su acceso al Portal de Socios está esperando", invH1: "Su acceso está listo", invP: "Aún no creó su contraseña del Portal de Socios. Use el enlace del correo de invitación. Si venció, responda este correo y le enviamos uno nuevo.", invCta: "Abrir el portal",
@@ -452,7 +453,7 @@ Deno.serve(async (req) => {
         await loadFrom(); S = (await db.from("crm_settings").select("*").eq("id", 1).single()).data ?? {} as Row;
         const lg = lang(l.language), paras = text.split(/\n\s*\n/).map((p) => esc(p.trim()).replace(/\n/g, "<br>")).filter(Boolean);
         const r = await deliver({ dedupe: `manual:${crypto.randomUUID()}`, kind: "manual", lead_id: l.id, to: l.email, l: lg, subject, by: email,
-          mail: { kicker: "ENDEAVOR BUSINESS SOLUTIONS", h1: subject, pre: text.slice(0, 140), paras, sign: false } });
+          mail: { kicker: "ENDEAVOR BUSINESS HUB", h1: subject, pre: text.slice(0, 140), paras, sign: false } });
         if (r.email !== "sent") return json({ error: "send_failed" }, 502);
         await db.from("leads").update({ last_contact_at: new Date().toISOString(), ...(l.status === "new" ? { status: "contacted" } : {}) }).eq("id", l.id);
         return json({ ok: true });

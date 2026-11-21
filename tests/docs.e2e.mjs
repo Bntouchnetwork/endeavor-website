@@ -17,7 +17,7 @@ page.on("pageerror", (e) => console.log("pageerror:", e.message));
 await page.route("**/functions/v1/docs", async (r) => {
   const b = JSON.parse(r.request().postData() || "{}"); chamadas.push(b);
   if (b.t !== TOKEN) return r.fulfill({ status: 404, json: { erro: "Este link não está mais ativo." } });
-  if (b.acao === "pub_info") return r.fulfill({ json: { empresa: "Endeavor Business Solutions", nome: "Ana", modelo: "Abertura de empresa (LLC)", idioma: "pt", aberto: true, documentos: docs.map((d) => ({ nome: d, enviados: (rec[d] || 0) })) } });
+  if (b.acao === "pub_info") return r.fulfill({ json: { empresa: "Endeavor Business Hub", nome: "Ana", modelo: "Abertura de empresa (LLC)", idioma: "pt", aberto: true, documentos: docs.map((d) => ({ nome: d, enviados: (rec[d] || 0) })) } });
   if (b.acao === "pub_sessao") { if (/\.zip$/.test(b.nome)) return r.fulfill({ status: 400, json: { erro: "Tipo de arquivo não aceito." } }); return r.fulfill({ json: { url: "https://upload.googleapis.test/sessao/" + chamadas.length, tipo: "application/pdf" } }); }
   if (b.acao === "pub_confirmar") { rec[b.doc] = (rec[b.doc] || 0) + 1; return r.fulfill({ json: { ok: true, faltam: docs.filter((d) => !rec[d]).length } }); }
   return r.fulfill({ status: 400, json: { erro: "?" } });

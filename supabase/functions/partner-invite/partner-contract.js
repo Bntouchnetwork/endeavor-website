@@ -33,7 +33,7 @@
 
   async function render(PDFLib, d) {
     var pdf = await PDFLib.PDFDocument.create();
-    pdf.setTitle(safe('Referral Partner Agreement - ' + d.partner.name)); pdf.setAuthor('Endeavor Business Solutions'); pdf.setCreator('Endeavor Partner Program'); pdf.setProducer('Endeavor');
+    pdf.setTitle(safe('Referral Partner Agreement - ' + d.partner.name)); pdf.setAuthor('Endeavor Business Hub'); pdf.setCreator('Endeavor Partner Program'); pdf.setProducer('Endeavor');
     var F = { r: await pdf.embedFont(PDFLib.StandardFonts.TimesRoman), b: await pdf.embedFont(PDFLib.StandardFonts.TimesRomanBold), i: await pdf.embedFont(PDFLib.StandardFonts.TimesRomanItalic), h: await pdf.embedFont(PDFLib.StandardFonts.Helvetica) };
     var ink = PDFLib.rgb(0.08, 0.08, 0.1), grey = PDFLib.rgb(0.42, 0.44, 0.48), navy = PDFLib.rgb(0.05, 0.13, 0.26);
     var SIZE = 11, LEAD = 15;
@@ -64,9 +64,9 @@
     newPage();
     y -= 10;
     para([{ t: 'REFERRAL PARTNER AGREEMENT', f: F.b }], { size: 18, lead: 24, center: true, color: navy });
-    para([{ t: 'Endeavor Business Solutions Partner Program', f: F.i }], { size: 12, lead: 18, center: true });
+    para([{ t: 'Endeavor Business Hub Partner Program', f: F.i }], { size: 12, lead: 18, center: true });
     y -= 6; page.drawLine({ start: { x: M + 120, y: y }, end: { x: W - M - 120, y: y }, thickness: 0.8, color: navy }); y -= 18;
-    para([{ t: 'This Referral Partner Agreement (the "Agreement") is made between', f: F.r }, { t: 'Endeavor Tax Solutions LLC, doing business as Endeavor Business Solutions,', f: F.b }, { t: 'with offices in Orlando, Florida ("Endeavor"), and', f: F.r }, { t: who + ',', f: F.b },
+    para([{ t: 'This Referral Partner Agreement (the "Agreement") is made between', f: F.r }, { t: 'Endeavor Tax Solutions LLC, doing business as Endeavor Business Hub,', f: F.b }, { t: 'with offices in Orlando, Florida ("Endeavor"), and', f: F.r }, { t: who + ',', f: F.b },
       { t: 'email ' + P.email + (P.country ? ', ' + P.country : '') + ' ("Partner"). It takes effect on the date it is signed by both parties.', f: F.r }]);
     y -= 4;
     para([{ t: 'Commission percentage agreed:', f: F.b }, { t: pctText(d.pct) + ' (see Section 3).', f: F.r }]);
@@ -83,7 +83,7 @@
     para([{ t: 'The parties sign this Agreement electronically through the Endeavor e-signature system.', f: F.r }]);
     y -= 20;
     var fields = [], fx = function (x) { return x / W; }, fy = function (yy) { return (H - yy) / H; };
-    [{ cap: 'PARTNER', name: P.name, title: P.company ? 'For ' + P.company : 'Individually' }, { cap: 'ENDEAVOR TAX SOLUTIONS LLC d/b/a ENDEAVOR BUSINESS SOLUTIONS', name: '', title: 'Title: Authorized representative' }].forEach(function (s, i) {
+    [{ cap: 'PARTNER', name: P.name, title: P.company ? 'For ' + P.company : 'Individually' }, { cap: 'ENDEAVOR TAX SOLUTIONS LLC d/b/a ENDEAVOR BUSINESS HUB', name: '', title: 'Title: Authorized representative' }].forEach(function (s, i) {
       var top = y, pageIndex = pages.length - 1;
       page.drawText(safe(s.cap), { x: M, y: top - 10, size: 9.5, font: F.b, color: navy });
       var lineY = top - 60;
@@ -104,7 +104,7 @@
       var foot = 'Page ' + (i + 1) + ' of ' + total, fw = F.r.widthOfTextAtSize(foot, 9);
       p.drawText(foot, { x: (W - fw) / 2, y: 40, size: 9, font: F.r, color: grey });
       p.drawText(safe('Referral Partner Agreement v' + VERSION + ' - ' + (d.date_text || '')), { x: M, y: 40, size: 7.5, font: F.h, color: grey });
-      if (i > 0) p.drawText(safe('Endeavor Business Solutions - Referral Partner Agreement - ' + P.name), { x: M, y: H - 44, size: 8.5, font: F.i, color: grey });
+      if (i > 0) p.drawText(safe('Endeavor Business Hub - Referral Partner Agreement - ' + P.name), { x: M, y: H - 44, size: 8.5, font: F.i, color: grey });
     });
     var bytes = await pdf.save();
     return { bytes: bytes, fields: fields, pages: total, version: VERSION };

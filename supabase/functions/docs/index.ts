@@ -41,7 +41,7 @@ const aleatorio = (n = 24) => btoa(String.fromCharCode(...crypto.getRandomValues
 /* ---------------- empresa e marca ---------------- */
 type Conta = { conta: string; clientId: string | null; endeavor: boolean; nome: string; email: string | null };
 async function contaDe(conta: string): Promise<Conta> {
-  if (conta === "endeavor") return { conta, clientId: null, endeavor: true, nome: "Endeavor Business Solutions", email: null };
+  if (conta === "endeavor") return { conta, clientId: null, endeavor: true, nome: "Endeavor Business Hub", email: null };
   const { data } = await db.from("clients").select("id, name, primary_email").eq("id", uuid(conta) || NADA).maybeSingle();
   if (!data) throw new Erro("Empresa não encontrada.", 404);
   return { conta: data.id, clientId: data.id, endeavor: false, nome: data.name || "Empresa", email: data.primary_email || null };

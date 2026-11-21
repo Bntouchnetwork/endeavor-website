@@ -9,6 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
 import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@f127635aa2d4f6b62fb5cec9e7b4cb0467ebcfef/supabase/functions/partner-invite/partner-contract.js";
+import { FOOT_BRAND } from "../_shared/brand.ts";
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
 
@@ -19,7 +20,7 @@ const SITE = (Deno.env.get("SITE_URL") ?? "https://endeavorbiz.com").replace(/\/
 const SMTP_USER = Deno.env.get("SMTP_USER") ?? "support@endeavorbiz.com";
 const SMTP_PASS = (Deno.env.get("SMTP_PASS") ?? "").replace(/\s+/g, "");
 const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.gmail.com";
-const FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Endeavor Business Solutions";
+const FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Endeavor Business Hub";
 const PHONE = "+1 (407) 436-9567";
 const DEFAULT_PCT = 10; // standard commission for self sign-up (the admin can change it per partner)
 const db = createClient(SB_URL, SB_SERVICE, { auth: { persistSession: false } });
@@ -34,40 +35,40 @@ const T: Record<Lang, Record<string, string | string[][]>> = {
     subject: "{n}, você foi convidado para o Programa de Parceiros da Endeavor",
     pre: "Indique clientes, acompanhe cada etapa pelo seu portal e receba sua comissão automaticamente.",
     kicker: "PROGRAMA DE PARCEIROS", hi: "Olá, {n}!",
-    h1: "Você foi convidado para ser parceiro da Endeavor Business Solutions",
+    h1: "Você foi convidado para ser parceiro da Endeavor Business Hub",
     intro: "A Endeavor ajuda empreendedores e investidores estrangeiros a abrir e manter empresas nos Estados Unidos: abertura de LLC e corporações, compliance, coordenação fiscal, conta bancária, imóveis e family office. Agora queremos crescer junto com você.",
     benefitsTitle: "Por que ser parceiro",
     benefits: [["Comissão em cada indicação", "Você ganha sobre os serviços contratados pelos clientes que indicar. Sem custo e sem meta mínima."], ["Pagamento automático", "Conecte sua conta Stripe uma vez e a sua parte cai direto na sua conta quando o cliente paga."], ["Seu próprio portal", "Envie indicações, acompanhe cada cliente etapa por etapa e veja o que já recebeu e o que vai receber."], ["Atendimento completo", "Nossa equipe cuida de todo o processo do cliente, em português, inglês ou espanhol, e mantém você informado."]],
     howTitle: "Como funciona",
     how: [["Crie seu acesso", "Defina a sua senha e ative a verificação em duas etapas no celular."], ["Indique clientes", "Cadastre a indicação pelo portal em menos de um minuto."], ["Acompanhe e receba", "Veja o andamento de cada cliente e receba a comissão via Stripe a cada pagamento."]],
     cta: "Criar minha senha e acessar o portal", ctaNote: "Por segurança, este link vale por 24 horas e só pode ser usado uma vez. Se ele expirar, abra o portal e use \"Esqueci a senha\" com este e-mail.",
-    portal: "Endereço do portal:", questions: "Ficou com alguma dúvida? Responda este e-mail ou fale com a gente pelo WhatsApp.", sign: "Equipe Endeavor Business Solutions",
+    portal: "Endereço do portal:", questions: "Ficou com alguma dúvida? Responda este e-mail ou fale com a gente pelo WhatsApp.", sign: "Equipe Endeavor Business Hub",
   },
   en: {
     subject: "{n}, you're invited to the Endeavor Partner Program",
     pre: "Refer clients, follow every step in your own portal and get your commission automatically.",
     kicker: "PARTNER PROGRAM", hi: "Hi {n},",
-    h1: "You're invited to become an Endeavor Business Solutions partner",
+    h1: "You're invited to become an Endeavor Business Hub partner",
     intro: "Endeavor helps foreign entrepreneurs and investors open and run companies in the United States: LLC and corporation formation, compliance, tax coordination, banking, real estate and family office. Now we want to grow together with you.",
     benefitsTitle: "Why partner with us",
     benefits: [["A commission on every referral", "You earn on the services bought by the clients you refer. No cost and no minimum targets."], ["Automatic payouts", "Connect your Stripe account once and your share goes straight to your account when the client pays."], ["Your own portal", "Send referrals, follow each client step by step and see what you have earned and what is coming."], ["Full-service support", "Our team handles the whole process for your client, in English, Portuguese or Spanish, and keeps you informed."]],
     howTitle: "How it works",
     how: [["Create your access", "Set your password and turn on two-step verification on your phone."], ["Refer clients", "Submit a referral in the portal in under a minute."], ["Track and get paid", "Follow each client's progress and receive your commission through Stripe with every payment."]],
     cta: "Create my password and open the portal", ctaNote: "For your security, this link is valid for 24 hours and works once. If it expires, open the portal and use \"Forgot password\" with this email.",
-    portal: "Portal address:", questions: "Questions? Reply to this email or reach us on WhatsApp.", sign: "The Endeavor Business Solutions team",
+    portal: "Portal address:", questions: "Questions? Reply to this email or reach us on WhatsApp.", sign: "The Endeavor Business Hub team",
   },
   es: {
     subject: "{n}, lo invitamos al Programa de Socios de Endeavor",
     pre: "Recomiende clientes, siga cada etapa en su propio portal y reciba su comisión automáticamente.",
     kicker: "PROGRAMA DE SOCIOS", hi: "¡Hola, {n}!",
-    h1: "Lo invitamos a ser socio de Endeavor Business Solutions",
+    h1: "Lo invitamos a ser socio de Endeavor Business Hub",
     intro: "Endeavor ayuda a emprendedores e inversionistas extranjeros a abrir y mantener empresas en Estados Unidos: constitución de LLC y corporaciones, cumplimiento, coordinación fiscal, cuenta bancaria, bienes raíces y family office. Ahora queremos crecer junto a usted.",
     benefitsTitle: "Por qué ser socio",
     benefits: [["Comisión por cada recomendación", "Usted gana sobre los servicios que contraten los clientes que recomiende. Sin costo y sin metas mínimas."], ["Pago automático", "Conecte su cuenta Stripe una vez y su parte llega directo a su cuenta cuando el cliente paga."], ["Su propio portal", "Envíe recomendaciones, siga cada cliente paso a paso y vea lo que ya recibió y lo que va a recibir."], ["Atención completa", "Nuestro equipo se encarga de todo el proceso del cliente, en español, inglés o portugués, y lo mantiene informado."]],
     howTitle: "Cómo funciona",
     how: [["Cree su acceso", "Defina su contraseña y active la verificación en dos pasos en el celular."], ["Recomiende clientes", "Registre la recomendación en el portal en menos de un minuto."], ["Siga y reciba", "Vea el avance de cada cliente y reciba la comisión por Stripe con cada pago."]],
     cta: "Crear mi contraseña y entrar al portal", ctaNote: "Por seguridad, este enlace es válido por 24 horas y se usa una sola vez. Si vence, abra el portal y use \"Olvidé mi contraseña\" con este correo.",
-    portal: "Dirección del portal:", questions: "¿Preguntas? Responda este correo o escríbanos por WhatsApp.", sign: "Equipo de Endeavor Business Solutions",
+    portal: "Dirección del portal:", questions: "¿Preguntas? Responda este correo o escríbanos por WhatsApp.", sign: "Equipo de Endeavor Business Hub",
   },
 };
 const L = (l: string | null): Lang => (l === "en" || l === "es" ? l : "pt");
@@ -87,7 +88,7 @@ function emailHtml(lang: Lang, name: string, link: string, portal: string) {
 <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(t.pre)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f6;padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e3e7ee">
-<tr><td style="padding:24px 32px;background:#ffffff;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>
+<tr><td style="padding:24px 32px;background:#ffffff;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>
 <tr><td style="background:${navy};padding:40px 32px 36px">
 <div style="font:700 12px/1 Arial,sans-serif;letter-spacing:.14em;color:${gold};margin:0 0 14px">${esc(t.kicker)}</div>
 <div style="font:700 27px/1.25 Georgia,serif;color:#ffffff;margin:0 0 14px">${esc(t.h1)}</div>
@@ -102,7 +103,7 @@ function emailHtml(lang: Lang, name: string, link: string, portal: string) {
 <p style="font:13px/1.55 Arial,sans-serif;color:#6b7280;margin:14px 0 0">${esc(t.ctaNote)}</p>
 <p style="font:13px/1.55 Arial,sans-serif;color:#6b7280;margin:8px 0 0">${esc(t.portal)} <a href="${esc(portal)}" style="color:${navy}">${esc(portal.replace(/^https?:\/\//, "").replace(/\?.*$/, ""))}</a></p></td></tr>
 <tr><td style="padding:22px 32px 30px;font:15px/1.6 Arial,sans-serif;color:#1f2937"><p style="margin:0 0 8px">${esc(t.questions)}</p><p style="margin:0;font-weight:700;color:${navy}">${esc(t.sign)}</p></td></tr>
-<tr><td style="padding:18px 32px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">Endeavor Business Solutions · Orlando, FL · ${PHONE} · <a href="mailto:${SMTP_USER}" style="color:#6b7280">${SMTP_USER}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a></td></tr>
+<tr><td style="padding:18px 32px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">${FOOT_BRAND} · Orlando, FL · ${PHONE} · <a href="mailto:${SMTP_USER}" style="color:#6b7280">${SMTP_USER}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a></td></tr>
 </table></td></tr></table></body></html>`;
 }
 function emailText(lang: Lang, name: string, link: string, portal: string) {
@@ -154,13 +155,13 @@ function shell(lang: Lang, o: { title: string; kicker: string; h1: string; pre: 
 <body style="margin:0;padding:0;background:#eef1f6"><div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(o.pre)}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f6;padding:28px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e3e7ee">
-<tr><td style="padding:24px 32px;background:#ffffff;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>
+<tr><td style="padding:24px 32px;background:#ffffff;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>
 <tr><td style="background:${navy};padding:36px 32px 32px"><div style="font:700 12px/1 Arial,sans-serif;letter-spacing:.14em;color:${gold};margin:0 0 14px">${esc(o.kicker)}</div>
 <div style="font:700 26px/1.25 Georgia,serif;color:#ffffff;margin:0 0 12px">${esc(o.h1)}</div><div style="font:16px/1.6 Arial,sans-serif;color:#d6deea">${esc(o.pre)}</div>${btn(gold, navy)}</td></tr>
 <tr><td style="padding:28px 32px 10px;font:15px/1.65 Arial,sans-serif;color:#1f2937">${o.body}</td></tr>
 ${o.cta && o.url ? `<tr><td align="center" style="padding:6px 32px 8px">${btn(navy, "#ffffff").replace("margin:26px 0 0", "margin:0 auto")}${o.note ? `<p style="font:13px/1.55 Arial,sans-serif;color:#6b7280;margin:14px 0 0">${esc(o.note)}</p>` : ""}</td></tr>` : ""}
 <tr><td style="padding:18px 32px 28px;font:15px/1.6 Arial,sans-serif;color:#1f2937"><p style="margin:0;font-weight:700;color:${navy}">${esc((T[lang] as Record<string, string>).sign)}</p></td></tr>
-<tr><td style="padding:18px 32px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">Endeavor Business Solutions · Orlando, FL · ${PHONE} · WhatsApp +1 (630) 689-8702 · <a href="mailto:${SMTP_USER}" style="color:#6b7280">${SMTP_USER}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a></td></tr>
+<tr><td style="padding:18px 32px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">${FOOT_BRAND} · Orlando, FL · ${PHONE} · WhatsApp +1 (630) 689-8702 · <a href="mailto:${SMTP_USER}" style="color:#6b7280">${SMTP_USER}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a></td></tr>
 </table></td></tr></table></body></html>`;
 }
 const P_ = (t: string) => `<p style="margin:0 0 12px">${esc(t)}</p>`;
@@ -170,7 +171,7 @@ const STEPS = (items: string[][]) => `<table role="presentation" width="100%" ce
 
 const W: Record<Lang, Record<string, string>> = {
   pt: { subject: "{n}, boas-vindas ao Programa de Parceiros da Endeavor", kicker: "PROGRAMA DE PARCEIROS", h1: "Seu acesso de parceiro está pronto", pre: "Crie sua senha e conclua o onboarding no portal: vídeo, contrato e recebimentos.",
-    hi: "Olá, {n}!", intro: "Obrigado por se cadastrar no Programa de Parceiros da Endeavor Business Solutions. O seu acesso ao Portal do Parceiro já está pronto. O onboarding é feito no próprio portal, em poucos minutos, e o nosso assistente ajuda você em cada passo.",
+    hi: "Olá, {n}!", intro: "Obrigado por se cadastrar no Programa de Parceiros da Endeavor Business Hub. O seu acesso ao Portal do Parceiro já está pronto. O onboarding é feito no próprio portal, em poucos minutos, e o nosso assistente ajuda você em cada passo.",
     next: "Próximos passos",
     s1: "Crie sua senha", s1d: "Use o botão deste e-mail. Você também ativa a verificação em duas etapas no celular.",
     s2: "Assista ao vídeo e assine o contrato", s2d: "O portal abre em \"Comece aqui\", com um vídeo curto sobre como tudo funciona e o contrato de parceria para assinar online (comissão padrão de 10%).",
@@ -179,7 +180,7 @@ const W: Record<Lang, Record<string, string>> = {
     s4: "Conta ativada e conversa de boas-vindas", s4d: "Concluídos os passos, a sua conta é ativada automaticamente: você já pode indicar clientes e agendar a conversa de boas-vindas com a nossa equipe.",
     cta: "Criar minha senha e entrar no portal" },
   en: { subject: "{n}, welcome to the Endeavor Partner Program", kicker: "PARTNER PROGRAM", h1: "Your partner access is ready", pre: "Create your password and finish onboarding in the portal: video, agreement and payouts.",
-    hi: "Hi {n},", intro: "Thank you for signing up for the Endeavor Business Solutions Partner Program. Your Partner Portal access is ready. Onboarding happens right in the portal, in a few minutes, and our assistant helps you at every step.",
+    hi: "Hi {n},", intro: "Thank you for signing up for the Endeavor Business Hub Partner Program. Your Partner Portal access is ready. Onboarding happens right in the portal, in a few minutes, and our assistant helps you at every step.",
     next: "Next steps",
     s1: "Create your password", s1d: "Use the button in this email. You will also turn on two-step verification on your phone.",
     s2: "Watch the video and sign the agreement", s2d: "The portal opens on \"Start here\", with a short video about how everything works and the partner agreement to sign online (standard 10% commission).",
@@ -188,7 +189,7 @@ const W: Record<Lang, Record<string, string>> = {
     s4: "Account activated and welcome call", s4d: "When the steps are done, your account is activated automatically: you can refer clients and book your welcome call with our team.",
     cta: "Create my password and open the portal" },
   es: { subject: "{n}, bienvenido(a) al Programa de Socios de Endeavor", kicker: "PROGRAMA DE SOCIOS", h1: "Su acceso de socio está listo", pre: "Cree su contraseña y complete el onboarding en el portal: video, contrato y pagos.",
-    hi: "¡Hola, {n}!", intro: "Gracias por registrarse en el Programa de Socios de Endeavor Business Solutions. Su acceso al Portal de Socios ya está listo. El onboarding se hace en el mismo portal, en pocos minutos, y nuestro asistente lo ayuda en cada paso.",
+    hi: "¡Hola, {n}!", intro: "Gracias por registrarse en el Programa de Socios de Endeavor Business Hub. Su acceso al Portal de Socios ya está listo. El onboarding se hace en el mismo portal, en pocos minutos, y nuestro asistente lo ayuda en cada paso.",
     next: "Próximos pasos",
     s1: "Cree su contraseña", s1d: "Use el botón de este correo. También activará la verificación en dos pasos en su celular.",
     s2: "Mire el video y firme el contrato", s2d: "El portal abre en \"Empiece aquí\", con un video corto sobre cómo funciona todo y el contrato de socio para firmar en línea (comisión estándar de 10%).",
@@ -314,7 +315,7 @@ async function envelopeSigned(token: string) {
   if (!p) return { ok: false };
   if (p.contract_partner_env === env.id && p.contract_status === "sent") {
     const doc = await (globalThis as Row).EPContract.render(PDFLib, contractData(p, Number(p.contract_pct), p.contract_sent_at));
-    const { data: e2, error } = await db.from("envelopes").insert({ title: ("Referral Partner Agreement - " + p.name + " (Endeavor)").slice(0, 200), signer_name: "Endeavor Business Solutions", signer_email: SMTP_USER,
+    const { data: e2, error } = await db.from("envelopes").insert({ title: ("Referral Partner Agreement - " + p.name + " (Endeavor)").slice(0, 200), signer_name: "Endeavor Business Hub", signer_email: SMTP_USER,
       message: "Countersignature by Endeavor. Signer 2 of 2.", document_path: env.signed_document_path, document_sha256: env.signed_document_sha256,
       fields: doc.fields.filter((x: Row) => x.signer === 1).map(({ signer: _s, ...x }: Row) => x), id_stamped: true, created_by: "partner-program" }).select("*").single();
     if (error) throw error;

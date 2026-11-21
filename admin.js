@@ -134,7 +134,7 @@
     authShell('<h1 class="portal-h1">' + (invite ? 'Crie a sua senha' : 'Crie uma nova senha') + '</h1><p class="portal-muted">' + (invite ? 'Bem-vindo ao console da Endeavor. Depois da senha você ativa o código do celular.' : 'Escolha uma nova senha para a sua conta.') + '</p>' +
       '<form class="portal-form" id="f-np" novalidate>' + pwField('np', 'Nova senha (mín. 8 caracteres)', 'new-password') + pwField('np2', 'Confirme a senha', 'new-password') +
       '<div class="field" id="np-code-wrap" hidden><label for="np-code">Código do autenticador</label><input id="np-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6">' +
-      '<p class="portal-muted" style="font-size:.85rem;margin:.35rem 0 0">Sua conta usa verificação em duas etapas. Digite o código de 6 dígitos que aparece no Google Authenticator em "Endeavor Business Solutions".</p></div>' +
+      '<p class="portal-muted" style="font-size:.85rem;margin:.35rem 0 0">Sua conta usa verificação em duas etapas. Digite o código de 6 dígitos que aparece no Google Authenticator em "Endeavor Business Hub".</p></div>' +
       '<div class="portal-alert" id="np-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Salvar senha</button></form>');
     wireEyes();
     var showCode = function () { $('#np-code-wrap').hidden = false; };
@@ -172,7 +172,7 @@
     var f = (await sb.auth.mfa.listFactors()).data || { totp: [], all: [] };
     var verified = (f.totp || []).filter(function (x) { return x.status === 'verified'; });
     if (verified.length) {
-      authShell('<h1 class="portal-h1">Verificação em duas etapas</h1><p class="portal-muted">Digite o código de 6 dígitos do seu aplicativo autenticador.</p><p class="portal-muted" style="font-size:.88rem">Abra o Google Authenticator e use o código que aparece em <strong>Endeavor Business Solutions</strong>. Perdeu o celular? Peça para resetar a verificação da conta no Supabase (Authentication → Users).</p>' +
+      authShell('<h1 class="portal-h1">Verificação em duas etapas</h1><p class="portal-muted">Digite o código de 6 dígitos do seu aplicativo autenticador.</p><p class="portal-muted" style="font-size:.88rem">Abra o Google Authenticator e use o código que aparece em <strong>Endeavor Business Hub</strong>. Perdeu o celular? Peça para resetar a verificação da conta no Supabase (Authentication → Users).</p>' +
         '<form class="portal-form" id="f-mfa"><div class="field"><label for="mfa-code">Código</label><input id="mfa-code" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required></div>' +
         '<div class="portal-alert" id="mfa-msg" role="alert"></div><button class="btn btn--navy btn--block" type="submit">Verificar</button></form>');
       $('#mfa-code').focus();
@@ -186,7 +186,7 @@
     }
     // remove abandoned, unverified factors, then enroll a new one
     for (var i = 0; i < (f.all || []).length; i++) { if (f.all[i].status !== 'verified') await sb.auth.mfa.unenroll({ factorId: f.all[i].id }); }
-    var en = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Endeavor Business Solutions', friendlyName: 'Endeavor Console ' + new Date().toISOString().slice(0, 10) });
+    var en = await sb.auth.mfa.enroll({ factorType: 'totp', issuer: 'Endeavor Business Hub', friendlyName: 'Endeavor Console ' + new Date().toISOString().slice(0, 10) });
     if (en.error) { authShell('<div class="portal-alert portal-alert--error">' + esc(errText(en.error)) + '</div>'); return; }
     authShell('<div class="enroll"><div class="enroll__info"><h1 class="portal-h1">Ative a verificação em duas etapas</h1>' +
       '<p class="portal-muted">Obrigatória para acessar o console.</p>' +
@@ -216,7 +216,7 @@
     document.body.classList.add('app-shell');
     app.innerHTML = '<div class="console" id="console"><nav class="console__nav" id="console-nav" aria-label="Console"><div class="console__nav-title">Endeavor Console</div><ul>' +
       NAV.map(function (n) { return '<li><a href="#/' + n[0] + '" data-view="' + n[0] + '"><svg class="icon" aria-hidden="true"><use href="#' + n[2] + '"/></svg>' + n[1] + '</a></li>'; }).join('') +
-      '</ul><div class="console__nav-foot">Endeavor Business Solutions<br>Acesso restrito</div></nav><div class="nav-backdrop" id="nav-backdrop"></div><main class="console__content" id="view" tabindex="-1"></main></div>' +
+      '</ul><div class="console__nav-foot">' + (window.ENDEAVOR_FOOT ? ENDEAVOR_FOOT() : 'Endeavor Business Hub') + '<br>Acesso restrito</div></nav><div class="nav-backdrop" id="nav-backdrop"></div><main class="console__content" id="view" tabindex="-1"></main></div>' +
       '<div class="overlay" id="overlay" hidden></div>';
     var tgl = $('#nav-toggle'), con = $('#console');
     tgl.hidden = false;
@@ -713,11 +713,11 @@
      and support@endeavorbiz.com receives the notification copy. */
   async function emailSigner(e) {
     var link = signLink(e), exp = new Date(e.token_expires_at).toLocaleDateString('pt-BR');
-    var text = 'Olá ' + e.signer_name + ', a Endeavor Business Solutions enviou o documento "' + e.title + '" para sua assinatura eletrônica. ' +
+    var text = 'Olá ' + e.signer_name + ', a Endeavor Business Hub enviou o documento "' + e.title + '" para sua assinatura eletrônica. ' +
       (e.message ? e.message + ' ' : '') + 'Abra o link para revisar e assinar: ' + link + ' (link pessoal, válido até ' + exp + '). ' +
-      '— Hello ' + e.signer_name + ', Endeavor Business Solutions sent you "' + e.title + '" for electronic signature. Review and sign here: ' + link + ' — ' +
-      'Hola ' + e.signer_name + ', Endeavor Business Solutions le envió "' + e.title + '" para firma electrónica. Revise y firme aquí: ' + link +
-      ' — Endeavor Business Solutions · ' + CFG.adminEmail + ' · +1 (407) 436-9567';
+      '— Hello ' + e.signer_name + ', Endeavor Business Hub sent you "' + e.title + '" for electronic signature. Review and sign here: ' + link + ' — ' +
+      'Hola ' + e.signer_name + ', Endeavor Business Hub le envió "' + e.title + '" para firma electrónica. Revise y firme aquí: ' + link +
+      ' — Endeavor Business Hub · ' + CFG.adminEmail + ' · +1 (407) 436-9567';
     try {
       var r = await fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ _subject: 'Documento enviado para assinatura: ' + e.title + ' → ' + e.signer_name, _template: 'table', _captcha: 'false',

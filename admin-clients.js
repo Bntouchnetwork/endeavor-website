@@ -375,7 +375,7 @@
     body.querySelectorAll('[data-dl]').forEach(function (b) { b.onclick = function () { genDeadlines(ctx, companies.find(function (x) { return x.id === b.dataset.dl; })); }; });
   }
   function editCompany(ctx, c, co) {
-    co = co || { state: 'FL', entity_type: 'llc_foreign', status: 'in_formation', fiscal_year_end: '12-31', registered_agent: 'Endeavor Business Solutions' };
+    co = co || { state: 'FL', entity_type: 'llc_foreign', status: 'in_formation', fiscal_year_end: '12-31', registered_agent: 'Endeavor Business Hub' };
     ctx.openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + (co.id ? 'Editar empresa' : 'Nova empresa') + '</h2><button class="close-x" type="button" aria-label="Fechar">×</button></div>' +
       '<form class="portal-form" id="co-form">' + field('co-name', 'Razão social', co.legal_name, 'text', true) +
       '<div class="portal-grid2">' + select('co-type', 'Tipo', ENTITY, co.entity_type) + select('co-state', 'Estado', Object.assign(US_STATES[co.state || 'FL'] ? {} : (function () { var o = {}; o[co.state] = co.state; return o; })(), US_STATES), co.state || 'FL') +

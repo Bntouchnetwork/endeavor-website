@@ -235,8 +235,8 @@ Deno.test("mensagens automáticas: reclamação de divulgação para os envios",
   eq(reclamacao([m("isso é spam?"), m("Nova mensagem nossa", true)]), ""); // antes da nossa última: já foi
 });
 Deno.test("mensagens automáticas: texto parecido com um já postado é recusado", () => {
-  const antes = ["Olá! Somos a Endeavor Business Solutions e ajudamos empreendedores a abrir empresa nos Estados Unidos. Responda aqui ou chame no privado."];
-  sim(parecido("Olá! Somos a Endeavor Business Solutions e ajudamos empreendedores a abrir empresa nos Estados Unidos. Chame no privado.", antes), "falhou");
+  const antes = ["Olá! Somos a Endeavor Business Hub e ajudamos empreendedores a abrir empresa nos Estados Unidos. Responda aqui ou chame no privado."];
+  sim(parecido("Olá! Somos a Endeavor Business Hub e ajudamos empreendedores a abrir empresa nos Estados Unidos. Chame no privado.", antes), "falhou");
   sim(!parecido("Você sabia que o bookkeeping mensal evita surpresas no imposto da sua LLC? Nossa equipe cuida disso. Quer conversar?", antes), "falhou");
 });
 Deno.test("mensagens automáticas: saída da IA normalizada e reclamação sem texto", () => {

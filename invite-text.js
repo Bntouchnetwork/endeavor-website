@@ -12,10 +12,10 @@
         'Olá ' + o.name + ',',
         '',
         o.accepted ? 'Recebemos o seu aceite da proposta "' + o.accepted + '". Obrigado pela confiança!' + (o.invoiceLine ? ' ' + o.invoiceLine : '')
-        : o.referral ? 'A Endeavor Business Solutions convidou você para o Programa de Parceiros. Pelo Portal do Parceiro você indica clientes, acompanha cada etapa e recebe as suas comissões pela sua conta Stripe.'
-        : o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Solutions, para acessar os documentos que compartilhou com você.'
-        : o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
-                    : 'A Endeavor Business Solutions criou o seu acesso ao portal do cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
+        : o.referral ? 'A Endeavor Business Hub convidou você para o Programa de Parceiros. Pelo Portal do Parceiro você indica clientes, acompanha cada etapa e recebe as suas comissões pela sua conta Stripe.'
+        : o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Hub, para acessar os documentos que compartilhou com você.'
+        : o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Hub' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+                    : 'A Endeavor Business Hub criou o seu acesso ao portal do cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         o.accepted ? 'O próximo passo é o pagamento pelo portal do cliente: ao entrar, você vai direto para a página de faturas e pode pagar com cartão, Pix ou transferência bancária. Por segurança, o acesso usa senha e um código do celular.'
         : o.referral ? 'Por segurança, o acesso usa senha e um código do celular.' : 'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
         '',
@@ -31,11 +31,11 @@
         'O link de criação de senha vale por 24 horas. Se expirar, abra o portal e clique em "Esqueci a senha" para receber um novo.',
         '',
         'NOS PRÓXIMOS ACESSOS',
-        'Entre com e-mail e senha. Quando o portal pedir o código, abra o Google Authenticator e digite o número que aparece em "Endeavor Business Solutions".',
+        'Entre com e-mail e senha. Quando o portal pedir o código, abra o Google Authenticator e digite o número que aparece em "Endeavor Business Hub".',
         'Dica: no Google Authenticator, entre com a sua conta Google. Assim o app guarda um backup e você não perde o acesso se trocar de celular.',
         '',
         'Precisa de ajuda? ' + HELP,
-        'Endeavor Business Solutions'
+        'Endeavor Business Hub'
       ].join('\n');
     },
     en: function (o) {
@@ -43,10 +43,10 @@
         'Hello ' + o.name + ',',
         '',
         o.accepted ? 'We received your acceptance of the proposal "' + o.accepted + '". Thank you for your trust!' + (o.invoiceLine ? ' ' + o.invoiceLine : '')
-        : o.referral ? 'Endeavor Business Solutions invited you to its Partner Program. In the Partner Portal you refer clients, follow every step and receive your commissions through your own Stripe account.'
-        : o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Solutions Partner Portal to access the documents they shared with you.'
-        : o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Solutions client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
-                    : 'Endeavor Business Solutions created your access to the client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
+        : o.referral ? 'Endeavor Business Hub invited you to its Partner Program. In the Partner Portal you refer clients, follow every step and receive your commissions through your own Stripe account.'
+        : o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Hub Partner Portal to access the documents they shared with you.'
+        : o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Hub client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+                    : 'Endeavor Business Hub created your access to the client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         o.accepted ? 'The next step is payment in the client portal: after you sign in you go straight to the invoices page and can pay by card, Pix or bank transfer. For security, access uses a password and a code from your phone.'
         : o.referral ? 'For security, access uses a password and a code from your phone.' : 'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
         '',
@@ -62,11 +62,11 @@
         'The password link is valid for 24 hours. If it expires, open the portal and click "Forgot password" to get a new one.',
         '',
         'NEXT TIME',
-        'Sign in with your email and password. When the portal asks for the code, open Google Authenticator and type the number shown under "Endeavor Business Solutions".',
+        'Sign in with your email and password. When the portal asks for the code, open Google Authenticator and type the number shown under "Endeavor Business Hub".',
         'Tip: sign in to Google Authenticator with your Google account so it keeps a backup if you change phones.',
         '',
         'Need help? ' + HELP,
-        'Endeavor Business Solutions'
+        'Endeavor Business Hub'
       ].join('\n');
     },
     es: function (o) {
@@ -74,10 +74,10 @@
         'Hola ' + o.name + ',',
         '',
         o.accepted ? 'Recibimos su aceptación de la propuesta "' + o.accepted + '". ¡Gracias por su confianza!' + (o.invoiceLine ? ' ' + o.invoiceLine : '')
-        : o.referral ? 'Endeavor Business Solutions lo invitó a su Programa de Socios. En el Portal de Socios usted refiere clientes, sigue cada etapa y recibe sus comisiones en su propia cuenta Stripe.'
-        : o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Solutions para acceder a los documentos que compartió con usted.'
-        : o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Solutions' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
-                    : 'Endeavor Business Solutions creó su acceso al portal del cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
+        : o.referral ? 'Endeavor Business Hub lo invitó a su Programa de Socios. En el Portal de Socios usted refiere clientes, sigue cada etapa y recibe sus comisiones en su propia cuenta Stripe.'
+        : o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Hub para acceder a los documentos que compartió con usted.'
+        : o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Hub' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
+                    : 'Endeavor Business Hub creó su acceso al portal del cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
         o.accepted ? 'El siguiente paso es el pago en el portal del cliente: al ingresar irá directo a la página de facturas y podrá pagar con tarjeta, Pix o transferencia bancaria. Por seguridad, el acceso usa contraseña y un código del celular.'
         : o.referral ? 'Por seguridad, el acceso usa contraseña y un código del celular.' : 'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
         '',
@@ -93,11 +93,11 @@
         'El enlace para crear la contraseña vale por 24 horas. Si vence, abra el portal y haga clic en "Olvidé mi contraseña" para recibir uno nuevo.',
         '',
         'EN LOS PRÓXIMOS ACCESOS',
-        'Ingrese con su correo y contraseña. Cuando el portal pida el código, abra Google Authenticator y escriba el número que aparece en "Endeavor Business Solutions".',
+        'Ingrese con su correo y contraseña. Cuando el portal pida el código, abra Google Authenticator y escriba el número que aparece en "Endeavor Business Hub".',
         'Consejo: inicie sesión en Google Authenticator con su cuenta de Google para tener una copia de respaldo si cambia de celular.',
         '',
         '¿Necesita ayuda? ' + HELP,
-        'Endeavor Business Solutions'
+        'Endeavor Business Hub'
       ].join('\n');
     }
   };
@@ -105,7 +105,7 @@
   window.EndeavorInvite = {
     text: function (lang, o) { return (T[lang] || T.pt)(o); },
     subject: function (lang) {
-      return { pt: 'Seu acesso ao portal da Endeavor Business Solutions', en: 'Your access to the Endeavor Business Solutions portal', es: 'Su acceso al portal de Endeavor Business Solutions' }[lang] || 'Seu acesso ao portal da Endeavor Business Solutions';
+      return { pt: 'Seu acesso ao portal da Endeavor Business Hub', en: 'Your access to the Endeavor Business Hub portal', es: 'Su acceso al portal de Endeavor Business Hub' }[lang] || 'Seu acesso ao portal da Endeavor Business Hub';
     },
     IOS: IOS, AND: AND
   };

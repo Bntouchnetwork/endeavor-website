@@ -16,11 +16,11 @@
     grupo_intervalo: 10,         // minutos entre respostas automáticas no mesmo grupo
     texto_aviso: 'Olá! Aqui é o assistente virtual da Endeavor.',
     idioma: 'pt-BR',
-    negocio: 'Endeavor Business Solutions (Orlando, FL): abertura de empresas nos EUA (LLC e corporação), Operating Agreement, EIN, bookkeeping e contabilidade, conta bancária empresarial (orientação), marketing, sites e projetos de IA. Atendimento em português, inglês e espanhol.',
+    negocio: 'Endeavor Business Hub (Orlando, FL): abertura de empresas nos EUA (LLC e corporação), Operating Agreement, EIN, bookkeeping e contabilidade, conta bancária empresarial (orientação), marketing, sites e projetos de IA. Atendimento em português, inglês e espanhol.',
     link_agenda: 'https://endeavorbiz.com/booking.html',
     horario: { ativo: false, inicio: '08:00', fim: '20:00', tz: 'America/New_York' },
     prontas: [
-      { titulo: 'Saudação', texto: 'Olá! Obrigado por falar com a Endeavor Business Solutions. Como posso ajudar?' },
+      { titulo: 'Saudação', texto: 'Olá! Obrigado por falar com a Endeavor Business Hub. Como posso ajudar?' },
       { titulo: 'Marcar conversa', texto: 'Podemos marcar uma conversa rápida com a nossa equipe. Escolha o melhor horário aqui: https://endeavorbiz.com/booking.html' },
       { titulo: 'Retorno', texto: 'Recebi sua mensagem e já vou verificar. Retorno em breve.' }
     ]

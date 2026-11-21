@@ -25,14 +25,14 @@ function servidor(b) {
   const erro = (st, m) => ({ st, j: { erro: m } });
   const reg = M.regs[b.token];
   switch (b.acao) {
-    case "pub_info": return { j: { titulo: "Como abrir sua LLC nos EUA", descricao: "Um passo a passo.", empresa: "Endeavor Business Solutions", starts_at: M.w.starts_at, timezone: "America/New_York", duracao_ms: C.total(linha()), estado: p.estado, idioma: "pt-BR", inscricao_aberta: true, agora } };
+    case "pub_info": return { j: { titulo: "Como abrir sua LLC nos EUA", descricao: "Um passo a passo.", empresa: "Endeavor Business Hub", starts_at: M.w.starts_at, timezone: "America/New_York", duracao_ms: C.total(linha()), estado: p.estado, idioma: "pt-BR", inscricao_aberta: true, agora } };
     case "pub_inscrever":
       if (!b.aceite) return erro(400, "Confirme que leu o aviso sobre a apresentação e o assistente de IA.");
       if (Object.values(M.regs).some((r) => r.email === b.email)) return { j: { ok: true, ja_inscrito: true, email_enviado: true } };
       { const token = "11111111-2222-4333-8444-" + String(Object.keys(M.regs).length + 1).padStart(12, "0"); M.regs[token] = { nome: b.nome, email: b.email }; return { j: { ok: true, token, email_enviado: true } }; }
     case "pub_entrar":
       if (!reg) return erro(403, "Inscrição não encontrada.");
-      return { j: { titulo: "Como abrir sua LLC nos EUA", empresa: "Endeavor Business Solutions", nome: reg.nome, starts_at: M.w.starts_at, timezone: "America/New_York", agora, slides, narracao: { s1: { duracao_ms: 1000 } },
+      return { j: { titulo: "Como abrir sua LLC nos EUA", empresa: "Endeavor Business Hub", nome: reg.nome, starts_at: M.w.starts_at, timezone: "America/New_York", agora, slides, narracao: { s1: { duracao_ms: 1000 } },
         audios: { s1: BASE + "/audio-teste.wav" }, ritmo: "normal", intro: M.intro ? { url: BASE + "/tests/fixtures/intro-teste.webm", duracao_ms: M.intro } : null, voz_teste: M.voz_teste, playback: M.w.playback, estado: p.estado, chat_abre_min: 15, agendamento: "calendario", idioma: "pt-BR", ia: true, contato_ok: M.contato } };
     case "pub_estado": {
       if (!reg) return erro(403, "x");

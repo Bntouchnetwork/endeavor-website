@@ -34,7 +34,7 @@ export interface Deps {
 }
 
 export const TERMO_VERSAO = "voz-2026-11";
-export const TERMO_VOZ = "Eu declaro que a voz gravada nesta amostra é a minha própria voz e autorizo a Endeavor Business Solutions, " +
+export const TERMO_VOZ = "Eu declaro que a voz gravada nesta amostra é a minha própria voz e autorizo a Endeavor Business Hub, " +
   "por meio do seu HUB AI e do provedor de voz contratado (ElevenLabs), a criar uma voz sintética a partir dela, usada somente para narrar " +
   "as minhas apresentações no Web Meeting. Não vou usar esta função para imitar outra pessoa. Posso apagar esta voz a qualquer momento, " +
   "e com ela os áudios gerados.";

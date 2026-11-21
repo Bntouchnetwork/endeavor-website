@@ -1,4 +1,4 @@
-// meet: servidor do Web Meeting (videoconferência com LiveKit) da Endeavor Business Solutions.
+// meet: servidor do Web Meeting (videoconferência com LiveKit) da Endeavor Business Hub.
 // Adaptado das funções livekit-token, livekit-admin, resumo-encontro e assistente-ia do Noir Hub.
 //
 // Ações (POST { acao, ... }):
@@ -99,7 +99,7 @@ async function info(b: Any) {
   if (!r) throw new Erro("Esta sala não existe. Confira o link.", 404);
   let habilitada = true;
   if (r.client_id) { const a = await acesso(r.client_id); habilitada = !!a?.enabled && r.clients?.status !== "archived"; }
-  return { titulo: r.title, situacao: r.status, quando: r.scheduled_at, tipo: r.kind, empresa: r.client_id ? r.clients?.name : "Endeavor Business Solutions",
+  return { titulo: r.title, situacao: r.status, quando: r.scheduled_at, tipo: r.kind, empresa: r.client_id ? r.clients?.name : "Endeavor Business Hub",
     configurado: lkOn(), habilitada, logo: await logoEmpresa(r.client_id) };
 }
 
@@ -300,7 +300,7 @@ async function resumo(r: Any, d: Any) {
   if (!transcricao.length && !enquetes.length && !tempos.length) throw new Erro("Ainda não há falas, enquetes ou tempos cronometrados para resumir.");
   const falas = transcricao.map((l) => `[${txt(l.hora, 8)}] ${txt(l.nome, 60) || "?"}: ${txt(l.texto, 600)}`).join("\n").slice(-120_000);
   const conteudo = [
-    `Reunião: ${txt(d.titulo, 160) || r.title}`, `Empresa: ${r.client_id ? r.clients?.name : "Endeavor Business Solutions"}`,
+    `Reunião: ${txt(d.titulo, 160) || r.title}`, `Empresa: ${r.client_id ? r.clients?.name : "Endeavor Business Hub"}`,
     `Duração: ${Number(d.duracaoMin) || 0} minutos`, `Participantes: ${(Array.isArray(d.participantes) ? d.participantes : []).map((x: unknown) => txt(x, 60)).join(", ")}`,
     "", "<transcricao>", falas || "(sem falas transcritas)", "</transcricao>",
     "", "<enquetes>", enquetes.map((q) => `- ${txt(q.pergunta, 160)}: ${(q.resultados ?? []).map((x: Any) => `${txt(x.opcao, 60)} (${Number(x.votos) || 0})`).join(", ")}`).join("\n") || "(nenhuma)", "</enquetes>",

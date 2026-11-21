@@ -649,7 +649,7 @@ async function handle(req: Request, body: any) {
         type: "express", country, email: p.email,
         capabilities: { transfers: { requested: true } },
         ...(country !== "US" ? { tos_acceptance: { service_agreement: "recipient" } } : {}),
-        business_profile: { product_description: "Referral partner of Endeavor Business Solutions" },
+        business_profile: { product_description: "Referral partner of Endeavor Business Hub" },
         metadata: { partner_id: p.id },
       }, "acct-" + p.id + "-" + country);
       acctId = acct.id;

@@ -38,7 +38,7 @@ Deno.test("follow-up nos dias 2, 5, 9, 16 e 23 e depois para", () => {
 });
 
 Deno.test("e-mails: lista inicial, lembrete com o que falta, reenvio; nos três idiomas, com o aviso de compliance", () => {
-  const a = { nome: "ana souza", empresa: "Endeavor Business Solutions", modelo: "Abertura de empresa (LLC)", faltam: DOCS.slice(1), todos: DOCS, url: "https://endeavorbiz.com/docs.html?t=x" };
+  const a = { nome: "ana souza", empresa: "Endeavor Business Hub", modelo: "Abertura de empresa (LLC)", faltam: DOCS.slice(1), todos: DOCS, url: "https://endeavorbiz.com/docs.html?t=x" };
   const l = textos("lista", "pt", a);
   sim(l.subject.includes("Abertura de empresa (LLC)") && l.corpo.paras[0] === "Olá, Ana!", "assunto e saudação");
   eq(l.corpo.lista!.map((i) => i.ok), [true, false, false], "o que já chegou aparece marcado");

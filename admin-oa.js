@@ -203,7 +203,7 @@
       var fit = function (s, w, size) { s = safe(s); while (s.length > 1 && f.widthOfTextAtSize(s, size) > w - 4) s = s.slice(0, -2) + '.'; return s; };
       var head = function () {
         page = pdf.addPage([W, H]); y = H - M;
-        page.drawText('Endeavor Business Solutions - Audit Report', { x: M, y: y - 12, size: 13, font: b, color: P.rgb(0.05, 0.13, 0.26) }); y -= 28;
+        page.drawText('Endeavor Business Hub - Audit Report', { x: M, y: y - 12, size: 13, font: b, color: P.rgb(0.05, 0.13, 0.26) }); y -= 28;
         page.drawText(fit(fdesc() + ' · ' + rows.length + ' registro(s) · gerado por ' + (me.email || '') + ' em ' + new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC', W - 2 * M, 7.5), { x: M, y: y, size: 7.5, font: f, color: P.rgb(0.35, 0.37, 0.42) }); y -= 16;
         page.drawRectangle({ x: M, y: y - 4, width: W - 2 * M, height: 14, color: P.rgb(0.92, 0.94, 0.97) });
         C.forEach(function (c) { page.drawText(c[2], { x: c[0] + 2, y: y, size: 7.5, font: b }); }); y -= 16;

@@ -4,7 +4,7 @@
   'use strict';
   var NAVY = '#0b1f3a', GOLD = '#c9a24a';
   // Endeavor brand facts used by every template (and given to the AI template writer)
-  var BRAND = { name: 'Endeavor Business Solutions', site: 'https://endeavorbiz.com', email: 'support@endeavorbiz.com', phone: '+1 (407) 436-9567', whatsapp: '+1 (630) 689-8702', whatsappUrl: 'https://wa.me/16306898702', city: 'Orlando, FL' };
+  var BRAND = { name: 'Endeavor Business Hub', site: 'https://endeavorbiz.com', email: 'support@endeavorbiz.com', phone: '+1 (407) 436-9567', whatsapp: '+1 (630) 689-8702', whatsappUrl: 'https://wa.me/16306898702', city: 'Orlando, FL' };
   // accent colours the AI may choose from (all pass contrast on navy and white)
   var ACCENTS = { gold: '#c9a24a', teal: '#2a9d8f', sky: '#4a90c9', emerald: '#3f9a6b', coral: '#d9734e' };
   var HI = { pt: ['Olá, {nome}!', 'Olá!'], en: ['Hi {nome},', 'Hello,'], es: ['¡Hola, {nome}!', '¡Hola!'] };
@@ -13,35 +13,35 @@
     pt: {
       kicker: 'PROGRAMA DE PARCEIROS', subject: '{nome}, vamos crescer juntos? Programa de Parceiros da Endeavor',
       pre: 'Indique clientes, acompanhe cada etapa pelo seu portal e receba sua comissão automaticamente.',
-      h1: 'Seja parceiro da Endeavor Business Solutions', hi: 'Olá, {nome}!', hiAnon: 'Olá!',
+      h1: 'Seja parceiro da Endeavor Business Hub', hi: 'Olá, {nome}!', hiAnon: 'Olá!',
       intro: 'A Endeavor ajuda empreendedores e investidores estrangeiros a abrir e manter empresas nos Estados Unidos: abertura de LLC e corporações, compliance, coordenação fiscal, conta bancária, imóveis e family office. Se os seus clientes precisam disso, podemos crescer juntos.',
       benefitsTitle: 'Por que ser parceiro',
       benefits: [['Comissão em cada indicação', 'Você ganha sobre os serviços contratados pelos clientes que indicar. Sem custo e sem meta mínima.'], ['Pagamento automático', 'Conecte sua conta Stripe uma vez e a sua parte cai direto na sua conta quando o cliente paga.'], ['Seu próprio portal', 'Envie indicações, acompanhe cada cliente etapa por etapa e veja o que já recebeu e o que vai receber.'], ['Atendimento completo', 'Nossa equipe cuida de todo o processo do cliente, em português, inglês ou espanhol, e mantém você informado.']],
       howTitle: 'Como começar', how: [['Agende uma conversa', 'Escolha um horário na nossa agenda para uma conversa de 30 minutos com a nossa equipe.'], ['Conversa de onboarding', 'Combinamos a sua comissão, você assina o contrato de parceria online e recebe o acesso ao portal.'], ['Indique e receba', 'Indique clientes pelo portal e receba a comissão via Stripe a cada pagamento.']],
-      cta: 'Quero ser parceiro', questions: 'Prefere conversar antes? Responda este e-mail ou fale com a gente pelo WhatsApp.', sign: 'Equipe Endeavor Business Solutions',
-      why: 'Você recebe este e-mail porque o seu contato profissional está na nossa lista de possíveis parceiros.', whyGen: 'Você recebe este e-mail porque o seu contato profissional está na lista de contatos da Endeavor Business Solutions.', unsub: 'Não quero mais receber estes e-mails'
+      cta: 'Quero ser parceiro', questions: 'Prefere conversar antes? Responda este e-mail ou fale com a gente pelo WhatsApp.', sign: 'Equipe Endeavor Business Hub',
+      why: 'Você recebe este e-mail porque o seu contato profissional está na nossa lista de possíveis parceiros.', whyGen: 'Você recebe este e-mail porque o seu contato profissional está na lista de contatos da Endeavor Business Hub.', unsub: 'Não quero mais receber estes e-mails'
     },
     en: {
       kicker: 'PARTNER PROGRAM', subject: "{nome}, let's grow together: Endeavor Partner Program",
       pre: 'Refer clients, follow every step in your own portal and get your commission automatically.',
-      h1: 'Become an Endeavor Business Solutions partner', hi: 'Hi {nome},', hiAnon: 'Hello,',
+      h1: 'Become an Endeavor Business Hub partner', hi: 'Hi {nome},', hiAnon: 'Hello,',
       intro: 'Endeavor helps foreign entrepreneurs and investors open and run companies in the United States: LLC and corporation formation, compliance, tax coordination, banking, real estate and family office. If your clients need this, we can grow together.',
       benefitsTitle: 'Why partner with us',
       benefits: [['A commission on every referral', 'You earn on the services bought by the clients you refer. No cost and no minimum targets.'], ['Automatic payouts', 'Connect your Stripe account once and your share goes straight to your account when the client pays.'], ['Your own portal', 'Send referrals, follow each client step by step and see what you have earned and what is coming.'], ['Full-service support', 'Our team handles the whole process for your client, in English, Portuguese or Spanish, and keeps you informed.']],
       howTitle: 'How to start', how: [['Schedule a call', 'Pick a time on our calendar for a 30-minute conversation with our team.'], ['Onboarding call', 'We agree on your commission, you sign the partner agreement online and receive your portal access.'], ['Refer and get paid', 'Refer clients in the portal and receive your commission through Stripe with every payment.']],
-      cta: 'I want to be a partner', questions: 'Prefer to talk first? Reply to this email or reach us on WhatsApp.', sign: 'The Endeavor Business Solutions team',
-      why: 'You are receiving this email because your business contact is on our list of potential partners.', whyGen: 'You are receiving this email because your business contact is on the Endeavor Business Solutions contact list.', unsub: 'Unsubscribe from these emails'
+      cta: 'I want to be a partner', questions: 'Prefer to talk first? Reply to this email or reach us on WhatsApp.', sign: 'The Endeavor Business Hub team',
+      why: 'You are receiving this email because your business contact is on our list of potential partners.', whyGen: 'You are receiving this email because your business contact is on the Endeavor Business Hub contact list.', unsub: 'Unsubscribe from these emails'
     },
     es: {
       kicker: 'PROGRAMA DE SOCIOS', subject: '{nome}, ¿crecemos juntos? Programa de Socios de Endeavor',
       pre: 'Recomiende clientes, siga cada etapa en su propio portal y reciba su comisión automáticamente.',
-      h1: 'Sea socio de Endeavor Business Solutions', hi: '¡Hola, {nome}!', hiAnon: '¡Hola!',
+      h1: 'Sea socio de Endeavor Business Hub', hi: '¡Hola, {nome}!', hiAnon: '¡Hola!',
       intro: 'Endeavor ayuda a emprendedores e inversionistas extranjeros a abrir y mantener empresas en Estados Unidos: constitución de LLC y corporaciones, cumplimiento, coordinación fiscal, cuenta bancaria, bienes raíces y family office. Si sus clientes lo necesitan, podemos crecer juntos.',
       benefitsTitle: 'Por qué ser socio',
       benefits: [['Comisión por cada recomendación', 'Usted gana sobre los servicios que contraten los clientes que recomiende. Sin costo y sin metas mínimas.'], ['Pago automático', 'Conecte su cuenta Stripe una vez y su parte llega directo a su cuenta cuando el cliente paga.'], ['Su propio portal', 'Envíe recomendaciones, siga cada cliente paso a paso y vea lo que ya recibió y lo que va a recibir.'], ['Atención completa', 'Nuestro equipo se encarga de todo el proceso del cliente, en español, inglés o portugués, y lo mantiene informado.']],
       howTitle: 'Cómo empezar', how: [['Agende una conversación', 'Elija un horario en nuestra agenda para una conversación de 30 minutos con nuestro equipo.'], ['Llamada de onboarding', 'Acordamos su comisión, usted firma el contrato de socio en línea y recibe el acceso al portal.'], ['Recomiende y reciba', 'Recomiende clientes en el portal y reciba la comisión por Stripe con cada pago.']],
-      cta: 'Quiero ser socio', questions: '¿Prefiere conversar antes? Responda este correo o escríbanos por WhatsApp.', sign: 'Equipo de Endeavor Business Solutions',
-      why: 'Recibe este correo porque su contacto profesional está en nuestra lista de posibles socios.', whyGen: 'Recibe este correo porque su contacto profesional está en la lista de contactos de Endeavor Business Solutions.', unsub: 'No quiero recibir más estos correos'
+      cta: 'Quiero ser socio', questions: '¿Prefiere conversar antes? Responda este correo o escríbanos por WhatsApp.', sign: 'Equipo de Endeavor Business Hub',
+      why: 'Recibe este correo porque su contacto profesional está en nuestra lista de posibles socios.', whyGen: 'Recibe este correo porque su contacto profesional está en la lista de contactos de Endeavor Business Hub.', unsub: 'No quiero recibir más estos correos'
     }
   };
   var CUSTOM_FOOT = { pt: T.pt, en: T.en, es: T.es };
@@ -75,7 +75,7 @@
       '<body style="margin:0;padding:0;background:#eef1f6"><div style="display:none;max-height:0;overflow:hidden;opacity:0">' + esc(o.pre || '') + '</div>' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef1f6;padding:28px 12px"><tr><td align="center">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e3e7ee">' +
-      '<tr><td style="padding:24px 32px;border-bottom:1px solid #eef0f4"><img src="' + o.site + '/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>' +
+      '<tr><td style="padding:24px 32px;border-bottom:1px solid #eef0f4"><img src="' + o.site + '/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>' +
       o.body +
       '<tr><td style="padding:18px 32px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">' + esc(o.why) + '<br>' + esc(o.address) +
       ' · <a href="mailto:' + esc(o.replyTo) + '" style="color:#6b7280">' + esc(o.replyTo) + '</a><br><a href="' + esc(o.unsubUrl) + '" data-unsub="1" style="color:#6b7280;text-decoration:underline">' + esc(o.unsub) + '</a></td></tr>' +
@@ -128,7 +128,7 @@
         (d.sections || []).slice(0, 6).map(secHtml).join('') +
         (label ? '<tr><td align="center" style="padding:14px 32px 14px">' + button(btnUrl, label, NAVY, '#ffffff') + '</td></tr>' : '') +
         '<tr><td style="padding:14px 32px 30px;font:15px/1.6 Arial,sans-serif;color:#1f2937">' + paraHtml(d.closing) +
-        '<p style="margin:10px 0 0;font-weight:700;color:' + NAVY + '">' + esc(d.sign || (lang === 'en' ? 'The Endeavor Business Solutions team' : lang === 'es' ? 'Equipo de Endeavor Business Solutions' : 'Equipe Endeavor Business Solutions')) + '</p>' +
+        '<p style="margin:10px 0 0;font-weight:700;color:' + NAVY + '">' + esc(d.sign || (lang === 'en' ? 'The Endeavor Business Hub team' : lang === 'es' ? 'Equipo de Endeavor Business Hub' : 'Equipe Endeavor Business Hub')) + '</p>' +
         '<p style="margin:12px 0 0;font:13px/1.6 Arial,sans-serif;color:#4b5563">' + esc(CT) + ': <a href="' + BRAND.whatsappUrl + '" style="color:' + NAVY + '">WhatsApp ' + BRAND.whatsapp + '</a> · ' + BRAND.phone + ' · <a href="mailto:' + BRAND.email + '" style="color:' + NAVY + '">' + BRAND.email + '</a></p></td></tr>';
       textParts = [n ? hi[0].replace('{nome}', n) : hi[1], '', head, ''].concat(merge(c.body || d.intro || '', ct).split(/\n\s*\n/))
         .concat((d.sections || []).map(function (sec) { return '\n' + (sec.title ? merge(sec.title, ct).toUpperCase() + '\n' : '') + (sec.items || []).map(function (it, i) { return (sec.type === 'steps' ? (i + 1) + '. ' : '- ') + merge(it.title || '', ct) + (it.title && it.text ? ': ' : '') + merge(it.text || '', ct); }).join('\n') + (sec.text ? merge(sec.text, ct) : ''); }))
@@ -156,7 +156,7 @@
         .concat(t.how.map(function (s, i) { return (i + 1) + '. ' + s[0] + ': ' + s[1]; })).concat(['', cta + ': ' + btnUrl, '', t.questions, t.sign]);
     }
     var foot = CUSTOM_FOOT[lang];
-    var html = shell({ lang: lang, subject: subject, pre: pre, body: body, site: site, why: c.template === 'partners' ? foot.why : foot.whyGen, unsub: foot.unsub, address: o.address || 'Endeavor Business Solutions · Orlando, FL, USA',
+    var html = shell({ lang: lang, subject: subject, pre: pre, body: body, site: site, why: c.template === 'partners' ? foot.why : foot.whyGen, unsub: foot.unsub, address: o.address || (G.ENDEAVOR_FOOT ? G.ENDEAVOR_FOOT() : BRAND.name) + ' · Orlando, FL, USA',
       replyTo: o.replyTo || 'support@endeavorbiz.com', unsubUrl: withLang(o.unsubUrl, lang), pixel: o.pixel });
     // click tracking: every https link except the unsubscribe link goes through the tracker (by position)
     var urls = [];

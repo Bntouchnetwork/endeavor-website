@@ -62,7 +62,7 @@ function novoCodigo() {
 
 /* ---------------- empresa (conta) ---------------- */
 type Conta = { conta: string; clientId: string | null; endeavor: boolean; nome: string };
-const ENDEAVOR: Conta = { conta: "endeavor", clientId: null, endeavor: true, nome: "Endeavor Business Solutions" };
+const ENDEAVOR: Conta = { conta: "endeavor", clientId: null, endeavor: true, nome: "Endeavor Business Hub" };
 async function contaDe(conta: string): Promise<Conta> {
   if (conta === "endeavor") return ENDEAVOR;
   const { data: cl } = await db.from("clients").select("id, name").eq("id", uuid(conta) || NADA).maybeSingle();

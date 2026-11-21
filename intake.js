@@ -6,8 +6,8 @@
   'use strict';
   var t = EP.init({
     en: {},
-    pt: { docTitle: 'Documentos de abertura | Endeavor Business Solutions', loading: 'Carregando…', skip: 'Pular para o conteúdo' },
-    es: { docTitle: 'Documentos de constitución | Endeavor Business Solutions', loading: 'Cargando…', skip: 'Saltar al contenido' }
+    pt: { docTitle: 'Documentos de abertura | Endeavor Business Hub', loading: 'Carregando…', skip: 'Pular para o conteúdo' },
+    es: { docTitle: 'Documentos de constitución | Endeavor Business Hub', loading: 'Cargando…', skip: 'Saltar al contenido' }
   });
   var L = EP.lang;
   var D = {

@@ -7,10 +7,10 @@
       errName: 'Enter your full name.', errEmail: 'Enter a valid email address.', sending: 'Booking…',
       slot_unavailable: 'Sorry, that time was just taken. Please choose another time.', too_many_bookings: 'You already have two upcoming calls booked. Reply to your confirmation to change them.',
       invalid_email: 'Enter a valid email address.', invalid_name: 'Enter your full name.', generic: 'Something went wrong. Please try again or write to support@endeavorbiz.com.',
-      evTitle: 'Call with Endeavor Business Solutions', pickDayFirst: 'Select an available day on the calendar.', noDays: 'There are no open times right now. Please write to support@endeavorbiz.com or message us on WhatsApp.', ET: 'ET', video: 'Video call', phoneCall: 'Phone', confirm: 'Confirm booking',
+      evTitle: 'Call with Endeavor Business Hub', pickDayFirst: 'Select an available day on the calendar.', noDays: 'There are no open times right now. Please write to support@endeavorbiz.com or message us on WhatsApp.', ET: 'ET', video: 'Video call', phoneCall: 'Phone', confirm: 'Confirm booking',
       errPhone: 'Enter your WhatsApp number with the area code.', invalid_phone: 'Enter your WhatsApp number with the area code.', cc: 'Country code',
       doneText2: 'We sent the confirmation to your email and WhatsApp, with links to reschedule or cancel. You will also get reminders before the call.' },
-    pt: { docTitle: 'Agendar uma chamada | Endeavor Business Solutions', skip: 'Pular para o conteúdo', title: 'Agende uma chamada',
+    pt: { docTitle: 'Agendar uma chamada | Endeavor Business Hub', skip: 'Pular para o conteúdo', title: 'Agende uma chamada',
       lead: 'Escolha o dia e o horário para uma conversa inicial gratuita. Uma consulta não cria relação de cliente.',
       pickDay: '1. Escolha o dia', pickTime: '2. Escolha o horário', pickDayFirst: 'Selecione um dia disponível no calendário.', yourDetails: '3. Seus dados',
       prevMonth: 'Mês anterior', nextMonth: 'Próximo mês', name: 'Nome completo', email: 'E-mail', phone: 'Telefone / WhatsApp', topic: 'Assunto',
@@ -25,10 +25,10 @@
       errName: 'Informe seu nome completo.', errEmail: 'Informe um e-mail válido.', sending: 'Agendando…',
       slot_unavailable: 'Esse horário acabou de ser reservado. Escolha outro horário.', too_many_bookings: 'Você já tem duas chamadas agendadas. Responda à confirmação para alterá-las.',
       invalid_email: 'Informe um e-mail válido.', invalid_name: 'Informe seu nome completo.', generic: 'Algo deu errado. Tente de novo ou escreva para support@endeavorbiz.com.',
-      evTitle: 'Chamada com a Endeavor Business Solutions', noDays: 'No momento não há horários abertos. Escreva para support@endeavorbiz.com ou fale conosco pelo WhatsApp.', ET: 'horário de Orlando',
+      evTitle: 'Chamada com a Endeavor Business Hub', noDays: 'No momento não há horários abertos. Escreva para support@endeavorbiz.com ou fale conosco pelo WhatsApp.', ET: 'horário de Orlando',
       waNote: 'Vamos enviar a confirmação e os lembretes desta chamada para este WhatsApp e para o seu e-mail.', errPhone: 'Informe o seu WhatsApp com o DDD.', invalid_phone: 'Informe o seu WhatsApp com o DDD.', cc: 'Código do país',
       doneText2: 'Enviamos a confirmação para o seu e-mail e WhatsApp, com os links para reagendar ou cancelar. Você também vai receber lembretes antes da chamada.' },
-    es: { docTitle: 'Agendar una llamada | Endeavor Business Solutions', skip: 'Saltar al contenido', title: 'Agende una llamada',
+    es: { docTitle: 'Agendar una llamada | Endeavor Business Hub', skip: 'Saltar al contenido', title: 'Agende una llamada',
       lead: 'Elija el día y la hora para una conversación inicial gratuita. Una consulta no crea una relación de cliente.',
       pickDay: '1. Elija el día', pickTime: '2. Elija la hora', pickDayFirst: 'Seleccione un día disponible en el calendario.', yourDetails: '3. Sus datos',
       prevMonth: 'Mes anterior', nextMonth: 'Mes siguiente', name: 'Nombre completo', email: 'Correo electrónico', phone: 'Teléfono / WhatsApp', topic: 'Tema',
@@ -43,7 +43,7 @@
       errName: 'Ingrese su nombre completo.', errEmail: 'Ingrese un correo válido.', sending: 'Agendando…',
       slot_unavailable: 'Ese horario acaba de ser reservado. Elija otro horario.', too_many_bookings: 'Ya tiene dos llamadas agendadas. Responda a la confirmación para cambiarlas.',
       invalid_email: 'Ingrese un correo válido.', invalid_name: 'Ingrese su nombre completo.', generic: 'Algo salió mal. Intente de nuevo o escriba a support@endeavorbiz.com.',
-      evTitle: 'Llamada con Endeavor Business Solutions', noDays: 'En este momento no hay horarios disponibles. Escriba a support@endeavorbiz.com o contáctenos por WhatsApp.', ET: 'hora de Orlando',
+      evTitle: 'Llamada con Endeavor Business Hub', noDays: 'En este momento no hay horarios disponibles. Escriba a support@endeavorbiz.com o contáctenos por WhatsApp.', ET: 'hora de Orlando',
       waNote: 'Enviaremos la confirmación y los recordatorios de esta llamada a este WhatsApp y a su correo.', errPhone: 'Ingrese su WhatsApp con el código de área.', invalid_phone: 'Ingrese su WhatsApp con el código de área.', cc: 'Código de país',
       doneText2: 'Enviamos la confirmación a su correo y WhatsApp, con enlaces para reprogramar o cancelar. También recibirá recordatorios antes de la llamada.' }
   };
@@ -221,9 +221,9 @@
     var title = t('evTitle'), details = topicLabel + ' · ' + (mt === 'video' ? t('video') : mt === 'phone' ? t('phoneCall') : 'WhatsApp') + '\nsupport@endeavorbiz.com · +1 (407) 436-9567';
     $('gcal').href = 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(title) + '&dates=' + icsDate(start) + '/' + icsDate(end) + '&details=' + encodeURIComponent(details);
     $('ics').onclick = function () {
-      var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Endeavor Business Solutions//Scheduling//EN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
+      var ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Endeavor Business Hub//Scheduling//EN', 'METHOD:PUBLISH', 'BEGIN:VEVENT',
         'UID:' + start.getTime() + '-' + Math.random().toString(36).slice(2) + '@endeavorbiz.com', 'DTSTAMP:' + icsDate(new Date()), 'DTSTART:' + icsDate(start), 'DTEND:' + icsDate(end),
-        'SUMMARY:' + title, 'DESCRIPTION:' + details.replace(/\n/g, '\\n'), 'ORGANIZER;CN=Endeavor Business Solutions:mailto:support@endeavorbiz.com',
+        'SUMMARY:' + title, 'DESCRIPTION:' + details.replace(/\n/g, '\\n'), 'ORGANIZER;CN=Endeavor Business Hub:mailto:support@endeavorbiz.com',
         'BEGIN:VALARM', 'TRIGGER:-PT30M', 'ACTION:DISPLAY', 'DESCRIPTION:' + title, 'END:VALARM', 'END:VEVENT', 'END:VCALENDAR'].join('\r\n');
       var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' })); a.download = 'endeavor-call.ics';
       document.body.appendChild(a); a.click(); setTimeout(function () { a.remove(); }, 300);

@@ -1,4 +1,4 @@
-/* Endeavor Business Solutions — script.js
+/* Endeavor Business Hub — script.js
    Minimal, dependency-free behavior: navigation, reveal, accessibility tools, form validation. */
 (function () {
   'use strict';

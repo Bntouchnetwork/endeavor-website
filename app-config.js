@@ -5,7 +5,10 @@ window.ENDEAVOR_CFG = {
   functionsUrl: 'https://onaewjlozioderwlvgfm.supabase.co/functions/v1',
   formEndpoint: 'https://formsubmit.co/ajax/support@endeavorbiz.com',
   adminEmail: 'support@endeavorbiz.com',
-  companyName: 'Endeavor Business Solutions',
+  companyName: 'Endeavor Business Hub',
+  /* Linha da razão social nos rodapés do site e dos portais. Quando o estado aprovar o nome, deixe vazio ('') e os rodapés
+     passam a mostrar só o nome da marca. (Nos e-mails, a mesma linha fica em supabase/functions/_shared/brand.ts.) */
+  poweredBy: 'Powered by Endeavor Tax Solutions LLC, d/b/a Endeavor Business Hub',
   /* WhatsApp da Endeavor (só dígitos, com o código do país). Para trocar o número dos ícones do site e do portal, mude só aqui. */
   whatsapp: '16306898702'
 };
@@ -20,3 +23,10 @@ window.ENDEAVOR_GEO_LANG = function () {
   if (/^(America\/(New_York|Chicago|Denver|Los_Angeles|Phoenix|Anchorage|Juneau|Sitka|Nome|Yakutat|Metlakatla|Adak|Boise|Detroit|Menominee|Indiana\/.*|Kentucky\/.*|North_Dakota\/.*)|Pacific\/Honolulu|US\/.*)$/.test(z)) return 'en';
   return null;
 };
+
+/* Rodapés: os elementos com data-powered mostram a linha "Powered by" da configuração (ou só o nome da marca, se ela estiver vazia). */
+window.ENDEAVOR_FOOT = function () { var c = window.ENDEAVOR_CFG; return c.poweredBy || c.companyName; };
+(function () {
+  function fill() { document.querySelectorAll('[data-powered]').forEach(function (el) { el.textContent = window.ENDEAVOR_FOOT(); }); }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fill); else fill();
+})();

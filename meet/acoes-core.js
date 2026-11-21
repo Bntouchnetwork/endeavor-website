@@ -499,7 +499,7 @@
       ...sec("Assuntos", a.assuntos), ...sec("Decisões", a.decisoes),
       ...sec("Tarefas", a.tarefas, t => "- " + t.titulo + " | Responsável: " + t.responsavel + " | Prazo: " + (t.prazo ? dataLegivel(t.prazo) : "a definir")),
       ...sec("Pendências", a.pendencias),
-      "Ata gerada pelo Web Meeting da Endeavor Business Solutions com apoio de IA. Confira antes de tomar decisões com base nela.",
+      "Ata gerada pelo Web Meeting da Endeavor Business Hub com apoio de IA. Confira antes de tomar decisões com base nela.",
     ].join("\n");
   }
   const escH = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -512,13 +512,13 @@
       h("Assuntos") + lista(a.assuntos) + h("Decisões") + lista(a.decisoes) +
       h("Tarefas") + lista(a.tarefas, t => "<b>" + escH(t.titulo) + "</b><br>Responsável: " + escH(t.responsavel) + " · Prazo: " + escH(t.prazo ? dataLegivel(t.prazo) : "a definir")) +
       h("Pendências") + lista(a.pendencias) +
-      `<p style="font-size:12px;color:#6b7280;margin-top:18px">Ata gerada pelo Web Meeting da Endeavor Business Solutions com apoio de IA. Confira antes de tomar decisões com base nela.</p></div>`;
+      `<p style="font-size:12px;color:#6b7280;margin-top:18px">Ata gerada pelo Web Meeting da Endeavor Business Hub com apoio de IA. Confira antes de tomar decisões com base nela.</p></div>`;
   }
   function textoContrato(d) {
     const tot = (d.itens || []).reduce((s, i) => s + Number(i.valor_cents || 0) * (Number(i.quantidade) || 1), 0), moeda = (d.itens && d.itens[0] && d.itens[0].moeda) || d.moeda || "usd";
     return [
       (d.titulo || "Contrato de prestação de serviços").toUpperCase(), "",
-      "CONTRATADA: Endeavor Business Solutions.", "CONTRATANTE: " + d.cliente_nome + " (" + destinatariosDe({ dados: d })[0] + ").", "",
+      "CONTRATADA: Endeavor Business Hub.", "CONTRATANTE: " + d.cliente_nome + " (" + destinatariosDe({ dados: d })[0] + ").", "",
       "1. SERVIÇOS. A CONTRATADA prestará os serviços abaixo, conforme combinado em reunião:",
       ...(d.itens || []).map((i, k) => `   1.${k + 1}. ${i.descricao}: ${formatarValor(i.valor_cents, i.moeda || moeda)}${i.mensal ? " por mês" : ""}.`),
       "2. VALOR. Total de " + formatarValor(tot, moeda) + ", pago conforme as faturas emitidas pela CONTRATADA.",

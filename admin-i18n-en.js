@@ -6,7 +6,7 @@ window.ADMIN_EN = {
   'Para o QuickBooks, a Endeavor precisa ter acesso à conta do cliente (contador convidado).': "For QuickBooks, Endeavor needs access to the client's account (invited accountant).", 'Nenhum relatório publicado ainda. O cliente vê aqui os PDFs publicados.': 'No reports published yet. The client sees the published PDFs here.',
   'Gerando os PDFs a partir do Bookkeeping…': 'Creating the PDFs from Bookkeeping…', 'Módulo de Bookkeeping não carregou. Recarregue a página.': 'The Bookkeeping module did not load. Reload the page.',
   // shell and login
-  'Console Admin | Endeavor Business Solutions': 'Admin Console | Endeavor Business Solutions', 'Carregando…': 'Loading…', 'Sair': 'Sign out', 'Abrir menu': 'Open menu', 'Fechar menu': 'Close menu',
+  'Console Admin | Endeavor Business Hub': 'Admin Console | Endeavor Business Hub', 'Carregando…': 'Loading…', 'Sair': 'Sign out', 'Abrir menu': 'Open menu', 'Fechar menu': 'Close menu',
   'Endeavor Console': 'Endeavor Console', 'Console': 'Console', 'Acesso restrito': 'Restricted access', 'Acesso restrito à equipe da Endeavor.': 'Restricted to the Endeavor team.',
   'Entrar': 'Sign in', 'Senha': 'Password', 'E-mail': 'Email', 'Esqueci a senha': 'Forgot password', 'Redefinir senha': 'Reset password', 'Enviar link': 'Send link', 'Voltar ao login': 'Back to sign in',
   'Digite o seu e-mail. Vamos enviar um link para você criar uma nova senha.': 'Enter your email. We will send you a link to create a new password.',
@@ -15,7 +15,7 @@ window.ADMIN_EN = {
   'Crie a sua senha': 'Create your password', 'Crie uma nova senha': 'Create a new password', 'Escolha uma nova senha para a sua conta.': 'Choose a new password for your account.',
   'Bem-vindo ao console da Endeavor. Depois da senha você ativa o código do celular.': 'Welcome to the Endeavor console. After the password you will activate the code on your phone.',
   'Nova senha (mín. 8 caracteres)': 'New password (min. 8 characters)', 'Confirme a senha': 'Confirm the password', 'Salvar senha': 'Save password', 'Salvar nova senha': 'Save new password', 'Mostrar senha': 'Show password',
-  'Código do autenticador': 'Authenticator code', 'Sua conta usa verificação em duas etapas. Digite o código de 6 dígitos que aparece no Google Authenticator em "Endeavor Business Solutions".': 'Your account uses two-step verification. Enter the 6-digit code shown in Google Authenticator under "Endeavor Business Solutions".',
+  'Código do autenticador': 'Authenticator code', 'Sua conta usa verificação em duas etapas. Digite o código de 6 dígitos que aparece no Google Authenticator em "Endeavor Business Hub".': 'Your account uses two-step verification. Enter the 6-digit code shown in Google Authenticator under "Endeavor Business Hub".',
   'Digite o código de 6 dígitos do autenticador.': 'Enter the 6-digit authenticator code.', 'Digite o código do autenticador para confirmar a troca de senha.': 'Enter the authenticator code to confirm the password change.',
   'Use pelo menos 8 caracteres.': 'Use at least 8 characters.', 'As senhas não são iguais.': 'The passwords do not match.', 'A nova senha precisa ser diferente da atual.': 'The new password must be different from the current one.',
   'Senha fraca. Use pelo menos 8 caracteres, com letras maiúsculas e minúsculas, números e um símbolo.': 'Weak password. Use at least 8 characters with upper and lower case letters, numbers and a symbol.',

@@ -19,7 +19,7 @@
   var RITMOS = [['calmo', 'Calmo'], ['normal', 'Normal'], ['rapido', 'Rápido']];
   var PPM = { calmo: 130, normal: 150, rapido: 170 };
   var LEITURA = 'Olá, eu sou a pessoa que vai apresentar este webinar. Estou gravando esta amostra com a minha própria voz, em um lugar silencioso, ' +
-    'falando no meu ritmo normal. Vou ler este texto com calma, como se estivesse explicando um assunto para um cliente. A Endeavor Business Solutions ' +
+    'falando no meu ritmo normal. Vou ler este texto com calma, como se estivesse explicando um assunto para um cliente. A Endeavor Business Hub ' +
     'ajuda empresas a abrir e organizar seus negócios nos Estados Unidos, com atendimento próximo e transparente. Em cada etapa, a gente explica o que ' +
     'vai acontecer, quais documentos são necessários e quanto tempo cada parte costuma levar. Quando surgem dúvidas, a melhor coisa é perguntar. ' +
     'Obrigado por ouvir até aqui; agora vou continuar falando por mais alguns segundos para completar um minuto de gravação.';

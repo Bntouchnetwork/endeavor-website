@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
         }
       };
       line("Certificate of Completion", 18, bold, rgb(0.08, 0.16, 0.30)); cy -= 6;
-      line("Endeavor Business Solutions (a trade name of Endeavor Tax Solutions LLC) - Electronic Signature Record", 9, font, rgb(0.4, 0.4, 0.4)); cy -= 8;
+      line("Endeavor Business Hub (a trade name of Endeavor Tax Solutions LLC) - Electronic Signature Record", 9, font, rgb(0.4, 0.4, 0.4)); cy -= 8;
       const rows: [string, string][] = [
         ["Envelope ID", env.id], ["Document", env.title], ["Signer", env.signer_name + " <" + env.signer_email + ">"],
         ["Typed signature name", typed], ["Signed at", stamp], ["Signer IP address", ip], ["Signer device", ua],

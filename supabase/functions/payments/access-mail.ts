@@ -2,6 +2,7 @@
 // invitation to create the password (with what the portal does and the authenticator steps) and password reset.
 // The one-time link is generated with the Admin API (generateLink) and sent over SES (or the support Gmail).
 import nodemailer from "npm:nodemailer@6.9.16";
+import { FOOT_BRAND } from "../_shared/brand.ts";
 
 type Lang = "pt" | "en" | "es";
 export type AccessKind = "client" | "collab" | "partner" | "store";
@@ -25,11 +26,11 @@ const L = (l: unknown): Lang => (l === "en" || l === "es" ? l : "pt");
 
 const T: Record<Lang, Any> = {
   pt: {
-    s_invite: "Seu acesso ao portal da Endeavor Business Solutions", s_reset: "Redefina sua senha do portal Endeavor",
+    s_invite: "Seu acesso ao portal da Endeavor Business Hub", s_reset: "Redefina sua senha do portal Endeavor",
     hi: (n: string) => (n ? `Olá, ${n}!` : "Olá!"),
-    lead: { client: "A Endeavor Business Solutions criou o seu acesso ao <strong>Portal do Cliente</strong>. É nele que você acompanha tudo sobre as suas empresas nos EUA, num só lugar e com segurança.",
-      collab: "A Endeavor Business Solutions convidou você para o <strong>Portal do Parceiro</strong> como colaborador{c}. Por ele você acessa as informações que o cliente compartilhou com você.",
-      partner: "A Endeavor Business Solutions criou o seu acesso ao <strong>Portal do Parceiro</strong>, onde você envia indicações e acompanha suas comissões.",
+    lead: { client: "A Endeavor Business Hub criou o seu acesso ao <strong>Portal do Cliente</strong>. É nele que você acompanha tudo sobre as suas empresas nos EUA, num só lugar e com segurança.",
+      collab: "A Endeavor Business Hub convidou você para o <strong>Portal do Parceiro</strong> como colaborador{c}. Por ele você acessa as informações que o cliente compartilhou com você.",
+      partner: "A Endeavor Business Hub criou o seu acesso ao <strong>Portal do Parceiro</strong>, onde você envia indicações e acompanha suas comissões.",
       store: "Obrigado pela sua compra! O pagamento foi confirmado e a sua conta no <strong>Portal do Cliente</strong> da Endeavor já está pronta, com {s} liberado. Para entrar, confirme o seu e-mail criando a sua senha." },
     services: "Serviço contratado", forgotQ: "Já criou a senha e esqueceu?", forgotBtn: "Esqueci minha senha",
     can: "O que você pode fazer no portal",
@@ -48,14 +49,14 @@ const T: Record<Lang, Any> = {
     resetIgnore: "Se não foi você, ignore este e-mail. A sua senha continua a mesma.",
     expire: "Por segurança, o link vale por pouco tempo e só pode ser usado uma vez. Se ele expirar, abra o portal e clique em <strong>Esqueci minha senha</strong>.",
     never: "A Endeavor nunca pede a sua senha nem o código do aplicativo por e-mail, telefone ou WhatsApp.",
-    help: "Dúvidas? Responda este e-mail ou fale com a gente:", sign: "Equipe Endeavor Business Solutions", portal: "Endereço do portal",
+    help: "Dúvidas? Responda este e-mail ou fale com a gente:", sign: "Equipe Endeavor Business Hub", portal: "Endereço do portal",
   },
   en: {
-    s_invite: "Your access to the Endeavor Business Solutions portal", s_reset: "Reset your Endeavor portal password",
+    s_invite: "Your access to the Endeavor Business Hub portal", s_reset: "Reset your Endeavor portal password",
     hi: (n: string) => (n ? `Hi ${n},` : "Hi,"),
-    lead: { client: "Endeavor Business Solutions has created your access to the <strong>Client Portal</strong>. It is where you follow everything about your US companies, in one secure place.",
-      collab: "Endeavor Business Solutions has invited you to the <strong>Partner Portal</strong> as a collaborator{c}. There you can see the information the client shared with you.",
-      partner: "Endeavor Business Solutions has created your access to the <strong>Partner Portal</strong>, where you send referrals and follow your commissions.",
+    lead: { client: "Endeavor Business Hub has created your access to the <strong>Client Portal</strong>. It is where you follow everything about your US companies, in one secure place.",
+      collab: "Endeavor Business Hub has invited you to the <strong>Partner Portal</strong> as a collaborator{c}. There you can see the information the client shared with you.",
+      partner: "Endeavor Business Hub has created your access to the <strong>Partner Portal</strong>, where you send referrals and follow your commissions.",
       store: "Thank you for your purchase! Your payment is confirmed and your Endeavor <strong>Client Portal</strong> account is ready, with {s} turned on. To sign in, confirm your e-mail by creating your password." },
     services: "Service purchased", forgotQ: "Already created your password and forgot it?", forgotBtn: "Forgot my password",
     can: "What you can do in the portal",
@@ -74,14 +75,14 @@ const T: Record<Lang, Any> = {
     resetIgnore: "If this was not you, ignore this e-mail. Your password stays the same.",
     expire: "For security, the link works for a short time and only once. If it expires, open the portal and click <strong>Forgot password</strong>.",
     never: "Endeavor never asks for your password or app code by e-mail, phone or WhatsApp.",
-    help: "Questions? Reply to this e-mail or reach us:", sign: "The Endeavor Business Solutions team", portal: "Portal address",
+    help: "Questions? Reply to this e-mail or reach us:", sign: "The Endeavor Business Hub team", portal: "Portal address",
   },
   es: {
-    s_invite: "Su acceso al portal de Endeavor Business Solutions", s_reset: "Restablezca su contraseña del portal Endeavor",
+    s_invite: "Su acceso al portal de Endeavor Business Hub", s_reset: "Restablezca su contraseña del portal Endeavor",
     hi: (n: string) => (n ? `¡Hola, ${n}!` : "¡Hola!"),
-    lead: { client: "Endeavor Business Solutions creó su acceso al <strong>Portal del Cliente</strong>. Allí sigue todo sobre sus empresas en EE. UU., en un solo lugar y con seguridad.",
-      collab: "Endeavor Business Solutions lo invitó al <strong>Portal del Socio</strong> como colaborador{c}. Allí ve la información que el cliente compartió con usted.",
-      partner: "Endeavor Business Solutions creó su acceso al <strong>Portal del Socio</strong>, donde envía referidos y sigue sus comisiones.",
+    lead: { client: "Endeavor Business Hub creó su acceso al <strong>Portal del Cliente</strong>. Allí sigue todo sobre sus empresas en EE. UU., en un solo lugar y con seguridad.",
+      collab: "Endeavor Business Hub lo invitó al <strong>Portal del Socio</strong> como colaborador{c}. Allí ve la información que el cliente compartió con usted.",
+      partner: "Endeavor Business Hub creó su acceso al <strong>Portal del Socio</strong>, donde envía referidos y sigue sus comisiones.",
       store: "¡Gracias por su compra! El pago fue confirmado y su cuenta en el <strong>Portal del Cliente</strong> de Endeavor ya está lista, con {s} activado. Para entrar, confirme su correo creando su contraseña." },
     services: "Servicio contratado", forgotQ: "¿Ya creó su contraseña y la olvidó?", forgotBtn: "Olvidé mi contraseña",
     can: "Lo que puede hacer en el portal",
@@ -100,7 +101,7 @@ const T: Record<Lang, Any> = {
     resetIgnore: "Si no fue usted, ignore este correo. Su contraseña sigue igual.",
     expire: "Por seguridad, el enlace vale por poco tiempo y solo una vez. Si vence, abra el portal y haga clic en <strong>Olvidé mi contraseña</strong>.",
     never: "Endeavor nunca pide su contraseña ni el código de la aplicación por correo, teléfono o WhatsApp.",
-    help: "¿Dudas? Responda este correo o escríbanos:", sign: "Equipo de Endeavor Business Solutions", portal: "Dirección del portal",
+    help: "¿Dudas? Responda este correo o escríbanos:", sign: "Equipo de Endeavor Business Hub", portal: "Dirección del portal",
   },
 };
 
@@ -109,9 +110,9 @@ export const btn = (href: string, label: string) =>
 export function layout(inner: string) {
   return `<!doctype html><html><head><meta name="color-scheme" content="light only"></head><body style="margin:0;background:#f4f6f9"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6f9;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:12px;border:1px solid #e3e7ee">
-<tr><td style="padding:22px 30px;border-bottom:3px solid #c9a24a"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="190" style="display:block;width:190px;height:auto"></td></tr>
+<tr><td style="padding:22px 30px;border-bottom:3px solid #c9a24a"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="190" style="display:block;width:190px;height:auto"></td></tr>
 <tr><td style="padding:28px 30px;font:15px/1.6 Arial,sans-serif;color:#1f2937">${inner}</td></tr>
-<tr><td style="padding:16px 30px;border-top:1px solid #e3e7ee;font:12px/1.5 Arial,sans-serif;color:#6b7280">Endeavor Business Solutions · Orlando, FL · ${PHONE} · <a href="mailto:${SUPPORT}" style="color:#6b7280">${SUPPORT}</a></td></tr>
+<tr><td style="padding:16px 30px;border-top:1px solid #e3e7ee;font:12px/1.5 Arial,sans-serif;color:#6b7280">${FOOT_BRAND} · Orlando, FL · ${PHONE} · <a href="mailto:${SUPPORT}" style="color:#6b7280">${SUPPORT}</a></td></tr>
 </table></td></tr></table></body></html>`;
 }
 const h2 = (s: string) => `<h2 style="font:700 16px/1.35 Georgia,serif;color:#0b1f3a;margin:24px 0 10px">${s}</h2>`;
@@ -149,13 +150,13 @@ ${forgot}
 
 export async function sendAccessMail(to: string, m: { subject: string; html: string; text: string }) {
   const from = sesOn() ? SUPPORT : G_USER;
-  await transport().sendMail({ from: { name: "Endeavor Business Solutions", address: from }, to, subject: m.subject, html: m.html, text: m.text, replyTo: SUPPORT });
+  await transport().sendMail({ from: { name: "Endeavor Business Hub", address: from }, to, subject: m.subject, html: m.html, text: m.text, replyTo: SUPPORT });
 }
 
 // generic sender used by the billing e-mails (invoice, reminders, receipt, proposal, opening documents, ACH)
 export async function sendMail(to: string | string[], subject: string, html: string, text: string, opts: { replyTo?: string; bcc?: string } = {}) {
   const from = sesOn() ? SUPPORT : G_USER;
-  await transport().sendMail({ from: { name: "Endeavor Business Solutions", address: from }, to, subject, html, text, replyTo: opts.replyTo || SUPPORT, bcc: opts.bcc });
+  await transport().sendMail({ from: { name: "Endeavor Business Hub", address: from }, to, subject, html, text, replyTo: opts.replyTo || SUPPORT, bcc: opts.bcc });
 }
 // WhatsApp (Meta Cloud API) — only when WHATSAPP_TOKEN and WHATSAPP_PHONE_ID exist and the template was approved; otherwise e-mail only
 const WA_TOKEN = Deno.env.get("WHATSAPP_TOKEN") ?? "", WA_PHONE = Deno.env.get("WHATSAPP_PHONE_ID") ?? "", WA_VER = Deno.env.get("WHATSAPP_API_VERSION") ?? "v21.0";

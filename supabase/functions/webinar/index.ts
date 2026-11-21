@@ -343,7 +343,7 @@ async function inscricao(w: Any, token: unknown) {
   if (!r) throw new Erro("Inscrição não encontrada. Use o link do e-mail ou inscreva-se de novo.", 403);
   return r;
 }
-const empresaNome = (w: Any) => w.client_id ? (w.clients?.name || "") : "Endeavor Business Solutions";
+const empresaNome = (w: Any) => w.client_id ? (w.clients?.name || "") : "Endeavor Business Hub";
 
 async function publico(req: Request, b: Any) {
   const w = await webinarPublico(b.slug);

@@ -1,6 +1,6 @@
 # Web Meeting
 
-Videoconferência da Endeavor Business Solutions com LiveKit. A própria Endeavor usa, e as empresas clientes usam como serviço quando o admin habilita na ficha do cliente. A sala foi adaptada da sala ao vivo do Noir Hub (repositório NOIR-HUB), com a marca, o login e o controle por empresa da Endeavor.
+Videoconferência da Endeavor Business Hub com LiveKit. A própria Endeavor usa, e as empresas clientes usam como serviço quando o admin habilita na ficha do cliente. A sala foi adaptada da sala ao vivo do Noir Hub (repositório NOIR-HUB), com a marca, o login e o controle por empresa da Endeavor.
 
 ## Onde fica
 

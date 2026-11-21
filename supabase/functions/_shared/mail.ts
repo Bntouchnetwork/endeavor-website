@@ -2,6 +2,7 @@
 // Para empresas clientes, a mensagem vai "em nome de" a empresa: o nome dela no topo e na assinatura, resposta para o
 // e-mail dela, e a linha "Enviado pela plataforma Endeavor".
 import nodemailer from "npm:nodemailer@6.9.16";
+import { FOOT_BRAND } from "./brand.ts";
 // deno-lint-ignore no-explicit-any
 type Db = any;
 
@@ -38,10 +39,10 @@ export function shell(l: Lang, m: Marca, o: Corpo) {
   const lista = o.lista?.length ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:6px 0 14px;width:100%">${o.lista.map((i) =>
     `<tr><td style="padding:6px 10px 6px 0;vertical-align:top;font:15px Arial,sans-serif;color:${i.ok ? "#1e6b3a" : navy}">${i.ok ? "✓" : "•"}</td><td style="padding:6px 0;font:15px/1.5 Arial,sans-serif;color:#1f2937;${i.ok ? "text-decoration:line-through;color:#6b7280" : ""}">${esc(i.texto)}</td></tr>`).join("")}</table>` : "";
   const topo = m.endeavor
-    ? `<img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="190" style="display:block;width:190px;height:auto;border:0">`
+    ? `<img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="190" style="display:block;width:190px;height:auto;border:0">`
     : `<div style="font:700 20px Georgia,serif;color:${navy}">${esc(m.nome)}</div>`;
   const rodape = m.endeavor
-    ? `Endeavor Business Solutions · Orlando, FL · ${PHONE} · WhatsApp ${WA_NUM} · <a href="mailto:${SUPPORT}" style="color:#6b7280">${SUPPORT}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a>`
+    ? `${FOOT_BRAND} · Orlando, FL · ${PHONE} · WhatsApp ${WA_NUM} · <a href="mailto:${SUPPORT}" style="color:#6b7280">${SUPPORT}</a> · <a href="${SITE}" style="color:#6b7280">endeavorbiz.com</a>`
     : `${POR[l]} ${esc(m.nome)}.`;
   return `<!doctype html><html lang="${l === "pt" ? "pt-BR" : l}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(o.h1)}</title></head>
 <body style="margin:0;padding:0;background:#eef1f6"><div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(o.pre)}</div>
@@ -50,13 +51,13 @@ export function shell(l: Lang, m: Marca, o: Corpo) {
 <tr><td style="padding:22px 30px;border-bottom:1px solid #eef0f4">${topo}</td></tr>
 <tr><td style="background:${navy};padding:30px 30px 26px"><div style="font:700 12px/1 Arial,sans-serif;letter-spacing:.14em;color:${gold};margin:0 0 12px">${esc(o.kicker)}</div><div style="font:700 24px/1.25 Georgia,serif;color:#fff">${esc(o.h1)}</div></td></tr>
 <tr><td style="padding:26px 30px 8px;font:15px/1.65 Arial,sans-serif;color:#1f2937">${o.paras.map((p) => `<p style="margin:0 0 12px">${p}</p>`).join("")}${lista}${btn}</td></tr>
-<tr><td style="padding:12px 30px 26px;font:15px/1.6 Arial,sans-serif;color:#1f2937"><p style="margin:0;font-weight:700;color:${navy}">${esc(SIGN[l](m.endeavor ? "Endeavor Business Solutions" : m.nome))}</p>${o.foot ? `<p style="margin:12px 0 0;font:13px/1.55 Arial,sans-serif;color:#6b7280">${esc(o.foot)}</p>` : ""}</td></tr>
+<tr><td style="padding:12px 30px 26px;font:15px/1.6 Arial,sans-serif;color:#1f2937"><p style="margin:0;font-weight:700;color:${navy}">${esc(SIGN[l](m.endeavor ? "Endeavor Business Hub" : m.nome))}</p>${o.foot ? `<p style="margin:12px 0 0;font:13px/1.55 Arial,sans-serif;color:#6b7280">${esc(o.foot)}</p>` : ""}</td></tr>
 <tr><td style="padding:16px 30px;background:#f7f8fb;border-top:1px solid #eef0f4;font:12px/1.6 Arial,sans-serif;color:#6b7280">${rodape}</td></tr>
 </table></td></tr></table></body></html>`;
 }
 export const texto = (l: Lang, m: Marca, o: Corpo) =>
   [o.h1, "", ...o.paras.map((p) => p.replace(/<[^>]+>/g, "")), ...(o.lista?.length ? ["", ...o.lista.map((i) => (i.ok ? "✓ " : "• ") + i.texto)] : []),
-    ...(o.cta && o.url ? ["", `${o.cta}: ${o.url}`] : []), "", SIGN[l](m.endeavor ? "Endeavor Business Solutions" : m.nome), ...(o.foot ? ["", o.foot] : [])].join("\n");
+    ...(o.cta && o.url ? ["", `${o.cta}: ${o.url}`] : []), "", SIGN[l](m.endeavor ? "Endeavor Business Hub" : m.nome), ...(o.foot ? ["", o.foot] : [])].join("\n");
 
 /** Envia uma vez por chave (crm_messages.dedupe) e registra o resultado. */
 export async function enviarEmail(db: Db, a: { dedupe: string; kind: string; lead_id?: string | null; to: string; l: Lang; marca: Marca; subject: string; corpo: Corpo; by?: string }) {
@@ -65,7 +66,7 @@ export async function enviarEmail(db: Db, a: { dedupe: string; kind: string; lea
   if (ins.error) return "dup";
   const id = (ins.data as { id: string }).id;
   try {
-    await transport().sendMail({ from: { name: a.marca.endeavor ? "Endeavor Business Solutions" : `${a.marca.nome} (via Endeavor)`, address: await remetente(db) }, to: a.to,
+    await transport().sendMail({ from: { name: a.marca.endeavor ? "Endeavor Business Hub" : `${a.marca.nome} (via Endeavor)`, address: await remetente(db) }, to: a.to,
       replyTo: a.marca.replyTo || SUPPORT, subject: a.subject, html: shell(a.l, a.marca, a.corpo), text: texto(a.l, a.marca, a.corpo) });
     await db.from("crm_messages").update({ status: "sent", sent_at: new Date().toISOString() }).eq("id", id);
     return "sent";

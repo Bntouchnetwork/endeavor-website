@@ -185,7 +185,7 @@ async function acao(q: Quem, b: Any) {
       const usados = new Set((ocupados || []).map((x: Any) => x.e164));
       return { numeros: lista.filter((x) => !usados.has(x.e164)), demo: modoDemo };
     }
-    // Linha da própria Endeavor (cliente interno "Endeavor Business Solutions", status internal): mesmo celular virtual dos clientes
+    // Linha da própria Endeavor (cliente interno "Endeavor Business Hub", status internal): mesmo celular virtual dos clientes
     case "adm_endeavor":
     case "adm_endeavor_criar": {
       soAdmin(q);

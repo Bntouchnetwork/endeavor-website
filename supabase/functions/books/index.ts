@@ -298,7 +298,7 @@ async function handle(req: Request, body: Any) {
     return { ok: true, accounts: added, imported: synced };
   }
   if (a === "plaid_link") {
-    const r = await plaid("/link/token/create", { client_name: "Endeavor Business Solutions", user: { client_user_id: co.id }, products: ["transactions"], country_codes: ["US"], language: body.lang === "es" ? "es" : "en",
+    const r = await plaid("/link/token/create", { client_name: "Endeavor Business Hub", user: { client_user_id: co.id }, products: ["transactions"], country_codes: ["US"], language: body.lang === "es" ? "es" : "en",
       transactions: { days_requested: 730 },
       account_filters: body.kind === "card" ? { credit: { account_subtypes: ["credit card"] } } : body.kind === "bank" ? { depository: { account_subtypes: ["checking", "savings"] } } : undefined });
     return { link_token: r.link_token };

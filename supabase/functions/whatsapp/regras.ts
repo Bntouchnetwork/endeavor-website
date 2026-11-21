@@ -252,7 +252,7 @@ export function configParaIA(cfg: Any) {
 
 /* ================================================================ entrada e saída da IA ================================================================ */
 export function montarEntrada(f: string, a: Any, c: { nome: string; grupo: boolean }, mensagens: Any[], extra: Any) {
-  const partes = [`<modo>${f}</modo>`, `<empresa>${txt(extra.empresa || "Endeavor Business Solutions", 120)}</empresa>`, `<idioma>${a.idioma}</idioma>`, `<negocio>${a.negocio}</negocio>`, `<link_agenda>${a.link_agenda}</link_agenda>`,
+  const partes = [`<modo>${f}</modo>`, `<empresa>${txt(extra.empresa || "Endeavor Business Hub", 120)}</empresa>`, `<idioma>${a.idioma}</idioma>`, `<negocio>${a.negocio}</negocio>`, `<link_agenda>${a.link_agenda}</link_agenda>`,
     `<conversa_tipo>${c.grupo ? "grupo" : "individual"}</conversa_tipo>`, `<contato>${txt(c.nome, 80)}</contato>`];
   if (extra.cfg) {
     const k = configParaIA(extra.cfg);

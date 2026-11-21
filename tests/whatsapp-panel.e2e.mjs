@@ -19,7 +19,7 @@ const log = Array.from({ length: 3 }, (_, i) => ({ id: 10 - i, chave: "155@c.us"
 function servidor(b) {
   chamadas.push(b);
   switch (b.acao) {
-    case "wa_painel": return { j: { ajustes: A, version, ia: true, dono: true, endeavor: true, empresa: "Endeavor Business Solutions", config: { perfil: {}, regras: [], fluxos: [], modelos: [] }, config_version: 1, hoje: { enviado: 3, sugerido: 5 }, dispositivos: devs, conversas: [{ chave: "155@c.us", nome: "Maria Teste", grupo: false, seguir: true, takeover: true }] } };
+    case "wa_painel": return { j: { ajustes: A, version, ia: true, dono: true, endeavor: true, empresa: "Endeavor Business Hub", config: { perfil: {}, regras: [], fluxos: [], modelos: [] }, config_version: 1, hoje: { enviado: 3, sugerido: 5 }, dispositivos: devs, conversas: [{ chave: "155@c.us", nome: "Maria Teste", grupo: false, seguir: true, takeover: true }] } };
     case "wa_ajustes": if (b.version !== version) return { st: 409, j: { erro: "Os ajustes mudaram em outro lugar." } }; Object.assign(A, b.ajustes, { espera_max: Math.max(b.ajustes.espera_max, b.ajustes.espera_min) }); version++; return { j: { ajustes: A, version } };
     case "wa_conectar": return { j: { id: "d2", codigo: "wam_CODIGOtesteABCDEFGHIJKLMNOP" } };
     case "wa_revogar": devs[0].ativo = false; devs[0].online = false; return { j: { ok: true } };

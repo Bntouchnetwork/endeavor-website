@@ -89,7 +89,7 @@
     } else if (tpl === 'quote') {
       c.fillStyle = p.accent; c.font = '600 220px ' + SERIF; c.fillText('“', M - 10, y + 150); y += 170;
       c.fillStyle = p.ink; var fq = fit(c, s.title, 'italic 500 {s}px ' + SERIF, 76, 48, maxW, 7); y = drawLines(c, fq.lines, M, y + fq.size, fq.size * 1.2) + 30;
-      c.fillStyle = p.accent; c.fillRect(M, y, 60, 4); c.fillStyle = p.muted; c.font = '500 30px ' + SANS; c.fillText(s.body || 'Endeavor Business Solutions', M + 80, y + 12);
+      c.fillStyle = p.accent; c.fillRect(M, y, 60, 4); c.fillStyle = p.muted; c.font = '500 30px ' + SANS; c.fillText(s.body || 'Endeavor Business Hub', M + 80, y + 12);
     } else if (tpl === 'cta') {
       kicker(); title(92, 4); body(40); y += 40;
       var label = s.bullets && s.bullets[0] ? s.bullets[0] : (post.language === 'en' ? 'Link in bio' : post.language === 'es' ? 'Enlace en la bio' : 'Link na bio');

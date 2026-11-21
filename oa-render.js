@@ -13,7 +13,7 @@
     opts = opts || {};
     var pdf = await PDFLib.PDFDocument.create();
     pdf.setTitle(safe('Operating Agreement of ' + doc.company));
-    pdf.setAuthor('Endeavor Business Solutions'); pdf.setCreator('Endeavor Operating Agreement module'); pdf.setProducer('Endeavor');
+    pdf.setAuthor('Endeavor Business Hub'); pdf.setCreator('Endeavor Operating Agreement module'); pdf.setProducer('Endeavor');
     if (opts.fixedDate) { pdf.setCreationDate(new Date(opts.fixedDate)); pdf.setModificationDate(new Date(opts.fixedDate)); }
     var F = { r: await pdf.embedFont(PDFLib.StandardFonts.TimesRoman), b: await pdf.embedFont(PDFLib.StandardFonts.TimesRomanBold), i: await pdf.embedFont(PDFLib.StandardFonts.TimesRomanItalic), h: await pdf.embedFont(PDFLib.StandardFonts.Helvetica) };
     var ink = PDFLib.rgb(0.08, 0.08, 0.1), grey = PDFLib.rgb(0.42, 0.44, 0.48), navy = PDFLib.rgb(0.05, 0.13, 0.26);

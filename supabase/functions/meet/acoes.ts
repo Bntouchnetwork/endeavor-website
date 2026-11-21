@@ -5,6 +5,7 @@
 import "./acoes-core.js";
 import nodemailer from "npm:nodemailer@6.9.16";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
+import { FOOT_BRAND } from "../_shared/brand.ts";
 
 // deno-lint-ignore no-explicit-any
 type Any = any;
@@ -30,16 +31,16 @@ export function moldura(titulo: string, corpoHtml: string, cta?: { rot: string; 
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(titulo)}</title></head>
 <body style="margin:0;background:#eef1f6"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#fff;border-radius:14px;border:1px solid #e3e7ee">
-<tr><td style="padding:20px 28px;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Solutions" width="180" style="display:block;width:180px;height:auto"></td></tr>
+<tr><td style="padding:20px 28px;border-bottom:1px solid #eef0f4"><img src="${SITE}/logo-endeavor-3000px.png" alt="Endeavor Business Hub" width="180" style="display:block;width:180px;height:auto"></td></tr>
 <tr><td style="padding:24px 28px;font:15px/1.6 Arial,sans-serif;color:#1f2937">${corpoHtml}${btn}</td></tr>
-<tr><td style="padding:14px 28px 22px;font:12px/1.5 Arial,sans-serif;color:#6b7280;border-top:1px solid #eef0f4">Endeavor Business Solutions · Orlando, FL</td></tr></table></td></tr></table></body></html>`;
+<tr><td style="padding:14px 28px 22px;font:12px/1.5 Arial,sans-serif;color:#6b7280;border-top:1px solid #eef0f4">${FOOT_BRAND} · Orlando, FL</td></tr></table></td></tr></table></body></html>`;
 }
 export async function enviarEmail(para: string[], assunto: string, texto: string, html?: string, replyTo?: string) {
   if (!mailOn()) throw new Error("E-mail não configurado no servidor.");
   const from = sesOn() ? "support@endeavorbiz.com" : G_USER;
   // um e-mail por destinatário: ninguém vê o endereço dos outros
   for (const to of para) {
-    await transport().sendMail({ from: { name: "Endeavor Business Solutions", address: from }, to, subject: assunto, text: texto,
+    await transport().sendMail({ from: { name: "Endeavor Business Hub", address: from }, to, subject: assunto, text: texto,
       html: html || moldura(assunto, texto.split("\n").map((l) => l.trim() ? `<p style="margin:0 0 10px">${esc(l)}</p>` : "").join("")), replyTo: replyTo || undefined });
   }
 }
@@ -268,7 +269,7 @@ export async function integracoes(o: { db: Any; r: Any; sessao: Any; quem: strin
 async function pdfContrato(titulo: string, texto: string) {
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const doc = await PDFDocument.create();
-  doc.setTitle(titulo); doc.setCreator("Endeavor Business Solutions · Web Meeting");
+  doc.setTitle(titulo); doc.setCreator("Endeavor Business Hub · Web Meeting");
   const fonte = await doc.embedFont(StandardFonts.Helvetica), negrito = await doc.embedFont(StandardFonts.HelveticaBold);
   const W = 612, H = 792, M = 64, tam = 11, alt = 16;
   const seguro = (s: string) => s.replace(/[^\x09\x0a\x0d\x20-\x7e\xa0-\xff]/g, (c) => ({ "–": "-", "—": "-", "’": "'", "“": '"', "”": '"', "…": "..." }[c] || "?"));
@@ -315,7 +316,7 @@ export async function docsPublico(db: Any, b: Any) {
   const p = await pedidoPorToken(db, b.t);
   const itens: Any[] = p.items || [];
   if (b.acao === "docs_info") {
-    return { empresa: p.meet_rooms?.client_id ? p.meet_rooms?.clients?.name : "Endeavor Business Solutions", reuniao: p.meet_rooms?.title, para: mascarar(p.email), nome: p.name || "",
+    return { empresa: p.meet_rooms?.client_id ? p.meet_rooms?.clients?.name : "Endeavor Business Hub", reuniao: p.meet_rooms?.title, para: mascarar(p.email), nome: p.name || "",
       itens: itens.map((i, k) => ({ k, nome: i.nome, status: i.status, arquivos: (i.arquivos || []).map((a: Any) => ({ nome: a.nome, tamanho: a.tamanho })) })), status: p.status, expira: p.expires_at, mensagem: p.message || "" };
   }
   const k = Number(b.item);

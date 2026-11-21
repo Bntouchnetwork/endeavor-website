@@ -22,7 +22,7 @@ const SITE = (Deno.env.get("SITE_URL") || "https://endeavorbiz.com").replace(/\/
 const AI_ON = hubOn();
 const AI_MODEL = "hub:oa-drafting";
 const RESEND = Deno.env.get("RESEND_API_KEY") || "";
-const MAIL_FROM = Deno.env.get("OA_EMAIL_FROM") || "Endeavor Business Solutions <support@endeavorbiz.com>";
+const MAIL_FROM = Deno.env.get("OA_EMAIL_FROM") || "Endeavor Business Hub <support@endeavorbiz.com>";
 const CONSENT_VERSION = "2026-11-05";
 const admin = createClient(SUPABASE_URL, SERVICE, { auth: { persistSession: false } });
 
@@ -236,9 +236,9 @@ async function mailSigner(oa: any, s: any, env: any) {
     return false;
   }
   const subj = { pt: "Assinatura do Operating Agreement: ", en: "Please sign the Operating Agreement: ", es: "Firma del Operating Agreement: " }[lang as "pt"] || "Please sign the Operating Agreement: ";
-  const body = { pt: `Olá ${s.name},\n\nO Operating Agreement de ${oa.companies?.legal_name} foi aprovado e aguarda a sua assinatura eletrônica.\n\nAssinar: ${link}\n\nO link é pessoal. Endeavor Business Solutions · support@endeavorbiz.com`,
-    en: `Hello ${s.name},\n\nThe Operating Agreement of ${oa.companies?.legal_name} was approved and is waiting for your electronic signature.\n\nSign here: ${link}\n\nThis link is personal. Endeavor Business Solutions · support@endeavorbiz.com`,
-    es: `Hola ${s.name},\n\nEl Operating Agreement de ${oa.companies?.legal_name} fue aprobado y espera su firma electrónica.\n\nFirmar: ${link}\n\nEl enlace es personal. Endeavor Business Solutions · support@endeavorbiz.com` }[lang as "pt"];
+  const body = { pt: `Olá ${s.name},\n\nO Operating Agreement de ${oa.companies?.legal_name} foi aprovado e aguarda a sua assinatura eletrônica.\n\nAssinar: ${link}\n\nO link é pessoal. Endeavor Business Hub · support@endeavorbiz.com`,
+    en: `Hello ${s.name},\n\nThe Operating Agreement of ${oa.companies?.legal_name} was approved and is waiting for your electronic signature.\n\nSign here: ${link}\n\nThis link is personal. Endeavor Business Hub · support@endeavorbiz.com`,
+    es: `Hola ${s.name},\n\nEl Operating Agreement de ${oa.companies?.legal_name} fue aprobado y espera su firma electrónica.\n\nFirmar: ${link}\n\nEl enlace es personal. Endeavor Business Hub · support@endeavorbiz.com` }[lang as "pt"];
   const r = await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: "Bearer " + RESEND, "content-type": "application/json" },
     body: JSON.stringify({ from: MAIL_FROM, to: [s.email], subject: subj + (oa.companies?.legal_name || ""), text: body }) });
   if (r.ok) { await admin.from("envelope_events").insert({ envelope_id: env.id, event: "emailed", details: { to: s.email, via: "oa-module" } }); return true; }
@@ -297,7 +297,7 @@ async function evidencePdf(oa: any, envs: any[], versions: any[], events: any[])
     if (cur) flush();
   };
   line("Operating Agreement - Signature and Compliance Evidence", 15, b); y -= 4;
-  line("Endeavor Business Solutions (a trade name of Endeavor Tax Solutions LLC). Generated " + now().replace("T", " ").slice(0, 19) + " UTC.", 8.5); y -= 8;
+  line("Endeavor Business Hub (a trade name of Endeavor Tax Solutions LLC). Generated " + now().replace("T", " ").slice(0, 19) + " UTC.", 8.5); y -= 8;
   const rows: [string, string][] = [["Company", oa.companies?.legal_name || ""], ["Operating Agreement ID", oa.id], ["State / rules version", (oa.answers?.state || oa.state) + " / " + (oa.rules_version || "")],
     ["Final version", "v" + oa.version], ["Approved by client", (oa.approved_by_email || "") + " at " + String(oa.approved_at || "").replace("T", " ").slice(0, 19) + " UTC"]];
   rows.forEach(([k, v]) => { line(k, 8.5, b); line(v, 9, f, 10); });

@@ -64,7 +64,7 @@
   function steps(n) { var l = [t('s1'), t('s2'), t('s3')]; if (PACK) { l.unshift(PT('s0')); n += 1; } return '<ol class="buy__steps">' + l.map(function (s, i) { return '<li' + (i === n ? ' class="is-on"' : '') + '><span>' + (i + 1) + '</span>' + esc(s) + '</li>'; }).join('') + '</ol>'; }
   function summary(code, p) {
     var info = EStore.info(code, L);
-    return '<aside class="portal-card buy__sum"><p class="eyebrow">Endeavor Business Solutions</p><h1>' + esc(info.name) + '</h1><p class="portal-muted">' + esc(info.lead) + '</p>' +
+    return '<aside class="portal-card buy__sum"><p class="eyebrow">Endeavor Business Hub</p><h1>' + esc(info.name) + '</h1><p class="portal-muted">' + esc(info.lead) + '</p>' +
       '<div class="buy__price"><strong>' + EStore.money(p.price_cents) + '</strong><span class="portal-muted">' + esc(EStore.interval(p.interval, L)) + '</span></div>' +
       '<h2 class="portal-h2" style="font-size:1rem">' + t('included') + '</h2><ul class="buy__feats">' + info.feats.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
       '<p class="portal-muted" style="font-size:.88rem">' + t(p.interval === 'year' ? 'perYear' : p.interval === 'month' ? 'perMonth' : 'secure') + '</p>' +
@@ -81,7 +81,7 @@
     try { rows = await EStore.loadCatalog(CFG); } catch (e) { /* below */ }
     var p = rows.find(function (r) { return r.code === code; });
     if (!p || !EStore.info(code, L)) { app.innerHTML = '<div class="portal-card"><p>' + t('notFound') + '</p><a class="btn btn--navy" href="index.html?lang=' + L + '#online-services">' + t('back') + '</a></div>'; return; }
-    document.title = EStore.info(code, L).name + ' | Endeavor Business Solutions';
+    document.title = EStore.info(code, L).name + ' | Endeavor Business Hub';
     if (p.kind === 'package') return packageStart(p, rows);
     if (p.kind === 'addon') { app.innerHTML = '<div class="portal-card"><p>' + t('notFound') + '</p><a class="btn btn--navy" href="index.html?lang=' + L + '#online-services">' + t('back') + '</a></div>'; return; }
     if (p.status !== 'active') { app.innerHTML = '<div class="buy">' + summary(code, p) + '<section class="portal-card"><p>' + t('soon') + '</p><a class="btn btn--gold" href="index.html?lang=' + L + '#contact">' + t('wait') + '</a></section></div>'; return; }
@@ -196,7 +196,7 @@
     var by = {}; rows.forEach(function (r) { by[r.code] = r; });
     PACK = { code: p.code, p: p, by: by, socios: saved.socios || 'single', items: [], step: -1, offered: false, yes: [] };
     PACK.sum = cartHtml;
-    document.title = name(p.code) + ' | Endeavor Business Solutions';
+    document.title = name(p.code) + ' | Endeavor Business Hub';
     if (p.status !== 'active') { app.innerHTML = '<div class="buy">' + cartHtml() + '<section class="portal-card"><p>' + t('soon') + '</p><a class="btn btn--gold" href="index.html?lang=' + L + '#contact">' + t('wait') + '</a></section></div>'; return; }
     packageFlow();
   }
