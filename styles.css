@@ -1156,7 +1156,13 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
 .shop__carousel { position: relative; }
 .shop__track { display: flex; grid-template-columns: none; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding: 0.4rem 0.2rem 1rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
 .shop__track::-webkit-scrollbar { display: none; }
-.shop__track > .shop-card { flex: 0 0 min(19rem, 82vw); scroll-snap-align: start; }
+/* só cards inteiros: a largura se ajusta para caber um número exato (1 no celular, 2 no tablet, 3 ou 4 no computador) */
+.shop__track { --n: 1; --gap: var(--space-3); gap: var(--gap); padding-inline: 0; scroll-padding-inline: 0; }
+@media (min-width: 640px) { .shop__track { --n: 2; } }
+@media (min-width: 1024px) { .shop__track { --n: 3; } }
+@media (min-width: 1280px) { .shop__track { --n: 4; } }
+.shop__track > .shop-card { flex: 0 0 calc((100% - (var(--n) - 1) * var(--gap)) / var(--n)); scroll-snap-align: start; }
+.shop__track > .shop-card:hover, .shop__track > .shop-card:focus-within { transform: none; }
 .shop__track:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: var(--radius-lg); }
 .shop__seta { position: absolute; top: 50%; right: -0.6rem; z-index: 2; width: 2.9rem; height: 2.9rem; margin-top: -1.45rem; border-radius: 50%; border: 1px solid var(--line); background: var(--white); color: var(--navy-900); display: grid; place-items: center; box-shadow: var(--shadow-lg); cursor: pointer; }
 .shop__seta--ant { right: auto; left: -0.6rem; }
