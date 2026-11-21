@@ -1183,3 +1183,14 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
 /* Programa de Parceiros: os passos 1, 2, 3 com respiro abaixo dos cards e o número em azul-marinho sobre o dourado do botão */
 .partners-home .ph-steps { margin-top: clamp(2rem, 1.4rem + 2.4vw, 3rem); }
 .ph-steps .ph-steps__num { background: var(--gold); color: var(--navy-950); font-size: 1.05rem; font-weight: 700; }
+
+/* Carrossel: flechas fora dos cards (uma de cada lado; no celular, embaixo da fileira) */
+.shop__carousel { display: grid; grid-template-columns: 1fr 1fr; grid-template-areas: "trilho trilho" "ant prox"; gap: 0.75rem; align-items: center; }
+.shop__carousel .shop__track { grid-area: trilho; min-width: 0; }
+.shop__carousel .shop__seta { position: static; margin: 0; grid-area: prox; justify-self: start; }
+.shop__carousel .shop__seta--ant { grid-area: ant; justify-self: end; }
+.shop__carousel .shop__seta:disabled { opacity: 0.35; pointer-events: none; box-shadow: none; }
+@media (min-width: 640px) {
+  .shop__carousel { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "ant trilho prox"; }
+  .shop__carousel .shop__seta, .shop__carousel .shop__seta--ant { justify-self: center; }
+}
