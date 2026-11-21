@@ -10,21 +10,21 @@
       r_admin: 'Endeavor team', r_client: 'Client Portal', r_partner: 'Partner Portal',
       forgotTitle: 'New password', forgotLead: 'Enter your e-mail and we will send a link to create a new password.', sendLink: 'Send the link', backLogin: 'Back to sign in',
       resetSent: 'If {e} has an account, the link to create a new password is on its way. Check your inbox and spam folder.', badEmail: 'Enter a valid e-mail.',
-      linkExpired: 'This link has expired or was already used. Ask for a new one below.', help: 'Need access? Write to support@endeavorbiz.com.' },
+      idle: 'You were signed out after a period without activity. Sign in again to continue.', linkExpired: 'This link has expired or was already used. Ask for a new one below.', help: 'Need access? Write to support@endeavorbiz.com.' },
     pt: { docTitle: 'Entrar | Endeavor Business Hub', title: 'Entrar', lead: 'Um login só para todas as contas da Endeavor.', email: 'E-mail', password: 'Senha', signIn: 'Entrar', forgot: 'Esqueci a senha', showPass: 'Mostrar a senha',
       loading: 'Entrando…', bad: 'E-mail ou senha incorretos.', limited: 'Muitas tentativas. Aguarde um instante e tente de novo.', offline: 'Não conseguimos conectar. Confira a internet e tente de novo.',
       noAccess: 'Esta conta não tem um acesso ativo. Escreva para support@endeavorbiz.com.', pick: 'O seu e-mail tem mais de um acesso. Para onde você quer ir?', pickNew: 'Escolha onde você quer criar a nova senha.',
       r_admin: 'Equipe Endeavor', r_client: 'Portal do Cliente', r_partner: 'Portal do Parceiro',
       forgotTitle: 'Nova senha', forgotLead: 'Digite o seu e-mail e enviamos um link para criar uma nova senha.', sendLink: 'Enviar o link', backLogin: 'Voltar para o login',
       resetSent: 'Se {e} tiver uma conta, o link para criar a nova senha está a caminho. Confira a caixa de entrada e o spam.', badEmail: 'Digite um e-mail válido.',
-      linkExpired: 'Este link expirou ou já foi usado. Peça um novo abaixo.', help: 'Precisa de acesso? Escreva para support@endeavorbiz.com.' },
+      idle: 'Você saiu automaticamente por falta de atividade. Entre de novo para continuar.', linkExpired: 'Este link expirou ou já foi usado. Peça um novo abaixo.', help: 'Precisa de acesso? Escreva para support@endeavorbiz.com.' },
     es: { docTitle: 'Ingresar | Endeavor Business Hub', title: 'Ingresar', lead: 'Un solo ingreso para todas las cuentas de Endeavor.', email: 'Correo', password: 'Contraseña', signIn: 'Ingresar', forgot: 'Olvidé mi contraseña', showPass: 'Mostrar la contraseña',
       loading: 'Ingresando…', bad: 'Correo o contraseña incorrectos.', limited: 'Demasiados intentos. Espere un momento e intente de nuevo.', offline: 'No pudimos conectar. Revise su internet e intente de nuevo.',
       noAccess: 'Esta cuenta no tiene un acceso activo. Escriba a support@endeavorbiz.com.', pick: 'Su correo tiene más de un acceso. ¿A dónde quiere ir?', pickNew: 'Elija dónde quiere crear la nueva contraseña.',
       r_admin: 'Equipo Endeavor', r_client: 'Portal del Cliente', r_partner: 'Portal de Socios',
       forgotTitle: 'Nueva contraseña', forgotLead: 'Escriba su correo y le enviamos un enlace para crear una nueva contraseña.', sendLink: 'Enviar el enlace', backLogin: 'Volver al ingreso',
       resetSent: 'Si {e} tiene una cuenta, el enlace para crear la nueva contraseña está en camino. Revise su bandeja de entrada y el spam.', badEmail: 'Escriba un correo válido.',
-      linkExpired: 'Este enlace venció o ya fue usado. Pida uno nuevo abajo.', help: '¿Necesita acceso? Escriba a support@endeavorbiz.com.' }
+      idle: 'Salió automáticamente por inactividad. Ingrese de nuevo para continuar.', linkExpired: 'Este enlace venció o ya fue usado. Pida uno nuevo abajo.', help: '¿Necesita acceso? Escriba a support@endeavorbiz.com.' }
   });
   var $ = function (s) { return document.querySelector(s); };
   var PAGE = { admin: 'admin.html', client: 'client.html', partner: 'partner.html' };
@@ -64,6 +64,17 @@
       });
   }
 
+  /* ---------- quem já está logado não digita nada de novo: volta direto ao próprio portal ---------- */
+  else if (window.ESession && !/[?&]forgot=1/.test(location.search)) {
+    var saiu = (/[?&]out=(admin|client|partner|all)/.exec(location.search) || [])[1];
+    // o portal mandou para cá porque a sessão dele não vale mais: apaga o que sobrou dela, para não ficar indo e voltando
+    if (saiu === 'all') ESession.clear(); else if (saiu) ESession.clearOne(saiu);
+    var ja = ESession.where();
+    if (ja) { document.documentElement.style.visibility = 'hidden'; location.replace(url(ja.route)); }
+    var parou = false; try { parou = sessionStorage.getItem('endeavor-idle-out') === '1'; sessionStorage.removeItem('endeavor-idle-out'); } catch (e0) { /* ignore */ }
+    if (parou) msg($('#l-msg'), T('idle'), 'info');
+  }
+
   /* ---------- entrar ---------- */
   $('#l-eye').onclick = function () { var i = $('#l-pass'), on = i.type === 'password'; i.type = on ? 'text' : 'password'; this.setAttribute('aria-pressed', String(on)); };
   var auth = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'endeavor-login-tmp' } });
@@ -72,6 +83,7 @@
     var c = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey, { auth: o });
     var r = await c.auth.setSession({ access_token: s.access_token, refresh_token: s.refresh_token });
     if (r.error) throw r.error;
+    if (window.ESession) { ESession.setPortal(route); ESession.touch(); }
     location.href = url(route);
   }
   $('#f-login').onsubmit = async function (e) {

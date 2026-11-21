@@ -1210,3 +1210,8 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
 @media (min-width: 1340px) { .shop__carousel .shop__pausa { display: grid; margin: 0.6rem auto 0; } }
 /* No computador a fileira só muda pelas flechas ou sozinha: não rola ao arrastar nem com dois dedos no trackpad (no celular, o dedo continua arrastando) */
 @media (hover: hover) and (pointer: fine) { .shop__track { overflow-x: hidden; } }
+
+/* Login da home quando a pessoa está logada: verde, e o clique volta direto ao painel */
+.login__toggle.is-logged { background: #1a7f4b; border-color: #1a7f4b; color: #fff; }
+.login__toggle.is-logged:hover { background: #146a3d; }
+.login__toggle.is-logged::after { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: #b9f5cf; flex: none; }

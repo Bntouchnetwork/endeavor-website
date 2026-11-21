@@ -91,7 +91,7 @@
   function renderLogin() {
     if (AUTH_ERR) { AUTH_ERR = false; history.replaceState(null, '', location.pathname); return renderForgot(true); }
     // login único: quem não está logado entra por login.html (o link de nova senha continua abrindo aqui)
-    if (/^https?:$/.test(location.protocol) && !window.ENDEAVOR_NO_LOGIN_REDIRECT) return location.replace('login.html');
+    if (/^https?:$/.test(location.protocol) && !window.ENDEAVOR_NO_LOGIN_REDIRECT) return location.replace('login.html?out=admin');
     authShell(
       '<h1 class="portal-h1">Console Admin</h1><p class="portal-muted">Acesso restrito à equipe da Endeavor.</p>' +
       '<form class="portal-form" id="f-login" novalidate>' +

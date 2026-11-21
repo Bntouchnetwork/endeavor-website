@@ -339,7 +339,7 @@
     if (/[?&]forgot=1/.test(location.search)) { history.replaceState(null, '', location.pathname + location.search.replace(/[?&]forgot=1/, '').replace(/^&/, '?')); return renderForgot(false); }
     if (AUTH_ERR) { var e0 = AUTH_ERR; AUTH_ERR = null; history.replaceState(null, '', location.pathname + location.search); return renderForgot(true, e0); }
     // login único: quem não está logado entra por login.html (os links de convite e de nova senha continuam abrindo aqui)
-    if (/^https?:$/.test(location.protocol) && !window.ENDEAVOR_NO_LOGIN_REDIRECT) return location.replace('login.html?lang=' + L);
+    if (/^https?:$/.test(location.protocol) && !window.ENDEAVOR_NO_LOGIN_REDIRECT) return location.replace('login.html?lang=' + L + '&out=client');
     authShell('<h1 class="portal-h1">' + t('loginTitle') + '</h1><p class="portal-muted">' + t('loginLead') + '</p>' +
       '<form class="portal-form" id="f-login" novalidate><div class="field"><label for="l-email">' + t('email') + '</label><input id="l-email" type="email" autocomplete="username" required></div>' +
       pwField('l-pass', t('password'), 'current-password') +
@@ -662,13 +662,14 @@
     } else body.innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
   }
 
-  var DOCX = { en: { solicitados: 'Requested', categoria: 'Category', paginas: 'Document pages', anterior: 'Previous page', proxima: 'Next page', baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
-    pt: { solicitados: 'Solicitados', categoria: 'Categoria', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Próxima página', baixar: 'Baixar', excluir: 'Excluir', excluirQ: 'Excluir "{t}"? Ele sai da sua lista. Não dá para desfazer por aqui.', pedidos: 'Documentos solicitados', pedidosLead: 'A Endeavor pediu estes documentos. Envie cada um por aqui.', enviar: 'Enviar', prazo: 'Prazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
-    es: { solicitados: 'Solicitados', categoria: 'Categoría', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Página siguiente', baixar: 'Descargar', excluir: 'Eliminar', excluirQ: '¿Eliminar "{t}"? Sale de su lista. No se puede deshacer aquí.', pedidos: 'Documentos solicitados', pedidosLead: 'Endeavor pidió estos documentos. Envíe cada uno por aquí.', enviar: 'Enviar', prazo: 'Plazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
+  var DOCX = { en: { cancelar: 'Cancel', solicitados: 'Requested', categoria: 'Category', paginas: 'Document pages', anterior: 'Previous page', proxima: 'Next page', baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
+    pt: { cancelar: 'Cancelar', solicitados: 'Solicitados', categoria: 'Categoria', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Próxima página', baixar: 'Baixar', excluir: 'Excluir', excluirQ: 'Excluir "{t}"? Ele sai da sua lista. Não dá para desfazer por aqui.', pedidos: 'Documentos solicitados', pedidosLead: 'A Endeavor pediu estes documentos. Envie cada um por aqui.', enviar: 'Enviar', prazo: 'Prazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
+    es: { cancelar: 'Cancelar', solicitados: 'Solicitados', categoria: 'Categoría', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Página siguiente', baixar: 'Descargar', excluir: 'Eliminar', excluirQ: '¿Eliminar "{t}"? Sale de su lista. No se puede deshacer aquí.', pedidos: 'Documentos solicitados', pedidosLead: 'Endeavor pidió estos documentos. Envíe cada uno por aquí.', enviar: 'Enviar', prazo: 'Plazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
   function dx(k, v) { var x = (DOCX[L] || DOCX.en)[k]; Object.keys(v || {}).forEach(function (n) { x = x.split('{' + n + '}').join(v[n]); }); return x; }
   async function vDocuments(view) {
     // o envio de documentos mora aqui dentro: botão "Novo documento" (o endereço antigo #/upload também abre esta tela)
-    if (param('new') && S.perms.upload) return vUpload(view);
+    var abrir = param('new') && S.perms.upload ? (param('req') || true) : null;
+    if (abrir) ERoute.set('#/documents', true);
     var docs = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).order('created_at', { ascending: false }));
     var pedidos = S.perms.upload ? ((await sb.from('portal_doc_requests').select('*').eq('client_id', S.client.id).eq('status', 'pending').order('created_at')).data || []) : [];
     S.docReq = pedidos.length; updateDocBadge();
@@ -677,7 +678,7 @@
       '<div class="sv-fit doc-fit"><div class="toolbar doc-barra"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
       '<select id="d-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
       '<select id="d-cat" aria-label="' + dx('categoria') + '">' + (pedidos.length ? '<option value="req">' + dx('solicitados') + ' (' + pedidos.length + ')</option>' : '') + '<option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select>' +
-      (S.perms.upload ? '<a class="btn btn--gold btn--sm doc-novo" id="d-new" href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</a>' : '') + '</div>' +
+      (S.perms.upload ? '<button class="btn btn--gold btn--sm doc-novo" id="d-new" type="button"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</button>' : '') + '</div>' +
       '<section class="portal-card doc-lista"><div class="doc-tab" id="d-tab"><div id="d-list"></div></div>' +
       '<nav class="sv-pager" id="d-pager" aria-label="' + dx('paginas') + '" hidden><button type="button" class="sv-seta" id="d-ant" aria-label="' + dx('anterior') + '">‹</button><span id="d-pg" aria-live="polite"></span><button type="button" class="sv-seta" id="d-prox" aria-label="' + dx('proxima') + '">›</button></nav></section></div>';
     var tab = $('#d-tab', view), lista = $('#d-list', view), pager = $('#d-pager', view), pag = 0, pags = [[]];
@@ -704,7 +705,7 @@
       if (cat === 'req') {
         var ps = pedidos.filter(function (r) { return (!co || !r.company_id || r.company_id === co) && (!s || (r.title + ' ' + (r.note || '')).toLowerCase().indexOf(s) > -1); });
         lista.innerHTML = ps.length ? '<ul class="doclist doc-pedidos" id="d-req"><li class="d-sep">' + esc(dx('pedidosLead')) + '</li>' + ps.map(function (r) { var c2 = r.company_id && coById(r.company_id);
-          return '<li><span class="ficon" aria-hidden="true">!</span><div><div class="dname">' + esc(r.title) + '</div><div class="dmeta">' + [c2 ? esc(c2.legal_name) : '', r.due_date ? esc(dx('prazo', { d: fmtDate(r.due_date + 'T12:00:00') })) : '', r.note ? esc(r.note) : ''].filter(Boolean).join(' · ') + '</div></div><a class="btn btn--navy btn--xs" href="#/documents?new=1&req=' + r.id + '">' + dx('enviar') + '</a></li>'; }).join('') + '</ul>' : vazio(dx('semTipo'));
+          return '<li><span class="ficon" aria-hidden="true">!</span><div><div class="dname">' + esc(r.title) + '</div><div class="dmeta">' + [c2 ? esc(c2.legal_name) : '', r.due_date ? esc(dx('prazo', { d: fmtDate(r.due_date + 'T12:00:00') })) : '', r.note ? esc(r.note) : ''].filter(Boolean).join(' · ') + '</div></div><button class="btn btn--navy btn--xs" type="button" data-req="' + r.id + '">' + dx('enviar') + '</button></li>'; }).join('') + '</ul>' : vazio(dx('semTipo'));
       } else {
         var rows = docs.filter(function (d) { return (!co || d.company_id === co) && (!cat || d.category === cat) && (!s || (d.title + ' ' + (d.year || '')).toLowerCase().indexOf(s) > -1); });
         // organizados por tipo: um título para cada tipo que tem documento, na ordem das permissões
@@ -715,12 +716,17 @@
           : vazio(docs.length ? dx('semTipo') : t('noDocs'));
         wireDocs(lista, rows);
       }
+      $$('[data-req]', lista).forEach(function (b) { b.onclick = function () { abrirEnvio(b.dataset.req); }; });
       pags = [[]]; pag = 0; paginar();
     }
     ['#d-q', '#d-co', '#d-cat'].forEach(function (x) { $(x).addEventListener('input', draw); });
     $('#d-ant', view).onclick = function () { pag--; mostra(); };
     $('#d-prox', view).onclick = function () { pag++; mostra(); };
     var pre = param('company'); if (pre) $('#d-co').value = pre;
+    if ($('#d-new')) $('#d-new').onclick = function () { abrirEnvio(); };
+    // depois de um envio, a lista abre nos documentos enviados, com o novo em primeiro
+    if (S.docAba) { $('#d-cat').value = ''; S.docAba = null; }
+    if (abrir) abrirEnvio(abrir === true ? null : abrir);
     draw(); requestAnimationFrame(function () { requestAnimationFrame(paginar); });
     if (docObs) docObs.disconnect();
     if (window.ResizeObserver) { var larg = 0, altu = 0; docObs = new ResizeObserver(function () { if (!document.body.contains(tab)) return; if (tab.clientHeight === altu && tab.clientWidth === larg) return; altu = tab.clientHeight; larg = tab.clientWidth; paginar(); }); docObs.observe(tab); }
@@ -816,23 +822,24 @@
     await reportsFor($('#r-body'), list);
   }
 
-  async function vUpload(view) {
-    var volta = '<p style="margin:0 0 .5rem"><a href="#/documents">← ' + dx('volta') + '</a></p>';
-    if (!S.companies.length) { view.innerHTML = volta + head(dx('novo'), '') + '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong></div>'; return; }
-    var mine = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).eq('category', 'uploaded').eq('uploaded_by', S.user.id).order('created_at', { ascending: false }).limit(50));
+  // envio de documento: janela por cima da página Documentos (não existe mais a página separada)
+  async function abrirEnvio(reqId) {
+    if (!S.perms.upload) return;
     var y = new Date().getFullYear();
     var tipos = S.perms.cats.filter(function (c) { return c !== 'uploaded'; });
-    var reqId = param('req'), pedido = reqId ? ((await sb.from('portal_doc_requests').select('*').eq('id', reqId).eq('status', 'pending').maybeSingle()).data || null) : null;
-    view.innerHTML = volta + head(dx('novo'), pedido ? dx('paraPedido', { t: pedido.title }) : t('uploadLead')) +
-      '<section class="portal-card"><form class="portal-form" id="u-form" novalidate><div class="portal-grid2"><div class="field"><label for="u-co">' + t('company') + '</label><select id="u-co">' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select></div>' +
+    var pedido = reqId ? ((await sb.from('portal_doc_requests').select('*').eq('id', reqId).eq('status', 'pending').maybeSingle()).data || null) : null;
+    if (!S.companies.length) { openOverlay('<div class="drawer__head"><h2 class="portal-h2" style="margin:0">' + dx('novo') + '</h2><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div><div class="empty-state"><strong>' + t('noCompanies') + '</strong></div>', true); return; }
+    openOverlay('<div class="drawer__head"><div><h2 class="portal-h2" id="u-h" style="margin:0">' + dx('novo') + '</h2><p class="portal-muted" id="u-sub" style="margin:.2rem 0 0">' + esc(pedido ? dx('paraPedido', { t: pedido.title }) : t('uploadLead')) + '</p></div><button class="close-x" type="button" aria-label="' + t('close') + '">×</button></div>' +
+      '<form class="portal-form" id="u-form" novalidate><div class="portal-grid2"><div class="field"><label for="u-co">' + t('company') + '</label><select id="u-co">' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="u-year">' + t('yearOpt') + '</label><select id="u-year"><option value="">—</option>' + [y, y - 1, y - 2, y - 3].map(function (v) { return '<option' + (v === y - 1 ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></div></div>' +
-      '<div class="field"><label for="u-tipo">' + dx('tipo') + '</label><select id="u-tipo"><option value="">' + dx('outro') + '</option>' + tipos.map(function (c) { return '<option value="' + c + '">' + esc(t('cat_' + c)) + '</option>'; }).join('') + '</select></div>' +
-      '<div class="field"><label for="u-title">' + t('docTitle') + '</label><input id="u-title" type="text" maxlength="160" placeholder="1099-NEC, bank statements, receipts…"></div>' +
+      '<div class="portal-grid2"><div class="field"><label for="u-tipo">' + dx('tipo') + '</label><select id="u-tipo"><option value="">' + dx('outro') + '</option>' + tipos.map(function (c) { return '<option value="' + c + '">' + esc(t('cat_' + c)) + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="u-title">' + t('docTitle') + '</label><input id="u-title" type="text" maxlength="160" placeholder="1099-NEC, bank statements, receipts…"></div></div>' +
       '<label class="upload-zone" for="u-file" id="u-zone"><input type="file" id="u-file" class="sr-only" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.csv,.xls,.xlsx,.doc,.docx"><strong>' + t('chooseFiles') + '</strong><span class="portal-muted" id="u-names">' + t('fileHint') + '</span></label>' +
-      '<div class="portal-alert" id="u-msg" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('send') + '</button></form></section>' +
-      '<section class="portal-card"><h2 class="portal-h2">' + t('myUploads') + '</h2>' + docItems(mine, true) + '</section>';
-    wireDocs(view, mine);
+      '<div class="portal-alert" id="u-msg" role="status"></div><div class="portal-btn-row" style="justify-content:flex-end"><button class="btn btn--ghost close-x-btn" type="button" id="u-cancel">' + dx('cancelar') + '</button><button class="btn btn--navy" type="submit" id="u-go">' + t('send') + '</button></div></form>', true);
+    $('#overlay .modal').setAttribute('aria-labelledby', 'u-h'); $('#overlay .modal').id = 'u-win';
+    $('#u-cancel').onclick = closeOverlay;
     if (pedido) { $('#u-title').value = pedido.title; if (pedido.company_id && coById(pedido.company_id)) $('#u-co').value = pedido.company_id; }
+    else { var fc = $('#d-co'); if (fc && fc.value) $('#u-co').value = fc.value; }
     var input = $('#u-file'), zone = $('#u-zone'), files = [];
     var show = function () { $('#u-names').textContent = files.length ? files.map(function (f) { return f.name; }).join(', ') : t('fileHint'); };
     input.onchange = function () { files = Array.prototype.slice.call(input.files); show(); };
@@ -841,10 +848,11 @@
     zone.addEventListener('drop', function (ev) { files = Array.prototype.slice.call(ev.dataTransfer.files || []); show(); });
     $('#u-form').onsubmit = async function (e) {
       e.preventDefault();
-      var m = $('#u-msg'), co = $('#u-co').value, desc = $('#u-title').value.trim(), year = +$('#u-year').value || null;
+      var m = $('#u-msg'), go = $('#u-go'), co = $('#u-co').value, desc = $('#u-title').value.trim(), year = +$('#u-year').value || null;
+      if (go.disabled) return;
       if (!files.length) return msg(m, t('pickFile'), 'error');
       var big = files.find(function (f) { return f.size > 25 * 1024 * 1024; }); if (big) return msg(m, t('tooBig', { f: big.name }), 'error');
-      var names = [];
+      var names = []; go.disabled = true;
       try {
         for (var i = 0; i < files.length; i++) {
           var f = files[i]; msg(m, t('sending', { i: i + 1, n: files.length }), 'info');
@@ -860,11 +868,12 @@
           if (pedido && i === 0) await sb.rpc('portal_doc_request_done', { p_id: pedido.id, p_doc: row.id });
           names.push(f.name);
         }
-        fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ _subject: 'Client portal upload: ' + S.client.name + ' (' + names.length + ' file' + (names.length > 1 ? 's' : '') + ')', _template: 'table', _captcha: 'false',
+        fetch(CFG.formEndpoint, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ _subject: 'Client portal upload: ' + S.client.name + ' (' + names.length + ' file' + (names.length > 1 ? 's' : '') + ')',
           client: S.client.name, company: (coById(co) || {}).legal_name, uploaded_by: S.user.email, files: names.join(', '), tax_year: year || '', note: 'Open the admin console > Clientes > Documentos.' }) }).catch(function () {});
-        msg(m, t('sent'), 'ok'); files = []; input.value = ''; show();
-        setTimeout(function () { ERoute.set('#/documents', true); route(); }, 1200);
-      } catch (err) { msg(m, errText(err), 'error'); }
+        // a janela fecha sozinha e a lista volta já com o documento (o pedido sai de "Solicitados")
+        msg(m, t('sent'), 'ok');
+        setTimeout(function () { closeOverlay(); S.docAba = 'uploaded'; route(); }, 700);
+      } catch (err) { go.disabled = false; msg(m, errText(err), 'error'); }
     };
   }
 
