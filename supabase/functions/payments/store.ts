@@ -242,10 +242,15 @@ export function store(d: StoreDeps) {
 
   // Add-ons sob consulta (Web Meeting, Webinar, WhatsApp Manager): o dono pede e a Endeavor ativa
   const SOB_CONSULTA: Record<string, string> = { webmeeting: "Web Meeting", webinar: "Live Webinar", whatsapp: "WhatsApp Manager" };
-  async function request(clientId: string, code: string, who: string) {
+  async function request(clientId: string, code: string, who: string, note = "") {
+    const { data: cl } = await admin.from("clients").select("name").eq("id", clientId).single();
+    // pedido de relatório do Bookkeeping (serviço dentro do pacote): a equipe prepara e publica
+    if (code === "relatorio") {
+      await admin.from("admin_events").insert({ kind: "report_request", title: `Pedido de relatório de Bookkeeping: ${cl?.name || clientId}`, body: `${String(note).slice(0, 600) || "Sem detalhes"} · pedido por ${who}`, link: "#/clientes?id=" + clientId });
+      return { ok: true };
+    }
     const nome = SOB_CONSULTA[code];
     if (!nome) throw new Fail("not_found", 404);
-    const { data: cl } = await admin.from("clients").select("name").eq("id", clientId).single();
     await admin.from("admin_events").insert({ kind: "store_request", title: `Pedido de add-on: ${nome}`, body: `${cl?.name || clientId} · pedido por ${who}`, link: "#/clientes" });
     return { ok: true };
   }

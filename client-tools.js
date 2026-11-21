@@ -443,9 +443,100 @@
   }
 
   /* ---------------- Bookkeeping ---------------- */
+  /* Bookkeeping como serviço do pacote (a Endeavor faz a contabilidade): painel de relatórios, pedido de relatório e conector de contas.
+     Quem comprou o Bookkeeping avulso continua com a página da ferramenta (books). */
+  var BKP = {
+    en: { lead: 'Endeavor keeps the books of your company. Here are your reports and your connected accounts.', ytd: 'Year to date · {y}', rev: 'Revenue', exp: 'Expenses', net: 'Net income', ytdNone: 'The numbers of {y} appear here when the first report of the year is published.', upTo: 'Published through {d}',
+      reps: 'Reports', repsLead: 'Profit and Loss, Balance Sheet and Cash Flow of the last 3 years.', none: 'No reports published for {y} yet.', period: 'Period', full: 'Full year', open: 'Open PDF', notYet: '—', ask: 'Request a report', askT: 'Request a report', askWhat: 'Which report do you need?', askPeriod: 'Period', askNote: 'Details (optional)', askSend: 'Send request', askOk: 'Request sent. Our team will prepare the report and let you know.', cancel: 'Cancel',
+      accts: 'Connected accounts', acctsLead: 'Connect the bank account and the card of your company. Endeavor reads the transactions to keep your books.', st_ok: 'Connected', st_err: 'Needs attention', lastSync: 'Last update: {d}', pl: 'Profit and Loss', bs: 'Balance Sheet', cf: 'Cash Flow', other: 'Other' },
+    pt: { lead: 'A Endeavor faz a contabilidade da sua empresa. Aqui estão os seus relatórios e as contas conectadas.', ytd: 'Ano até hoje · {y}', rev: 'Receita', exp: 'Despesas', net: 'Lucro', ytdNone: 'Os números de {y} aparecem aqui quando o primeiro relatório do ano for publicado.', upTo: 'Publicado até {d}',
+      reps: 'Relatórios', repsLead: 'P&L, Balance Sheet e Fluxo de caixa dos últimos 3 anos.', none: 'Nenhum relatório publicado para {y} ainda.', period: 'Período', full: 'Ano inteiro', open: 'Abrir PDF', notYet: '—', ask: 'Solicitar relatório', askT: 'Solicitar relatório', askWhat: 'Qual relatório você precisa?', askPeriod: 'Período', askNote: 'Detalhes (opcional)', askSend: 'Enviar pedido', askOk: 'Pedido enviado. A nossa equipe prepara o relatório e avisa você.', cancel: 'Cancelar',
+      accts: 'Contas conectadas', acctsLead: 'Conecte a conta bancária e o cartão da sua empresa. A Endeavor lê as transações para fazer a sua contabilidade.', st_ok: 'Conectada', st_err: 'Precisa de atenção', lastSync: 'Última atualização: {d}', pl: 'P&L (resultado)', bs: 'Balance Sheet (balanço)', cf: 'Fluxo de caixa', other: 'Outro' },
+    es: { lead: 'Endeavor lleva la contabilidad de su empresa. Aquí están sus informes y las cuentas conectadas.', ytd: 'Año hasta hoy · {y}', rev: 'Ingresos', exp: 'Gastos', net: 'Utilidad', ytdNone: 'Los números de {y} aparecen aquí cuando se publique el primer informe del año.', upTo: 'Publicado hasta {d}',
+      reps: 'Informes', repsLead: 'Estado de resultados, balance y flujo de caja de los últimos 3 años.', none: 'Aún no hay informes publicados para {y}.', period: 'Período', full: 'Año completo', open: 'Abrir PDF', notYet: '—', ask: 'Solicitar informe', askT: 'Solicitar informe', askWhat: '¿Qué informe necesita?', askPeriod: 'Período', askNote: 'Detalles (opcional)', askSend: 'Enviar pedido', askOk: 'Pedido enviado. Nuestro equipo prepara el informe y le avisa.', cancel: 'Cancelar',
+      accts: 'Cuentas conectadas', acctsLead: 'Conecte la cuenta bancaria y la tarjeta de su empresa. Endeavor lee las transacciones para llevar su contabilidad.', st_ok: 'Conectada', st_err: 'Requiere atención', lastSync: 'Última actualización: {d}', pl: 'Estado de resultados', bs: 'Balance general', cf: 'Flujo de caja', other: 'Otro' }
+  };
+  function bk(k, v) { var x = (BKP[L] || BKP.en)[k] || k; Object.keys(v || {}).forEach(function (n) { x = x.split('{' + n + '}').join(v[n]); }); return x; }
+  var TIPOS = [['ProfitAndLoss', 'pl'], ['BalanceSheet', 'bs'], ['CashFlow', 'cf']];
+  /** Receita, despesas e lucro do ano com o que já foi publicado: o ano inteiro, se houver; senão, a soma dos trimestres. */
+  function ytdDe(reps, ano) {
+    var pl = reps.filter(function (r) { return r.report_type === 'ProfitAndLoss' && String(r.start_date).slice(0, 4) === String(ano) && r.data; });
+    var cheio = pl.filter(function (r) { return String(r.start_date).slice(5) === '01-01' && String(r.end_date).slice(5) === '12-31'; })[0];
+    var usar = cheio ? [cheio] : pl.filter(function (r) { return !(String(r.start_date).slice(5) === '01-01' && String(r.end_date).slice(5) === '12-31'); });
+    if (!usar.length) return null;
+    var tot = function (d, k) { var s = (d.sections || []).filter(function (x) { return x.key === k; })[0]; return s ? Number(s.total || 0) : 0; };
+    var o = { rev: 0, exp: 0, net: 0, ate: '' };
+    usar.forEach(function (r) { o.rev += tot(r.data, 'income') + tot(r.data, 'other_income'); o.exp += tot(r.data, 'cogs') + tot(r.data, 'expense') + tot(r.data, 'other_expense'); o.net += Number(r.data.net_income || 0); if (String(r.end_date) > o.ate) o.ate = String(r.end_date); });
+    return o;
+  }
+  async function booksPainel(view, cos) {
+    var cid = C.S.client.id, co = cos.find(function (c) { return c.id === C.param('co'); }) || cos[0], ano = new Date().getFullYear(), anos = [ano, ano - 1, ano - 2];
+    var res = await Promise.all([
+      C.sb.from('financial_reports').select('id, period_label, start_date, end_date, report_type, document_id, data').eq('company_id', co.id).gte('start_date', (ano - 2) + '-01-01').order('start_date', { ascending: false }),
+      C.sb.rpc('client_bk_status', { p_company: co.id })]);
+    var reps = (res[0] && res[0].data) || [], st = (res[1] && res[1].data) || { connections: [], accounts: [] };
+    var sel = +C.param('y') || ano; if (anos.indexOf(sel) < 0) sel = ano;
+    var y = ytdDe(reps, ano), dinheiro = function (c) { return money(c); }, dataCurta = function (d) { return C.fmtDate ? C.fmtDate(d) : d; };
+    var conex = st.connections || [], ult = conex.reduce(function (a, c) { return c.last_sync_at && (!a || c.last_sync_at > a) ? c.last_sync_at : a; }, null);
+    function tabela(a) {
+      var doAno = reps.filter(function (r) { return String(r.start_date).slice(0, 4) === String(a); });
+      if (!doAno.length) return '<p class="portal-muted" style="margin:.5rem 0 0">' + bk('none', { y: a }) + '</p>';
+      var periodos = []; doAno.forEach(function (r) { var k = r.start_date + '|' + r.end_date; if (!periodos.some(function (p) { return p.k === k; })) periodos.push({ k: k, label: r.period_label, s: r.start_date, e: r.end_date }); });
+      periodos.sort(function (p, q) { return p.s < q.s ? -1 : p.s > q.s ? 1 : (p.e < q.e ? -1 : 1); });
+      return '<div class="table-wrap"><table class="data bkp-tab"><thead><tr><th>' + bk('period') + '</th>' + TIPOS.map(function (tp) { return '<th>' + bk(tp[1]) + '</th>'; }).join('') + '</tr></thead><tbody>' + periodos.map(function (p) {
+        var cheio = String(p.s).slice(5) === '01-01' && String(p.e).slice(5) === '12-31';
+        return '<tr><td><strong>' + esc(cheio ? bk('full') : p.label || (p.s + ' – ' + p.e)) + '</strong></td>' + TIPOS.map(function (tp) { var r = doAno.filter(function (x) { return x.report_type === tp[0] && x.start_date === p.s && x.end_date === p.e; })[0];
+          return '<td>' + (r && r.document_id ? '<button class="btn btn--ghost btn--xs" type="button" data-rep="' + r.document_id + '">' + bk('open') + '</button>' : '<span class="portal-muted">' + bk('notYet') + '</span>') + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+    }
+    view.innerHTML = C.head(t('nav_books'), bk('lead'), '<button class="btn btn--gold btn--sm" type="button" id="bkp-ask">' + bk('ask') + '</button>') +
+      (cos.length > 1 ? '<div class="toolbar"><select id="bk-co" aria-label="' + esc(t('nav_books')) + '">' + cos.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.legal_name) + '</option>'; }).join('') + '</select></div>' : '') +
+      '<div class="portal-alert" id="bk-m" role="status"></div>' +
+      '<section class="portal-card bkp-ytd" id="bkp-ytd"><div class="bil-plano__top"><h2 class="portal-h2">' + bk('ytd', { y: ano }) + ' · ' + esc(co.legal_name) + '</h2>' + (y && y.ate ? '<span class="portal-muted" style="font-size:.85rem">' + esc(bk('upTo', { d: dataCurta(y.ate) })) + '</span>' : '') + '</div>' +
+        (y ? '<div class="kpis">' + C.kpi(bk('rev'), dinheiro(y.rev), true) + C.kpi(bk('exp'), dinheiro(y.exp), true) + C.kpi(bk('net'), dinheiro(y.net), true) + '</div>' : '<p class="portal-muted" style="margin:0">' + bk('ytdNone', { y: ano }) + '</p>') + '</section>' +
+      '<div class="bkp-grid"><section class="portal-card" id="bkp-reps"><div class="bil-plano__top"><h2 class="portal-h2">' + bk('reps') + '</h2><div class="seg" role="group" aria-label="' + bk('reps') + '">' + anos.map(function (a) { return '<button type="button" data-ano="' + a + '" aria-pressed="' + (a === sel) + '">' + a + '</button>'; }).join('') + '</div></div>' +
+        '<p class="portal-muted" style="margin:-.25rem 0 .5rem;font-size:.9rem">' + bk('repsLead') + '</p><div id="bkp-lista">' + tabela(sel) + '</div></section>' +
+      '<section class="portal-card" id="bkp-contas"><h2 class="portal-h2">' + bk('accts') + '</h2><p class="portal-muted" style="margin:-.25rem 0 .75rem;font-size:.9rem">' + bk('acctsLead') + '</p>' +
+        ((st.accounts || []).length ? '<ul class="ag-list">' + st.accounts.map(function (a) { var cx = conex.filter(function (c) { return c.id === a.connection_id; })[0], ruim = cx && (cx.status === 'error' || cx.last_error);
+          return '<li class="ag-item"><div><strong>' + esc(a.name) + '</strong>' + (a.mask ? ' ••' + esc(a.mask) : '') + '<div class="portal-muted" style="font-size:.85rem">' + t('k_' + (a.kind || 'other')) + '</div></div><span class="inv-st inv-st--' + (ruim ? 'uncollectible' : 'paid') + '">' + bk(ruim ? 'st_err' : 'st_ok') + '</span></li>'; }).join('') + '</ul>'
+          : '<p class="portal-muted">' + t('bk_none') + '</p>') +
+        (ult ? '<p class="portal-muted" style="font-size:.85rem;margin:.6rem 0 0">' + esc(bk('lastSync', { d: C.fmtDT(ult) })) + '</p>' : '') +
+        '<div class="portal-btn-row" style="margin-top:.9rem"><button class="btn btn--navy btn--sm" type="button" id="bk-bank">' + t('bk_bank') + '</button><button class="btn btn--ghost btn--sm" type="button" id="bk-card">' + t('bk_card') + '</button></div></section></div>';
+    var abrir = function () { view.querySelectorAll('[data-rep]').forEach(function (b) { b.onclick = async function () {
+      b.disabled = true;
+      try { var d = (await C.sb.from('company_documents').select('*').eq('id', b.dataset.rep).single()).data; if (d && C.viewDoc) C.viewDoc(d); else location.hash = '#/reports?company=' + co.id; } catch (e) { location.hash = '#/reports?company=' + co.id; }
+      b.disabled = false; }; }); };
+    abrir();
+    view.querySelectorAll('[data-ano]').forEach(function (b) { b.onclick = function () { view.querySelectorAll('[data-ano]').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); view.querySelector('#bkp-lista').innerHTML = tabela(+b.dataset.ano); abrir(); }; });
+    if (view.querySelector('#bk-co')) view.querySelector('#bk-co').onchange = function () { location.hash = '#/bookkeeping?co=' + this.value; };
+    view.querySelector('#bk-bank').onclick = function () { connect(co, 'bank', view); };
+    view.querySelector('#bk-card').onclick = function () { connect(co, 'card', view); };
+    // pedir um relatório: vira aviso no sino da equipe e e-mail para o suporte
+    view.querySelector('#bkp-ask').onclick = function () {
+      var ov = C.openOverlay('<h2 class="portal-h2">' + bk('askT') + '</h2><form class="portal-form" id="bkp-f" novalidate>' +
+        '<div class="field"><label for="bkp-tipo">' + bk('askWhat') + '</label><select id="bkp-tipo">' + TIPOS.map(function (tp) { return '<option>' + bk(tp[1]) + '</option>'; }).join('') + '<option>' + bk('other') + '</option></select></div>' +
+        '<div class="field"><label for="bkp-per">' + bk('askPeriod') + '</label><input id="bkp-per" type="text" maxlength="80" placeholder="Q3 ' + ano + '"></div>' +
+        '<div class="field"><label for="bkp-nota">' + bk('askNote') + '</label><textarea id="bkp-nota" rows="3" maxlength="400"></textarea></div>' +
+        '<div class="portal-alert" id="bkp-fm" role="alert"></div><div class="portal-btn-row"><button class="btn btn--navy" type="submit">' + bk('askSend') + '</button><button class="btn btn--ghost" type="button" id="bkp-x">' + bk('cancel') + '</button></div></form>');
+      var root = (ov && ov.querySelector) ? ov : document.getElementById('overlay') || document;
+      root.querySelector('#bkp-x').onclick = function () { C.closeOverlay(); };
+      root.querySelector('#bkp-f').onsubmit = async function (e) {
+        e.preventDefault();
+        var nota = [root.querySelector('#bkp-tipo').value, root.querySelector('#bkp-per').value.trim(), co.legal_name, root.querySelector('#bkp-nota').value.trim()].filter(Boolean).join(' · ');
+        var btn = this.querySelector('button[type=submit]'); btn.disabled = true;
+        try {
+          await fn('payments', { action: 'store_request', client_id: cid, product: 'relatorio', note: nota });
+          if (window.EP && EP.notify) EP.notify({ _subject: 'Pedido de relatório de Bookkeeping: ' + C.S.client.name, name: C.S.client.name, email: C.S.client.primary_email, pedido: nota });
+          C.closeOverlay(); C.msg(view.querySelector('#bk-m'), bk('askOk'), 'ok');
+        } catch (er) { btn.disabled = false; C.msg(root.querySelector('#bkp-fm'), er.message, 'error'); }
+      };
+    };
+  }
   async function books(view) {
     var cos = (C.S.companies || []).filter(function (c) { return c.books_provider === 'endeavor'; });
     if (!cos.length) { view.innerHTML = C.head(t('nav_books'), t('bk_lead')) + '<div class="portal-card">' + t('bk_noCo') + '</div>'; return; }
+    // Bookkeeping dentro do pacote (serviço feito pela Endeavor): painel de relatórios; avulso: a página da ferramenta
+    var sv = await C.sb.from('client_services').select('included_in, status').eq('client_id', C.S.client.id).eq('product_code', 'bookkeeping').neq('status', 'canceled');
+    if (((sv && sv.data) || []).some(function (x) { return x.included_in; })) return booksPainel(view, cos);
     var co = cos.find(function (c) { return c.id === C.param('co'); }) || cos[0];
     var st = (await C.sb.rpc('client_bk_status', { p_company: co.id })).data || { connections: [], accounts: [] };
     view.innerHTML = C.head(t('nav_books'), t('bk_lead')) +

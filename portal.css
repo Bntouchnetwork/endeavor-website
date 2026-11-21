@@ -1470,3 +1470,10 @@ tr.is-archived td { opacity: .6; }
 .ck-card__so { font-size: .88rem; margin: 0 0 .9rem; }
 .ck-card__btn { min-height: 3.25rem; font-size: 1.05rem; }
 body.app-shell .console__content .ck-um, .ck-um { max-width: 46rem !important; margin-inline: auto !important; }
+
+/* Bookkeeping (serviço do pacote): painel de relatórios */
+.bkp-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin-top: 1rem; align-items: start; }
+@media (min-width: 1100px) { .bkp-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } }
+.bkp-grid .portal-card { margin: 0; }
+.bkp-tab td, .bkp-tab th { white-space: nowrap; }
+.bkp-ytd .kpis { margin: 0; }

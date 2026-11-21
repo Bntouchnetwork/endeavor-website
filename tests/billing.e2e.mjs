@@ -10,7 +10,11 @@ const dia = (m) => { const d = new Date(); d.setMonth(d.getMonth() - m); return 
 const DADOS = {
   clients: [{ id: "c1", name: "ACME LLC", primary_email: "dono@acme.com", status: "active", portal_kind: "full", language: "pt", monthly_cents: null }],
   client_users: [{ id: "cu1", client_id: "c1", user_id: "u1", email: "dono@acme.com", role: "owner", status: "active", can_view: true, can_upload: true }],
-  companies: [], compliance_items: [], company_documents: [], tel_access: [], meet_access: [], wa_access: [], linkedin_accounts: [],
+  companies: [{ id: "co1", client_id: "c1", legal_name: "ACME LLC", status: "active", stage: "approved", books_provider: "endeavor", books_service: "active" }], compliance_items: [],
+  company_documents: [{ id: "d1", client_id: "c1", company_id: "co1", category: "formation", title: "Articles of Organization", path: "c1/a.pdf", created_at: dia(5), visible_to_client: true }, { id: "d2", client_id: "c1", company_id: "co1", category: "tax_return", title: "Form 1120", year: 2025, path: "c1/b.pdf", created_at: dia(3), visible_to_client: true },
+    { id: "d3", client_id: "c1", company_id: "co1", category: "uploaded", title: "Extrato bancário", path: "c1/c.pdf", created_at: dia(1), uploaded_by: "u1", uploaded_by_email: "dono@acme.com", visible_to_client: true }],
+  financial_reports: [1, 2, 3].flatMap((q) => ["ProfitAndLoss", "BalanceSheet", "CashFlow"].map((tp) => ({ id: "fr" + q + tp, company_id: "co1", period_label: "Q" + q + " " + new Date().getFullYear(), start_date: new Date().getFullYear() + "-" + String((q - 1) * 3 + 1).padStart(2, "0") + "-01", end_date: new Date().getFullYear() + "-" + String(q * 3).padStart(2, "0") + "-30", report_type: tp, document_id: "d-" + q + tp,
+    data: tp === "ProfitAndLoss" ? { kind: "pl", sections: [{ key: "income", total: 1000000 }, { key: "expense", total: 600000 }], net_income: 400000 } : {} }))), tel_access: [], meet_access: [], wa_access: [], linkedin_accounts: [],
   client_services: [{ product_code: "pkg_holding", status: "active", included_in: null }, { product_code: "bookkeeping", status: "active", included_in: "pkg_holding" }, { product_code: "crm", status: "active", included_in: null }],
   store_products: [{ code: "pkg_holding", kind: "package", price_cents: 24900, member_cents: null, interval: "month", status: "hidden", sort: 3 }, { code: "crm", kind: "tool", price_cents: 2900, member_cents: 2320, interval: "month", status: "active", sort: 10 }, { code: "bookkeeping", kind: "tool", price_cents: 19900, member_cents: null, interval: "month", status: "active", sort: 40 }],
   invoices: [
@@ -27,7 +31,7 @@ const FAKE_SB = `window.supabase = { createClient: function () {
     in: function (k, v) { f[k] = v; return o; }, eq: function (k, v) { f[k] = [v]; return o; }, single: function () { um = true; return o; }, maybeSingle: function () { um = true; return o; }, insert: function () { return Promise.resolve({ data: null, error: null }); }, update: function () { return o; }, upsert: function () { return Promise.resolve({ data: null, error: null }); },
     then: function (res) { var r = (D[t] || []).filter(function (x) { return Object.keys(f).every(function (k) { return !(k in x) || f[k].indexOf(x[k]) > -1; }); }); return Promise.resolve({ data: um ? (r[0] || null) : r, error: null, count: r.length }).then(res); } }; return o; }
   var sess = { access_token: "tok", user: { id: "u1", email: "dono@acme.com", last_sign_in_at: new Date().toISOString() } };
-  return { from: Q, rpc: function (n) { var R = { claim_invitations: [{ client_id: "c1", client_name: "ACME LLC", role: "owner", status: "active" }], client_is_member: true, portal_mfa_policy: { optional: false } }; return Promise.resolve({ data: n in R ? R[n] : null, error: null }); },
+  return { from: Q, rpc: function (n) { var R = { client_bk_status: { connections: [{ id: "cx1", status: "active", last_sync_at: new Date().toISOString() }], accounts: [{ name: "Chase Business Checking", mask: "6789", kind: "bank", connection_id: "cx1" }], transactions: 120, to_review: 4 }, claim_invitations: [{ client_id: "c1", client_name: "ACME LLC", role: "owner", status: "active" }], client_is_member: true, portal_mfa_policy: { optional: false } }; return Promise.resolve({ data: n in R ? R[n] : null, error: null }); },
     auth: { getSession: function () { return Promise.resolve({ data: { session: sess } }); }, getUser: function () { return Promise.resolve({ data: { user: sess.user } }); }, onAuthStateChange: function () { return { data: { subscription: { unsubscribe: function () {} } } }; }, signOut: function () { return Promise.resolve({}); },
       mfa: { getAuthenticatorAssuranceLevel: function () { return Promise.resolve({ data: { currentLevel: "aal2", nextLevel: "aal2" } }); }, listFactors: function () { return Promise.resolve({ data: { totp: [{ id: "f", status: "verified" }] } }); } } },
     storage: { from: function () { return { createSignedUrl: function () { return Promise.resolve({ data: { signedUrl: "#" } }); } }; } }, channel: function () { var c = { on: function () { return c; }, subscribe: function () { return c; } }; return c; }, removeChannel: function () {} }; } };`;
@@ -94,7 +98,30 @@ try {
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(400);
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1) && await p.locator("#bil-rows tr").count() === 15 && await p.locator("#bil-pager").isHidden(), "celular: todas as faturas empilhadas, com rolagem normal e sem rolagem horizontal");
   for (const [l, nome] of [["en", "Billing"], ["es", "Facturación"]]) { await p.goto(BASE + "/client.html?lang=" + l + "#/invoices"); await p.reload(); await p.waitForSelector("#bil-rows tr"); ok((await p.textContent(".console__head h1")) === nome, l + ": " + nome); }
-} catch (e) { console.log("erro:", e.message.slice(0, 400)); falhas.push("erro"); }
+  // Documentos: o envio mora dentro da página, organizada por tipo
+  await p.setViewportSize({ width: 1366, height: 900 });
+  await p.goto(BASE + "/client.html?lang=pt#/documents"); await p.reload(); await p.waitForSelector("#d-list .d-grupo");
+  ok(!(await p.locator('#console-nav a[data-view="upload"]').count()) && await p.locator('#console-nav a[data-view="documents"]').count() === 1, 'menu: sai "Enviar documentos", fica só "Documentos"');
+  const grupos = await p.locator("#d-list .d-grupo").evaluateAll((l) => l.map((g) => g.dataset.cat + ":" + g.querySelectorAll(".doclist li").length).join(","));
+  ok(grupos === "formation:1,tax_return:1,uploaded:1" && (await p.textContent("#d-new")).includes("Novo documento"), "documentos organizados por tipo, com o botão Novo documento");
+  await p.fill("#d-q", "1120"); ok(await p.locator("#d-list .d-grupo").count() === 1, "busca filtra os grupos");
+  await p.screenshot({ path: OUT + "/documentos.png" });
+  await p.click("#d-new"); await p.waitForSelector("#u-form", { timeout: 5000 }).catch(async () => console.log("tela:", p.url(), (await p.textContent("#view")).slice(0, 300)));
+  ok((await p.textContent(".console__head h1")) === "Novo documento" && await p.locator("#u-co").count() === 1 && await p.locator("#u-tipo option").count() >= 3 && await p.locator("#u-file").count() === 1, "Novo documento: empresa, tipo do documento e arquivo");
+  await p.goto(BASE + "/client.html?lang=pt#/upload"); await p.reload(); await p.waitForSelector("#u-form");
+  ok(p.url().includes("#/documents?new=1"), "o endereço antigo de envio abre a página nova");
+  // Bookkeeping do pacote: painel de relatórios
+  await p.goto(BASE + "/client.html?lang=pt#/bookkeeping"); await p.reload(); await p.waitForSelector("#bkp-ytd");
+  const yt = await p.textContent("#bkp-ytd");
+  ok(yt.includes("Ano até hoje") && yt.includes("$30,000") && yt.includes("$18,000") && yt.includes("$12,000"), "Bookkeeping do pacote: resumo do ano até hoje (receita, despesas e lucro dos relatórios publicados)");
+  ok(await p.locator("#bkp-reps [data-ano]").count() === 3 && await p.locator("#bkp-lista tbody tr").count() === 3 && await p.locator("#bkp-lista [data-rep]").count() === 9, "relatórios dos últimos 3 anos: P&L, Balance Sheet e Fluxo de caixa por trimestre, com PDF");
+  const ct = await p.textContent("#bkp-contas");
+  ok(ct.includes("Chase Business Checking") && ct.includes("Conectada") && await p.locator("#bk-bank").count() === 1 && await p.locator("#bk-card").count() === 1, "conector de contas: contas conectadas com a situação e os botões de conectar");
+  await p.screenshot({ path: OUT + "/bookkeeping-painel.png", fullPage: true });
+  await p.click("#bkp-ask"); await p.waitForSelector("#bkp-f"); await p.fill("#bkp-per", "Q4"); await p.click('#bkp-f button[type="submit"]'); await p.waitForSelector("#bk-m.portal-alert--ok");
+  const pr = pedidos.filter((b) => b.action === "store_request").pop();
+  ok(pr && pr.product === "relatorio" && pr.note.includes("Q4") && pr.note.includes("ACME LLC"), "Solicitar relatório vira pedido para a equipe");
+} catch (e) { console.log("erro:", e.message.slice(0, 400), (e.stack || "").split("\n").filter((x) => x.includes("billing.e2e")).slice(0, 2).join(" ")); falhas.push("erro"); }
 await browser.close();
 console.log(falhas.length ? falhas.length + " falha(s)" : "tudo certo");
 process.exit(falhas.length ? 1 : 0);

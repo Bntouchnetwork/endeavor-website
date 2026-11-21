@@ -272,7 +272,7 @@
   function refCtx() {
     return { sb: sb, CFG: CFG, L: L, locale: EP.locale, t: t, esc: esc, $: $, $$: $$, msg: msg, q: q, errText: errText, fmtDate: fmtDate, fmtDT: fmtDT,
       head: function (a, b, c) { return head(a, b, c); }, kpi: function (a, b, c) { return kpi(a, b, c); }, openOverlay: function (h, c) { return openOverlay(h, c); }, closeOverlay: function () { closeOverlay(); },
-      param: function (k) { return param(k); }, siteUrl: siteUrl, route: function () { route(); }, S: S, sha256Hex: sha256Hex,
+      param: function (k) { return param(k); }, siteUrl: siteUrl, route: function () { route(); }, S: S, sha256Hex: sha256Hex, viewDoc: function (d) { return viewDoc(d); },
       reload: async function () { await selectClient(S.client.id); await checkOpenInvoices(); startShell(); } };
   }
   // red counter next to "Invoices" (and a dot on the mobile menu button) while there are invoices to pay
@@ -444,7 +444,7 @@
     // account created by an online purchase: only what was bought (bookkeeping brings the company, documents and reports)
     if (S.kind === 'tools' && !PARTNER) {
       var b = S.services.indexOf('bookkeeping') > -1, m = [['overview', 'nav_overview', 'i-grid']];
-      if (b) m.push(['companies', 'nav_companies', 'i-brief'], ['documents', 'nav_documents', 'i-file'], ['reports', 'nav_reports', 'i-chart'], ['upload', 'nav_upload', 'i-up']);
+      if (b) m.push(['companies', 'nav_companies', 'i-brief'], ['documents', 'nav_documents', 'i-file'], ['reports', 'nav_reports', 'i-chart']);
       if (S.perms.owner && window.ETools) ETools.nav().forEach(function (x) { m.push([x[0], x[1], x[2], 1]); });
       if (S.meetOn && window.EMeetPanel) m.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
       if (S.meetOn && window.EWebinarPanel) m.push(['webinar', 'Live Webinar', 'i-live', 1]);
@@ -459,7 +459,6 @@
     if (S.perms.view) n.push(['documents', 'nav_documents', 'i-file']);
     if (S.perms.deadlines) n.push(['compliance', 'nav_compliance', 'i-cal']);
     if (S.perms.reports) n.push(['reports', 'nav_reports', 'i-chart']);
-    if (S.perms.upload) n.push(['upload', 'nav_upload', 'i-up']);
     if (S.perms.owner) n.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
     if (window.EProjects && S.perms.owner && !PARTNER) n.push(['projetos', 'nav_projects', 'i-bot']);
     if (window.EAttorney) n.push(['advogados', 'nav_attorneys', 'i-law']);
@@ -506,11 +505,13 @@
     var h = ERoute.get().replace(/^#\/?/, ''), v = h.split('?')[0] || items[0][0];
     var allowed = items.map(function (n) { return n[0]; });
     if (S.client && S.perms.owner && window.EClientOA) allowed.push('oa');
+    // endereço antigo do envio de documentos: abre o envio dentro de Documentos
+    if (v === 'upload' && allowed.indexOf('documents') > -1 && S.perms.upload) { ERoute.set('#/documents?new=1', true); v = 'documents'; }
     if (allowed.indexOf(v) < 0) v = items[0][0];
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     var view = $('#view'); if (!view) return;
     view.innerHTML = '<p class="portal-muted">' + t('loading') + '</p>'; view.scrollTop = 0;
-    var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: vUpload, invoices: vInvoices, collaborators: vCollab, settings: vSettings };
+    var V = { overview: vOverview, companies: vCompanies, documents: vDocuments, compliance: vCompliance, reports: vReports, upload: function (view) { ERoute.set('#/documents?new=1', true); return vDocuments(view); }, invoices: vInvoices, collaborators: vCollab, settings: vSettings };
     if (window.EAttorney) V.advogados = function (view) { return EAttorney.clientView(view, refCtx()); };
     if (S.ref) Object.assign(V, S.ref.views);
     if (window.EClientOA) V.oa = EClientOA.view;
@@ -599,7 +600,7 @@
           (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>') +
         (S.perms.view ? '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('recentDocs') + '</h2><a href="#/documents">' + t('seeAll') + '</a></div>' + docItems(res[1], true) + '</section>' : '') +
       '</div><aside class="links-panel portal-card"><h2 class="portal-h2">' + t('quick') + '</h2><ul>' +
-        (S.perms.upload ? '<li><a href="#/upload"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg>' + t('qUpload') + '</a></li>' : '') +
+        (S.perms.upload ? '<li><a href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg>' + t('qUpload') + '</a></li>' : '') +
         (S.perms.owner ? '<li><a href="#/collaborators?invite=1"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>' + t('qInvite') + '</a></li><li><a href="#/reports"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>' + t('qQbo') + '</a></li>' : '') +
         '<li><a href="#/companies"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>' + t('nav_companies') + '</a></li>' +
       '</ul>' + (PARTNER ? '<h3 class="portal-h2" style="margin-top:1.25rem;font-size:1rem">' + t('myAccess') + '</h3><p class="perm-sum">' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</p>' : '') + '<p class="portal-muted" style="font-size:.8rem;margin-top:1rem">' + t('privacyNote') + '</p></aside></div>';
@@ -644,17 +645,29 @@
     } else body.innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
   }
 
+  var DOCX = { en: { novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
+    pt: { novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
+    es: { novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
+  function dx(k) { return (DOCX[L] || DOCX.en)[k]; }
   async function vDocuments(view) {
+    // o envio de documentos mora aqui dentro: botão "Novo documento" (o endereço antigo #/upload também abre esta tela)
+    if (param('new') && S.perms.upload) return vUpload(view);
     var docs = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).order('created_at', { ascending: false }));
-    view.innerHTML = head(t('nav_documents'), t('privacyNote')) +
+    view.innerHTML = head(t('nav_documents'), t('privacyNote'), S.perms.upload ? '<a class="btn btn--gold btn--sm" id="d-new" href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</a>' : '') +
       '<div class="toolbar"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
       '<select id="d-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
       '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select></div>' +
-      '<section class="portal-card" id="d-list"></section>';
+      '<div id="d-list"></div>';
     function draw() {
       var s = $('#d-q').value.trim().toLowerCase(), co = $('#d-co').value, cat = $('#d-cat').value;
       var rows = docs.filter(function (d) { return (!co || d.company_id === co) && (!cat || d.category === cat) && (!s || (d.title + ' ' + (d.year || '')).toLowerCase().indexOf(s) > -1); });
-      $('#d-list').innerHTML = docItems(rows, true); wireDocs($('#d-list'), rows);
+      // organizados por tipo: um bloco para cada tipo que tem documento, na ordem das permissões
+      var ordem = S.perms.cats.concat(['uploaded']), outros = rows.filter(function (d) { return ordem.indexOf(d.category) < 0; });
+      var blocos = ordem.map(function (c) { return [c, rows.filter(function (d) { return d.category === c; })]; }).filter(function (b) { return b[1].length; });
+      if (outros.length) blocos.push(['', outros]);
+      $('#d-list').innerHTML = blocos.length ? blocos.map(function (b) { return '<section class="portal-card d-grupo" data-cat="' + b[0] + '"><h2 class="portal-h2">' + esc(b[0] ? t('cat_' + b[0]) : dx('outro')) + ' <span class="portal-muted" style="font-weight:400;font-size:.95rem">(' + b[1].length + ')</span></h2>' + docItems(b[1], true) + '</section>'; }).join('')
+        : '<section class="portal-card"><div class="empty-state"><strong>' + (docs.length ? dx('semTipo') : t('noDocs')) + '</strong></div></section>';
+      wireDocs($('#d-list'), rows);
     }
     ['#d-q', '#d-co', '#d-cat'].forEach(function (s) { $(s).addEventListener('input', draw); });
     var pre = param('company'); if (pre) $('#d-co').value = pre;
@@ -751,12 +764,15 @@
   }
 
   async function vUpload(view) {
-    if (!S.companies.length) { view.innerHTML = head(t('nav_upload'), '') + '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong></div>'; return; }
+    var volta = '<p style="margin:0 0 .5rem"><a href="#/documents">← ' + dx('volta') + '</a></p>';
+    if (!S.companies.length) { view.innerHTML = volta + head(dx('novo'), '') + '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong></div>'; return; }
     var mine = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).eq('category', 'uploaded').eq('uploaded_by', S.user.id).order('created_at', { ascending: false }).limit(50));
     var y = new Date().getFullYear();
-    view.innerHTML = head(t('nav_upload'), t('uploadLead')) +
+    var tipos = S.perms.cats.filter(function (c) { return c !== 'uploaded'; });
+    view.innerHTML = volta + head(dx('novo'), t('uploadLead')) +
       '<section class="portal-card"><form class="portal-form" id="u-form" novalidate><div class="portal-grid2"><div class="field"><label for="u-co">' + t('company') + '</label><select id="u-co">' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="u-year">' + t('yearOpt') + '</label><select id="u-year"><option value="">—</option>' + [y, y - 1, y - 2, y - 3].map(function (v) { return '<option' + (v === y - 1 ? ' selected' : '') + '>' + v + '</option>'; }).join('') + '</select></div></div>' +
+      '<div class="field"><label for="u-tipo">' + dx('tipo') + '</label><select id="u-tipo"><option value="">' + dx('outro') + '</option>' + tipos.map(function (c) { return '<option value="' + c + '">' + esc(t('cat_' + c)) + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="u-title">' + t('docTitle') + '</label><input id="u-title" type="text" maxlength="160" placeholder="1099-NEC, bank statements, receipts…"></div>' +
       '<label class="upload-zone" for="u-file" id="u-zone"><input type="file" id="u-file" class="sr-only" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.csv,.xls,.xlsx,.doc,.docx"><strong>' + t('chooseFiles') + '</strong><span class="portal-muted" id="u-names">' + t('fileHint') + '</span></label>' +
       '<div class="portal-alert" id="u-msg" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('send') + '</button></form></section>' +
@@ -782,6 +798,8 @@
           var up = await sb.storage.from('client-docs').upload(path, new Blob([buf], { type: f.type || 'application/octet-stream' }), { contentType: f.type || 'application/octet-stream' });
           if (up.error) throw up.error;
           var title = desc ? (files.length > 1 ? desc + ' · ' + f.name : desc) : f.name.replace(/\.[^.]+$/, '');
+          // o tipo escolhido entra no nome (o arquivo continua no grupo "enviados", que é onde o cliente pode gravar)
+          var tp = $('#u-tipo') && $('#u-tipo').value; if (tp) title = (t('cat_' + tp) + ' · ' + title).slice(0, 160);
           var row = await q(sb.from('company_documents').insert({ company_id: co, client_id: S.client.id, category: 'uploaded', title: title, year: year, path: path, mime: f.type || null, size_bytes: f.size, sha256: await sha256Hex(buf), uploaded_by: S.user.id }).select('id').single());
           sb.from('doc_access_log').insert({ document_id: row.id, action: 'upload' }).then(function () {});
           names.push(f.name);

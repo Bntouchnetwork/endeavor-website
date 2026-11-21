@@ -792,7 +792,7 @@ async function storeAction(req: Request, body: any) {
   const { data: role } = await c.user.rpc("my_client_role", { p_client: clientId });
   if (role !== "owner") throw new Fail("forbidden", 403);
   if (a === "store_cancel") return await STORE().cancel(clientId, String(body.product || ""));
-  if (a === "store_request") return await STORE().request(clientId, String(body.product || ""), c.email);
+  if (a === "store_request") return await STORE().request(clientId, String(body.product || ""), c.email, String(body.note || ""));
   if (a === "store_checkout") {
     const { data: cl } = await admin.from("clients").select("name, language, stripe_customer_id").eq("id", clientId).single();
     const { data: me } = await c.user.from("client_users").select("name, email").eq("client_id", clientId).eq("role", "owner").ilike("email", likeEsc(c.email)).maybeSingle();
