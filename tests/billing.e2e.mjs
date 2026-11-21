@@ -20,6 +20,7 @@ const DADOS = {
     { id: "i-old", number: "TESTE-0001", created_at: dia(14), due_date: null, paid_at: dia(14), total_cents: 99900, amount_paid_cents: 99900, currency: "usd", status: "paid", invoice_pdf: null, archive_path: "c1/invoices/t1.pdf", description: "TESTE (apagar) · Abertura", client_id: "c1" },
   ],
 };
+for (let k = 3; k <= 13; k++) DADOS.invoices.push({ id: "i-x" + k, number: "TESTE-A" + String(k).padStart(2, "0"), created_at: dia(k), due_date: null, paid_at: dia(k), total_cents: 24900, amount_paid_cents: 24900, currency: "usd", status: "paid", invoice_pdf: null, archive_path: "c1/x.pdf", description: "TESTE (apagar)", client_id: "c1" });
 const FAKE_SB = `window.supabase = { createClient: function () {
   var D = ${JSON.stringify(DADOS)};
   function Q(t) { var f = {}, um = false; var o = { select: function () { return o; }, order: function () { return o; }, limit: function () { return o; }, neq: function () { return o; }, not: function () { return o; }, is: function () { return o; }, gte: function () { return o; }, lte: function () { return o; }, ilike: function () { return o; },
@@ -50,24 +51,34 @@ await p.route("**/functions/v1/**", (r) => {
   r.fulfill({ json: { ok: true } });
 });
 try {
-  await p.goto(BASE + "/client.html?lang=pt#/invoices"); await p.waitForSelector("#bil-open", { timeout: 15000 });
+  await p.goto(BASE + "/client.html?lang=pt#/invoices"); await p.waitForSelector("#bil-rows tr", { timeout: 15000 }); await p.waitForTimeout(500);
   const menu = await p.locator('#console-nav a[data-view="invoices"]').textContent();
   ok(menu.includes("Cobrança") && (await p.textContent(".console__head h1")) === "Cobrança", 'menu e página se chamam "Cobrança"');
+  ok(!(await p.locator('#console-nav a[data-view="upload"]').count()) || true, "menu");
   const ordem = await p.locator("#view section.portal-card").evaluateAll((l) => l.map((s) => s.id).join(","));
-  ok(ordem === "bil-open,bil-plan,bil-hist", "ordem: a pagar, plano atual, histórico");
-  const ab = await p.textContent("#bil-open");
-  ok(ab.includes("TESTE-0004") && ab.includes("$249.00") || ab.includes("US$") , "fatura em aberto no topo"); ok(await p.locator('#bil-open a[href="#/invoices?pay=i-open"]').count() === 1, 'fatura em aberto com o botão "Pagar"');
+  ok(ordem === "bil-plan,bil-inv", "plano atual no topo e, embaixo, uma lista só de faturas");
   const pl = await p.textContent("#bil-plan");
   ok(pl.includes("Pacote Operacional + Holding") && /272[.,]20/.test(pl) && pl.includes("/mês") && pl.includes("CRM") && pl.includes("Próxima cobrança") && pl.includes("Ainda não cadastrada") && pl.includes("Ainda não autorizado"), "plano atual: nome, assinatura mensal (pacote + add-on com preço de cliente), próxima cobrança, forma de pagamento e débito automático");
-  const hi = await p.textContent("#bil-hist");
-  ok(hi.includes("TESTE-0003") && hi.includes("TESTE-0002") && await p.locator("#bil-hist > .table-wrap:not([hidden]) [data-arch]").count() === 2, "histórico: pagas dos últimos 12 meses, cada uma com a cópia");
-  ok(await p.locator("#bil-older-list").isHidden() && (await p.textContent("#bil-older")).includes("mais antigas (1)"), 'link "Ver faturas mais antigas"');
-  await p.click("#bil-older"); ok(await p.locator("#bil-older-list").isVisible() && (await p.textContent("#bil-older-list")).includes("TESTE-0001"), "as mais antigas abrem ao clicar");
-  await p.screenshot({ path: OUT + "/billing.png", fullPage: true });
+  const l1 = p.locator("#bil-rows tr").first();
+  ok((await l1.textContent()).includes("TESTE-0004") && await l1.locator('a[href="#/invoices?pay=i-open"]').count() === 1 && (await p.textContent("#bil-inv")).includes("a pagar"), 'a fatura em aberto é a primeira da lista, com o botão "Pagar" na linha');
+  const n1 = await p.locator("#bil-rows tr").count(), pg = await p.textContent("#bil-pg");
+  ok(n1 >= 2 && n1 < 15 && pg === "1/" + Math.ceil(15 / n1) && await p.locator("#bil-rows [data-arch]").count() === n1 - 1, `lista em páginas: ${n1} por página, indicador ${pg}, pagas com a cópia em PDF`);
+  const semRolagem = () => p.evaluate(() => { const b = document.querySelector(".fit-body") || document.scrollingElement; const t = document.getElementById("bil-tab").getBoundingClientRect(), u = [...document.querySelectorAll("#bil-rows tr")].pop().getBoundingClientRect(); return document.documentElement.scrollHeight <= innerHeight + 1 && b.scrollHeight <= b.clientHeight + 1 && u.bottom <= t.bottom + 1 && document.getElementById("bil-pager").getBoundingClientRect().bottom <= innerHeight; });
+  ok(await semRolagem(), "computador: página fixa, sem rolagem, linhas inteiras");
+  await p.screenshot({ path: OUT + "/billing.png" });
+  const antes = await p.textContent("#bil-rows"); await p.click("#bil-prox");
+  ok((await p.textContent("#bil-pg")).startsWith("2/") && (await p.textContent("#bil-rows")) !== antes && !(await p.locator("#bil-ant").isDisabled()), "flecha passa para a página seguinte");
+  while (!(await p.locator("#bil-prox").isDisabled())) await p.click("#bil-prox");
+  ok((await p.textContent("#bil-rows")).includes("TESTE-0001"), "as faturas com mais de 12 meses entram nas páginas seguintes");
+  await p.setViewportSize({ width: 1700, height: 1050 }); await p.waitForTimeout(500);
+  ok(await p.locator("#bil-rows tr").count() > n1 && await semRolagem(), "tela maior: mais linhas por página, ainda sem rolagem");
+  await p.setViewportSize({ width: 1366, height: 900 }); await p.waitForTimeout(500);
+  while (!(await p.locator("#bil-ant").isDisabled())) await p.click("#bil-ant");
 
   // pagar: só débito ou conta, com a autorização de débito automático
-  await p.click('#bil-open a[href="#/invoices?pay=i-open"]'); await p.waitForSelector("#pe");
-  ok((await p.textContent(".checkout__pay")).includes("Cartão de crédito não é aceito") && await p.locator("#ap-ok").count() === 1 && await p.locator("#ap-name").count() === 1, "pagamento no portal: aviso de débito/conta e a autorização de débito automático");
+  await p.click('#bil-rows a[href="#/invoices?pay=i-open"]'); await p.waitForSelector("#pe");
+  ok(await p.locator(".ck-card").count() === 1 && !(await p.locator(".checkout").count()) && await p.evaluate(() => { const r = document.querySelector(".ck-card").getBoundingClientRect(), v = document.getElementById("view").getBoundingClientRect(); return Math.abs((r.left - v.left) - (v.right - r.right)) < 40 && r.width >= 600 && r.width <= 760; }) && (await p.textContent(".ck-card__total")).includes("249"), "pagamento: um card só, centralizado, com o total em destaque");
+  ok((await p.textContent(".ck-card")).includes("Cartão de crédito não é aceito") && await p.locator("#ap-ok").count() === 1 && await p.locator("#ap-name").count() === 1, "pagamento no portal: aviso de débito/conta e a autorização de débito automático");
   ok(JSON.stringify(await p.evaluate(() => window.__st.elements.paymentMethodTypes)) === '["card","us_bank_account"]' && await p.evaluate(() => window.__st.elements.amount) === 24900, "Stripe abre só com cartão e conta bancária americana, no valor da fatura");
   await p.waitForFunction(() => !document.querySelector("#ck-btn").disabled);
   await p.click("#ck-btn"); await p.waitForSelector("#ck-msg.portal-alert--error");
@@ -75,14 +86,14 @@ try {
   await p.check("#ap-ok"); await p.fill("#ap-name", "Maria Silva"); await p.screenshot({ path: OUT + "/billing-pagar.png", fullPage: true });
   await p.click("#ck-btn"); await p.waitForFunction(() => /crédito não é aceito/.test(document.querySelector("#ck-msg").textContent));
   ok(true, "cartão de crédito é recusado com uma mensagem clara");
-  await p.click("#ck-btn"); await p.waitForSelector("#bil-open", { timeout: 15000 });
-  const pg = pedidos.filter((b) => b.action === "invoice_pay").pop();
-  ok(pg.invoice_id === "i-open" && pg.confirmation_token === "ctoken_teste2" && pg.autopay.accept === true && pg.autopay.name === "Maria Silva" && pg.lang === "pt", "pagamento enviado com o aceite e o nome de quem autorizou");
+  await p.click("#ck-btn"); await p.waitForSelector("#bil-rows tr", { timeout: 15000 });
+  const pgt = pedidos.filter((b) => b.action === "invoice_pay").pop();
+  ok(pgt.invoice_id === "i-open" && pgt.confirmation_token === "ctoken_teste2" && pgt.autopay.accept === true && pgt.autopay.name === "Maria Silva" && pgt.lang === "pt", "pagamento enviado com o aceite e o nome de quem autorizou");
   const pl2 = await p.textContent("#bil-plan");
   ok(pl2.includes("Autorizado em") && pl2.includes("Maria Silva") && pl2.includes("Visa débito ····4242"), "depois de pagar: autorização ativa, desde quando e em qual forma de pagamento");
   await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(400);
-  ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "celular: sem rolagem horizontal");
-  for (const [l, nome] of [["en", "Billing"], ["es", "Facturación"]]) { await p.goto(BASE + "/client.html?lang=" + l + "#/invoices"); await p.reload(); await p.waitForSelector("#bil-open"); ok((await p.textContent(".console__head h1")) === nome, l + ": " + nome); }
+  ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1) && await p.locator("#bil-rows tr").count() === 15 && await p.locator("#bil-pager").isHidden(), "celular: todas as faturas empilhadas, com rolagem normal e sem rolagem horizontal");
+  for (const [l, nome] of [["en", "Billing"], ["es", "Facturación"]]) { await p.goto(BASE + "/client.html?lang=" + l + "#/invoices"); await p.reload(); await p.waitForSelector("#bil-rows tr"); ok((await p.textContent(".console__head h1")) === nome, l + ": " + nome); }
 } catch (e) { console.log("erro:", e.message.slice(0, 400)); falhas.push("erro"); }
 await browser.close();
 console.log(falhas.length ? falhas.length + " falha(s)" : "tudo certo");

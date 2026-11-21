@@ -1433,3 +1433,40 @@ tr.is-archived td { opacity: .6; }
 .ck-autopay__txt { font-size: .88rem; line-height: 1.55; color: var(--text); margin: 0 0 .75rem; }
 .ck-autopay__ok { display: flex; gap: .6rem; align-items: flex-start; font-size: .92rem; font-weight: 600; margin-bottom: .75rem; cursor: pointer; }
 .ck-autopay__ok input { width: 1.15rem; height: 1.15rem; margin-top: .15rem; flex: none; }
+
+/* Billing: plano atual numa faixa no topo, e uma lista só de faturas, em páginas (sem rolagem no computador) */
+.bil-plano__top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: .6rem; }
+.bil-plano__top .portal-h2 { margin: 0; }
+.bil-faixa { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: .9rem 1.5rem; margin: 0; }
+.bil-cel dt { font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: .2rem; }
+.bil-cel dd { margin: 0; font-size: .95rem; color: var(--ink); overflow-wrap: anywhere; }
+.bil-cel dd strong { font-size: 1.05rem; }
+.bil-cel dd small { display: block; color: var(--muted); font-size: .8rem; margin-top: .1rem; }
+.bil-desc { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 22rem; }
+.bil-aberta td { background: #fffaf0; }
+.bil-acao { text-align: right; white-space: nowrap; }
+.bil-fit .portal-card + .portal-card { margin-top: 1rem; }
+@media (min-width: 1000px) and (min-height: 560px) {
+  body.app-shell .console__content .bil-fit .bil-plano { flex: none; padding: 1rem 1.25rem; }
+  body.app-shell .console__content .bil-fit .bil-lista { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 1rem 1.25rem; }
+  body.app-shell .console__content .bil-fit .bil-tab { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  body.app-shell .console__content .bil-fit .bil-tab td { height: 62px; padding-block: .35rem; }
+  body.app-shell .console__content .bil-fit .sv-pager { flex: none; padding-top: .6rem; }
+}
+/* Pagamento: um card só, centralizado */
+.ck-um { max-width: 46rem; margin: 0 auto; width: 100%; }
+.ck-um__volta { margin: 0 0 .75rem; font-size: .92rem; }
+.ck-card { padding: clamp(1.25rem, 1rem + 1.2vw, 2rem); border-top: 4px solid var(--gold, #c8a45d); }
+.ck-card__top { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem 2rem; flex-wrap: wrap; padding-bottom: 1rem; border-bottom: 1px solid #edf0f4; }
+.ck-card__sub { margin: 0 0 .2rem; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.ck-card__t { margin: 0; font-family: "Source Serif 4", Georgia, serif; font-size: 1.6rem; color: var(--ink); }
+.ck-card__total { text-align: right; }
+.ck-card__total span { display: block; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.ck-card__total strong { font-family: "Source Serif 4", Georgia, serif; font-size: 2.2rem; line-height: 1.1; color: var(--ink); }
+.ck-itens { margin: .75rem 0 0; }
+.ck-itens summary { cursor: pointer; font-weight: 600; font-size: .92rem; color: var(--navy-900, #0b1f3a); padding: .35rem 0; }
+.ck-itens .cart { margin-top: .35rem; }
+.ck-card__h { margin: 1.25rem 0 .25rem; }
+.ck-card__so { font-size: .88rem; margin: 0 0 .9rem; }
+.ck-card__btn { min-height: 3.25rem; font-size: 1.05rem; }
+body.app-shell .console__content .ck-um, .ck-um { max-width: 46rem !important; margin-inline: auto !important; }

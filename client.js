@@ -865,19 +865,19 @@
   }
   /* ---------------- Billing: faturas a pagar, plano atual, histórico e débito automático ---------------- */
   var BIL = {
-    en: { lead: 'Your invoices, your plan and your automatic payment authorization.', open: 'To pay', noOpen: 'No open invoices. You are all set.', plan: 'Current plan', noPlan: 'No plan on this account yet.', monthly: 'Monthly subscription', perMonth: '/month',
+    en: { due: 'Due {d}', paidOn: 'Paid {d}', when: 'Due / paid', action: 'Action', invoices: 'Invoices', openTotal: '{a} to pay', pages: 'Invoice pages', prev: 'Previous page', nextPg: 'Next page', apOnShort: 'Authorized on {d}', apOffShort: 'Not authorized yet', ckSub: 'Invoice {n}', ckTotal: 'Total to pay', ckItems: 'What you are paying', lead: 'Your invoices, your plan and your automatic payment authorization.', open: 'To pay', noOpen: 'No open invoices. You are all set.', plan: 'Current plan', noPlan: 'No plan on this account yet.', monthly: 'Monthly subscription', perMonth: '/month',
       plus: 'plan {p} + add-ons {a}', next: 'Next charge', method: 'Payment method', noMethod: 'Not registered yet', autopay: 'Automatic payment', apOn: 'Authorized on {d} by {n}', apOff: 'Not authorized yet. You authorize it when you pay your first invoice.',
       hist: 'Paid invoices (last 12 months)', histLead: 'Each one with a copy of the paid invoice to download.', noHist: 'No invoices paid in the last 12 months.', older: 'See older invoices ({n})', olderHide: 'Hide older invoices', copy: 'Paid invoice (PDF)', noCopy: 'Copy not available',
       only: 'We accept only a U.S. bank account (ACH) or a debit card. Credit cards are not accepted.', apTitle: 'Automatic payment authorization', apCheck: 'I have read and I authorize the automatic payment described above.', apName: 'Full name (as your signature)',
       apNeed: 'To pay, check the authorization box and type your full name.', credit: 'Credit cards are not accepted. Use a debit card or a U.S. bank account.', debitOnly: 'We could not confirm that this is a debit card. Use a debit card or a U.S. bank account.',
       notAllowed: 'This payment method is not accepted. Use a debit card or a U.S. bank account.', apActive: 'Automatic payment authorized on {d} by {n}.', manage: 'Manage services' },
-    pt: { lead: 'Suas faturas, o seu plano e a sua autorização de débito automático.', open: 'A pagar', noOpen: 'Nenhuma fatura em aberto. Está tudo em dia.', plan: 'Plano atual', noPlan: 'Esta conta ainda não tem um plano.', monthly: 'Assinatura mensal', perMonth: '/mês',
+    pt: { due: 'Vence em {d}', paidOn: 'Paga em {d}', when: 'Vencimento / pagamento', action: 'Ação', invoices: 'Faturas', openTotal: '{a} a pagar', pages: 'Páginas de faturas', prev: 'Página anterior', nextPg: 'Próxima página', apOnShort: 'Autorizado em {d}', apOffShort: 'Ainda não autorizado', ckSub: 'Fatura {n}', ckTotal: 'Total a pagar', ckItems: 'O que você está pagando', lead: 'Suas faturas, o seu plano e a sua autorização de débito automático.', open: 'A pagar', noOpen: 'Nenhuma fatura em aberto. Está tudo em dia.', plan: 'Plano atual', noPlan: 'Esta conta ainda não tem um plano.', monthly: 'Assinatura mensal', perMonth: '/mês',
       plus: 'plano {p} + add-ons {a}', next: 'Próxima cobrança', method: 'Forma de pagamento', noMethod: 'Ainda não cadastrada', autopay: 'Débito automático', apOn: 'Autorizado em {d} por {n}', apOff: 'Ainda não autorizado. Você autoriza ao pagar a primeira fatura.',
       hist: 'Faturas pagas (últimos 12 meses)', histLead: 'Cada uma com a cópia da fatura paga para baixar.', noHist: 'Nenhuma fatura paga nos últimos 12 meses.', older: 'Ver faturas mais antigas ({n})', olderHide: 'Esconder as faturas mais antigas', copy: 'Fatura paga (PDF)', noCopy: 'Cópia não disponível',
       only: 'Aceitamos só conta bancária americana (ACH) ou cartão de débito. Cartão de crédito não é aceito.', apTitle: 'Autorização de débito automático', apCheck: 'Li e autorizo o débito automático descrito acima.', apName: 'Nome completo (vale como a sua assinatura)',
       apNeed: 'Para pagar, marque a autorização e digite o seu nome completo.', credit: 'Cartão de crédito não é aceito. Use um cartão de débito ou uma conta bancária americana.', debitOnly: 'Não conseguimos confirmar que este cartão é de débito. Use um cartão de débito ou uma conta bancária americana.',
       notAllowed: 'Esta forma de pagamento não é aceita. Use um cartão de débito ou uma conta bancária americana.', apActive: 'Débito automático autorizado em {d} por {n}.', manage: 'Gerenciar serviços' },
-    es: { lead: 'Sus facturas, su plan y su autorización de débito automático.', open: 'Por pagar', noOpen: 'No hay facturas abiertas. Está al día.', plan: 'Plan actual', noPlan: 'Esta cuenta aún no tiene un plan.', monthly: 'Suscripción mensual', perMonth: '/mes',
+    es: { due: 'Vence el {d}', paidOn: 'Pagada el {d}', when: 'Vencimiento / pago', action: 'Acción', invoices: 'Facturas', openTotal: '{a} por pagar', pages: 'Páginas de facturas', prev: 'Página anterior', nextPg: 'Página siguiente', apOnShort: 'Autorizado el {d}', apOffShort: 'Aún no autorizado', ckSub: 'Factura {n}', ckTotal: 'Total a pagar', ckItems: 'Lo que está pagando', lead: 'Sus facturas, su plan y su autorización de débito automático.', open: 'Por pagar', noOpen: 'No hay facturas abiertas. Está al día.', plan: 'Plan actual', noPlan: 'Esta cuenta aún no tiene un plan.', monthly: 'Suscripción mensual', perMonth: '/mes',
       plus: 'plan {p} + add-ons {a}', next: 'Próximo cargo', method: 'Medio de pago', noMethod: 'Aún no registrado', autopay: 'Débito automático', apOn: 'Autorizado el {d} por {n}', apOff: 'Aún no autorizado. Usted lo autoriza al pagar la primera factura.',
       hist: 'Facturas pagadas (últimos 12 meses)', histLead: 'Cada una con la copia de la factura pagada para descargar.', noHist: 'No hay facturas pagadas en los últimos 12 meses.', older: 'Ver facturas más antiguas ({n})', olderHide: 'Ocultar las facturas más antiguas', copy: 'Factura pagada (PDF)', noCopy: 'Copia no disponible',
       only: 'Aceptamos solo cuenta bancaria de EE. UU. (ACH) o tarjeta de débito. No se aceptan tarjetas de crédito.', apTitle: 'Autorización de débito automático', apCheck: 'Leí y autorizo el débito automático descrito arriba.', apName: 'Nombre completo (vale como su firma)',
@@ -911,37 +911,57 @@
     svcs.forEach(function (x) { var p = prods[x.product_code]; if (!p || p.kind === 'package' || x.included_in || p.interval !== 'month') return; extras += (plano && p.member_cents != null && p.member_cents < p.price_cents) ? p.member_cents : p.price_cents; nomesExtras.push(nomeDe(x.product_code)); });
     if (!plano && !extras && S.client.monthly_cents) base = S.client.monthly_cents;
     var mensal = base + extras, temPlano = !!(plano || mensal);
-    var rowHtml = function (r, paidMode) {
-      return '<tr><td><strong style="white-space:nowrap">' + esc(r.number || '—') + '</strong>' + (r.description ? '<div class="portal-muted" style="font-size:.85rem">' + esc(r.description) + '</div>' : '') + '</td><td>' + esc(fmtDate(r.created_at)) + '</td><td>' + esc(paidMode ? (r.paid_at ? fmtDate(r.paid_at) : '—') : (r.due_date ? fmtDate(r.due_date) : '—')) + '</td>' +
+    // uma lista só: mais recentes primeiro; a em aberto com "Pagar" na linha, as pagas com a cópia em PDF
+    var lista = rows.filter(function (r) { return isOpen(r) || r.status === 'paid'; }).sort(function (x, y) { return new Date(y.created_at) - new Date(x.created_at); });
+    var linha = function (r) {
+      var aberta = isOpen(r);
+      return '<tr' + (aberta ? ' class="bil-aberta"' : '') + '><td><strong style="white-space:nowrap">' + esc(r.number || '—') + '</strong>' + (r.description ? '<div class="portal-muted bil-desc">' + esc(r.description) + '</div>' : '') + '</td><td>' + esc(fmtDate(r.created_at)) + '</td>' +
+        '<td>' + esc(aberta ? (r.due_date ? bt('due', { d: fmtDate(r.due_date) }) : '—') : (r.paid_at ? bt('paidOn', { d: fmtDate(r.paid_at) }) : '—')) + '</td>' +
         '<td class="num">' + esc(money(r.total_cents, r.currency)) + '</td><td><span class="inv-st inv-st--' + esc(r.status) + '">' + esc(t('inv_' + r.status)) + '</span></td>' +
-        '<td><div class="portal-btn-row" style="flex-wrap:nowrap">' + (paidMode ? (r.archive_path || stripeUrl(r.invoice_pdf) ? '<button class="btn btn--ghost btn--xs" type="button" data-arch="' + r.id + '">' + bt('copy') + '</button>' : '<span class="portal-muted" style="font-size:.82rem">' + bt('noCopy') + '</span>')
-          : '<a class="btn btn--navy btn--xs" href="#/invoices?pay=' + r.id + '">' + t('invPay') + '</a>') + '</div></td></tr>';
+        '<td class="bil-acao">' + (aberta ? '<a class="btn btn--navy btn--xs" href="#/invoices?pay=' + r.id + '">' + t('invPay') + '</a>'
+          : (r.archive_path || stripeUrl(r.invoice_pdf) ? '<button class="btn btn--ghost btn--xs" type="button" data-arch="' + r.id + '">' + bt('copy') + '</button>' : '<span class="portal-muted" style="font-size:.82rem">' + bt('noCopy') + '</span>')) + '</td></tr>';
     };
-    var table = function (list, paidMode, id) { return '<div class="table-wrap"' + (id ? ' id="' + id + '" hidden' : '') + '><table class="data"><thead><tr><th>' + t('invNo') + '</th><th>' + t('invDate') + '</th><th>' + (paidMode ? t('inv_paid') : t('invDue')) + '</th><th class="num">' + t('invTotal') + '</th><th>' + t('invStatus') + '</th><th><span class="sr-only">PDF</span></th></tr></thead><tbody>' + list.map(function (r) { return rowHtml(r, paidMode); }).join('') + '</tbody></table></div>'; };
-    var ap = sum.autopay;
+    var ap = sum.autopay, cel = function (rot, val) { return '<div class="bil-cel"><dt>' + rot + '</dt><dd>' + val + '</dd></div>'; };
     view.innerHTML = head(t('nav_invoices'), bt('lead')) +
       (done ? '<div class="portal-alert portal-alert--' + (done.status === 'paid' ? 'ok' : 'info') + '" role="status" style="display:block;margin-bottom:1rem"><strong>' + esc(done.status === 'paid' ? t('ck_ok') : t('ck_processing')) + '</strong>' + (done.status === 'paid' ? ' ' + esc(t('ck_okText')) : '') + '</div>' : '') +
-      '<section class="portal-card" id="bil-open"><h2 class="portal-h2">' + bt('open') + (openRows.length ? ' <span class="portal-muted" style="font-weight:400;font-size:1rem">· ' + esc(money(open)) + '</span>' : '') + '</h2>' + (openRows.length ? table(openRows, false) : '<p class="portal-muted">' + bt('noOpen') + '</p>') + '</section>' +
-      '<section class="portal-card" id="bil-plan"><h2 class="portal-h2">' + bt('plan') + '</h2>' + (!temPlano ? '<p class="portal-muted">' + bt('noPlan') + '</p>' :
-        '<dl class="kv"><dt>' + bt('plan') + '</dt><dd><strong>' + esc(plano ? nomeDe(plano) : '—') + '</strong>' + (nomesExtras.length ? '<div class="portal-muted" style="font-size:.88rem">+ ' + esc(nomesExtras.join(', ')) + '</div>' : '') + '</dd>' +
-        '<dt>' + bt('monthly') + '</dt><dd><strong>' + esc(money(mensal)) + '</strong> ' + bt('perMonth') + (plano && extras ? '<div class="portal-muted" style="font-size:.88rem">' + esc(bt('plus', { p: money(base), a: money(extras) })) + '</div>' : '') + '</dd>' +
-        '<dt>' + bt('next') + '</dt><dd>' + esc(sum.next_charge ? fmtDate(sum.next_charge) : '—') + '</dd>' +
-        '<dt>' + bt('method') + '</dt><dd>' + esc(sum.method && sum.method.label ? sum.method.label : bt('noMethod')) + '</dd>' +
-        '<dt>' + bt('autopay') + '</dt><dd>' + (ap ? '<span class="inv-st inv-st--paid">' + esc(bt('apOn', { d: fmtDate(ap.since), n: ap.name })) + '</span>' + (ap.method ? '<div class="portal-muted" style="font-size:.88rem">' + esc(ap.method) + '</div>' : '') : '<span class="portal-muted">' + bt('apOff') + '</span>') + '</dd></dl>') +
-        '<div class="portal-btn-row" style="margin-top:.75rem"><a class="btn btn--ghost btn--sm" href="#/servicos">' + bt('manage') + '</a></div></section>' +
-      '<section class="portal-card" id="bil-hist"><h2 class="portal-h2">' + bt('hist') + '</h2><p class="portal-muted" style="margin-top:-.25rem">' + bt('histLead') + '</p>' + (hist.length ? table(hist, true) : '<p class="portal-muted">' + bt('noHist') + '</p>') +
-        (antigas.length ? '<p style="margin:.9rem 0 .5rem"><button class="btn btn--ghost btn--sm" type="button" id="bil-older" aria-expanded="false" aria-controls="bil-older-list">' + esc(bt('older', { n: antigas.length })) + '</button></p>' + table(antigas, true, 'bil-older-list') : '') + '</section>';
-    var bo = $('#bil-older', view);
-    if (bo) bo.onclick = function () { var l = $('#bil-older-list', view), abrir = l.hidden; l.hidden = !abrir; bo.setAttribute('aria-expanded', String(abrir)); bo.textContent = abrir ? bt('olderHide') : bt('older', { n: antigas.length }); };
-    $$('[data-arch]', view).forEach(function (b) {
-      b.onclick = async function () {
+      '<div class="sv-fit bil-fit">' +
+      '<section class="portal-card bil-plano" id="bil-plan" aria-labelledby="bil-plan-t"><div class="bil-plano__top"><h2 class="portal-h2" id="bil-plan-t">' + bt('plan') + '</h2><a class="btn btn--ghost btn--xs" href="#/servicos">' + bt('manage') + '</a></div>' +
+        (!temPlano ? '<p class="portal-muted" style="margin:0">' + bt('noPlan') + '</p>' : '<dl class="bil-faixa">' +
+          cel(bt('plan'), '<strong>' + esc(plano ? nomeDe(plano) : '—') + '</strong>' + (nomesExtras.length ? '<small>+ ' + esc(nomesExtras.join(', ')) + '</small>' : '')) +
+          cel(bt('monthly'), '<strong>' + esc(money(mensal)) + '</strong> ' + bt('perMonth') + (plano && extras ? '<small>' + esc(bt('plus', { p: money(base), a: money(extras) })) + '</small>' : '')) +
+          cel(bt('next'), esc(sum.next_charge ? fmtDate(sum.next_charge) : '—')) +
+          cel(bt('method'), esc(sum.method && sum.method.label ? sum.method.label : bt('noMethod'))) +
+          cel(bt('autopay'), ap ? '<span class="inv-st inv-st--paid">' + esc(bt('apOnShort', { d: fmtDate(ap.since) })) + '</span><small>' + esc(ap.name) + '</small>' : '<span class="portal-muted">' + bt('apOffShort') + '</span>') + '</dl>') + '</section>' +
+      '<section class="portal-card bil-lista" id="bil-inv" aria-labelledby="bil-inv-t"><div class="bil-plano__top"><h2 class="portal-h2" id="bil-inv-t">' + bt('invoices') + '</h2>' + (openRows.length ? '<span class="inv-st inv-st--open">' + esc(bt('openTotal', { a: money(open) })) + '</span>' : '') + '</div>' +
+        (lista.length ? '<div class="table-wrap bil-tab" id="bil-tab"><table class="data"><thead><tr><th>' + t('invNo') + '</th><th>' + t('invDate') + '</th><th>' + bt('when') + '</th><th class="num">' + t('invTotal') + '</th><th>' + t('invStatus') + '</th><th><span class="sr-only">' + bt('action') + '</span></th></tr></thead><tbody id="bil-rows"></tbody></table></div>' +
+          '<nav class="sv-pager" id="bil-pager" aria-label="' + bt('pages') + '" hidden><button type="button" class="sv-seta" id="bil-ant" aria-label="' + bt('prev') + '">‹</button><span id="bil-pg" aria-live="polite"></span><button type="button" class="sv-seta" id="bil-prox" aria-label="' + bt('nextPg') + '">›</button></nav>'
+          : '<p class="portal-muted">' + t('invNone') + '</p>') + '</section></div>';
+    if (!lista.length) return;
+    // páginas: no computador, a quantidade de linhas que cabe na tela; no celular, todas, com rolagem normal
+    var tab = $('#bil-tab', view), corpo = $('#bil-rows', view), pager = $('#bil-pager', view), pag = 0, porPag = 0;
+    function cabem() { if (window.innerWidth < 1000 || window.innerHeight < 560) return 0; var th = tab.querySelector('thead').getBoundingClientRect().height || 44; return Math.max(2, Math.floor((tab.clientHeight - th - 2) / 62)); }
+    function arquivo() {
+      $$('[data-arch]', corpo).forEach(function (b) { b.onclick = async function () {
         b.disabled = true;
         try { var j = await payCall({ action: 'invoice_archive', invoice_id: b.dataset.arch }); window.open(j.url, '_blank', 'noopener'); }
         catch (e) { var r = rows.find(function (x) { return x.id === b.dataset.arch; }); var u = r && stripeUrl(r.invoice_pdf); if (u) window.open(u, '_blank', 'noopener'); }
         b.disabled = false;
-      };
-    });
+      }; });
+    }
+    function desenha() {
+      var pags = porPag ? Math.max(1, Math.ceil(lista.length / porPag)) : 1; pag = Math.min(pag, pags - 1);
+      corpo.innerHTML = (porPag ? lista.slice(pag * porPag, pag * porPag + porPag) : lista).map(linha).join('');
+      pager.hidden = pags < 2; $('#bil-pg', view).textContent = (pag + 1) + '/' + pags; $('#bil-ant', view).disabled = pag === 0; $('#bil-prox', view).disabled = pag >= pags - 1;
+      arquivo();
+    }
+    function medir() { var n = cabem(); if (n === porPag && corpo.children.length) return; var primeiro = porPag ? pag * porPag : 0; porPag = n; pag = n ? Math.floor(primeiro / n) : 0; desenha(); }
+    $('#bil-ant', view).onclick = function () { if (pag > 0) { pag--; desenha(); } };
+    $('#bil-prox', view).onclick = function () { pag++; desenha(); };
+    desenha(); requestAnimationFrame(function () { requestAnimationFrame(medir); });
+    if (bilObs) bilObs.disconnect();
+    if (window.ResizeObserver) { bilObs = new ResizeObserver(function () { if (document.body.contains(tab)) medir(); }); bilObs.observe(tab); }
   }
+  var bilObs = null;
 
   /* Pagamento dentro do portal: resumo da fatura + Stripe Payment Element. Só conta bancária americana (ACH) ou cartão de débito:
      o tipo do cartão é conferido no servidor antes de confirmar. No primeiro pagamento o dono autoriza o débito automático. */
@@ -950,16 +970,16 @@
     if (!inv) { ERoute.set('#/invoices', true); return vInvoices(view); }
     var pdf = stripeUrl(inv.invoice_pdf);
     var items = Array.isArray(inv.items) ? inv.items : [];
-    view.innerHTML = '<p><a href="#/invoices">← ' + t('ck_back') + '</a></p>' + head(t('ck_title'), inv.number ? t('invNo') + ' ' + inv.number : '') +
-      '<div class="checkout"><section class="portal-card checkout__sum" aria-labelledby="ck-sum"><h2 class="portal-h2" id="ck-sum">' + t('ck_summary') + '</h2>' +
-        '<dl class="kv"><dt>' + t('ck_from') + '</dt><dd>Endeavor Business Hub</dd><dt>' + t('ck_billTo') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('invNo') + '</dt><dd>' + esc(inv.number || '—') + '</dd><dt>' + t('ck_due') + '</dt><dd>' + esc(inv.due_date ? fmtDate(inv.due_date) : '—') + '</dd></dl>' +
-        '<ul class="cart">' + items.map(function (i) { return '<li><span><strong>' + esc(i.description) + '</strong>' + ((i.quantity || 1) > 1 ? '<small>' + t('ck_qty') + ' ' + i.quantity + ' × ' + esc(money(i.amount_cents, inv.currency)) + '</small>' : '') + '</span><span class="cart__amt">' + esc(money(i.amount_cents * (i.quantity || 1), inv.currency)) + '</span></li>'; }).join('') + '</ul>' +
-        '<div class="cart__total"><span>' + t('ck_total') + '</span><strong>' + esc(money(inv.total_cents - inv.amount_paid_cents, inv.currency)) + '</strong></div>' +
-        (pdf ? '<a class="btn btn--ghost btn--block" href="' + esc(pdf) + '" target="_blank" rel="noopener" style="margin-top:1rem"><svg class="icon" aria-hidden="true"><use href="#i-file"/></svg> ' + t('ck_pdf') + '</a>' : '') + '</section>' +
-      '<section class="portal-card checkout__pay" aria-labelledby="ck-pay"><h2 class="portal-h2" id="ck-pay">' + t('ck_method') + '</h2><p class="portal-muted" style="font-size:.88rem;margin-top:-.25rem">' + bt('only') + '</p>' +
-        '<form id="ck-form" novalidate><div id="ck-element" class="ck-element"><p class="portal-muted">' + t('ck_loading') + '</p></div><div id="ck-autopay"></div><div class="portal-alert" id="ck-msg" role="alert"></div>' +
-        '<button class="btn btn--navy btn--block" type="submit" id="ck-btn" disabled>' + esc(t('ck_pay', { a: money(inv.total_cents - inv.amount_paid_cents, inv.currency) })) + '</button></form>' +
-        '<p class="ck-secure"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>' + t('ck_secure') + '</p></section></div>';
+    view.innerHTML = '<div class="ck-um"><p class="ck-um__volta"><a href="#/invoices">← ' + t('ck_back') + '</a></p>' +
+      '<section class="portal-card ck-card" aria-labelledby="ck-t"><header class="ck-card__top"><div><p class="ck-card__sub">' + esc(bt('ckSub', { n: inv.number || '—' })) + ' · ' + esc(S.client.name) + '</p><h1 class="ck-card__t" id="ck-t">' + t('ck_title') + '</h1>' +
+          (inv.due_date ? '<p class="portal-muted" style="margin:.15rem 0 0;font-size:.9rem">' + esc(bt('due', { d: fmtDate(inv.due_date) })) + '</p>' : '') + '</div>' +
+          '<div class="ck-card__total"><span>' + bt('ckTotal') + '</span><strong>' + esc(money(inv.total_cents - inv.amount_paid_cents, inv.currency)) + '</strong></div></header>' +
+        (items.length ? '<details class="ck-itens"' + (items.length <= 2 ? ' open' : '') + '><summary>' + bt('ckItems') + '</summary><ul class="cart">' + items.map(function (i) { return '<li><span><strong>' + esc(i.description) + '</strong>' + ((i.quantity || 1) > 1 ? '<small>' + t('ck_qty') + ' ' + i.quantity + ' × ' + esc(money(i.amount_cents, inv.currency)) + '</small>' : '') + '</span><span class="cart__amt">' + esc(money(i.amount_cents * (i.quantity || 1), inv.currency)) + '</span></li>'; }).join('') + '</ul></details>' : '') +
+        '<h2 class="portal-h2 ck-card__h" id="ck-pay">' + t('ck_method') + '</h2><p class="portal-muted ck-card__so">' + bt('only') + '</p>' +
+        '<form id="ck-form" class="checkout__pay" novalidate><div id="ck-element" class="ck-element"><p class="portal-muted">' + t('ck_loading') + '</p></div><div id="ck-autopay"></div><div class="portal-alert" id="ck-msg" role="alert"></div>' +
+        '<button class="btn btn--gold btn--block ck-card__btn" type="submit" id="ck-btn" disabled>' + esc(t('ck_pay', { a: money(inv.total_cents - inv.amount_paid_cents, inv.currency) })) + '</button></form>' +
+        '<p class="ck-secure"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>' + t('ck_secure') + '</p>' +
+        (pdf ? '<p style="text-align:center;margin:.25rem 0 0;font-size:.88rem"><a href="' + esc(pdf) + '" target="_blank" rel="noopener">' + t('ck_pdf') + '</a></p>' : '') + '</section></div>';
     if (inv.status === 'paid') { $('#ck-element').innerHTML = '<div class="portal-alert portal-alert--ok" style="display:block">' + t('ck_paidAlready') + '</div>'; return; }
     var cfg;
     try { cfg = await payCall({ action: 'invoice_checkout', invoice_id: id, lang: L }); }
