@@ -148,17 +148,48 @@ try {
   await p.click("#u-cancel"); ok(await p.locator("#overlay").isHidden(), "Cancelar fecha a janela");
   for (const antigo of ["#/upload", "#/documents?new=1"]) { await p.goto("about:blank"); await p.goto(BASE + "/client.html?lang=pt" + antigo); await p.waitForSelector("#u-win #u-form"); ok(p.url().endsWith("#/documents") && await p.locator(".doc-barra").count() === 1, "o endereço antigo " + antigo + " abre Documentos com a janela aberta"); }
   await p.keyboard.press("Escape");
-  // Bookkeeping do pacote: painel de relatórios
-  await p.goto(BASE + "/client.html?lang=pt#/bookkeeping"); await p.reload(); await p.waitForSelector("#bkp-ytd");
+  // Bookkeeping incluído no pacote: sem o painel do Bookkeeping; os relatórios ficam em Relatórios financeiros
+  await p.goto("about:blank"); await p.goto(BASE + "/client.html?lang=pt#/reports"); await p.waitForSelector("#bkp-ytd");
+  const menu2 = await p.locator("#console-nav a[data-view]").evaluateAll((l) => l.map((a) => a.dataset.view));
+  ok(!menu2.includes("bookkeeping") && menu2.includes("reports"), "pacote com bookkeeping incluído: menu sem Bookkeeping e com Relatórios financeiros");
   const yt = await p.textContent("#bkp-ytd");
-  ok(yt.includes("Ano até hoje") && yt.includes("$30,000") && yt.includes("$18,000") && yt.includes("$12,000"), "Bookkeeping do pacote: resumo do ano até hoje (receita, despesas e lucro dos relatórios publicados)");
+  ok((await p.textContent(".console__head h1")) === "Relatórios financeiros" && yt.includes("Ano até hoje") && yt.includes("$30,000") && yt.includes("$18,000") && yt.includes("$12,000"), "Relatórios financeiros: resumo do ano até hoje (receita, despesas e lucro dos relatórios publicados)");
   ok(await p.locator("#bkp-reps [data-ano]").count() === 3 && await p.locator("#bkp-lista tbody tr").count() === 3 && await p.locator("#bkp-lista [data-rep]").count() === 9, "relatórios dos últimos 3 anos: P&L, Balance Sheet e Fluxo de caixa por trimestre, com PDF");
-  const ct = await p.textContent("#bkp-contas");
-  ok(ct.includes("Chase Business Checking") && ct.includes("Conectada") && await p.locator("#bk-bank").count() === 1 && await p.locator("#bk-card").count() === 1, "conector de contas: contas conectadas com a situação e os botões de conectar");
-  await p.screenshot({ path: OUT + "/bookkeeping-painel.png", fullPage: true });
+  ok(!(await p.locator("#bkp-contas, #bk-bank, #bk-card").count()), "a conexão de contas saiu desta página");
+  await p.screenshot({ path: OUT + "/relatorios-financeiros.png" });
   await p.click("#bkp-ask"); await p.waitForSelector("#bkp-f"); await p.fill("#bkp-per", "Q4"); await p.click('#bkp-f button[type="submit"]'); await p.waitForSelector("#bk-m.portal-alert--ok");
   const pr = pedidos.filter((b) => b.action === "store_request").pop();
   ok(pr && pr.product === "relatorio" && pr.note.includes("Q4") && pr.note.includes("ACME LLC"), "Solicitar relatório vira pedido para a equipe");
+  await p.goto("about:blank"); await p.goto(BASE + "/client.html?lang=pt#/bookkeeping"); await p.waitForSelector("#bkp-ytd");
+  ok(p.url().endsWith("#/reports"), "o endereço do painel antigo do Bookkeeping leva aos Relatórios financeiros");
+  // Configurações: Contas conectadas
+  await p.goto("about:blank"); await p.goto(BASE + "/client.html?lang=pt#/settings"); await p.waitForSelector("#set-contas #bk-bank");
+  const ct = await p.textContent("#set-contas");
+  ok(ct.includes("Contas conectadas") && ct.includes("Chase Business Checking") && ct.includes("Conectada") && ct.includes("Não são usadas para cobrar") && await p.locator("#set-contas #bk-card").count() === 1, "Configurações: bloco Contas conectadas com a lista e os dois botões");
+  const semRolar = () => p.evaluate(() => { const f = document.querySelector(".fit-body") || document.scrollingElement; return document.scrollingElement.scrollHeight <= innerHeight + 1 && f.scrollHeight <= f.clientHeight + 1; });
+  ok(await semRolar(), "Configurações: página sem rolagem no computador");
+  await p.screenshot({ path: OUT + "/configuracoes-contas.png" });
+  // Minhas empresas: abre direto no painel da empresa
+  await p.goto("about:blank"); await p.goto(BASE + "/client.html?lang=pt#/companies"); await p.waitForSelector("#co-tabs");
+  const abas = await p.locator("#co-tabs a").evaluateAll((l) => l.map((a) => a.textContent.trim()).join("|"));
+  ok(!(await p.locator(".co-card").count()) && (await p.textContent("#co-nome")) === "ACME LLC" && /Documentos\|Prazos\|Relatórios$/.test(abas) && !/QuickBooks/.test(abas), "Minhas empresas: sem o cartão, abre direto no painel da empresa com as abas (" + abas + ")");
+  await p.waitForSelector("#co-body .tl-full"); ok(await semRolar(), "aba Linha do tempo em página fixa"); await p.screenshot({ path: OUT + "/empresa-linha.png" });
+  await p.click('#co-tabs a[href*="tab=docs"]'); await p.waitForSelector("#co-docs .doclist li");
+  ok(await p.locator("#co-docs .doclist li:not(.d-sep)").count() >= 3 && await semRolar(), "aba Documentos da empresa, em página fixa");
+  await p.screenshot({ path: OUT + "/empresa-documentos.png" });
+  await p.click('#co-tabs a[href*="tab=finance"]'); await p.waitForSelector("#co-body #bkp-lista [data-rep]");
+  ok(await p.locator("#co-body #bkp-lista [data-rep]").count() === 9 && !(await p.locator("#bkp-ask").count()) && await semRolar(), "aba Relatórios: os mesmos relatórios de Relatórios financeiros");
+  await p.screenshot({ path: OUT + "/empresa-relatorios.png" });
+  // Visão geral fixa
+  await p.click('#console-nav a[data-view="overview"]'); await p.waitForSelector(".ov-cols"); await p.waitForTimeout(500);
+  ok(await p.locator("#ov-docs .doclist li").count() >= 3 && await p.locator(".ov-links a").count() >= 2 && await p.locator("#tl-ov .tl-row").count() === 1 && await semRolar(), "Visão geral: indicadores, andamento, prazos, documentos e atalhos numa página fixa, sem rolagem");
+  await p.screenshot({ path: OUT + "/visao-geral.png" });
+  await p.setViewportSize({ width: 1366, height: 600 }); await p.waitForTimeout(500);
+  const og = await p.evaluate(() => ({ nav: !document.querySelector("#ov-docs .fp-nav").hidden, pg: document.querySelector("#ov-docs .fp-nav span").textContent, vis: [...document.querySelectorAll("#ov-docs .doclist li")].filter((x) => !x.hidden).length }));
+  ok(await semRolar() && og.vis >= 1 && og.nav, "Visão geral em tela baixa: continua sem rolagem; o que não cabe vai para as páginas (" + JSON.stringify(og) + ")");
+  await p.screenshot({ path: OUT + "/visao-geral-baixa.png" });
+  await p.setViewportSize({ width: 390, height: 800 }); await p.waitForTimeout(400);
+  ok(await p.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth + 1 && [...document.querySelectorAll("#ov-docs .doclist li")].every((x) => !x.hidden)), "Visão geral no celular: tudo visível, rolagem normal, sem rolagem horizontal");
 } catch (e) { console.log("erro:", e.message.slice(0, 400), (e.stack || "").split("\n").filter((x) => x.includes("billing.e2e")).slice(0, 2).join(" ")); falhas.push("erro"); }
 await browser.close();
 console.log(falhas.length ? falhas.length + " falha(s)" : "tudo certo");

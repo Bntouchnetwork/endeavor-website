@@ -1473,11 +1473,11 @@ body.app-shell .console__content .ck-um, .ck-um { max-width: 46rem !important; m
 
 /* Bookkeeping (serviço do pacote): painel de relatórios */
 .bkp-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin-top: 1rem; align-items: start; }
-@media (min-width: 1100px) { .bkp-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); } }
+
 .bkp-grid .portal-card { margin: 0; }
 .bkp-tab td, .bkp-tab th { white-space: nowrap; padding-inline: .7rem; }
 #bkp-lista .table-wrap { overflow-x: auto; }
-@media (min-width: 1100px) { .bkp-grid { grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr) !important; } }
+
 .bkp-ytd .kpis { margin: 0; }
 
 /* Documentos: barra numa linha (busca menor, filtros e o botão no fim), ações de cada documento e documentos solicitados */
@@ -1504,3 +1504,47 @@ body.app-shell .console__content .ck-um, .ck-um { max-width: 46rem !important; m
 }
 @media (max-width: 999px) { .doc-barra { position: sticky; top: 0; z-index: 5; background: var(--bg, #f5f6fa); padding-block: .5rem; } }
 body.app-shell .console__content .doc-fit .doc-barra { flex: none; }
+
+/* Páginas fixas (Visão geral, Minhas empresas, Configurações): listas em páginas com flechas, sem rolagem no computador */
+.fp-item[hidden] { display: none !important; }
+.fp-nav { padding-top: .5rem; }
+.ov-top { justify-content: space-between; align-items: center; margin-bottom: .25rem; }
+.ov-aviso { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 1rem; }
+.ov-perm { margin: .75rem 0 0; font-size: .88rem; }
+.ov-cols { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); margin-top: 1rem; }
+.ov-col { display: grid; gap: 1rem; align-content: start; min-width: 0; }
+.ov-cols .portal-card { margin: 0; }
+.ov-links .btn { white-space: nowrap; }
+.co-topo { display: grid; gap: .6rem; padding: .9rem 1.25rem; }
+.co-topo__l { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; }
+.co-topo select { min-height: 2.5rem; border: 1px solid #c9ced8; border-radius: 8px; padding: 0 .6rem; background: #fff; font: 600 1rem/1.2 inherit; max-width: 100%; }
+dl.co-kv { display: flex; flex-wrap: wrap; gap: .4rem 1.75rem; margin: 0; font-size: .9rem; }
+dl.co-kv dt { color: var(--muted); font-size: .78rem; }
+dl.co-kv dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.co-fit .subtabs { margin: .75rem 0 .9rem; }
+.co-body > .portal-card { margin: 0; }
+.set-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.set-grid .portal-card { margin: 0 0 1rem; }
+@media (min-width: 1000px) { .set-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+@media (min-width: 1000px) and (min-height: 560px) {
+  body.app-shell .console__content .sv-fit .fp-card { display: flex; flex-direction: column; min-height: 0; }
+  body.app-shell .console__content .sv-fit .fp-card > * { flex: none; }
+  body.app-shell .console__content .sv-fit .fp-card > .fp-box { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  body.app-shell .console__content .ov-fit > * { flex: none; }
+  body.app-shell .console__content .ov-fit > .ov-cols { flex: 1 1 auto; min-height: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  body.app-shell .console__content .ov-fit .ov-col { display: flex; flex-direction: column; min-height: 0; }
+  body.app-shell .console__content .ov-fit .ov-col > * { flex: none; }
+  body.app-shell .console__content .ov-fit .ov-col > #ov-dl { flex: 1 1 auto; }
+  body.app-shell .console__content .ov-fit .ov-col > #tl-ov.ov-tl--muitas { flex: 1 1 40%; min-height: 0; display: flex; flex-direction: column; }
+  body.app-shell .console__content .ov-fit .ov-col > #tl-ov.ov-tl--muitas > .fp-card { flex: 1 1 auto; }
+  body.app-shell .console__content .ov-fit .kpi { padding: .6rem 1rem; }
+  body.app-shell .console__content .ov-fit .kpi__value { font-size: 1.45rem; padding-top: 0 !important; }
+  body.app-shell .console__content .ov-fit .portal-card { padding: .9rem 1.25rem; }
+  body.app-shell .console__content .ov-fit .ov-aviso { padding-block: .5rem; margin-bottom: .75rem; }
+  body.app-shell .console__content .ov-fit .tl-card .portal-h2 { margin-bottom: .4rem; }
+  body.app-shell .console__content .co-fit > * { flex: none; }
+  body.app-shell .console__content .co-fit > .co-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  body.app-shell .console__content .co-fit > .co-body > .fp-card { flex: 1 1 auto; }
+}
+body.app-shell .console__content .co-fit .bkp-grid { margin-top: 0; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; align-items: stretch; }
+body.app-shell .console__content .co-fit .bkp-grid > .fp-card { flex: 1 1 auto; }

@@ -38,7 +38,7 @@
       nextDeadlines: 'Next deadlines', recentDocs: 'Recent documents', seeAll: 'See all', quick: 'Quick actions', qUpload: 'Upload documents for your tax return', qInvite: 'Invite your accountant or bookkeeper', qQbo: 'Connect QuickBooks',
       noCompanies: 'No companies yet', noCompaniesText: 'Endeavor will add your companies here.', formed: 'Formed {d}', docNumber: 'Florida document no.', ein: 'EIN', agent: 'Registered agent', fye: 'Fiscal year end', address: 'Address',
       st_active: 'Active', st_in_formation: 'In formation', st_inactive: 'Inactive', st_dissolved: 'Dissolved',
-      tab_timeline: 'Timeline', tab_docs: 'Documents', tab_deadlines: 'Deadlines', tab_finance: 'QuickBooks & reports', back: 'My Companies',
+      tab_timeline: 'Timeline', tab_docs: 'Documents', tab_deadlines: 'Deadlines', tab_finance: 'Reports', back: 'My Companies',
       cat_formation: 'Formation', cat_onboarding: 'Opening documents', cat_tax_return: 'Tax return', cat_report: 'Financial report', cat_uploaded: 'Uploaded', cat_compliance: 'Compliance', cat_other: 'Other',
       allCompanies: 'All companies', allCategories: 'All categories', search: 'Search…', view: 'View', download: 'Download', print: 'Print', close: 'Close',
       noDocs: 'No documents yet', noPreview: 'Preview not available for this file type. Use Download.', viewErr: 'Could not open the file.',
@@ -89,7 +89,7 @@
       nextDeadlines: 'Próximos prazos', recentDocs: 'Documentos recentes', seeAll: 'Ver todos', quick: 'Ações rápidas', qUpload: 'Enviar documentos para o imposto', qInvite: 'Convidar seu contador ou bookkeeper', qQbo: 'Conectar QuickBooks',
       noCompanies: 'Nenhuma empresa ainda', noCompaniesText: 'A Endeavor vai adicionar suas empresas aqui.', formed: 'Constituída em {d}', docNumber: 'Nº do documento na Flórida', ein: 'EIN', agent: 'Registered agent', fye: 'Fim do ano fiscal', address: 'Endereço',
       st_active: 'Ativa', st_in_formation: 'Em formação', st_inactive: 'Inativa', st_dissolved: 'Dissolvida',
-      tab_timeline: 'Linha do tempo', tab_docs: 'Documentos', tab_deadlines: 'Prazos', tab_finance: 'QuickBooks e relatórios', back: 'Minhas empresas',
+      tab_timeline: 'Linha do tempo', tab_docs: 'Documentos', tab_deadlines: 'Prazos', tab_finance: 'Relatórios', back: 'Minhas empresas',
       cat_formation: 'Formação', cat_onboarding: 'Documentos de abertura', cat_tax_return: 'Declaração de imposto', cat_report: 'Relatório financeiro', cat_uploaded: 'Enviado', cat_compliance: 'Compliance', cat_other: 'Outro',
       allCompanies: 'Todas as empresas', allCategories: 'Todas as categorias', search: 'Buscar…', view: 'Ver', download: 'Baixar', print: 'Imprimir', close: 'Fechar',
       noDocs: 'Nenhum documento ainda', noPreview: 'Pré-visualização indisponível para este tipo de arquivo. Use Baixar.', viewErr: 'Não foi possível abrir o arquivo.',
@@ -140,7 +140,7 @@
       nextDeadlines: 'Próximos plazos', recentDocs: 'Documentos recientes', seeAll: 'Ver todos', quick: 'Acciones rápidas', qUpload: 'Enviar documentos para el impuesto', qInvite: 'Invitar a su contador o bookkeeper', qQbo: 'Conectar QuickBooks',
       noCompanies: 'Aún no hay empresas', noCompaniesText: 'Endeavor agregará sus empresas aquí.', formed: 'Constituida el {d}', docNumber: 'N.º de documento en Florida', ein: 'EIN', agent: 'Registered agent', fye: 'Cierre del año fiscal', address: 'Dirección',
       st_active: 'Activa', st_in_formation: 'En constitución', st_inactive: 'Inactiva', st_dissolved: 'Disuelta',
-      tab_timeline: 'Línea de tiempo', tab_docs: 'Documentos', tab_deadlines: 'Plazos', tab_finance: 'QuickBooks y reportes', back: 'Mis empresas',
+      tab_timeline: 'Línea de tiempo', tab_docs: 'Documentos', tab_deadlines: 'Plazos', tab_finance: 'Reportes', back: 'Mis empresas',
       cat_formation: 'Constitución', cat_onboarding: 'Documentos de constitución', cat_tax_return: 'Declaración de impuestos', cat_report: 'Reporte financiero', cat_uploaded: 'Enviado', cat_compliance: 'Cumplimiento', cat_other: 'Otro',
       allCompanies: 'Todas las empresas', allCategories: 'Todas las categorías', search: 'Buscar…', view: 'Ver', download: 'Descargar', print: 'Imprimir', close: 'Cerrar',
       noDocs: 'Aún no hay documentos', noPreview: 'Vista previa no disponible para este tipo de archivo. Use Descargar.', viewErr: 'No se pudo abrir el archivo.',
@@ -311,8 +311,10 @@
       deadlines: own || me.perm_deadlines !== false, upload: own || !!me.can_upload };
     S.companies = await q(sb.from('companies').select('*').eq('client_id', id).order('legal_name'));
     // services bought online (CRM, Agenda, E-signature, Bookkeeping...): unlock the tools in the menu
-    var sv = await sb.from('client_services').select('product_code, status').eq('client_id', id).in('status', ['active', 'past_due']);
+    var sv = await sb.from('client_services').select('product_code, status, included_in').eq('client_id', id).in('status', ['active', 'past_due']);
     S.services = (sv.data || []).map(function (x) { return x.product_code; });
+    var bks = (sv.data || []).filter(function (x) { return x.product_code === 'bookkeeping'; });
+    S.books = bks.some(function (x) { return !x.included_in; }) ? 'avulso' : (bks.length || S.companies.some(function (c) { return c.books_provider === 'endeavor' || c.books_provider === 'quickbooks'; })) ? 'pacote' : null;
     S.kind = S.client.portal_kind === 'tools' ? 'tools' : 'full';
     // Web Meeting habilitado pela Endeavor na ficha do cliente
     var ma = await sb.from('meet_access').select('enabled').eq('client_id', id).maybeSingle();
@@ -446,7 +448,8 @@
     // account created by an online purchase: only what was bought (bookkeeping brings the company, documents and reports)
     if (S.kind === 'tools' && !PARTNER) {
       var b = S.services.indexOf('bookkeeping') > -1, m = [['overview', 'nav_overview', 'i-grid']];
-      if (b) m.push(['companies', 'nav_companies', 'i-brief'], ['documents', 'nav_documents', 'i-file'], ['reports', 'nav_reports', 'i-chart']);
+      if (b) m.push(['companies', 'nav_companies', 'i-brief'], ['documents', 'nav_documents', 'i-file']);
+      if (S.books) m.push(['reports', 'nav_reports', 'i-chart']);
       if (S.perms.owner && window.ETools) ETools.nav().forEach(function (x) { m.push([x[0], x[1], x[2], 1]); });
       if (S.meetOn && window.EMeetPanel) m.push(['webmeeting', 'Web Meeting', 'i-video', 1]);
       if (S.meetOn && window.EWebinarPanel) m.push(['webinar', 'Live Webinar', 'i-live', 1]);
@@ -460,7 +463,7 @@
     var n = [['overview', 'nav_overview', 'i-grid'], ['companies', 'nav_companies', 'i-brief']];
     if (S.perms.view) n.push(['documents', 'nav_documents', 'i-file']);
     if (S.perms.deadlines) n.push(['compliance', 'nav_compliance', 'i-cal']);
-    if (S.perms.reports) n.push(['reports', 'nav_reports', 'i-chart']);
+    if (S.perms.reports && S.books) n.push(['reports', 'nav_reports', 'i-chart']);
     if (S.perms.owner) n.push(['invoices', 'nav_invoices', 'i-card'], ['collaborators', 'nav_collab', 'i-users']);
     if (window.EProjects && S.perms.owner && !PARTNER) n.push(['projetos', 'nav_projects', 'i-bot']);
     if (window.EAttorney) n.push(['advogados', 'nav_attorneys', 'i-law']);
@@ -508,6 +511,7 @@
     var allowed = items.map(function (n) { return n[0]; });
     if (S.client && S.perms.owner && window.EClientOA) allowed.push('oa');
     // endereço antigo do envio de documentos: abre o envio dentro de Documentos
+    if (v === 'bookkeeping' && allowed.indexOf('bookkeeping') < 0 && allowed.indexOf('reports') > -1) { ERoute.set('#/reports', true); v = 'reports'; }   // painel antigo do bookkeeping do pacote
     if (v === 'upload' && allowed.indexOf('documents') > -1 && S.perms.upload) { ERoute.set('#/documents?new=1', true); v = 'documents'; }
     if (allowed.indexOf(v) < 0) v = items[0][0];
     $$('.console__nav a').forEach(function (a) { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
@@ -601,65 +605,121 @@
   async function vOverview(view) {
     var cid = S.client.id;
     var res = await Promise.all([
-      S.perms.deadlines ? q(sb.from('compliance_items').select('*').eq('client_id', cid).in('status', ['pending', 'in_progress']).order('due_date').limit(6)) : Promise.resolve([]),
-      S.perms.view ? q(sb.from('company_documents').select('*').eq('client_id', cid).order('created_at', { ascending: false }).limit(6)) : Promise.resolve([]),
+      S.perms.deadlines ? q(sb.from('compliance_items').select('*').eq('client_id', cid).in('status', ['pending', 'in_progress']).order('due_date').limit(40)) : Promise.resolve([]),
+      S.perms.view ? q(sb.from('company_documents').select('*').eq('client_id', cid).order('created_at', { ascending: false }).limit(30)) : Promise.resolve([]),
       S.perms.view ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid) : Promise.resolve({ count: 0 }),
-      S.perms.reports ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid).eq('category', 'report') : Promise.resolve({ count: 0 })
+      S.perms.reports && S.books ? sb.from('company_documents').select('id', { count: 'exact', head: true }).eq('client_id', cid).eq('category', 'report') : Promise.resolve({ count: 0 })
     ]);
     var next = res[0][0];
     var first = (S.me && S.me.name ? S.me.name : S.client.name).split(' ')[0];
     var kp = kpi(t('k_companies'), S.companies.length) + (S.perms.deadlines ? kpi(t('k_next'), next ? fmtDate(next.due_date) : t('none'), true) : '') +
-      (S.perms.view ? kpi(t('k_docs'), res[2].count || 0) : '') + (S.perms.reports ? kpi(t('k_reports'), res[3].count || 0) : '');
-    view.innerHTML = head(t('hello', { n: first }), PARTNER ? t('p_overviewLead', { c: S.client.name }) : t('overviewLead')) +
-      (S.openInv && S.openInv.n ? '<div class="portal-alert portal-alert--info" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem"><strong>' + esc(t('inv_banner', { n: S.openInv.n, a: money(S.openInv.cents) })) + '</strong><a class="btn btn--navy btn--xs" href="#/invoices">' + t('inv_bannerBtn') + '</a></div>' : '') +
-      '<div class="dash"><div><div class="kpis">' + kp + '</div><div id="tl-ov"></div>' +
-        (!S.perms.deadlines ? '' : '<section class="portal-card" style="margin-top:1.25rem"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('nextDeadlines') + '</h2><a href="#/compliance">' + t('seeAll') + '</a></div>' +
-          (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>') +
-        (S.perms.view ? '<section class="portal-card"><div class="toolbar" style="justify-content:space-between;align-items:center"><h2 class="portal-h2" style="margin:0">' + t('recentDocs') + '</h2><a href="#/documents">' + t('seeAll') + '</a></div>' + docItems(res[1], true) + '</section>' : '') +
-      '</div><aside class="links-panel portal-card"><h2 class="portal-h2">' + t('quick') + '</h2><ul>' +
-        (S.perms.upload ? '<li><a href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg>' + t('qUpload') + '</a></li>' : '') +
-        (S.perms.owner ? '<li><a href="#/collaborators?invite=1"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg>' + t('qInvite') + '</a></li><li><a href="#/reports"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg>' + t('qQbo') + '</a></li>' : '') +
-        '<li><a href="#/companies"><svg class="icon" aria-hidden="true"><use href="#i-brief"/></svg>' + t('nav_companies') + '</a></li>' +
-      '</ul>' + (PARTNER ? '<h3 class="portal-h2" style="margin-top:1.25rem;font-size:1rem">' + t('myAccess') + '</h3><p class="perm-sum">' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</p>' : '') + '<p class="portal-muted" style="font-size:.8rem;margin-top:1rem">' + t('privacyNote') + '</p></aside></div>';
+      (S.perms.view ? kpi(t('k_docs'), res[2].count || 0) : '') + (S.perms.reports && S.books ? kpi(t('k_reports'), res[3].count || 0) : '');
+    var topo = function (tit, href) { return '<div class="toolbar ov-top"><h2 class="portal-h2" style="margin:0">' + tit + '</h2><a href="' + href + '">' + t('seeAll') + '</a></div>'; };
+    // página fixa: indicadores e andamento em cima; embaixo, prazos, documentos e atalhos lado a lado, cada lista em páginas com flechas
+    var atalhos = (S.perms.upload ? '<a class="btn btn--gold btn--sm" href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</a>' : '') +
+      (S.perms.owner ? '<a class="btn btn--ghost btn--sm" href="#/collaborators?invite=1"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg> ' + t('qInvite') + '</a>' : '');
+    view.innerHTML = head(t('hello', { n: first }), PARTNER ? t('p_overviewLead', { c: S.client.name }) : t('overviewLead'), atalhos ? '<span class="ov-links portal-btn-row">' + atalhos + '</span>' : '') +
+      '<div class="sv-fit ov-fit">' +
+      (S.openInv && S.openInv.n ? '<div class="portal-alert portal-alert--info ov-aviso"><strong>' + esc(t('inv_banner', { n: S.openInv.n, a: money(S.openInv.cents) })) + '</strong><a class="btn btn--navy btn--xs" href="#/invoices">' + t('inv_bannerBtn') + '</a></div>' : '') +
+      '<div class="kpis">' + kp + '</div>' + (PARTNER ? '<p class="perm-sum ov-perm"><strong>' + t('myAccess') + ':</strong> ' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</p>' : '') +
+      '<div class="ov-cols"><div class="ov-col"><div id="tl-ov"></div>' +
+        (!S.perms.deadlines ? '' : '<section class="portal-card fp-card" id="ov-dl">' + topo(t('nextDeadlines'), '#/compliance') +
+          '<div id="ov-dl-box">' + (res[0].length ? res[0].map(function (i) { return deadlineRow(i, coById(i.company_id)); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</div></section>') + '</div>' +
+        (S.perms.view ? '<section class="portal-card fp-card" id="ov-docs">' + topo(t('recentDocs'), '#/documents') + '<div id="ov-docs-box">' + docItems(res[1], true) + '</div></section>' : '') +
+      '</div></div>';
     wireDocs(view, res[1]);
-    if (window.EClientOA && S.companies.length) EClientOA.overviewCard(S.companies).then(function (h) { var b = $('#tl-ov', view); if (b) b.innerHTML = h; }, function () {});
+    var refaz = [];
+    if ($('#ov-dl-box', view)) refaz.push(fitPager($('#ov-dl-box', view), '.deadline'));
+    if ($('#ov-docs-box', view)) refaz.push(fitPager($('#ov-docs-box', view), '.doclist > li'));
+    if (window.EClientOA && S.companies.length) EClientOA.overviewCard(S.companies).then(function (h) { var b = $('#tl-ov', view); if (!b) return; b.innerHTML = h; var c = b.querySelector('.portal-card'); if (c) { c.classList.add('fp-card'); var cx = document.createElement('div'); c.querySelectorAll('.tl-row').forEach(function (r) { cx.appendChild(r); }); c.appendChild(cx); cx.id = 'ov-tl-box'; b.classList.toggle('ov-tl--muitas', S.companies.length > 1); if (S.companies.length > 1) fitPager(cx, '.tl-row'); } refaz.forEach(function (f) { f(); }); }, function () {});
+  }
+  // Página fixa: divide os itens de uma área em páginas com flechas, pelo que cabe de verdade na tela. No celular mostra tudo, com rolagem normal.
+  var fpObs = [];
+  function fitPager(box, sel) {
+    fpObs = fpObs.filter(function (o) { if (document.body.contains(o.box)) return true; o.obs.disconnect(); return false; });
+    var nav = document.createElement('nav'); nav.className = 'sv-pager fp-nav'; nav.hidden = true; nav.setAttribute('aria-label', dx('paginas'));
+    nav.innerHTML = '<button type="button" class="sv-seta" data-fp="-1" aria-label="' + dx('anterior') + '">‹</button><span aria-live="polite"></span><button type="button" class="sv-seta" data-fp="1" aria-label="' + dx('proxima') + '">›</button>';
+    box.classList.add('fp-box'); box.insertAdjacentElement('afterend', nav);
+    var pag = 0, ini = [0], li = [];
+    function mostra() {
+      pag = Math.max(0, Math.min(pag, ini.length - 1));
+      var a = ini[pag], b = pag + 1 < ini.length ? ini[pag + 1] : li.length;
+      li.forEach(function (x, i) { x.hidden = i < a || i >= b; });
+      nav.hidden = ini.length < 2; nav.querySelector('span').textContent = (pag + 1) + '/' + ini.length;
+      nav.querySelector('[data-fp="-1"]').disabled = pag === 0; nav.querySelector('[data-fp="1"]').disabled = pag >= ini.length - 1;
+    }
+    function paginar() {
+      var primeiro = li[ini[pag]]; li = $$(sel, box); li.forEach(function (x) { x.classList.add('fp-item'); x.hidden = false; });
+      ini = [0];
+      if (window.innerWidth >= 1000 && window.innerHeight >= 560 && li.length) {
+        nav.hidden = false;                                    // reserva a altura das flechas enquanto mede
+        var cabe = function (a, n) { li.forEach(function (x, i) { x.hidden = i < a || i >= a + n; }); return box.scrollHeight <= box.clientHeight + 1; };
+        var a = 0;
+        while (a < li.length) {
+          var lo = 1, hi = li.length - a;
+          if (!cabe(a, hi)) { while (lo < hi) { var mid = Math.ceil((lo + hi) / 2); if (cabe(a, mid)) lo = mid; else hi = mid - 1; } } else lo = hi;
+          if (lo > 1 && a + lo < li.length && li[a + lo - 1].classList.contains('d-sep')) lo--;     // título de grupo não fica sozinho no fim
+          a += lo; if (a < li.length) ini.push(a);
+        }
+        if (ini.length < 2) { nav.hidden = true; }
+      }
+      var k = primeiro ? li.indexOf(primeiro) : 0; pag = 0; if (k > 0) ini.forEach(function (v, i) { if (v <= k) pag = i; });
+      mostra();
+    }
+    nav.querySelectorAll('[data-fp]').forEach(function (b) { b.onclick = function () { pag += +b.dataset.fp; mostra(); }; });
+    paginar(); requestAnimationFrame(function () { requestAnimationFrame(paginar); });
+    if (window.ResizeObserver) { var w = 0, h = 0, obs = new ResizeObserver(function () { if (!document.body.contains(box)) return; if (box.clientWidth === w && box.clientHeight === h) return; w = box.clientWidth; h = box.clientHeight; paginar(); }); obs.observe(box); fpObs.push({ box: box, obs: obs }); }
+    return paginar;
   }
   function kpi(l, v, small) { return '<div class="kpi"><div class="kpi__label">' + esc(l) + '</div><div class="kpi__value"' + (small ? ' style="font-size:1.35rem;padding-top:.35rem"' : '') + '>' + esc(v) + '</div></div>'; }
 
+  // Minhas empresas abre direto no painel da empresa (sem o cartão antes); com mais de uma empresa, um seletor troca de empresa
   async function vCompanies(view) {
-    var id = param('id');
-    if (id && coById(id)) return companyDetail(view, coById(id));
-    view.innerHTML = head(t('nav_companies'), '', window.EProjects && S.perms.owner && !PARTNER ? '<button class="btn btn--navy" type="button" id="co-add">+ ' + esc(EProjects.addLabel(L)) + '</button>' : '') + (S.companies.length ? '<div class="cards">' + S.companies.map(function (c) {
-      return '<a class="co-card" href="#/companies?id=' + c.id + '"><h3>' + esc(c.legal_name) + '</h3><div class="meta">' + esc(c.state || '') + (c.formation_date ? ' · ' + esc(t('formed', { d: fmtDate(c.formation_date) })) : '') + '</div>' +
-        '<div class="row"><span>' + (c.ein ? 'EIN ' + esc(c.ein) : '') + '</span><span class="pill' + (c.status === 'active' ? ' pill--done' : '') + '">' + esc(t('st_' + c.status)) + '</span></div>' + (window.EOAUI && c.stage ? EOAUI.stepper(L, c, null) : '') + '</a>';
-    }).join('') + '</div>' : '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong>' + t('noCompaniesText') + '</div>');
-    if ($('#co-add')) $('#co-add').onclick = function () { EProjects.addCompany(refCtx(), function () { route(); }); };
-  }
-  async function companyDetail(view, co) {
+    var addBtn = window.EProjects && S.perms.owner && !PARTNER ? '<button class="btn btn--navy btn--sm" type="button" id="co-add">+ ' + esc(EProjects.addLabel(L)) + '</button>' : '';
+    var liga = function () { if ($('#co-add')) $('#co-add').onclick = function () { EProjects.addCompany(refCtx(), function () { route(); }); }; };
+    if (!S.companies.length) { view.innerHTML = head(t('nav_companies'), '', addBtn) + '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong>' + t('noCompaniesText') + '</div>'; return liga(); }
+    var co = coById(param('id')) || S.companies[0];
     var tabs = [];
     if (window.EClientOA) tabs.push(['timeline', t('tab_timeline')]);
     if (S.perms.view) tabs.push(['docs', t('tab_docs')]);
     if (S.perms.deadlines) tabs.push(['deadlines', t('tab_deadlines')]);
-    if (S.perms.reports) tabs.push(['finance', t('tab_finance')]);
-    var tab = param('tab') || (tabs[0] ? tabs[0][0] : 'none');
+    if (S.perms.reports && S.books) tabs.push(['finance', t('tab_finance')]);
+    var tab = param('tab'); if (!tabs.some(function (x) { return x[0] === tab; })) tab = tabs[0] ? tabs[0][0] : 'none';
     var kv = [[t('docNumber'), co.document_number], [t('ein'), co.ein], [t('agent'), co.registered_agent], [t('fye'), co.fiscal_year_end], [t('address'), co.address]].filter(function (x) { return x[1]; });
-    view.innerHTML = '<p class="crumbs"><a href="#/companies">' + t('back') + '</a> /</p>' + head(co.legal_name, (co.state || '') + (co.formation_date ? ' · ' + t('formed', { d: fmtDate(co.formation_date) }) : '') + ' · ' + t('st_' + co.status)) +
-      (kv.length ? '<section class="portal-card"><dl class="kv">' + kv.map(function (x) { return '<dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd>'; }).join('') + '</dl></section>' : '') +
-      '<nav class="subtabs" style="margin-top:1.25rem" aria-label="' + esc(co.legal_name) + '">' + tabs.map(function (x) { return '<a href="#/companies?id=' + co.id + '&tab=' + x[0] + '"' + (x[0] === tab ? ' aria-current="page"' : '') + '>' + esc(x[1]) + '</a>'; }).join('') + '</nav><div id="co-body"></div>';
-    var body = $('#co-body', view);
+    var meta = [co.state, co.formation_date ? t('formed', { d: fmtDate(co.formation_date) }) : ''].filter(Boolean).join(' · ');
+    view.innerHTML = head(t('nav_companies'), '', addBtn) + '<div class="sv-fit co-fit">' +
+      '<section class="portal-card co-topo"><div class="co-topo__l">' +
+        (S.companies.length > 1 ? '<select id="co-sel" aria-label="' + t('company') + '">' + S.companies.map(function (c) { return '<option value="' + c.id + '"' + (c.id === co.id ? ' selected' : '') + '>' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' : '<h2 class="portal-h2" id="co-nome" style="margin:0">' + esc(co.legal_name) + '</h2>') +
+        '<span class="portal-muted">' + esc(meta) + '</span><span class="pill' + (co.status === 'active' ? ' pill--done' : '') + '">' + esc(t('st_' + co.status)) + '</span></div>' +
+        (kv.length ? '<dl class="co-kv">' + kv.map(function (x) { return '<div><dt>' + esc(x[0]) + '</dt><dd>' + esc(x[1]) + '</dd></div>'; }).join('') + '</dl>' : '') + '</section>' +
+      '<nav class="subtabs" id="co-tabs" aria-label="' + esc(co.legal_name) + '">' + tabs.map(function (x) { return '<a href="#/companies?id=' + co.id + '&tab=' + x[0] + '"' + (x[0] === tab ? ' aria-current="page"' : '') + '>' + esc(x[1]) + '</a>'; }).join('') + '</nav>' +
+      '<div id="co-body" class="co-body"></div></div>';
+    liga();
+    if ($('#co-sel')) $('#co-sel').onchange = function () { ERoute.set('#/companies?id=' + this.value + '&tab=' + tab); };
+    var body = $('#co-body', view), vazio = '<section class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></section>';
     if (tab === 'timeline' && window.EClientOA) {
       await EClientOA.companyTab(body, co);
+      var cartao = body.querySelector('.portal-card'); if (cartao) { cartao.classList.add('fp-card'); var cx = document.createElement('div'); while (cartao.firstChild) cx.appendChild(cartao.firstChild); cartao.appendChild(cx); fitPager(cx, '.tl-full > li'); }
     } else if (tab === 'docs' && S.perms.view) {
       var docs = await q(sb.from('company_documents').select('*').eq('company_id', co.id).order('category').order('created_at', { ascending: false }));
       var groups = ['onboarding', 'formation', 'tax_return', 'report', 'compliance', 'uploaded', 'other'].filter(function (c) { return docs.some(function (d) { return d.category === c; }); });
-      body.innerHTML = groups.length ? groups.map(function (g) { return '<section class="portal-card"><h2 class="portal-h2">' + esc(t('cat_' + g)) + '</h2>' + docItems(docs.filter(function (d) { return d.category === g; }), false) + '</section>'; }).join('') : '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
+      body.innerHTML = groups.length ? '<section class="portal-card fp-card doc-lista"><div id="co-docs"><ul class="doclist">' + groups.map(function (g) { var ds = docs.filter(function (d) { return d.category === g; });
+        return '<li class="d-sep" data-cat="' + g + '">' + esc(t('cat_' + g)) + ' <span class="portal-muted">(' + ds.length + ')</span></li>' + docItems(ds, false).replace(/^<ul[^>]*>|<\/ul>$/g, ''); }).join('') + '</ul></div></section>' : vazio;
       wireDocs(body, docs);
-    } else if (tab === 'finance' && S.perms.reports) {
-      await reportsFor(body, [co]);
+      if ($('#co-docs', body)) fitPager($('#co-docs', body), '.doclist > li');
+    } else if (tab === 'finance' && S.perms.reports && S.books) {
+      // os mesmos relatórios da página Relatórios financeiros
+      if (S.books === 'pacote' && window.ETools && ETools.reportsTab && co.books_provider !== 'quickbooks') {
+        await ETools.reportsTab(body, co);
+        var rc = $('#bkp-reps', body), rl = $('#bkp-lista', body);
+        if (rc && rl) { rc.classList.add('fp-card'); var rp = fitPager(rl, 'tbody tr'); $$('[data-ano]', body).forEach(function (b) { b.addEventListener('click', function () { setTimeout(rp, 0); }); }); }
+      }
+      else await reportsFor(body, [co]);
     } else if (tab === 'deadlines' && S.perms.deadlines) {
       var items = await q(sb.from('compliance_items').select('*').eq('company_id', co.id).order('due_date'));
-      body.innerHTML = '<section class="portal-card">' + (items.length ? items.map(function (i) { return deadlineRow(i, co); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</section>';
-    } else body.innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
+      body.innerHTML = '<section class="portal-card fp-card"><div id="co-dl">' + (items.length ? items.map(function (i) { return deadlineRow(i, co); }).join('') : '<div class="empty-state"><strong>' + t('noDeadlines') + '</strong></div>') + '</div></section>';
+      fitPager($('#co-dl', body), '.deadline');
+    } else body.innerHTML = vazio;
   }
 
   var DOCX = { en: { cancelar: 'Cancel', solicitados: 'Requested', categoria: 'Category', paginas: 'Document pages', anterior: 'Previous page', proxima: 'Next page', baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
@@ -816,6 +876,8 @@
     wireDocs(body, docs);
   }
   async function vReports(view) {
+    if (!S.books) { ERoute.set('#/overview', true); return vOverview(view); }
+    if (S.books === 'pacote' && window.ETools && ETools.reportsPage && S.companies.some(function (c) { return c.books_provider === 'endeavor'; })) return ETools.reportsPage(view);
     view.innerHTML = head(t('nav_reports'), t('reportsLead')) + '<div id="r-body"></div>';
     if (!S.companies.length) { $('#r-body').innerHTML = '<div class="portal-card empty-state"><strong>' + t('noCompanies') + '</strong></div>'; return; }
     var pre = param('company'), list = pre && coById(pre) ? [coById(pre)].concat(S.companies.filter(function (c) { return c.id !== pre; })) : S.companies;
@@ -1111,11 +1173,14 @@
 
   async function vSettings(view) {
     var u = (await sb.auth.getUser()).data.user;
-    view.innerHTML = head(t('nav_settings'), t('settingsLead')) +
+    var contas = S.client && S.perms.owner && !PARTNER && S.books === 'pacote' && window.ETools && ETools.accounts && S.companies.some(function (c) { return c.books_provider === 'endeavor'; });
+    view.innerHTML = head(t('nav_settings'), t('settingsLead')) + (contas ? '<div class="set-grid"><div>' : '') +
       '<section class="portal-card"><h2 class="portal-h2">' + t('account') + '</h2><dl class="kv"><dt>' + t('email') + '</dt><dd>' + esc(u.email) + '</dd><dt>' + t('lastLogin') + '</dt><dd>' + esc(fmtDT(u.last_sign_in_at)) + '</dd>' +
       '<dt>' + t('yourRole') + '</dt><dd>' + esc(S.perms.owner ? t('owner') : [S.partner ? t('p_partnerLead') : '', S.client ? t('c_' + (S.me.collab_type || 'other')) : ''].filter(Boolean).join(' · ')) + '</dd>' + (PARTNER && S.client ? '<dt>' + t('sharedBy') + '</dt><dd>' + esc(S.client.name) + '</dd><dt>' + t('myAccess') + '</dt><dd>' + esc(EPerms.summary(S.me, permLabels(), S.companies)) + '</dd>' : '') + '<dt>MFA</dt><dd>' + t('mfaOn') + '</dd></dl></section>' +
       '<section class="portal-card"><h2 class="portal-h2">' + t('changePass') + '</h2><form class="portal-form" id="pw"><div class="field"><label for="pw-n">' + t('newPass') + '</label><input id="pw-n" type="password" autocomplete="new-password" minlength="8" required></div>' +
-      '<div class="portal-alert" id="pw-m" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('savePass') + '</button></form></section>';
+      '<div class="portal-alert" id="pw-m" role="status"></div><button class="btn btn--navy" type="submit" style="justify-self:start">' + t('savePass') + '</button></form></section>' + (contas ? '</div><section class="portal-card" id="set-contas"></section></div>' : '');
+    // contas que alimentam o bookkeeping incluído no pacote (quem comprou a ferramenta avulsa conecta dentro dela)
+    if (contas) ETools.accounts($('#set-contas', view));
     $('#pw').onsubmit = async function (e) {
       e.preventDefault(); var p = $('#pw-n').value; if (p.length < 8) return msg($('#pw-m'), t('passShort'), 'error');
       var r = await sb.auth.updateUser({ password: p }); msg($('#pw-m'), r.error ? errText(r.error) : t('passChanged'), r.error ? 'error' : 'ok');
