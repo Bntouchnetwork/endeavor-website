@@ -1151,3 +1151,29 @@ fieldset.field.att-set legend{padding:0;margin-bottom:.4rem;font-weight:600;font
 html.a11y-contrast .wa-ico { background: #000; border: 2px solid #fff; }
 [data-lang-only][hidden] { display: none !important; }
 a.login__toggle, a.login__toggle:hover { text-decoration: none; }
+
+/* Serviços avulsos: carrossel de uma fileira, com flechas */
+.shop__carousel { position: relative; }
+.shop__track { display: flex; grid-template-columns: none; gap: var(--space-3); overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; padding: 0.4rem 0.2rem 1rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.shop__track::-webkit-scrollbar { display: none; }
+.shop__track > .shop-card { flex: 0 0 min(19rem, 82vw); scroll-snap-align: start; }
+.shop__track:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: var(--radius-lg); }
+.shop__seta { position: absolute; top: 50%; right: -0.6rem; z-index: 2; width: 2.9rem; height: 2.9rem; margin-top: -1.45rem; border-radius: 50%; border: 1px solid var(--line); background: var(--white); color: var(--navy-900); display: grid; place-items: center; box-shadow: var(--shadow-lg); cursor: pointer; }
+.shop__seta--ant { right: auto; left: -0.6rem; }
+.shop__seta--ant .icon { transform: rotate(180deg); }
+.shop__seta .icon { width: 1.2rem; height: 1.2rem; }
+.shop__seta:hover:not(:disabled) { background: var(--navy-900); color: var(--white); }
+.shop__seta:disabled { opacity: 0; pointer-events: none; }
+.shop__seta:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+@media (min-width: 1300px) { .shop__seta { right: -1.45rem; } .shop__seta--ant { left: -1.45rem; } }
+@media (prefers-reduced-motion: reduce) { .shop__track { scroll-behavior: auto; } }
+/* Contato: WhatsApp como os outros itens da lista, com o ícone verde */
+.contact__list .contact__wa { display: flex; gap: 1rem; align-items: center; text-decoration: none; color: inherit; }
+.contact__list .contact__wa .icon { background: #128c4a; color: #fff; }
+.contact__list .contact__wa:hover .icon { background: #0e7a3f; }
+.contact__list .contact__wa:hover strong { text-decoration: underline; }
+.contact__list .contact__wa strong { margin-bottom: 0; }
+.contact__list .contact__wa:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; border-radius: 0.5rem; }
+/* Programa de Parceiros: os passos 1, 2, 3 com respiro abaixo dos cards e o número em azul-marinho sobre o dourado do botão */
+.partners-home .ph-steps { margin-top: clamp(2rem, 1.4rem + 2.4vw, 3rem); }
+.ph-steps .ph-steps__num { background: var(--gold); color: var(--navy-950); font-size: 1.05rem; font-weight: 700; }

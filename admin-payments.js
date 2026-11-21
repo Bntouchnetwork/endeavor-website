@@ -588,7 +588,7 @@
   }
 
   /* ---------- online store: prices of the cards on the home page, purchases and active services ---------- */
-  var SP = { crm: 'CRM', agenda: 'Agenda Online', esign: 'Assinatura Eletrônica', bookkeeping: 'Bookkeeping com IA', registered_agent: 'Registered Agent', virtual_address: 'Endereço Virtual', pkg_essencial: 'Pacote Essencial', pkg_completo: 'Pacote Completo', pkg_holding: 'Pacote Operacional + Holding (só por proposta)', operating_agreement: 'Operating Agreement (add-on)', telefone: 'Telefone Comercial', webmeeting: 'Web Meeting', webinar: 'Live Webinar', whatsapp: 'WhatsApp Manager' };
+  var SP = { crm: 'CRM', agenda: 'Agenda Online', esign: 'Assinatura Eletrônica', bookkeeping: 'Bookkeeping', registered_agent: 'Registered Agent', virtual_address: 'Endereço Virtual', pkg_essencial: 'Pacote Essencial', pkg_completo: 'Pacote Completo', pkg_holding: 'Pacote Operacional + Holding (só por proposta)', operating_agreement: 'Operating Agreement (add-on)', telefone: 'Telefone Comercial', webmeeting: 'Web Meeting', webinar: 'Live Webinar', whatsapp: 'WhatsApp Manager' };
   async function storeTab(body, ctx) {
     var esc = ctx.esc;
     var res = await Promise.all([ctx.q(ctx.sb.from('store_products').select('*').order('sort')),

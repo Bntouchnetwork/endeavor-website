@@ -436,6 +436,18 @@
     update();
   })();
 
+  /* ---------- Serviços avulsos: carrossel com flechas ---------- */
+  (function () {
+    var tr = document.getElementById('shop-track'), ant = document.getElementById('shop-ant'), prox = document.getElementById('shop-prox'); if (!tr || !ant || !prox) return;
+    function passo() { var c = tr.querySelector('.shop-card:not([hidden])'); return c ? c.getBoundingClientRect().width + parseFloat(getComputedStyle(tr).columnGap || 16) : 300; }
+    function estado() { ant.disabled = tr.scrollLeft < 4; prox.disabled = tr.scrollLeft + tr.clientWidth > tr.scrollWidth - 4; }
+    function ir(d) { var n = Math.max(1, Math.floor(tr.clientWidth / passo())); tr.scrollBy({ left: d * n * passo(), behavior: 'smooth' }); }
+    ant.addEventListener('click', function () { ir(-1); }); prox.addEventListener('click', function () { ir(1); });
+    tr.addEventListener('keydown', function (e) { if (e.target !== tr) return; if (e.key === 'ArrowRight') { e.preventDefault(); ir(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); ir(-1); } });
+    tr.addEventListener('scroll', function () { requestAnimationFrame(estado); }, { passive: true });
+    window.addEventListener('resize', estado); setTimeout(estado, 300); estado();
+  })();
+
   /* ---------- Hire online: current prices from the catalog (Admin > Pagamentos > Loja) ---------- */
   (function () {
     var C = window.ENDEAVOR_CFG; if (!C || !document.querySelector('[data-price]') || !window.fetch) return;

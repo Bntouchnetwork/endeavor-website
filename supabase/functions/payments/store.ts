@@ -19,7 +19,7 @@ export const PRODUCTS: Record<string, { pt: string; en: string; es: string }> = 
   crm: { pt: "CRM Endeavor", en: "Endeavor CRM", es: "CRM Endeavor" },
   agenda: { pt: "Agenda Online", en: "Online Scheduling", es: "Agenda en Línea" },
   esign: { pt: "Assinatura Eletrônica", en: "Electronic Signature", es: "Firma Electrónica" },
-  bookkeeping: { pt: "Bookkeeping com IA", en: "AI Bookkeeping", es: "Bookkeeping con IA" },
+  bookkeeping: { pt: "Bookkeeping", en: "Bookkeeping", es: "Bookkeeping" },
   registered_agent: { pt: "Registered Agent", en: "Registered Agent", es: "Agente Registrado" },
   virtual_address: { pt: "Endereço Virtual", en: "Virtual Address", es: "Dirección Virtual" },
   pkg_essencial: { pt: "Pacote Essencial de Abertura", en: "Essential Formation Package", es: "Paquete Esencial de Apertura" },

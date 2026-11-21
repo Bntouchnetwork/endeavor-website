@@ -252,7 +252,7 @@ async function handle(req: Request, body: Any) {
   const { data: u } = await user.auth.getUser();
   if (!u?.user) throw new Fail("unauthorized", 401);
   const { data: isAdmin } = await user.rpc("is_admin");
-  // a client who bought "Bookkeeping com IA" connects the bank and card accounts of its own company from the portal
+  // a client who bought "Bookkeeping" connects the bank and card accounts of its own company from the portal
   if (!isAdmin) {
     if (!["config", "stripe_session", "stripe_complete", "plaid_link", "plaid_exchange"].includes(a)) throw new Fail("forbidden", 403);
     if (a !== "config") {
