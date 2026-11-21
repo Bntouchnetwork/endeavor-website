@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261221">
+  <link rel="stylesheet" href="styles.css?v=20261222">
 
   <script type="application/ld+json">
   {
@@ -222,7 +222,7 @@
           <h4 class="pkgs__title pkgs__title--tools">Tools and services à la carte</h4>
         </div>
         <div class="shop__carousel" id="shop-carousel">
-          <button type="button" class="shop__seta shop__seta--ant" id="shop-ant" aria-label="Previous services" disabled><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button type="button" class="shop__seta shop__seta--ant" id="shop-ant" aria-label="Previous services"><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
           <ul class="shop__grid shop__track" role="list" id="shop-track" tabindex="0" aria-label="Tools and services à la carte">
             <li class="shop-card reveal" data-product="crm"><svg class="card__icon" aria-hidden="true"><use href="#i-users"/></svg><h3>CRM</h3><p class="shop-card__lead">Organize your leads and clients in a simple sales pipeline.</p><ul class="shop-card__feats" role="list"><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Sales pipeline by stage</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Contacts with notes and history</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Next actions with dates</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Online bookings become contacts automatically</li></ul><p class="shop-card__price"><span class="shop-card__amount" data-price="crm">$29</span><span class="shop-card__int" data-int="month">/month</span><span class="shop-card__int" data-int="year" hidden>/year</span><span class="shop-card__int" data-int="once" hidden>one-time</span></p><a class="btn btn--gold shop-card__cta js-buy" data-p="crm" href="comprar.html?p=crm">Subscribe now <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></li>
             <li class="shop-card reveal" data-product="agenda"><svg class="card__icon" aria-hidden="true"><use href="#i-clock"/></svg><h3>Online Scheduling</h3><p class="shop-card__lead">Your own booking page, so clients schedule with you on their own.</p><ul class="shop-card__feats" role="list"><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Personal booking link for your business</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Weekly hours, breaks and days off</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Automatic e-mail confirmations</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Clients cancel with one click</li></ul><p class="shop-card__price"><span class="shop-card__amount" data-price="agenda">$19</span><span class="shop-card__int" data-int="month">/month</span><span class="shop-card__int" data-int="year" hidden>/year</span><span class="shop-card__int" data-int="once" hidden>one-time</span></p><a class="btn btn--gold shop-card__cta js-buy" data-p="agenda" href="comprar.html?p=agenda">Subscribe now <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></li>
@@ -236,6 +236,7 @@
             <li class="shop-card reveal shop-card--soon" data-product="virtual_address"><span class="shop-card__badge">Coming soon</span><svg class="card__icon" aria-hidden="true"><use href="#i-pin"/></svg><h3>Virtual Address</h3><p class="shop-card__lead">A professional business address in Orlando, Florida.</p><ul class="shop-card__feats" role="list"><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Business mailing address in Orlando, FL</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Mail scanned and notified in your portal</li><li><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>Forwarding on request</li></ul><p class="shop-card__price"><span class="shop-card__amount" data-price="virtual_address">$49</span><span class="shop-card__int" data-int="month">/month</span><span class="shop-card__int" data-int="year" hidden>/year</span><span class="shop-card__int" data-int="once" hidden>one-time</span></p><span class="btn btn--ghost shop-card__cta is-disabled" aria-disabled="true">Coming soon</span><a class="shop-card__wait" href="#contact" data-assist="Other">Join the waiting list</a></li>
           </ul>
           <button type="button" class="shop__seta" id="shop-prox" aria-label="Next services"><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          <button type="button" class="shop__pausa" id="shop-pausa" aria-label="Pause the automatic carousel" aria-pressed="false"><span class="shop__pausa-ico" aria-hidden="true"></span></button>
         </div>
         <p class="shop__note"><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg><span>Payments are processed by Stripe. Monthly plans renew automatically and can be cancelled in the portal.</span></p>
       </div>
@@ -915,8 +916,8 @@
 </div>
 
 <script src="app-config.js?v=20261212" defer></script>
-<script src="i18n.js?v=20261221" defer></script>
-<script src="script.js?v=20261217" defer></script>
+<script src="i18n.js?v=20261222" defer></script>
+<script src="script.js?v=20261222" defer></script>
 <script src="site-chat.js?v=20261212" defer></script>
 </body>
 </html>

@@ -436,17 +436,37 @@
     update();
   })();
 
-  /* ---------- Serviços avulsos: carrossel com flechas ---------- */
+  /* ---------- Serviços avulsos: carrossel com flechas, que passa sozinho a cada 5 s, em loop ---------- */
   (function () {
-    var tr = document.getElementById('shop-track'), ant = document.getElementById('shop-ant'), prox = document.getElementById('shop-prox'); if (!tr || !ant || !prox) return;
+    var box = document.getElementById('shop-carousel'), tr = document.getElementById('shop-track'), ant = document.getElementById('shop-ant'), prox = document.getElementById('shop-prox'), pausa = document.getElementById('shop-pausa');
+    if (!box || !tr || !ant || !prox) return;
+    var TEMPO = 5000, calmo = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    var parado = calmo, segura = 0, naTela = false, relogio = null;   // parado = botão de pausa; segura = mouse, teclado ou dedo em cima
     function passo() { var c = tr.querySelector('.shop-card:not([hidden])'); return c ? c.getBoundingClientRect().width + parseFloat(getComputedStyle(tr).columnGap || 16) : 300; }
-    function estado() { ant.disabled = tr.scrollLeft < 4; prox.disabled = tr.scrollLeft + tr.clientWidth > tr.scrollWidth - 4; }
-    // cada clique passa um grupo completo (a quantidade de cards que cabe inteira na tela)
-    function ir(d) { var n = Math.max(1, Math.round((tr.clientWidth + parseFloat(getComputedStyle(tr).columnGap || 16)) / passo())); tr.scrollBy({ left: d * n * passo(), behavior: 'smooth' }); }
-    ant.addEventListener('click', function () { ir(-1); }); prox.addEventListener('click', function () { ir(1); });
-    tr.addEventListener('keydown', function (e) { if (e.target !== tr) return; if (e.key === 'ArrowRight') { e.preventDefault(); ir(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); ir(-1); } });
-    tr.addEventListener('scroll', function () { requestAnimationFrame(estado); }, { passive: true });
-    window.addEventListener('resize', estado); setTimeout(estado, 300); estado();
+    function fim() { return tr.scrollLeft + tr.clientWidth > tr.scrollWidth - 4; }
+    function rola(x) { tr.scrollTo({ left: x, behavior: calmo ? 'auto' : 'smooth' }); }
+    // um card para a frente; depois do último, volta para o primeiro
+    function avanca() { if (fim()) rola(0); else rola(Math.round(tr.scrollLeft / passo() + 1) * passo()); }
+    // flechas: um grupo completo por clique, também dando a volta
+    function grupo(d) {
+      var n = Math.max(1, Math.round((tr.clientWidth + parseFloat(getComputedStyle(tr).columnGap || 16)) / passo()));
+      if (d > 0 && fim()) return rola(0);
+      if (d < 0 && tr.scrollLeft < 4) return rola(tr.scrollWidth);
+      rola((Math.round(tr.scrollLeft / passo()) + d * n) * passo());
+    }
+    function liga() { clearInterval(relogio); relogio = null; if (!parado && !segura && naTela && !document.hidden) relogio = setInterval(avanca, TEMPO); }
+    function segurar(v) { segura = Math.max(0, segura + v); liga(); }
+    ant.disabled = false; prox.disabled = false;
+    ant.addEventListener('click', function () { grupo(-1); }); prox.addEventListener('click', function () { grupo(1); });
+    tr.addEventListener('keydown', function (e) { if (e.target !== tr) return; if (e.key === 'ArrowRight') { e.preventDefault(); grupo(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); grupo(-1); } });
+    box.addEventListener('mouseenter', function () { segurar(1); }); box.addEventListener('mouseleave', function () { segurar(-1); });
+    box.addEventListener('focusin', function (e) { if (!box.contains(e.relatedTarget)) segurar(1); }); box.addEventListener('focusout', function (e) { if (!box.contains(e.relatedTarget)) segurar(-1); });
+    var dedo = null;
+    box.addEventListener('touchstart', function () { clearTimeout(dedo); if (!box._dedo) { box._dedo = true; segurar(1); } }, { passive: true });
+    box.addEventListener('touchend', function () { clearTimeout(dedo); dedo = setTimeout(function () { if (box._dedo) { box._dedo = false; segurar(-1); } }, 4000); }, { passive: true });
+    if (pausa) { pausa.setAttribute('aria-pressed', String(parado)); pausa.addEventListener('click', function () { parado = !parado; pausa.setAttribute('aria-pressed', String(parado)); liga(); }); }
+    document.addEventListener('visibilitychange', liga);
+    if (window.IntersectionObserver) new IntersectionObserver(function (es) { naTela = es[0].isIntersecting; liga(); }, { threshold: 0.4 }).observe(box); else { naTela = true; liga(); }
   })();
 
   /* ---------- Hire online: current prices from the catalog (Admin > Pagamentos > Loja) ---------- */

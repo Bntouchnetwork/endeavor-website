@@ -1200,3 +1200,11 @@ a.login__toggle, a.login__toggle:hover { text-decoration: none; }
 .contact__list li:has(> .contact__solo) { align-items: center; }
 .contact__list .contact__solo strong.sr-only { display: block; margin: -1px; }
 .pkg__note { flex-basis: 100%; font-size: 0.95rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+/* Carrossel automático: botão pequeno de pausar e continuar */
+.shop__carousel { grid-template-columns: 1fr auto 1fr; grid-template-areas: "trilho trilho trilho" "ant pausa prox"; }
+.shop__pausa { grid-area: pausa; justify-self: center; width: 2.25rem; height: 2.25rem; border-radius: 50%; border: 1px solid var(--line); background: var(--white); color: var(--navy-900); display: grid; place-items: center; cursor: pointer; }
+.shop__pausa:hover { background: var(--navy-900); color: var(--white); }
+.shop__pausa:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.shop__pausa-ico { width: 0.7rem; height: 0.8rem; border-left: 0.24rem solid currentColor; border-right: 0.24rem solid currentColor; box-sizing: border-box; }
+.shop__pausa[aria-pressed="true"] .shop__pausa-ico { width: 0; height: 0; border: 0.42rem solid transparent; border-left: 0.7rem solid currentColor; border-right: 0; margin-left: 0.15rem; }
+@media (min-width: 1340px) { .shop__carousel .shop__pausa { display: grid; margin: 0.6rem auto 0; } }
