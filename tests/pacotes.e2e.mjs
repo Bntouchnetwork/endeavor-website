@@ -81,6 +81,7 @@ try {
     ok(hrefs.length === 1 && !(await home.locator("footer a.js-wa, footer .wa-ico").count()) && hrefs.every((h) => h === "https://wa.me/16306898702?text=" + encodeURIComponent("Preciso de informações.")), "contatos: o ícone do WhatsApp abre a conversa com a mensagem pronta (PT)");
     ok(!/630\D*689/.test(ct + ft) && /407\) 436-9567/.test(ct) && ct.includes("support@endeavorbiz.com") && ft.includes("support@endeavorbiz.com"), "contatos: sem o número do WhatsApp escrito; telefone e e-mail aparecem");
     ok((await home.locator("#contact a.js-wa").textContent()).includes("WhatsApp") && await home.locator("#contact a.js-wa svg").isVisible() && !(await home.locator("#contact .wa-ico").count()), "contatos: WhatsApp na lista, com ícone verde e a palavra, sem o botão solto");
+    await home.evaluate(() => { document.getElementById("shop-track").scrollLeft = 0; }); await home.waitForTimeout(700);
     ok(await home.locator("#shop-track .shop-card").count() >= 9 && await home.locator("#shop-ant").isDisabled() && !(await home.locator("#shop-prox").isDisabled()) && !/Bookkeeping com IA/.test(await home.textContent("body")), "serviços avulsos em carrossel com flechas; Bookkeeping sem \"com IA\"");
     await home.locator("#contact .contact__list").screenshot({ path: OUT + "/contatos.png" }); }
   await home.click('[data-product="pkg_holding"] .shop-card__cta');
