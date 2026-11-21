@@ -1,4 +1,4 @@
-import { htmlToText, officialUrl, plan, quoteInSource, relevant, sameObligation, sig, validate } from "../supabase/functions/crm/deadlines-core.ts";
+import { htmlToText, officialUrl, plan, quoteInSource, relevant, sameObligation, sig, stale, validate } from "../supabase/functions/crm/deadlines-core.ts";
 const eq = (a: unknown, b: unknown, m = "") => { if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error(`${m}: ${JSON.stringify(a)} != ${JSON.stringify(b)}`); };
 const ok = (c: unknown, m = "") => { if (!c) throw new Error(m || "falhou"); };
 
@@ -50,4 +50,22 @@ Deno.test("não duplica nem mexe no que a equipe cadastrou", () => {
     { id: "a2", title: "Form 1099-NEC", category: "federal_tax", due_date: "2026-01-31", origin: "agent", status: "done" },
   ]);
   eq(p.manual, 1); eq(p.update.map((x) => x.id + ":" + x.from), ["a1:2026-04-14"]); eq(p.keep.map((x) => x.id), ["a2"]); eq(p.create.map((x) => x.title), ["Form 7004 extension"]);
+});
+
+Deno.test("datas de multa ou dissolução ficam de fora; o que o agente criou e não se confirma sai", () => {
+  const src = [{ url: "https://dos.fl.gov/x", text: "Annual reports are due by May 1. Entities are administratively dissolved on the third Friday of September." }];
+  const r = validate({ deadlines: [
+    { title: "Florida Annual Report", category: "annual_report", due_date: "2026-05-01", source: 1, quote: "Annual reports are due by May 1." },
+    { title: "Annual Report 2026", category: "annual_report", due_date: "2026-09-18", source: 1, quote: "Entities are administratively dissolved on the third Friday of September." },
+  ] }, src, [2026, 2027]);
+  eq(r.ok.map((x) => x.due_date), ["2026-05-01"]); eq(r.rejected, 1);
+  const ex = [
+    { id: "a", origin: "agent", status: "pending", due_date: "2026-12-15", source_url: "https://www.irs.gov/publications/p509" },
+    { id: "b", origin: "agent", status: "pending", due_date: "2026-12-20", source_url: "https://outra.gov/x" },       // a fonte não abriu: fica
+    { id: "c", origin: "agent", status: "done", due_date: "2026-12-15", source_url: "https://www.irs.gov/publications/p509" },
+    { id: "d", origin: "manual", status: "pending", due_date: "2026-12-15", source_url: null },
+    { id: "e", origin: "agent", status: "pending", due_date: "2026-01-10", source_url: "https://www.irs.gov/publications/p509" },   // já passou: fica
+    { id: "f", origin: "agent", status: "pending", due_date: "2027-03-15", source_url: "https://www.irs.gov/publications/p509" },   // confirmado
+  ];
+  eq(stale(ex, ["f"], ["https://www.irs.gov/publications/p509"], "2026-11-21", [2026, 2027]).map((x) => x.id), ["a"]);
 });

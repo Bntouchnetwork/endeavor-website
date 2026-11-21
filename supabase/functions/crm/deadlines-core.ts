@@ -88,6 +88,8 @@ export function validate(raw: unknown, sources: { url: string; text: string }[],
     const due = String(d?.due_date || ""), src = sources[Number(d?.source) - 1];
     const dateOk = /^\d{4}-\d{2}-\d{2}$/.test(due) && !isNaN(Date.parse(due + "T12:00:00Z")) && new Date(due + "T12:00:00Z").toISOString().slice(0, 10) === due && years.includes(+due.slice(0, 4));
     if (title.length < 3 || !CATS.includes(d?.category) || !dateOk || !src || !quoteInSource(d?.quote, src.text)) { rejected++; continue; }
+    // datas de multa, atraso ou dissolução não são o prazo da obrigação: ficam de fora
+    if (/dissol|late fee|penalt|delinquen|multa|atraso/i.test(title + " " + String(d?.quote || ""))) { rejected++; continue; }
     if (ok.some((x) => sameObligation(x, { title, category: d.category, due_date: due }))) continue;
     // anotação curta do que vence (o que é e a que período se refere), escrita pela IA só com o que está na fonte
     const note = String(d?.note || "").replace(/<[^>]*>/g, "").replace(/https?:\/\/\S+/g, "").replace(/\s+/g, " ").trim().slice(0, 280);
@@ -107,4 +109,9 @@ export function plan(found: Found[], existing: Row[]): { create: Found[]; update
     else out.keep.push({ id: m.id, found: f });
   }
   return out;
+}
+
+// prazos que o próprio agente criou e que a verificação mais recente não confirmou mais (só os pendentes, futuros e de fontes que abriram)
+export function stale(existing: Row[], confirmedIds: string[], loadedUrls: string[], today: string, years: number[]): Row[] {
+  return existing.filter((e) => e.origin === "agent" && e.status === "pending" && e.due_date >= today && years.includes(+String(e.due_date).slice(0, 4)) && loadedUrls.includes(e.source_url) && !confirmedIds.includes(e.id));
 }

@@ -3,7 +3,7 @@
 // A IA (1) sugere endereços oficiais do estado e do condado e (2) lê o texto baixado e devolve os prazos, cada um com
 // um trecho copiado da fonte. Só entra no portal o que passa na conferência (deadlines-core.ts).
 import { hubJson, hubOn } from "../_shared/hub-ai.ts";
-import { CATS, htmlToText, officialUrl, plan, relevant, validate, type Row } from "./deadlines-core.ts";
+import { CATS, htmlToText, officialUrl, plan, relevant, stale, validate, type Row } from "./deadlines-core.ts";
 
 const IRS_CAL = "https://www.irs.gov/publications/p509";
 const FL_AR = "https://dos.fl.gov/sunbiz/manage-business/efile/annual-report/";
@@ -45,12 +45,12 @@ export async function runCompany(db: any, co: Row, lang: string, today = new Dat
   if (!sources.length) { await db.from("companies").update({ deadlines_checked_at: today.toISOString() }).eq("id", co.id); return { company_id: co.id, error: "no_sources", sources: tried }; }
   // 3. a IA lê as fontes e devolve os prazos, com o trecho que sustenta cada um
   const idioma = lang === "en" ? "English" : lang === "es" ? "Spanish" : "Brazilian Portuguese";
-  const raw: Row = await hubJson({ agent: "tax-deadlines", userId: "endeavor-admin-deadlines", idempotencyKey: `endeavor-dl-read3-${co.id}-${today.toISOString().slice(0, 10)}`, task: "tax_deadline_extract", maxOutputTokens: 4000, timeoutMs: 80_000, meter,
+  const raw: Row = await hubJson({ agent: "tax-deadlines", userId: "endeavor-admin-deadlines", idempotencyKey: `endeavor-dl-read4-${co.id}-${today.toISOString().slice(0, 10)}`, task: "tax_deadline_extract", maxOutputTokens: 4000, timeoutMs: 80_000, meter,
     input: `[Context]\nTask: from the official sources below, list the filing and tax deadlines that apply to this company with a due date in ${years[0]} or ${years[1]}.\nRules: use ONLY the sources. List one deadline per filing or payment: the regular due date. Do NOT list late-fee dates, penalty dates, administrative dissolution dates or extended due dates as separate deadlines. Include estimated tax payments only when the company facts say this entity itself pays income tax; for a disregarded entity or a pass-through entity (partnership, S corporation) leave them out. When you are not sure an obligation applies to this entity type, leave it out. "basis" is "stated" when the source states the date itself, or "rule" when the source states a rule (for example "the 15th day of the 3rd month after the end of the tax year") and you computed the date from it; when a computed date falls on a Saturday or Sunday use the next Monday. If the sources do not cover a year, do not guess that year. "quote" is one sentence copied EXACTLY from the source that supports the deadline. "title" is short, in ${idioma}, keeping the official form or filing name (for example "Form 1065"). "category" is one of ${CATS.join(", ")}. "source" is the number of the source. "note" is one or two short sentences in ${idioma}, for the business owner, saying what is due on that date: what the filing or payment is and which period it refers to, using only what the source says (no advice, no amounts, no links).\nReply with ONLY a JSON object {"deadlines": [{"title": "...", "category": "...", "due_date": "YYYY-MM-DD", "source": 1, "quote": "...", "basis": "stated", "note": "..."}]}.\n[/Context]\n\nCompany facts: ${JSON.stringify(facts)}\n\n` +
       sources.map((s, i) => `=== SOURCE ${i + 1}: ${s.url} ===\n${s.text}`).join("\n\n") });
   const v = validate(raw, sources, years);
   // 4. grava: cria o que falta, corrige a data do que o próprio agente criou, não mexe no que a equipe cadastrou
-  const { data: existing } = await db.from("compliance_items").select("id, title, category, due_date, status, origin").eq("company_id", co.id);
+  const { data: existing } = await db.from("compliance_items").select("id, title, category, due_date, status, origin, source_url").eq("company_id", co.id);
   const p = plan(v.ok, existing ?? []), now = today.toISOString();
   const REGRA: Row = { pt: "Data calculada pela regra da fonte oficial.", en: "Date computed from the rule in the official source.", es: "Fecha calculada según la regla de la fuente oficial." };
   const nota = (f: Row) => [f.note, f.basis === "rule" ? (REGRA[lang] || REGRA.pt) : ""].filter(Boolean).join(" ").slice(0, 400) || null;
@@ -58,12 +58,15 @@ export async function runCompany(db: any, co: Row, lang: string, today = new Dat
   for (const u of p.update) await db.from("compliance_items").update({ due_date: u.found.due_date, source_url: u.found.source_url, verified_at: now, notes: nota(u.found) }).eq("id", u.id);
   // confirmados: renova a data da verificação e a anotação (o título e a situação ficam como estão)
   for (const k of p.keep) await db.from("compliance_items").update({ verified_at: now, source_url: k.found.source_url, ...(nota(k.found) ? { notes: nota(k.found) } : {}) }).eq("id", k.id);
+  // mantém a lista em dia: o que o agente tinha criado e esta verificação não confirmou mais sai da lista
+  const velhos = stale(existing ?? [], [...p.keep.map((k) => k.id), ...p.update.map((u) => u.id)], sources.map((x) => x.url), now.slice(0, 10), years);
+  if (velhos.length) await db.from("compliance_items").delete().in("id", velhos.map((x) => x.id)).eq("origin", "agent");
   await db.from("companies").update({ deadlines_checked_at: now }).eq("id", co.id);
-  if (p.create.length || p.update.length) {
-    await db.from("admin_events").insert({ kind: "deadline_agent", title: `Agente de prazos: ${p.create.length} novo(s), ${p.update.length} alterado(s) · ${String(co.legal_name || "").slice(0, 120)}`.slice(0, 300),
-      body: [...p.create.map((f) => `Novo: ${f.title} · ${f.due_date}`), ...p.update.map((u) => `Mudou: ${u.found.title} · ${u.from} → ${u.found.due_date}`)].join("\n").slice(0, 2000), link: `#/clientes?id=${co.client_id}&tab=prazos` });
+  if (p.create.length || p.update.length || velhos.length) {
+    await db.from("admin_events").insert({ kind: "deadline_agent", title: `Agente de prazos: ${p.create.length} novo(s), ${p.update.length} alterado(s), ${velhos.length} retirado(s) · ${String(co.legal_name || "").slice(0, 120)}`.slice(0, 300),
+      body: [...p.create.map((f) => `Novo: ${f.title} · ${f.due_date}`), ...p.update.map((u) => `Mudou: ${u.found.title} · ${u.from} → ${u.found.due_date}`), ...velhos.map((x) => `Retirado (a fonte não confirma mais): ${x.title} · ${x.due_date}`)].join("\n").slice(0, 2000), link: `#/clientes?id=${co.client_id}&tab=prazos` });
   }
-  return { company_id: co.id, company: co.legal_name, created: p.create.length, changed: p.update.length, confirmed: p.keep.length, already_by_team: p.manual, rejected: v.rejected, sources: tried };
+  return { company_id: co.id, company: co.legal_name, created: p.create.length, changed: p.update.length, removed: velhos.length, confirmed: p.keep.length, already_by_team: p.manual, rejected: v.rejected, sources: tried };
 }
 
 // a próxima empresa da fila (nunca verificada primeiro; depois as verificadas há mais tempo que o intervalo)
