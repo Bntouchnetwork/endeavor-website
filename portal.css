@@ -1369,3 +1369,44 @@ tr.is-archived td { opacity: .6; }
 .ad-chip:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 .ad-cat { font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; margin: .35rem 0 0; }
 .ad-plan { border-left: 4px solid var(--gold); margin-bottom: 1.25rem; }
+
+/* Serviços (Meu plano e Add-ons): no computador a página não rola e os cards vêm em páginas */
+.sv-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+.sv-card { margin: 0 !important; min-height: 0; overflow: hidden; gap: .3rem; }
+.sv-top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: .3rem .5rem; }
+.sv-top h2 { flex: 1 1 7rem; min-width: 0; overflow-wrap: normal; word-break: normal; hyphens: none; margin: 0; font-size: 1.05rem; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.sv-top .pill { flex: none; }
+.sv-card .ad-cat { margin: 0; }
+.sv-lead { flex: none; margin: 0; font-size: .9rem; color: var(--text); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
+.sv-card .tl-price { margin: auto 0 0; padding-top: .35rem; }
+.sv-card .tl-price strong { font-size: 1.2rem; }
+.sv-card .portal-btn-row { margin-top: .4rem; min-height: 2.25rem; flex: none; }
+.sv-card > .sv-lead + .portal-btn-row { margin-top: auto; }
+.sv-card--plano { border-left: 4px solid var(--gold); }
+.sv-vazio { grid-column: 1 / -1; }
+.sv-pager { display: flex; justify-content: center; align-items: center; gap: 1rem; padding-top: .75rem; }
+.sv-pager[hidden] { display: none; }
+.sv-pager span { min-width: 3.5rem; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
+.sv-seta { width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--navy-900); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.sv-seta:hover:not(:disabled) { background: var(--navy-900); color: #fff; }
+.sv-seta:disabled { opacity: .35; cursor: default; }
+.sv-seta:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+@media (min-width: 1000px) and (min-height: 560px) {
+  body.app-shell .console__content:not(.is-editor) > .fit-body:has(> .sv-fit) { overflow: hidden; display: flex; flex-direction: column; padding-bottom: 1rem; }
+  body.app-shell .console__content:not(.is-editor) > .fit-body:has(> .sv-fit) > :not(.sv-fit) { flex: none; width: 100%; }
+  body.app-shell .console__content .sv-fit { flex: 1 1 auto; min-height: 0; width: 100%; display: flex; flex-direction: column; }
+  body.app-shell .console__content .sv-fit .ad-tools { flex: none; margin-bottom: .9rem; grid-template-columns: minmax(12rem, 20rem) 1fr; align-items: center; }
+  body.app-shell .console__content .sv-fit .sv-grid { flex: 1 1 auto; min-height: 0; }
+  body.app-shell .console__content .sv-fit .sv-grid--fixo { overflow: hidden; align-content: start; }
+  body.app-shell .console__content .sv-fit .sv-grid--fixo .sv-lead { -webkit-line-clamp: 2; }
+  body.app-shell .console__content .sv-fit .sv-grid--fixo .sv-card--largo { grid-column: span 2; }
+  body.app-shell .console__content .sv-fit .sv-grid--fixo .sv-card--plano .sv-lead { -webkit-line-clamp: 3; }
+  body.app-shell .console__content .sv-fit .sv-grid--fixo .sv-card { padding: 1rem 1.1rem; }
+  body.app-shell .console__content .sv-fit .ad-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  body.app-shell .console__content .sv-fit .ad-chip { flex: none; }
+  body.app-shell .console__content .sv-fit .sv-pager { flex: none; }
+}
+
+.sv-card .portal-btn-row { flex-wrap: nowrap; gap: .25rem .5rem; align-items: center; }
+.sv-card [data-cancel] { border: 0; background: none; padding: 0 .25rem; min-height: 2.25rem; font-size: .82rem; font-weight: 600; text-decoration: underline; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sv-card [data-cancel]:hover { color: #b42318; background: none; }

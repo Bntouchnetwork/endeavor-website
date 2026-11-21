@@ -10,6 +10,7 @@
   var T = {
     en: {
       nav_addons: 'Add-ons', ad_title: 'Add-ons', ad_lead: 'Tools and services to add to your account, with the same login. New add-ons appear here as they launch.', ad_search: 'Search add-ons…', ad_all: 'All', cat_empresa: 'Company', cat_vendas: 'Sales', cat_comunicacao: 'Communication', cat_financeiro: 'Finance', cat_documentos: 'Documents', ad_member: 'Client price', ad_plan: 'Your plan', ad_included: 'Included in your plan', ad_request: 'Request activation', ad_requested: 'Request sent. Our team will contact you to turn it on.', ad_quote: 'On request', ad_none: 'No add-ons match your search.', e_included_in_package: 'This service is part of your package and is cancelled together with it.', cancelledNow: 'Add-on removed. The unused part of the month becomes a credit on your next invoice.', inPackage: 'In your package', x_webmeeting: 'Video meetings in the browser with your own room link, recording and notes.', x_webinar: 'Live webinars with registration page, reminders and replay.', x_whatsapp: 'Organize your WhatsApp conversations, groups and automatic replies.',
+      cancelShort: 'Cancel', tab_plan: 'My plan', tab_addons: 'Add-ons', sv_empty: 'You have no active services yet. See what you can add.', pg_prev: 'Previous page', pg_next: 'Next page', pg_label: 'Pages',
       nav_services: 'Services', nav_crm: 'CRM', nav_agenda: 'Scheduling', nav_esign: 'E-signature', nav_books: 'Bookkeeping',
       sv_title: 'Services', sv_lead: 'The Endeavor services on your account. Add more whenever you want, with the same login.', active: 'Active', past_due: 'Payment pending', soon: 'Coming soon', open: 'Open', buy: 'Add to my account', cancelSub: 'Cancel subscription',
       cancelQ: 'Cancel {p}? You keep access until the end of the period already paid.', cancelled: 'Cancellation scheduled. You keep access until the end of the paid period.', paying: 'Secure payment', checking: 'Confirming the payment…', activated: '{p} is active on your account.', payErr: 'The payment could not be started',
@@ -34,6 +35,7 @@
     },
     pt: {
       nav_addons: 'Add-ons', ad_title: 'Add-ons', ad_lead: 'Ferramentas e serviços para adicionar à sua conta, com o mesmo login. Os novos add-ons aparecem aqui conforme forem lançados.', ad_search: 'Buscar add-ons…', ad_all: 'Todos', cat_empresa: 'Empresa', cat_vendas: 'Vendas', cat_comunicacao: 'Comunicação', cat_financeiro: 'Financeiro', cat_documentos: 'Documentos', ad_member: 'Preço de cliente', ad_plan: 'Seu plano', ad_included: 'Incluído no seu plano', ad_request: 'Pedir ativação', ad_requested: 'Pedido enviado. A nossa equipe entra em contato para ativar.', ad_quote: 'Sob consulta', ad_none: 'Nenhum add-on encontrado.', e_included_in_package: 'Este serviço faz parte do seu pacote e só é cancelado junto com ele.', cancelledNow: 'Add-on removido. A parte não usada do mês vira crédito na próxima fatura.', inPackage: 'No seu pacote', x_webmeeting: 'Reuniões por vídeo no navegador, com sala própria, gravação e anotações.', x_webinar: 'Webinars ao vivo com página de inscrição, lembretes e replay.', x_whatsapp: 'Organize as conversas, os grupos e as respostas automáticas do seu WhatsApp.',
+      cancelShort: 'Cancelar', tab_plan: 'Meu plano', tab_addons: 'Add-ons', sv_empty: 'Você ainda não tem serviços ativos. Veja o que dá para adicionar.', pg_prev: 'Página anterior', pg_next: 'Próxima página', pg_label: 'Páginas',
       nav_services: 'Serviços', nav_crm: 'CRM', nav_agenda: 'Agenda', nav_esign: 'Assinatura eletrônica', nav_books: 'Bookkeeping',
       sv_title: 'Serviços', sv_lead: 'Os serviços da Endeavor na sua conta. Contrate mais quando quiser, com o mesmo login.', active: 'Ativo', past_due: 'Pagamento pendente', soon: 'Em breve', open: 'Abrir', buy: 'Contratar', cancelSub: 'Cancelar assinatura',
       cancelQ: 'Cancelar {p}? Você continua com acesso até o fim do período já pago.', cancelled: 'Cancelamento agendado. O acesso continua até o fim do período pago.', paying: 'Pagamento seguro', checking: 'Confirmando o pagamento…', activated: '{p} está ativo na sua conta.', payErr: 'Não foi possível iniciar o pagamento',
@@ -58,6 +60,7 @@
     },
     es: {
       nav_addons: 'Add-ons', ad_title: 'Add-ons', ad_lead: 'Herramientas y servicios para agregar a su cuenta, con el mismo login. Los nuevos add-ons aparecen aquí a medida que se lanzan.', ad_search: 'Buscar add-ons…', ad_all: 'Todos', cat_empresa: 'Empresa', cat_vendas: 'Ventas', cat_comunicacao: 'Comunicación', cat_financeiro: 'Finanzas', cat_documentos: 'Documentos', ad_member: 'Precio de cliente', ad_plan: 'Su plan', ad_included: 'Incluido en su plan', ad_request: 'Pedir activación', ad_requested: 'Pedido enviado. Nuestro equipo lo contactará para activarlo.', ad_quote: 'A consultar', ad_none: 'Ningún add-on encontrado.', e_included_in_package: 'Este servicio es parte de su paquete y solo se cancela junto con él.', cancelledNow: 'Add-on eliminado. La parte no usada del mes queda como crédito en la próxima factura.', inPackage: 'En su paquete', x_webmeeting: 'Reuniones por video en el navegador, con sala propia, grabación y notas.', x_webinar: 'Webinars en vivo con página de inscripción, recordatorios y repetición.', x_whatsapp: 'Organice las conversaciones, grupos y respuestas automáticas de su WhatsApp.',
+      cancelShort: 'Cancelar', tab_plan: 'Mi plan', tab_addons: 'Add-ons', sv_empty: 'Aún no tiene servicios activos. Vea lo que puede agregar.', pg_prev: 'Página anterior', pg_next: 'Página siguiente', pg_label: 'Páginas',
       nav_services: 'Servicios', nav_crm: 'CRM', nav_agenda: 'Agenda', nav_esign: 'Firma electrónica', nav_books: 'Bookkeeping',
       sv_title: 'Servicios', sv_lead: 'Los servicios de Endeavor en su cuenta. Contrate más cuando quiera, con el mismo login.', active: 'Activo', past_due: 'Pago pendiente', soon: 'Próximamente', open: 'Abrir', buy: 'Contratar', cancelSub: 'Cancelar suscripción',
       cancelQ: '¿Cancelar {p}? Mantiene el acceso hasta el fin del período ya pagado.', cancelled: 'Cancelación programada. El acceso sigue hasta el fin del período pagado.', paying: 'Pago seguro', checking: 'Confirmando el pago…', activated: '{p} está activo en su cuenta.', payErr: 'No se pudo iniciar el pago',
@@ -105,7 +108,6 @@
     if (has('agenda')) n.push(['agenda', 'nav_agenda', 'i-cal']);
     if (has('esign')) n.push(['assinaturas', 'nav_esign', 'i-file']);
     if (has('bookkeeping')) n.push(['bookkeeping', 'nav_books', 'i-chart']);
-    n.push(['addons', 'nav_addons', 'i-plus']);
     n.push(['servicos', 'nav_services', 'i-grid']);
     return n.map(function (x) { return [x[0], t(x[1]), x[2]]; });
   }
@@ -122,30 +124,120 @@
       }).join('') + '</div>' : '<div class="portal-card empty-state"><strong>' + t('ov_none') + '</strong><p><a class="btn btn--navy" href="#/servicos">' + t('ov_more') + '</a></p></div>');
   }
 
-  /* ---------------- Serviços (and upgrades) ---------------- */
-  async function services(view) {
-    var orderBack = C.param('order');
-    var rows = await C.q(C.sb.from('store_products').select('*').neq('status', 'hidden').order('sort'));
-    var mine = await C.q(C.sb.from('client_services').select('*').eq('client_id', C.S.client.id));
-    var by = {}; mine.forEach(function (s) { by[s.product_code] = s; });
-    // pacotes de abertura só aparecem para quem tem; add-ons do carrinho (Operating Agreement) só se a conta tiver
-    rows = rows.filter(function (p) { var s = by[p.code], on = s && s.status !== 'canceled'; return on || (p.kind !== 'package' && p.kind !== 'addon'); });
-    view.innerHTML = C.head(t('sv_title'), t('sv_lead')) + '<div class="portal-alert" id="sv-m" role="status"></div><div class="tl-grid">' + rows.map(function (p) {
-      var i = (window.EStore && EStore.info(p.code, L)) || { name: p.code, lead: '', feats: [] }, s = by[p.code], on = s && s.status !== 'canceled';
-      return '<section class="portal-card tl-card' + (on ? ' tl-card--on' : '') + '"><div style="display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start"><h2 class="portal-h2" style="margin:0">' + esc(i.name) + '</h2>' +
-        (on ? '<span class="pill pill--report">' + t(s.status === 'past_due' ? 'past_due' : 'active') + '</span>' : p.status === 'coming_soon' ? '<span class="pill">' + t('soon') + '</span>' : '') + '</div>' +
-        '<p class="portal-muted" style="margin:.4rem 0 .6rem">' + esc(i.lead) + '</p><ul class="tl-feats">' + (i.feats || []).map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
-        '<p class="tl-price"><strong>' + EStore.money(p.price_cents) + '</strong> <span class="portal-muted">' + esc(EStore.interval(p.interval, L)) + '</span></p>' +
-        '<div class="portal-btn-row">' + (on ? (TOOL_VIEW[p.code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[p.code] + '">' + t('open') + '</a>' : '') + (s.included_in ? '<span class="portal-muted" style="font-size:.85rem">' + t('inPackage') + '</span>' : p.interval === 'once' ? '' : '<button class="btn btn--ghost btn--sm" type="button" data-cancel="' + p.code + '">' + t('cancelSub') + '</button>')
-          : p.status === 'active' ? '<button class="btn btn--gold btn--sm" type="button" data-buy="' + p.code + '">' + t('buy') + '</button>' : '') + '</div></section>';
-    }).join('') + '</div>';
-    view.querySelectorAll('[data-buy]').forEach(function (b) { b.onclick = function () { buy(b.dataset.buy); }; });
-    view.querySelectorAll('[data-cancel]').forEach(function (b) { b.onclick = async function () {
-      if (!confirm(t('cancelQ', { p: svcName(b.dataset.cancel) }))) return;
-      b.disabled = true;
-      try { var rc = await fn('payments', { action: 'store_cancel', client_id: C.S.client.id, product: b.dataset.cancel }); C.msg(document.getElementById('sv-m'), t(rc.now ? 'cancelledNow' : 'cancelled'), 'ok'); if (rc.now) setTimeout(function () { C.reload(); }, 1500); }
-      catch (e) { b.disabled = false; C.msg(document.getElementById('sv-m'), e.message, 'error'); }
-    }; });
+  /* ---------------- Serviços: uma página só, com as abas "Meu plano" e "Add-ons" ----------------
+     No computador a página não rola: os cards vêm em páginas (flechas e "1/3"), e a quantidade por página é
+     calculada pelo tamanho da tela. No celular os cards ficam um embaixo do outro, com rolagem normal. */
+  var EXTRA = [['webmeeting', 'Web Meeting', 'comunicacao', 'meetOn'], ['webinar', 'Live Webinar', 'comunicacao', 'meetOn'], ['whatsapp', 'WhatsApp Manager', 'vendas', 'waOn']];
+  var CATS = ['empresa', 'vendas', 'comunicacao', 'financeiro', 'documentos'];
+  var PACOTES = ['pkg_completo', 'pkg_essencial'];
+  var CARD_W = 224, CARD_H = 216, CARD_MAX = 280, GAP = 16, svObs = null;
+  /** Quantos cards cabem: colunas × linhas no espaço livre (0 = celular, mostra todos). */
+  function cabem(w, h) {
+    if (window.innerWidth < 1000 || window.innerHeight < 560) return { cols: 0, rows: 0, n: 0 };
+    var cols = Math.max(1, Math.min(4, Math.floor((w + GAP) / (CARD_W + GAP)))), rows = Math.max(1, Math.floor((h + GAP) / (CARD_H + GAP)));
+    // a linha usa a altura livre, até um teto, para o card não ficar esticado quando sobra espaço
+    return { cols: cols, rows: rows, n: cols * rows, alt: Math.min(CARD_MAX, Math.floor((h - (rows - 1) * GAP) / rows)) };
+  }
+  async function services(view, forcarAba) {
+    var cid = C.S.client.id, orderBack = C.param('order');
+    var res = await Promise.all([C.q(C.sb.from('store_products').select('*').neq('status', 'hidden').order('sort')), C.q(C.sb.from('client_services').select('*').eq('client_id', cid)),
+      C.sb.rpc('client_is_member', { p_client: cid })]);
+    var prod = {}; res[0].forEach(function (p) { prod[p.code] = p; });
+    var by = {}; res[1].forEach(function (x) { if (x.status !== 'canceled') by[x.product_code] = x; });
+    var member = !!(res[2] && res[2].data), plan = PACOTES.filter(function (c) { return by[c]; })[0];
+    var meus = res[1].filter(function (x) { return x.status !== 'canceled' && PACOTES.indexOf(x.product_code) < 0; });
+    var aba = forcarAba || C.param('tab') || (plan || meus.length ? 'plano' : 'addons'); if (aba !== 'addons') aba = 'plano';
+    var info = function (code) { return (window.EStore && EStore.info(code, L)) || { name: code, lead: '', feats: [] }; };
+    var q = '', cat = '', pag = 0, medida = { cols: 0, rows: 0, n: 0 };
+
+    view.innerHTML = C.head(t('sv_title'), t('sv_lead')) +
+      '<nav class="subtabs" aria-label="' + t('sv_title') + '">' + [['plano', t('tab_plan')], ['addons', t('tab_addons')]].map(function (a) { return '<a href="#/servicos?tab=' + a[0] + '"' + (a[0] === aba ? ' aria-current="page"' : '') + '>' + a[1] + '</a>'; }).join('') + '</nav>' +
+      '<div class="portal-alert" id="sv-m" role="status"></div><div class="sv-fit">' +
+      (aba === 'addons' ? '<div class="ad-tools"><label class="sr-only" for="ad-q">' + t('ad_search') + '</label><input id="ad-q" type="search" placeholder="' + t('ad_search') + '" autocomplete="off">' +
+        '<div class="ad-chips" role="group" aria-label="' + t('ad_all') + '">' + [''].concat(CATS).map(function (c) { return '<button type="button" class="ad-chip" data-cat="' + c + '" aria-pressed="' + (c === '' ? 'true' : 'false') + '">' + t(c ? 'cat_' + c : 'ad_all') + '</button>'; }).join('') + '</div></div>' : '') +
+      '<div class="sv-grid" id="sv-grid"></div>' +
+      '<nav class="sv-pager" id="sv-pager" aria-label="' + t('pg_label') + '" hidden><button type="button" class="sv-seta" id="sv-ant" aria-label="' + t('pg_prev') + '">‹</button><span id="sv-pg" aria-live="polite"></span><button type="button" class="sv-seta" id="sv-prox" aria-label="' + t('pg_next') + '">›</button></nav></div>';
+    var grid = view.querySelector('#sv-grid'), pager = view.querySelector('#sv-pager'), m = view.querySelector('#sv-m');
+
+    /* ----- cards ----- */
+    function cardPlano() {
+      var p = prod[plan] || {}, inc = res[1].filter(function (x) { return x.included_in === plan && x.status !== 'canceled'; });
+      return '<section class="portal-card tl-card tl-card--on sv-card sv-card--plano' + (medida.cols >= 2 ? ' sv-card--largo' : '') + '"><div class="sv-top"><h2 class="portal-h2">' + esc(svcName(plan)) + '</h2><span class="pill pill--report">' + t(by[plan].status === 'past_due' ? 'past_due' : 'active') + '</span></div>' +
+        '<p class="ad-cat portal-muted">' + t('ad_plan') + '</p>' + (p.price_cents != null ? '<p class="tl-price"><strong>' + EStore.money(p.price_cents) + '</strong> <span class="portal-muted">' + esc(EStore.interval(p.interval, L)) + '</span></p>' : '') +
+        '<p class="sv-lead"><strong>' + t('ad_included') + ':</strong> ' + inc.map(function (x) { return esc(svcName(x.product_code)); }).join(', ') + '</p></section>';
+    }
+    function cardMeu(s) {
+      var code = s.product_code, p = prod[code] || {}, i = info(code);
+      return '<section class="portal-card tl-card tl-card--on sv-card"><div class="sv-top"><h2 class="portal-h2">' + esc(i.name) + '</h2><span class="pill pill--report">' + (s.included_in ? t('inPackage') : t(s.status === 'past_due' ? 'past_due' : 'active')) + '</span></div>' +
+        '<p class="sv-lead">' + esc(i.lead) + '</p>' + (s.included_in || p.price_cents == null ? '' : '<p class="tl-price"><strong>' + EStore.money(p.price_cents) + '</strong> <span class="portal-muted">' + esc(EStore.interval(p.interval, L)) + '</span></p>') +
+        '<div class="portal-btn-row">' + (TOOL_VIEW[code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[code] + '">' + t('open') + '</a>' : '') +
+        (s.included_in || p.interval === 'once' ? '' : '<button class="btn btn--ghost btn--sm" type="button" data-cancel="' + code + '" aria-label="' + t('cancelSub') + ': ' + esc(i.name) + '">' + t('cancelShort') + '</button>') + '</div></section>';
+    }
+    function cardAddon(x) {
+      var on = x.extra ? x.on : !!x.mine, soon = !x.extra && x.p.status === 'coming_soon';
+      var btn = on ? (x.extra ? '<a class="btn btn--navy btn--sm" href="#/' + x.code + '">' + t('open') + '</a>' : TOOL_VIEW[x.code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[x.code] + '">' + t('open') + '</a>' : '')
+        : x.extra ? '<button class="btn btn--ghost btn--sm" type="button" data-req="' + x.code + '">' + t('ad_request') + '</button>'
+        : soon ? '' : '<button class="btn btn--gold btn--sm" type="button" data-buy="' + x.code + '">' + t('buy') + '</button>';
+      var pill = on ? '<span class="pill pill--report">' + (x.mine && x.mine.included_in ? t('inPackage') : t('active')) + '</span>' : soon ? '<span class="pill">' + t('soon') + '</span>' : '';
+      var price = x.extra ? '<p class="tl-price"><strong>' + t('ad_quote') + '</strong></p>' : (x.mine && x.mine.included_in) ? '' :
+        '<p class="tl-price">' + (x.full ? '<s class="portal-muted">' + EStore.money(x.full) + '</s> ' : '') + '<strong>' + EStore.money(x.price) + '</strong> <span class="portal-muted">' + esc(EStore.interval(x.p.interval, L)) + '</span>' + (x.full ? ' <span class="pill pill--report">' + t('ad_member') + '</span>' : '') + '</p>';
+      return '<section class="portal-card tl-card sv-card' + (on ? ' tl-card--on' : '') + '"><div class="sv-top"><h2 class="portal-h2">' + esc(x.name) + '</h2>' + pill + '</div>' +
+        '<p class="portal-muted ad-cat">' + t('cat_' + x.cat) + '</p><p class="sv-lead">' + esc(x.lead) + '</p>' + price + '<div class="portal-btn-row">' + btn + '</div></section>';
+    }
+    var catalogo = res[0].filter(function (p) { return p.kind !== 'package'; }).map(function (p) {
+      var i = info(p.code), price = member && p.member_cents != null && p.member_cents < p.price_cents ? p.member_cents : p.price_cents;
+      return { code: p.code, name: i.name, lead: i.lead, cat: p.category || 'empresa', p: p, price: price, full: price < p.price_cents ? p.price_cents : null, mine: by[p.code] };
+    }).filter(function (x) { return x.p.kind !== 'addon' || x.mine; }).concat(EXTRA.map(function (e) { return { code: e[0], name: e[1], lead: t('x_' + e[0]), cat: e[2], extra: true, on: !!C.S[e[3]] }; }));
+    var semAc = function (v) { return String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
+    function lista() {
+      // o card do plano ocupa duas colunas quando há espaço (o item vazio guarda o lugar na conta da página)
+      if (aba === 'plano') return (plan ? (medida.cols >= 2 ? [cardPlano(), ''] : [cardPlano()]) : []).concat(meus.map(cardMeu));
+      var k = semAc(q.trim());
+      return catalogo.filter(function (x) { return (!cat || x.cat === cat) && (!k || semAc(x.name + ' ' + x.lead + ' ' + t('cat_' + x.cat)).indexOf(k) > -1); }).map(cardAddon);
+    }
+
+    /* ----- páginas ----- */
+    function draw() {
+      var cards = lista(), n = medida.n, pags = n ? Math.max(1, Math.ceil(cards.length / n)) : 1;
+      pag = Math.min(pag, pags - 1);
+      grid.style.gridTemplateColumns = n ? 'repeat(' + medida.cols + ', minmax(0, 1fr))' : '';
+      grid.style.gridTemplateRows = n ? 'repeat(' + medida.rows + ', ' + medida.alt + 'px)' : '';
+      grid.classList.toggle('sv-grid--fixo', !!n);
+      grid.innerHTML = cards.length ? (n ? cards.slice(pag * n, pag * n + n) : cards).join('')
+        : '<div class="portal-card empty-state sv-vazio"><p>' + t(aba === 'plano' ? 'sv_empty' : 'ad_none') + '</p>' + (aba === 'plano' ? '<a class="btn btn--gold btn--sm" href="#/servicos?tab=addons">' + t('tab_addons') + '</a>' : '') + '</div>';
+      pager.hidden = pags < 2;
+      view.querySelector('#sv-pg').textContent = (pag + 1) + '/' + pags;
+      view.querySelector('#sv-ant').disabled = pag === 0; view.querySelector('#sv-prox').disabled = pag >= pags - 1;
+      grid.querySelectorAll('[data-buy]').forEach(function (b) { b.onclick = function () { buy(b.dataset.buy); }; });
+      grid.querySelectorAll('[data-req]').forEach(function (b) { b.onclick = async function () {
+        b.disabled = true;
+        try { await fn('payments', { action: 'store_request', client_id: cid, product: b.dataset.req }); C.msg(m, t('ad_requested'), 'ok'); }
+        catch (e) { b.disabled = false; C.msg(m, e.message, 'error'); }
+      }; });
+      grid.querySelectorAll('[data-cancel]').forEach(function (b) { b.onclick = async function () {
+        if (!confirm(t('cancelQ', { p: svcName(b.dataset.cancel) }))) return;
+        b.disabled = true;
+        try { var rc = await fn('payments', { action: 'store_cancel', client_id: cid, product: b.dataset.cancel }); C.msg(m, t(rc.now ? 'cancelledNow' : 'cancelled'), 'ok'); if (rc.now) setTimeout(function () { C.reload(); }, 1500); }
+        catch (e) { b.disabled = false; C.msg(m, e.message, 'error'); }
+      }; });
+    }
+    function medir() {
+      var nova = cabem(grid.clientWidth, grid.clientHeight);
+      if (nova.cols === medida.cols && nova.rows === medida.rows && nova.alt === medida.alt) return;
+      var primeiro = medida.n ? pag * medida.n : 0; // mantém na tela o primeiro card que estava visível
+      medida = nova; pag = nova.n ? Math.floor(primeiro / nova.n) : 0; draw();
+    }
+    view.querySelector('#sv-ant').onclick = function () { if (pag > 0) { pag--; draw(); } };
+    view.querySelector('#sv-prox').onclick = function () { pag++; draw(); };
+    view.querySelector('.sv-fit').onkeydown = function (e) { if (e.target.tagName === 'INPUT' || pager.hidden) return; if (e.key === 'ArrowRight') view.querySelector('#sv-prox').click(); if (e.key === 'ArrowLeft') view.querySelector('#sv-ant').click(); };
+    var busca = view.querySelector('#ad-q');
+    if (busca) busca.oninput = function (e) { q = e.target.value; pag = 0; draw(); };
+    view.querySelectorAll('.ad-chip').forEach(function (b) { b.onclick = function () { cat = b.dataset.cat; pag = 0; view.querySelectorAll('.ad-chip').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); draw(); }; });
+    draw();
+    // mede quando a página assenta e sempre que a janela muda de tamanho
+    if (svObs) svObs.disconnect();
+    if (window.ResizeObserver) { svObs = new ResizeObserver(function () { if (document.contains(grid)) medir(); }); svObs.observe(grid); }
+    requestAnimationFrame(medir);
     if (orderBack) waitOrder(orderBack, null);
   }
   async function buy(code) {
@@ -174,57 +266,6 @@
     if (r && r.status === 'fulfilled') setTimeout(function () { var mm = document.getElementById('sv-m'); if (mm) C.msg(mm, t('activated', { p: svcName(r.product) }), 'ok'); }, 300);
   }
 
-
-  /* ---------------- Add-ons: catálogo com busca por tipo e preço de cliente ---------------- */
-  var EXTRA = [['webmeeting', 'Web Meeting', 'comunicacao', 'meetOn'], ['webinar', 'Live Webinar', 'comunicacao', 'meetOn'], ['whatsapp', 'WhatsApp Manager', 'vendas', 'waOn']];
-  var CATS = ['empresa', 'vendas', 'comunicacao', 'financeiro', 'documentos'];
-  async function addons(view) {
-    var cid = C.S.client.id;
-    var res = await Promise.all([C.q(C.sb.from('store_products').select('*').neq('status', 'hidden').order('sort')), C.q(C.sb.from('client_services').select('*').eq('client_id', cid)),
-      C.sb.rpc('client_is_member', { p_client: cid })]);
-    var by = {}; res[1].forEach(function (x) { if (x.status !== 'canceled') by[x.product_code] = x; });
-    var member = !!(res[2] && res[2].data), plan = ['pkg_completo', 'pkg_essencial'].filter(function (c) { return by[c]; })[0];
-    var items = res[0].filter(function (p) { return p.kind !== 'package'; }).map(function (p) {
-      var i = (window.EStore && EStore.info(p.code, L)) || { name: p.code, lead: '', feats: [] };
-      var price = member && p.member_cents != null && p.member_cents < p.price_cents ? p.member_cents : p.price_cents;
-      return { code: p.code, name: i.name, lead: i.lead, cat: p.category || 'empresa', p: p, price: price, full: price < p.price_cents ? p.price_cents : null, mine: by[p.code] };
-    }).filter(function (x) { return x.p.kind !== 'addon' || x.mine; }).concat(EXTRA.map(function (e) {
-      return { code: e[0], name: e[1], lead: t('x_' + e[0]), cat: e[2], extra: true, on: !!C.S[e[3]] };
-    }));
-    var q = '', cat = '';
-    view.innerHTML = C.head(t('ad_title'), t('ad_lead')) + '<div class="portal-alert" id="ad-m" role="status"></div>' +
-      (plan ? '<section class="portal-card ad-plan"><p class="eyebrow" style="margin:0">' + t('ad_plan') + '</p><h2 class="portal-h2" style="margin:.2rem 0 .5rem">' + esc(svcName(plan)) + '</h2><p class="portal-muted" style="margin:0">' + t('ad_included') + ': ' +
-        res[1].filter(function (x) { return x.included_in === plan && x.status !== 'canceled'; }).map(function (x) { return esc(svcName(x.product_code)); }).join(', ') + '</p></section>' : '') +
-      '<div class="ad-tools"><label class="sr-only" for="ad-q">' + t('ad_search') + '</label><input id="ad-q" type="search" placeholder="' + t('ad_search') + '" autocomplete="off">' +
-      '<div class="ad-chips" role="group" aria-label="' + t('ad_all') + '">' + [''].concat(CATS).map(function (c) { return '<button type="button" class="ad-chip" data-cat="' + c + '" aria-pressed="' + (c === '' ? 'true' : 'false') + '">' + t(c ? 'cat_' + c : 'ad_all') + '</button>'; }).join('') + '</div></div>' +
-      '<div class="tl-grid" id="ad-grid"></div>';
-    var grid = view.querySelector('#ad-grid');
-    function card(x) {
-      var on = x.extra ? x.on : !!x.mine, soon = !x.extra && x.p.status === 'coming_soon';
-      var btn = on ? (x.extra ? '<a class="btn btn--navy btn--sm" href="#/' + x.code + '">' + t('open') + '</a>' : TOOL_VIEW[x.code] ? '<a class="btn btn--navy btn--sm" href="#/' + TOOL_VIEW[x.code] + '">' + t('open') + '</a>' : '')
-        : x.extra ? '<button class="btn btn--ghost btn--sm" type="button" data-req="' + x.code + '">' + t('ad_request') + '</button>'
-        : soon ? '' : '<button class="btn btn--gold btn--sm" type="button" data-buy="' + x.code + '">' + t('buy') + '</button>';
-      var pill = on ? '<span class="pill pill--report">' + (x.mine && x.mine.included_in ? t('inPackage') : t('active')) + '</span>' : soon ? '<span class="pill">' + t('soon') + '</span>' : '';
-      var price = x.extra ? '<p class="tl-price"><strong>' + t('ad_quote') + '</strong></p>' : (x.mine && x.mine.included_in) ? '' :
-        '<p class="tl-price">' + (x.full ? '<s class="portal-muted">' + EStore.money(x.full) + '</s> ' : '') + '<strong>' + EStore.money(x.price) + '</strong> <span class="portal-muted">' + esc(EStore.interval(x.p.interval, L)) + '</span>' + (x.full ? ' <span class="pill pill--report">' + t('ad_member') + '</span>' : '') + '</p>';
-      return '<section class="portal-card tl-card' + (on ? ' tl-card--on' : '') + '"><div style="display:flex;justify-content:space-between;gap:.5rem;align-items:flex-start"><h2 class="portal-h2" style="margin:0">' + esc(x.name) + '</h2>' + pill + '</div>' +
-        '<p class="portal-muted ad-cat">' + t('cat_' + x.cat) + '</p><p style="margin:.2rem 0 .6rem">' + esc(x.lead) + '</p>' + price + '<div class="portal-btn-row">' + btn + '</div></section>';
-    }
-    function draw() {
-      var k = q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
-      var list = items.filter(function (x) { return (!cat || x.cat === cat) && (!k || (x.name + ' ' + x.lead + ' ' + t('cat_' + x.cat)).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').indexOf(k) > -1); });
-      grid.innerHTML = list.length ? list.map(card).join('') : '<div class="portal-card empty-state"><p>' + t('ad_none') + '</p></div>';
-      grid.querySelectorAll('[data-buy]').forEach(function (b) { b.onclick = function () { buy(b.dataset.buy); }; });
-      grid.querySelectorAll('[data-req]').forEach(function (b) { b.onclick = async function () {
-        b.disabled = true;
-        try { await fn('payments', { action: 'store_request', client_id: cid, product: b.dataset.req }); C.msg(view.querySelector('#ad-m'), t('ad_requested'), 'ok'); }
-        catch (e) { b.disabled = false; C.msg(view.querySelector('#ad-m'), e.message, 'error'); }
-      }; });
-    }
-    view.querySelector('#ad-q').oninput = function (e) { q = e.target.value; draw(); };
-    view.querySelectorAll('.ad-chip').forEach(function (b) { b.onclick = function () { cat = b.dataset.cat; view.querySelectorAll('.ad-chip').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); draw(); }; });
-    draw();
-  }
 
   /* ---------------- CRM ---------------- */
   async function crm(view) {
@@ -444,6 +485,6 @@
 
   window.ETools = {
     init: init, nav: nav, has: has, overview: overview,
-    views: { servicos: services, addons: addons, crm: crm, agenda: agenda, assinaturas: esign, bookkeeping: books }
+    views: { servicos: services, addons: function (view) { return services(view, 'addons'); }, crm: crm, agenda: agenda, assinaturas: esign, bookkeeping: books }
   };
 })();

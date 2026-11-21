@@ -111,24 +111,51 @@ try {
   await p4.waitForSelector(".portal-card");
   ok((await p4.textContent("#app")).includes("não encontrado"), "add-on não é vendido sozinho no site");
 
-  /* ---------- portal: Add-ons ---------- */
-  const ad = await pagina();
-  await ad.goto(`${BASE}/tests/fixtures/addons.html`);
-  await ad.waitForSelector("#ad-grid .tl-card");
-  const g = await ad.textContent("#view");
-  ok(g.includes("Seu plano") && g.includes("Pacote Essencial"), "add-ons: mostra o plano do cliente");
-  ok((await ad.locator('#ad-grid s').first().textContent()) === "$29" && g.includes("$23") && g.includes("Preço de cliente"), "add-ons: preço cheio riscado e preço de cliente");
-  ok(!g.includes("Pacote Completo de Abertura") && g.includes("WhatsApp Manager") && g.includes("Sob consulta"), "add-ons: sem pacotes; WhatsApp sob consulta");
+  /* ---------- portal: Serviços (Meu plano e Add-ons), sem rolagem e com páginas ---------- */
+  const semRolagem = (p) => p.evaluate(() => { const b = document.querySelector(".fit-body"); return document.documentElement.scrollHeight <= innerHeight + 1 && b.scrollHeight <= b.clientHeight + 1; });
+  const cabeTudo = (p) => p.evaluate(() => { const g = document.querySelector("#sv-grid").getBoundingClientRect(); return [...document.querySelectorAll("#sv-grid .sv-card")].every((c) => { const r = c.getBoundingClientRect(), bt = c.querySelector(".btn"); return r.bottom <= g.bottom + 1 && r.right <= g.right + 1 && (!bt || bt.getBoundingClientRect().bottom <= r.bottom + 1); }); });
+  const ad = await pagina({ viewport: { width: 1280, height: 720 } });
+  await ad.goto(`${BASE}/tests/fixtures/addons.html#/servicos`);
+  await ad.waitForSelector("#sv-grid .sv-card"); await ad.waitForTimeout(300);
+  const menu = await ad.evaluate(() => window.__nav); ok(menu.includes("servicos") && !menu.includes("addons"), "menu: só Serviços (sem o item Add-ons)");
+  ok((await ad.textContent(".subtabs [aria-current]")) === "Meu plano", "abre em Meu plano para quem tem pacote");
+  const pl = await ad.textContent("#sv-grid");
+  ok(pl.includes("Pacote Essencial") && pl.includes("$59") && pl.includes("Registered Agent") && pl.includes("No seu pacote") && pl.includes("CRM") && pl.includes("Cancelar"), "Meu plano: pacote com mensalidade, incluídos e o add-on contratado com cancelar");
+  ok(await semRolagem(ad) && await cabeTudo(ad), "Meu plano: sem rolagem, cards inteiros na tela");
+  await ad.screenshot({ path: OUT + "/servicos-plano.png" });
+  await ad.click('.subtabs a[href$="tab=addons"]');
+  await ad.waitForSelector("#ad-q"); await ad.waitForTimeout(300);
+  const total = 10; // 7 produtos (sem pacotes e sem o Operating Agreement, que a conta não tem) + 3 sob consulta
+  const n1 = await ad.locator("#sv-grid .sv-card").count(), pg = await ad.textContent("#sv-pg");
+  ok(n1 < total && n1 >= 4 && pg === "1/" + Math.ceil(total / n1), `Add-ons: ${n1} cards por página, indicador ${pg}`);
+  ok(await semRolagem(ad) && await cabeTudo(ad), "Add-ons: sem rolagem, cards inteiros na tela");
+  ok(await ad.locator("#sv-ant").isDisabled(), "primeira página: flecha anterior desligada");
+  ok((await ad.locator("#sv-grid s").first().textContent()) === "$29" && (await ad.textContent("#sv-grid")).includes("Preço de cliente"), "preço cheio riscado e preço de cliente");
+  await ad.screenshot({ path: OUT + "/servicos-addons.png" });
+  const primeira = await ad.textContent("#sv-grid");
+  await ad.click("#sv-prox");
+  ok((await ad.textContent("#sv-pg")).startsWith("2/") && (await ad.textContent("#sv-grid")) !== primeira, "flecha passa para a próxima página");
+  let vistos = n1; while (!(await ad.locator("#sv-prox").isDisabled())) { vistos += 0; await ad.click("#sv-prox"); }
+  ok((await ad.textContent("#sv-grid")).includes("WhatsApp Manager") && await ad.locator("#sv-prox").isDisabled(), "última página: sob consulta e flecha próxima desligada");
   await ad.fill("#ad-q", "whats");
-  ok(await ad.locator("#ad-grid .tl-card").count() === 1, "busca por nome");
-  await ad.fill("#ad-q", "");
-  await ad.click('.ad-chip[data-cat="financeiro"]');
-  ok((await ad.locator("#ad-grid .tl-card").count()) === 1 && (await ad.textContent("#ad-grid")).includes("Bookkeeping"), "filtro por tipo");
-  await ad.click('.ad-chip[data-cat=""]');
+  ok(await ad.locator("#sv-grid .sv-card").count() === 1 && await ad.locator("#sv-pager").isHidden(), "busca refaz as páginas (1 resultado, sem flechas)");
+  await ad.fill("#ad-q", ""); await ad.click('.ad-chip[data-cat="financeiro"]');
+  ok((await ad.locator("#sv-grid .sv-card").count()) === 1 && (await ad.textContent("#sv-grid")).includes("Bookkeeping"), "filtro por tipo refaz as páginas");
+  await ad.click('.ad-chip[data-cat="vendas"]');
   await ad.click('[data-req="whatsapp"]');
-  await ad.waitForSelector("#ad-m:has-text('Pedido enviado')");
-  ok(pedidos.some((b) => b.action === "store_request" && b.product === "whatsapp"), "pedir ativação do WhatsApp Manager");
-  await ad.screenshot({ path: OUT + "/addons-portal.png", fullPage: true });
+  await ad.waitForSelector("#sv-m:has-text('Pedido enviado')");
+  ok(pedidos.some((b) => b.action === "store_request" && b.product === "whatsapp"), "pedir ativação continua funcionando");
+  await ad.click('.ad-chip[data-cat=""]');
+  await ad.setViewportSize({ width: 1700, height: 1000 }); await ad.waitForTimeout(400);
+  const n2 = await ad.locator("#sv-grid .sv-card").count();
+  ok(n2 > n1 && await semRolagem(ad) && await cabeTudo(ad), `tela maior: mais cards por página (${n2}), ainda sem rolagem`);
+  await ad.goto(`${BASE}/tests/fixtures/addons.html#/addons`); await ad.waitForSelector("#ad-q");
+  ok((await ad.textContent(".subtabs [aria-current]")) === "Add-ons", "link antigo #/addons abre a aba Add-ons de Serviços");
+  const cel = await pagina({ ...devices["iPhone 13"] });
+  await cel.goto(`${BASE}/tests/fixtures/addons.html#/servicos?tab=addons`); await cel.waitForSelector("#sv-grid .sv-card"); await cel.waitForTimeout(300);
+  ok(await cel.locator("#sv-grid .sv-card").count() === total && await cel.locator("#sv-pager").isHidden(), "celular: todos os cards, um embaixo do outro, sem páginas");
+  ok(await cel.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "celular: sem rolagem horizontal");
+  await cel.screenshot({ path: OUT + "/servicos-celular.png" });
 } catch (e) { console.log("erro:", e.message); falhas.push(e.message); }
 await browser.close();
 console.log(falhas.length ? `\n${falhas.length} falha(s)` : "\ntudo certo");
