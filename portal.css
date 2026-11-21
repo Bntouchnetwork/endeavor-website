@@ -1489,6 +1489,18 @@ body.app-shell .console__content .ck-um, .ck-um { max-width: 46rem !important; m
 .doc-acoes { display: flex; gap: .4rem; flex-wrap: wrap; justify-content: flex-end; }
 .doc-del { color: #8a2a20; }
 .doc-del:hover { background: #fbecea; border-color: #e3b4ae; color: #8a2a20; }
-.doc-pedidos { border-left: 4px solid var(--gold, #c8a45d); }
 .doc-pedidos .ficon { background: #fbf3e2; color: #7a5a12; font-weight: 700; }
-.doc-pedidos { margin-bottom: 1rem; }
+/* Documentos: página fixa. A barra fica no topo; a lista vem em páginas (flechas), com os títulos de categoria como linhas */
+.doc-barra { margin-bottom: 1rem; }
+.doc-lista { padding: .6rem 1.25rem 1rem; }
+.doc-lista .doclist li[hidden] { display: none; }
+.doc-lista .doclist li.d-sep { display: block; grid-template-columns: none; padding: .9rem 0 .35rem; border: 0; font: 700 1.05rem/1.3 var(--serif, Georgia, serif); color: var(--navy, #0b1f3a); }
+.doc-lista .doclist li.d-sep .portal-muted { font: 400 .9rem/1 var(--sans, inherit); }
+.doc-lista .doc-pedidos li.d-sep { font: 400 .95rem/1.4 var(--sans, inherit); color: var(--muted, #55607a); }
+@media (min-width: 1000px) and (min-height: 560px) {
+  body.app-shell .console__content .doc-fit .doc-lista { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  body.app-shell .console__content .doc-fit .doc-tab { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  body.app-shell .console__content .doc-fit .sv-pager { flex: none; padding-top: .6rem; }
+}
+@media (max-width: 999px) { .doc-barra { position: sticky; top: 0; z-index: 5; background: var(--bg, #f5f6fa); padding-block: .5rem; } }
+body.app-shell .console__content .doc-fit .doc-barra { flex: none; }

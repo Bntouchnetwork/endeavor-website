@@ -662,9 +662,9 @@
     } else body.innerHTML = '<div class="portal-card empty-state"><strong>' + t('noDocs') + '</strong></div>';
   }
 
-  var DOCX = { en: { baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
-    pt: { baixar: 'Baixar', excluir: 'Excluir', excluirQ: 'Excluir "{t}"? Ele sai da sua lista. Não dá para desfazer por aqui.', pedidos: 'Documentos solicitados', pedidosLead: 'A Endeavor pediu estes documentos. Envie cada um por aqui.', enviar: 'Enviar', prazo: 'Prazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
-    es: { baixar: 'Descargar', excluir: 'Eliminar', excluirQ: '¿Eliminar "{t}"? Sale de su lista. No se puede deshacer aquí.', pedidos: 'Documentos solicitados', pedidosLead: 'Endeavor pidió estos documentos. Envíe cada uno por aquí.', enviar: 'Enviar', prazo: 'Plazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
+  var DOCX = { en: { solicitados: 'Requested', categoria: 'Category', paginas: 'Document pages', anterior: 'Previous page', proxima: 'Next page', baixar: 'Download', excluir: 'Delete', excluirQ: 'Delete "{t}"? It leaves your list. This cannot be undone here.', pedidos: 'Requested documents', pedidosLead: 'Endeavor asked for these documents. Send each one here.', enviar: 'Send', prazo: 'Due {d}', paraPedido: 'Requested document: {t}', novo: 'New document', tipo: 'Document type', outro: 'Other', volta: 'Back to Documents', semTipo: 'No documents match your search.' },
+    pt: { solicitados: 'Solicitados', categoria: 'Categoria', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Próxima página', baixar: 'Baixar', excluir: 'Excluir', excluirQ: 'Excluir "{t}"? Ele sai da sua lista. Não dá para desfazer por aqui.', pedidos: 'Documentos solicitados', pedidosLead: 'A Endeavor pediu estes documentos. Envie cada um por aqui.', enviar: 'Enviar', prazo: 'Prazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Novo documento', tipo: 'Tipo do documento', outro: 'Outro', volta: 'Voltar para Documentos', semTipo: 'Nenhum documento encontrado.' },
+    es: { solicitados: 'Solicitados', categoria: 'Categoría', paginas: 'Páginas de documentos', anterior: 'Página anterior', proxima: 'Página siguiente', baixar: 'Descargar', excluir: 'Eliminar', excluirQ: '¿Eliminar "{t}"? Sale de su lista. No se puede deshacer aquí.', pedidos: 'Documentos solicitados', pedidosLead: 'Endeavor pidió estos documentos. Envíe cada uno por aquí.', enviar: 'Enviar', prazo: 'Plazo: {d}', paraPedido: 'Documento solicitado: {t}', novo: 'Nuevo documento', tipo: 'Tipo de documento', outro: 'Otro', volta: 'Volver a Documentos', semTipo: 'Ningún documento encontrado.' } };
   function dx(k, v) { var x = (DOCX[L] || DOCX.en)[k]; Object.keys(v || {}).forEach(function (n) { x = x.split('{' + n + '}').join(v[n]); }); return x; }
   async function vDocuments(view) {
     // o envio de documentos mora aqui dentro: botão "Novo documento" (o endereço antigo #/upload também abre esta tela)
@@ -672,29 +672,60 @@
     var docs = await q(sb.from('company_documents').select('*').eq('client_id', S.client.id).order('created_at', { ascending: false }));
     var pedidos = S.perms.upload ? ((await sb.from('portal_doc_requests').select('*').eq('client_id', S.client.id).eq('status', 'pending').order('created_at')).data || []) : [];
     S.docReq = pedidos.length; updateDocBadge();
+    // página fixa: a barra fica no topo e a lista vem em páginas com flechas. Os documentos solicitados são a primeira opção das categorias (só quando há pendente).
     view.innerHTML = head(t('nav_documents'), t('privacyNote')) +
-      (pedidos.length ? '<section class="portal-card doc-pedidos" id="d-req"><h2 class="portal-h2">' + dx('pedidos') + ' <span class="nav-badge" style="position:static;display:inline-grid">' + pedidos.length + '</span></h2><p class="portal-muted" style="margin:-.25rem 0 .6rem">' + dx('pedidosLead') + '</p><ul class="doclist">' + pedidos.map(function (r) { var co = r.company_id && coById(r.company_id);
-        return '<li><span class="ficon" aria-hidden="true">!</span><div><div class="dname">' + esc(r.title) + '</div><div class="dmeta">' + [co ? esc(co.legal_name) : '', r.due_date ? esc(dx('prazo', { d: fmtDate(r.due_date) })) : '', r.note ? esc(r.note) : ''].filter(Boolean).join(' · ') + '</div></div><a class="btn btn--navy btn--xs" href="#/documents?new=1&req=' + r.id + '">' + dx('enviar') + '</a></li>'; }).join('') + '</ul></section>' : '') +
-      '<div class="toolbar doc-barra"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
+      '<div class="sv-fit doc-fit"><div class="toolbar doc-barra"><input type="search" id="d-q" placeholder="' + t('search') + '" aria-label="' + t('search') + '">' +
       '<select id="d-co" aria-label="' + t('company') + '"><option value="">' + t('allCompanies') + '</option>' + S.companies.map(function (c) { return '<option value="' + c.id + '">' + esc(c.legal_name) + '</option>'; }).join('') + '</select>' +
-      '<select id="d-cat" aria-label="Category"><option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select>' +
+      '<select id="d-cat" aria-label="' + dx('categoria') + '">' + (pedidos.length ? '<option value="req">' + dx('solicitados') + ' (' + pedidos.length + ')</option>' : '') + '<option value="">' + t('allCategories') + '</option>' + S.perms.cats.concat(['uploaded']).map(function (c) { return '<option value="' + c + '">' + t('cat_' + c) + '</option>'; }).join('') + '</select>' +
       (S.perms.upload ? '<a class="btn btn--gold btn--sm doc-novo" id="d-new" href="#/documents?new=1"><svg class="icon" aria-hidden="true"><use href="#i-up"/></svg> ' + dx('novo') + '</a>' : '') + '</div>' +
-      '<div id="d-list"></div>';
-    function draw() {
-      var s = $('#d-q').value.trim().toLowerCase(), co = $('#d-co').value, cat = $('#d-cat').value;
-      var rows = docs.filter(function (d) { return (!co || d.company_id === co) && (!cat || d.category === cat) && (!s || (d.title + ' ' + (d.year || '')).toLowerCase().indexOf(s) > -1); });
-      // organizados por tipo: um bloco para cada tipo que tem documento, na ordem das permissões
-      var ordem = S.perms.cats.concat(['uploaded']), outros = rows.filter(function (d) { return ordem.indexOf(d.category) < 0; });
-      var blocos = ordem.map(function (c) { return [c, rows.filter(function (d) { return d.category === c; })]; }).filter(function (b) { return b[1].length; });
-      if (outros.length) blocos.push(['', outros]);
-      $('#d-list').innerHTML = blocos.length ? blocos.map(function (b) { return '<section class="portal-card d-grupo" data-cat="' + b[0] + '"><h2 class="portal-h2">' + esc(b[0] ? t('cat_' + b[0]) : dx('outro')) + ' <span class="portal-muted" style="font-weight:400;font-size:.95rem">(' + b[1].length + ')</span></h2>' + docItems(b[1], true) + '</section>'; }).join('')
-        : '<section class="portal-card"><div class="empty-state"><strong>' + (docs.length ? dx('semTipo') : t('noDocs')) + '</strong></div></section>';
-      wireDocs($('#d-list'), rows);
+      '<section class="portal-card doc-lista"><div class="doc-tab" id="d-tab"><div id="d-list"></div></div>' +
+      '<nav class="sv-pager" id="d-pager" aria-label="' + dx('paginas') + '" hidden><button type="button" class="sv-seta" id="d-ant" aria-label="' + dx('anterior') + '">‹</button><span id="d-pg" aria-live="polite"></span><button type="button" class="sv-seta" id="d-prox" aria-label="' + dx('proxima') + '">›</button></nav></section></div>';
+    var tab = $('#d-tab', view), lista = $('#d-list', view), pager = $('#d-pager', view), pag = 0, pags = [[]];
+    // divide as linhas em páginas pela altura real de cada uma; um título de categoria nunca fica sozinho no fim da página
+    function paginar() {
+      var li = $$('#d-list > ul > li', view); li.forEach(function (x) { x.hidden = false; });
+      if (window.innerWidth < 1000 || window.innerHeight < 560 || !li.length) { pags = [li]; pag = 0; return mostra(); }
+      var alt = tab.clientHeight, primeiro = (pags[pag] || [])[0], atual = [], h = 0; pags = [];
+      li.forEach(function (x) {
+        var a = x.offsetHeight;
+        if (atual.length && h + a > alt) { var sep = atual[atual.length - 1].classList.contains('d-sep') && atual.length > 1 ? atual.pop() : null; pags.push(atual); atual = sep ? [sep] : []; h = sep ? sep.offsetHeight : 0; }
+        atual.push(x); h += a;
+      });
+      if (atual.length) pags.push(atual);
+      var k = pags.findIndex(function (g) { return g.indexOf(primeiro) > -1; }); pag = k > -1 ? k : 0; mostra();
     }
-    ['#d-q', '#d-co', '#d-cat'].forEach(function (s) { $(s).addEventListener('input', draw); });
+    function mostra() {
+      pag = Math.max(0, Math.min(pag, pags.length - 1));
+      pags.forEach(function (g, k) { g.forEach(function (x) { x.hidden = k !== pag; }); });
+      pager.hidden = pags.length < 2; $('#d-pg', view).textContent = (pag + 1) + '/' + pags.length; $('#d-ant', view).disabled = pag === 0; $('#d-prox', view).disabled = pag >= pags.length - 1;
+    }
+    function draw() {
+      var s = $('#d-q').value.trim().toLowerCase(), co = $('#d-co').value, cat = $('#d-cat').value, vazio = function (m) { return '<div class="empty-state"><strong>' + m + '</strong></div>'; };
+      if (cat === 'req') {
+        var ps = pedidos.filter(function (r) { return (!co || !r.company_id || r.company_id === co) && (!s || (r.title + ' ' + (r.note || '')).toLowerCase().indexOf(s) > -1); });
+        lista.innerHTML = ps.length ? '<ul class="doclist doc-pedidos" id="d-req"><li class="d-sep">' + esc(dx('pedidosLead')) + '</li>' + ps.map(function (r) { var c2 = r.company_id && coById(r.company_id);
+          return '<li><span class="ficon" aria-hidden="true">!</span><div><div class="dname">' + esc(r.title) + '</div><div class="dmeta">' + [c2 ? esc(c2.legal_name) : '', r.due_date ? esc(dx('prazo', { d: fmtDate(r.due_date + 'T12:00:00') })) : '', r.note ? esc(r.note) : ''].filter(Boolean).join(' · ') + '</div></div><a class="btn btn--navy btn--xs" href="#/documents?new=1&req=' + r.id + '">' + dx('enviar') + '</a></li>'; }).join('') + '</ul>' : vazio(dx('semTipo'));
+      } else {
+        var rows = docs.filter(function (d) { return (!co || d.company_id === co) && (!cat || d.category === cat) && (!s || (d.title + ' ' + (d.year || '')).toLowerCase().indexOf(s) > -1); });
+        // organizados por tipo: um título para cada tipo que tem documento, na ordem das permissões
+        var ordem = S.perms.cats.concat(['uploaded']), outros = rows.filter(function (d) { return ordem.indexOf(d.category) < 0; });
+        var blocos = ordem.map(function (c) { return [c, rows.filter(function (d) { return d.category === c; })]; }).filter(function (b) { return b[1].length; });
+        if (outros.length) blocos.push(['', outros]);
+        lista.innerHTML = blocos.length ? '<ul class="doclist">' + blocos.map(function (b) { return '<li class="d-sep d-grupo" data-cat="' + b[0] + '" data-n="' + b[1].length + '">' + esc(b[0] ? t('cat_' + b[0]) : dx('outro')) + ' <span class="portal-muted">(' + b[1].length + ')</span></li>' + docItems(b[1], true).replace(/^<ul[^>]*>|<\/ul>$/g, ''); }).join('') + '</ul>'
+          : vazio(docs.length ? dx('semTipo') : t('noDocs'));
+        wireDocs(lista, rows);
+      }
+      pags = [[]]; pag = 0; paginar();
+    }
+    ['#d-q', '#d-co', '#d-cat'].forEach(function (x) { $(x).addEventListener('input', draw); });
+    $('#d-ant', view).onclick = function () { pag--; mostra(); };
+    $('#d-prox', view).onclick = function () { pag++; mostra(); };
     var pre = param('company'); if (pre) $('#d-co').value = pre;
-    draw();
+    draw(); requestAnimationFrame(function () { requestAnimationFrame(paginar); });
+    if (docObs) docObs.disconnect();
+    if (window.ResizeObserver) { var larg = 0, altu = 0; docObs = new ResizeObserver(function () { if (!document.body.contains(tab)) return; if (tab.clientHeight === altu && tab.clientWidth === larg) return; altu = tab.clientHeight; larg = tab.clientWidth; paginar(); }); docObs.observe(tab); }
   }
+  var docObs = null;
 
   async function vCompliance(view) {
     var items = await q(sb.from('compliance_items').select('*').eq('client_id', S.client.id).order('due_date'));
