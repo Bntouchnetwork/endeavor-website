@@ -276,10 +276,11 @@ async function handle(req: Request, body: Any) {
       conn = ins.data;
     }
     // separate buttons for bank accounts and credit cards: the session only offers the chosen kind
-    const filters: Any = { countries: ["US"] };
-    if (body.kind === "card") filters.account_subcategories = ["credit_card"];
-    else if (body.kind === "bank") filters.account_subcategories = ["checking", "savings"];
-    const s = await stripe("POST", "/financial_connections/sessions", { account_holder: { type: "customer", customer: conn.external_id }, permissions: ["transactions", "balances"], filters });
+    // (o Stripe não aceita filters[countries] nesta chamada; sem o filtro de país, vale o país da conta Stripe, os EUA)
+    const sess: Any = { account_holder: { type: "customer", customer: conn.external_id }, permissions: ["transactions", "balances"] };
+    if (body.kind === "card") sess.filters = { account_subcategories: ["credit_card"] };
+    else if (body.kind === "bank") sess.filters = { account_subcategories: ["checking", "savings"] };
+    const s = await stripe("POST", "/financial_connections/sessions", sess);
     return { client_secret: s.client_secret, session_id: s.id, pk: PK, connection_id: conn.id };
   }
   if (a === "stripe_complete") {
