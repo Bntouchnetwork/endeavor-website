@@ -78,6 +78,7 @@
     document.querySelectorAll('.js-partners').forEach(function (l) { l.href = 'partners.html?lang=' + lang; });
     document.querySelectorAll('.js-partners-signup').forEach(function (l) { l.href = 'partners.html?lang=' + lang + '#cadastro'; });
     document.querySelectorAll('.js-login').forEach(function (l) { l.href = 'login.html?lang=' + lang; });
+    document.querySelectorAll('.js-community').forEach(function (l) { l.href = 'community.html?lang=' + lang; });
     document.querySelectorAll('.js-client').forEach(function (l) { l.href = 'client.html?lang=' + lang; });
     document.querySelectorAll('.js-buy').forEach(function (l) { l.href = 'comprar.html?p=' + l.getAttribute('data-p') + '&lang=' + lang; });
     document.querySelectorAll('.js-partner').forEach(function (l) { l.href = 'partner.html?lang=' + lang; });
@@ -488,5 +489,12 @@
           }
         });
       }).catch(function () { /* keep the printed prices */ });
+  })();
+
+  // Comunidade: o link só aparece quando a página está ligada no admin
+  (function () {
+    var c = window.ENDEAVOR_CFG || {}; if (!c.supabaseUrl || !window.fetch) return;
+    fetch(c.supabaseUrl + '/rest/v1/rpc/community_on', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: c.supabaseKey, Authorization: 'Bearer ' + c.supabaseKey }, body: '{}' })
+      .then(function (r) { return r.ok ? r.json() : false; }).then(function (on) { if (on === true) document.querySelectorAll('.js-community-li').forEach(function (li) { li.hidden = false; }); }).catch(function () {});
   })();
 })();

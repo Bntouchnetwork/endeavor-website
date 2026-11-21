@@ -211,7 +211,7 @@
   /* ---------- console shell ---------- */
   var NAV = [
     ['dashboard', 'Dashboard', 'i-grid'], ['crm', 'CRM', 'i-users'], ['agenda', 'Agenda', 'i-cal'], ['webmeeting', 'Web Meeting', 'i-video'], ['webinar', 'Live Webinar', 'i-live'], ['whatsapp', 'WhatsApp Manager', 'i-wa'], ['linkedin', 'LinkedIn Manager', 'i-linkedin'], ['telefonia', 'Telefonia', 'i-phone'],
-    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['instagram', 'Instagram', 'i-ig'], ['projetos', 'AI Projects', 'i-code'], ['addons', 'Add-ons', 'i-plus'], ['agentes', 'Agentes IA', 'i-bot'], ['hubai', 'Hub AI', 'i-db'], ['conectores', 'Conectores', 'i-link'], ['bookkeeping', 'Bookkeeping', 'i-book'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
+    ['assinaturas', 'Assinaturas', 'i-pen'], ['parceiros', 'Parceiros', 'i-handshake'], ['marketing', 'Marketing', 'i-mail'], ['instagram', 'Instagram', 'i-ig'], ['projetos', 'AI Projects', 'i-code'], ['comunidade', 'Comunidade', 'i-users'], ['addons', 'Add-ons', 'i-plus'], ['agentes', 'Agentes IA', 'i-bot'], ['hubai', 'Hub AI', 'i-db'], ['conectores', 'Conectores', 'i-link'], ['bookkeeping', 'Bookkeeping', 'i-book'], ['pagamentos', 'Pagamentos', 'i-card'], ['compliance', 'Compliance', 'i-shield'], ['config', 'Configurações', 'i-gear']];
 
   function startConsole() {
     $('#topbar-user').hidden = false;
@@ -241,6 +241,7 @@
     var view = $('#view'); if (!view) return;
     view.classList.remove('is-editor'); view.innerHTML = '<p class="portal-muted">Carregando…</p>'; view.scrollTop = 0;
     ({ dashboard: viewDashboard, crm: viewCrm, clientes: viewClients, agenda: viewAgenda, assinaturas: viewEnvelopes, parceiros: viewPartners, marketing: viewMarketing, instagram: viewInstagram, bookkeeping: viewBooks, agentes: viewAgents, pagamentos: viewPayments, compliance: viewCompliance, config: viewConfig,
+      comunidade: function (vw) { return window.EAdminCommunity ? EAdminCommunity.view(vw, clientsCtx()) : Promise.reject(new Error('O módulo Comunidade não carregou. Recarregue a página.')); },
       projetos: function (vw) { return AdminProjects.projects(vw, clientsCtx()); }, conectores: function (vw) { return AdminProjects.connectors(vw, clientsCtx()); }, hubai: function (vw) { return AdminProjects.hub(vw, clientsCtx()); },
       webmeeting: function (vw) { return window.EMeetPanel ? EMeetPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Web Meeting não carregou. Recarregue a página.')); },
       webinar: function (vw) { return window.EWebinarPanel ? EWebinarPanel.render(vw, clientsCtx(), { scope: 'admin' }) : Promise.reject(new Error('O módulo Live Webinar não carregou. Recarregue a página.')); },

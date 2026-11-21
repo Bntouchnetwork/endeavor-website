@@ -9,7 +9,7 @@ const ok = (c, n) => { console.log((c ? "✓ " : "✗ ") + n); if (!c) falhas.pu
 const dia = (m) => { const d = new Date(); d.setMonth(d.getMonth() - m); return d.toISOString(); };
 const DADOS = {
   clients: [{ id: "c1", name: "ACME LLC", primary_email: "dono@acme.com", status: "active", portal_kind: "full", language: "pt", monthly_cents: null }],
-  client_users: [{ id: "cu1", client_id: "c1", user_id: "u1", email: "dono@acme.com", role: "owner", status: "active", can_view: true, can_upload: true }],
+  client_users: [{ id: "cu1", client_id: "c1", user_id: "u1", email: "dono@acme.com", name: "Dono ACME", role: "owner", status: "active", can_view: true, can_upload: true }],
   companies: [{ id: "co1", client_id: "c1", legal_name: "ACME LLC", status: "active", stage: "approved", books_provider: "endeavor", books_service: "active" }], compliance_items: [{ id: "ci1", client_id: "c1", company_id: "co1", title: "Form 1065", category: "federal_tax", due_date: new Date().getFullYear() + "-03-16", status: "done", completed_at: new Date().getFullYear() + "-03-10T12:00:00Z", notes: "Declaração da sociedade (Form 1065), referente a " + (new Date().getFullYear() - 1) + ".", origin: "agent", source_url: "https://www.irs.gov/publications/p509" }, { id: "ci2", client_id: "c1", company_id: "co1", title: "Florida Annual Report", category: "annual_report", due_date: new Date().getFullYear() + "-05-01", status: "pending", notes: null }],
   company_documents: [{ id: "d1", client_id: "c1", company_id: "co1", category: "formation", title: "Articles of Organization", path: "c1/a.pdf", created_at: dia(5), visible_to_client: true }, { id: "d2", client_id: "c1", company_id: "co1", category: "tax_return", title: "Form 1120", year: 2025, path: "c1/b.pdf", created_at: dia(3), visible_to_client: true },
     { id: "d3", client_id: "c1", company_id: "co1", category: "uploaded", title: "Extrato bancário", path: "c1/c.pdf", created_at: dia(1), uploaded_by: "u1", uploaded_by_email: "dono@acme.com", visible_to_client: true }],
@@ -210,6 +210,17 @@ try {
   await p.screenshot({ path: OUT + "/configuracoes-email.png" });
   await p.click("#e2-make"); ok(await p.locator("#overlay #e2-pass").isVisible() && (await p.textContent("#e2-troca")).includes("financeiro@acme.com"), "tornar principal abre a janela que pede a senha atual e explica a confirmação por link");
   await p.keyboard.press("Escape");
+  // Configurações > Perfil: dados, imagens, perfil da Comunidade e prévia
+  await p.click('#set-tabs a[href="#/settings?tab=perfil"]'); await p.waitForSelector("#pf");
+  ok(await p.locator("#pf-name, #pf-phone, #pf-lang, #pf-kind, #pf-dname, #pf-headline, #pf-area, #pf-site, #pf-city, #pf-state, #pf-bio, #pf-f-photo, #pf-f-logo, #pf-f-banner, #pf-on").count() === 15 && (await p.textContent("#pf-st")).includes("Não publicado") && !(await p.isChecked("#pf-on")), "Perfil: dados, imagens, campos da Comunidade e a opção Aparecer na Comunidade, desligada");
+  await p.fill("#pf-dname", "ACME Logistics"); await p.fill("#pf-headline", "Frete entre o Brasil e os EUA"); await p.fill("#pf-area", "Logística"); await p.fill("#pf-city", "Orlando"); await p.fill("#pf-state", "FL");
+  const pv = await p.textContent("#pf-prev"); ok(pv.includes("ACME Logistics") && pv.includes("Logística · Orlando, FL") && pv.includes("Frete entre o Brasil e os EUA"), "a prévia mostra o card como vai aparecer na Comunidade");
+  ok(await semRolar(), "Perfil: página fixa, sem rolagem");
+  await p.screenshot({ path: OUT + "/perfil.png" });
+  await p.check("#pf-on"); await p.click('#pf button[type="submit"]'); ok((await p.textContent("#pf-m")).includes("aceite o termo"), "ligar a Comunidade sem aceitar o termo é recusado");
+  await p.check("#pf-terms"); await p.evaluate(() => { window.__rpc = []; }); await p.click('#pf button[type="submit"]'); await p.waitForFunction(() => (window.__rpc || []).some((x) => x[0] === "community_save"));
+  const sv = await p.evaluate(() => (window.__rpc || []).filter((x) => x[0] === "community_save" || x[0] === "client_update_profile").map((x) => [x[0], x[1].p ? [x[1].p.enabled, x[1].p.terms, x[1].p.display_name, x[1].p.kind] : x[1].p_name]));
+  ok(JSON.stringify(sv) === JSON.stringify([["client_update_profile", "Dono ACME"], ["community_save", [true, true, "ACME Logistics", "company"]]]), "salvar grava os dados da pessoa e o perfil, com a opção ligada e o termo aceito (" + JSON.stringify(sv) + ")");
   // AI Projects: apresentação do serviço para quem não tem projeto, e formulário numa tela só
   await p.click('#console-nav a[data-view="projetos"]'); await p.waitForSelector("#pj-land");
   ok((await p.textContent("#pj-land")).includes("com IA") && await p.locator(".pj-passos li").count() === 5 && (await p.textContent("#pj-cta")).includes("Novo projeto") && await semRolar(), "AI Projects sem projetos: página de apresentação, com os 5 passos e o botão Novo projeto, sem rolagem");

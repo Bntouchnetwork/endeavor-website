@@ -1618,3 +1618,29 @@ body.app-shell .console__content .co-fit .bkp-grid > .fp-card { flex: 1 1 auto; 
   body.app-shell .console__content .pj-land .pj-n { width: clamp(2rem, 1.4rem + 1.4vh, 2.9rem); height: clamp(2rem, 1.4rem + 1.4vh, 2.9rem); font-size: clamp(1rem, .8rem + .5vh, 1.3rem); }
   body.app-shell .console__content .pj-land #pj-cta { min-height: clamp(2.75rem, 2.2rem + 1.4vh, 3.4rem); padding-inline: clamp(1.25rem, 2vw, 2.25rem); font-size: clamp(1rem, .85rem + .4vh, 1.15rem); }
 }
+
+/* Configurações > Perfil */
+.set-tabs { margin: 0 0 1rem; }
+.pf-grid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.pf-grid .portal-card { margin: 0; padding: 1rem 1.25rem; }
+.pf-grid .field { margin-bottom: .45rem; }
+.pf-grid .portal-grid2 { gap: 0 .8rem; }
+.pf-grid textarea { resize: none; }
+.pf-h2 { margin-top: .9rem; }
+.pf-imgs { display: grid; gap: .5rem; }
+.pf-img { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr); gap: .7rem; align-items: center; }
+.pf-img strong { font-size: .9rem; }
+.pf-thumb { width: 3.25rem; height: 3.25rem; border-radius: 10px; background: #f1f3f7 center / cover no-repeat; border: 1px dashed #c9ced8; }
+.pf-thumb.is-on { border-style: solid; }
+.pf-thumb--photo { border-radius: 50%; }
+.pf-up { cursor: pointer; }
+.pf-hint { font-size: .82rem; margin: .3rem 0 0; }
+.pf-topo { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-bottom: .7rem; }
+.pf-st--published { background: #ecf7f0; color: #14532d; } .pf-st--pending, .pf-st--changes { background: #fbf3e2; color: #7a5a12; } .pf-st--hidden { background: #fbecea; color: #8a2a20; }
+.pf-prev { height: 12.5rem; margin-bottom: .8rem; }
+.pf-on { margin: 0; } .pf-terms { margin: .5rem 0 0; font-size: .88rem; align-items: flex-start; }
+.pf-fim { margin-top: .7rem; }
+@media (min-width: 1000px) { .pf-grid { grid-template-columns: minmax(0, .85fr) minmax(0, 1.25fr) minmax(0, 1fr); } }
+.pf-grid input[type="text"], .pf-grid select { min-height: 2.6rem; padding-block: .3rem; }
+.pf-prev { height: 11rem; }
+[hidden].pf-terms { display: none; }

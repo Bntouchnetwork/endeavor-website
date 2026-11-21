@@ -394,6 +394,41 @@ async function aiSuggest(leadId: string) {
   } catch { return { error: "ai_format" }; }
 }
 
+// Comunidade: formulário "Contatar" de um perfil público. A mensagem vai por e-mail ao dono do perfil (o e-mail dele
+// nunca aparece na página). Proteção contra robôs: campo isca, tempo mínimo de preenchimento e limite de envios.
+const CM: Record<Lang, Row> = {
+  pt: { k: "COMUNIDADE ENDEAVOR", s: "Nova mensagem pelo seu perfil na Comunidade", h: "Você recebeu uma mensagem", de: "De", msg: "Mensagem", foot: "Para responder, use o botão Responder do seu e-mail: a resposta vai direto para quem escreveu. A Endeavor não confere a identidade de quem envia mensagens pela Comunidade." },
+  en: { k: "ENDEAVOR COMMUNITY", s: "New message from your Community profile", h: "You received a message", de: "From", msg: "Message", foot: "To answer, use Reply in your e-mail: the answer goes straight to the sender. Endeavor does not verify the identity of people who write through the Community." },
+  es: { k: "COMUNIDAD ENDEAVOR", s: "Nuevo mensaje desde su perfil en la Comunidad", h: "Recibió un mensaje", de: "De", msg: "Mensaje", foot: "Para responder, use Responder en su correo: la respuesta va directo a quien escribió. Endeavor no verifica la identidad de quienes escriben por la Comunidad." },
+};
+async function communityContact(body: Row, req: Request) {
+  const okMail = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(e);
+  const name = String(body.name || "").replace(/[<>\r\n]/g, " ").trim().slice(0, 100), email = String(body.email || "").trim().toLowerCase().slice(0, 200), message = String(body.message || "").replace(/\r/g, "").trim().slice(0, 2000);
+  // robôs: o campo isca vem preenchido, ou o formulário foi enviado rápido demais; responde "ok" sem enviar nada
+  if (String(body.website || "").trim() || !(Number(body.elapsed_ms) >= 3000)) return { ok: true };
+  if (name.length < 2 || !okMail(email) || message.length < 10) return { error: "invalid" };
+  if ((message.match(/https?:\/\//gi) || []).length > 2) return { error: "invalid" };
+  const { data: on } = await db.rpc("community_on");
+  if (!on) return { error: "off" };
+  const { data: p } = await db.from("community_profiles").select("id, client_id, published, clients(name, primary_email, email2, language, status)").eq("id", String(body.profile_id || "")).eq("enabled", true).eq("status", "published").maybeSingle();
+  if (!p || (p as Row).clients?.status !== "active") return { error: "not_found" };
+  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
+  const ipHash = ip ? Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("community:" + ip)))).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32) : null;
+  const hora = new Date(Date.now() - 3600e3).toISOString(), dia = new Date(Date.now() - 864e5).toISOString();
+  const cnt = async (q: any) => (await q).count ?? 0;
+  const base = () => db.from("community_messages").select("id", { count: "exact", head: true });
+  if (await cnt(base().eq("email", email).gte("created_at", hora)) >= 3 || (ipHash && await cnt(base().eq("ip_hash", ipHash).gte("created_at", hora)) >= 5) || await cnt(base().eq("profile_id", p.id).gte("created_at", dia)) >= 30) return { error: "rate" };
+  const cl: Row = (p as Row).clients, to = [cl.primary_email, cl.email2].filter((e: unknown) => typeof e === "string" && okMail(e as string)).join(", ");
+  const ins = await db.from("community_messages").insert({ profile_id: p.id, name, email, message, ip_hash: ipHash }).select("id").single();
+  if (!to || !mailOn()) return { error: "unavailable" };
+  const l = lang(cl.language), T0 = CM[l];
+  await loadFrom();
+  const mail = { kicker: T0.k, h1: T0.h, pre: T0.s, paras: [`<strong>${esc(T0.de)}:</strong> ${esc(name)} (${esc(email)})`, `<strong>${esc(T0.msg)}:</strong><br>${esc(message).replace(/\n/g, "<br>")}`], foot: T0.foot, sign: false };
+  await transport().sendMail({ from: { name: "Endeavor Business Hub", address: FROM }, to, replyTo: { name, address: email }, subject: T0.s, html: shell(l, mail), text: textOf(mail, l) });
+  if (ins.data) await db.from("community_messages").update({ sent: true }).eq("id", ins.data.id);
+  return { ok: true };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   const url = new URL(req.url);
@@ -405,6 +440,7 @@ Deno.serve(async (req) => {
   try {
     const raw = await req.text();
     let body: Row = {}; try { body = JSON.parse(raw || "{}"); } catch { body = {}; }
+    if (body.public === "community_contact") { const r: Row = await communityContact(body, req); return json(r, r.error ? (r.error === "rate" ? 429 : r.error === "unavailable" ? 503 : 400) : 200); }
     // Meta webhook: incoming WhatsApp messages (signed with the app secret)
     if (body.object === "whatsapp_business_account") {
       if (!(await hmacOk(raw, req.headers.get("x-hub-signature-256")))) return new Response("forbidden", { status: 403 });

@@ -1,0 +1,7 @@
+-- Comunidade: diretório público (opt-in do titular, aprovação do admin), avaliações e contato por formulário.
+-- Aplicada no banco como a migração "community_directory" (o SQL completo está no histórico de migrações do Supabase:
+--   select statements from supabase_migrations.schema_migrations where name = 'community_directory').
+-- Cria: crm_settings.community_enabled; tabelas community_profiles, community_reviews, community_messages (com RLS);
+-- bucket público "community" (só imagens, até 3 MB) com políticas de gravação do titular;
+-- funções community_snapshot, community_save, client_update_profile, community_on, community_list, community_profile,
+-- community_review_add, community_review_reply, community_admin_set.
