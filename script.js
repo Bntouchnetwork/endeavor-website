@@ -70,7 +70,7 @@
     document.querySelectorAll('.js-buy').forEach(function (l) { l.href = 'comprar.html?p=' + l.getAttribute('data-p') + '&lang=' + lang; });
     document.querySelectorAll('.js-partner').forEach(function (l) { l.href = 'partner.html?lang=' + lang; });
     document.querySelectorAll('#wa-float, .js-wa').forEach(function (l) {
-      l.href = 'https://wa.me/16306898702?text=' + encodeURIComponent(ui('waText'));
+      l.href = 'https://wa.me/' + ((window.ENDEAVOR_CFG || {}).whatsapp || '') + '?text=' + encodeURIComponent(ui('waText'));
     });
     if (typeof rules !== 'undefined') {
       rules.forEach(function (r) { if (document.getElementById(r.id).getAttribute('aria-invalid') === 'true') validateField(r); });

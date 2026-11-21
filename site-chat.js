@@ -100,7 +100,7 @@
   function actionCard(a, restoring) {
     var l = L();
     if (a === 'lead' && !state.lead) return leadCard();
-    var href = a === 'book' ? 'schedule.html?lang=' + l : a === 'partner' ? 'partners.html?lang=' + l + '#cadastro' : a === 'human' ? 'https://wa.me/16306898702' : null;
+    var href = a === 'book' ? 'schedule.html?lang=' + l : a === 'partner' ? 'partners.html?lang=' + l + '#cadastro' : a === 'human' ? 'https://wa.me/' + (CFG.whatsapp || '') : null;
     if (!href) return;
     var d = bubble('bot', '<a class="sc-cta" href="' + href + '"' + (a === 'human' ? ' target="_blank" rel="noopener"' : '') + '>' + esc(t(a)) + ' →</a>', 'sc-msg--cta');
     if (restoring) d.classList.add('is-restored');

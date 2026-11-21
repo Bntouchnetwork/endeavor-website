@@ -79,7 +79,7 @@
     if (p.status === 'expired') { act.innerHTML = '<h2 class="portal-h2">' + esc(T('expired')) + '</h2><p>' + esc(T('expiredText')) + '</p>'; return; }
     if (p.status === 'accepted') { act.innerHTML = '<p>' + esc(T('accepted', { d: fmtD(p.accepted_at) })) + '</p><div id="pay-box"></div>'; return startPay({ name: p.accepted_name, agree: true }); }
     act.innerHTML = '<div class="portal-btn-row prop-cta"><button class="btn btn--navy btn--lg" type="button" id="b-acc">' + esc(T('acceptPay')) + '</button><button class="btn btn--ghost" type="button" id="b-rej">' + esc(T('reject')) + '</button>' +
-      '<a class="btn btn--ghost" href="https://wa.me/16306898702" target="_blank" rel="noopener">' + esc(T('questions')) + '</a></div>';
+      '<a class="btn btn--ghost" href="https://wa.me/' + ((window.ENDEAVOR_CFG || {}).whatsapp || '') + '" target="_blank" rel="noopener">' + esc(T('questions')) + '</a></div>';
     $('#b-acc').onclick = function () { acceptModal(oneTotal, mTotal); };
     $('#b-rej').onclick = rejectModal;
     if (intent === 'pay') acceptModal(oneTotal, mTotal); else if (intent === 'reject') rejectModal();

@@ -1138,3 +1138,12 @@ fieldset.field.att-set legend{padding:0;margin-bottom:.4rem;font-weight:600;font
 .att-wk__p2:has(input:placeholder-shown){}
 #atc-bio{min-height:4.2rem}
 .shop-card[hidden], .shop-card [hidden] { display: none !important; }
+
+/* WhatsApp como ícone (abre a conversa com a mensagem pronta) */
+.wa-ico { display: inline-flex; align-items: center; justify-content: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; background: #128c4a; color: #fff; vertical-align: middle; transition: background-color .2s var(--ease), transform .2s var(--ease); }
+.wa-ico:hover { background: #0e7a3f; color: #fff; transform: translateY(-1px); }
+.wa-ico:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.wa-ico__svg { width: 1.5rem; height: 1.5rem; display: block; }
+.contact__list .wa-ico { margin-top: .2rem; }
+.site-footer .wa-ico { color: #fff; margin-left: .35rem; }
+html.a11y-contrast .wa-ico { background: #000; border: 2px solid #fff; }

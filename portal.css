@@ -1410,3 +1410,19 @@ tr.is-archived td { opacity: .6; }
 .sv-card .portal-btn-row { flex-wrap: nowrap; gap: .25rem .5rem; align-items: center; }
 .sv-card [data-cancel] { border: 0; background: none; padding: 0 .25rem; min-height: 2.25rem; font-size: .82rem; font-weight: 600; text-decoration: underline; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sv-card [data-cancel]:hover { color: #b42318; background: none; }
+
+/* Meu plano: um card só, com a descrição do pacote e a lista do que está incluído */
+.sv-card--plano .tl-price { margin: 0; padding-top: 0; }
+.sv-inc-t { margin: .5rem 0 .1rem; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sv-inc { margin: 0; padding: 0; list-style: none; display: grid; gap: .3rem 1.25rem; font-size: .9rem; color: var(--text); }
+.sv-inc li { position: relative; padding-left: 1.35rem; }
+.sv-inc li::before { content: ""; position: absolute; left: .15rem; top: .3em; width: .7rem; height: .4rem; border-left: 2px solid var(--gold); border-bottom: 2px solid var(--gold); transform: rotate(-45deg); }
+@media (min-width: 1000px) {
+  .sv-card--largo .sv-inc { grid-template-columns: 1fr 1fr; }
+  body.app-shell .console__content .sv-fit .sv-grid--fixo .sv-card--alto { grid-row: span 2; }
+}
+/* WhatsApp da Endeavor no rodapé do menu */
+.console__nav-foot .wa-nav { display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; margin-bottom: .5rem; border-radius: 50%; background: #128c4a; color: #fff; }
+.console__nav-foot .wa-nav:hover { background: #0e7a3f; }
+.console__nav-foot .wa-nav:focus-visible { outline: 3px solid var(--focus, #ffbf47); outline-offset: 2px; }
+.console__nav-foot .wa-nav .icon { width: 1.25rem; height: 1.25rem; }

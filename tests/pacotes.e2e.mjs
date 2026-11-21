@@ -76,6 +76,12 @@ try {
     ok(await v.locator('.shop-card[data-product="whatsapp"]').isHidden() && await v.locator('.shop-card[data-product="webmeeting"] .js-buy').isHidden(), "home: Escondido some do site; os outros seguem em breve");
     await v.close();
   }
+  { const ct = await home.textContent("#contact"), ft = await home.textContent("footer");
+    const hrefs = await home.locator("a.js-wa").evaluateAll((l) => l.map((a) => a.href));
+    ok(hrefs.length === 2 && hrefs.every((h) => h === "https://wa.me/16306898702?text=" + encodeURIComponent("Preciso de informações.")), "contatos: o ícone do WhatsApp abre a conversa com a mensagem pronta (PT)");
+    ok(!/630\D*689/.test(ct + ft) && /407\) 436-9567/.test(ct) && ct.includes("support@endeavorbiz.com") && ft.includes("support@endeavorbiz.com"), "contatos: sem o número do WhatsApp escrito; telefone e e-mail aparecem");
+    ok((await home.locator("#contact a.js-wa").getAttribute("aria-label")).includes("WhatsApp") && await home.locator("#contact a.js-wa svg").isVisible(), "contatos: ícone com nome acessível");
+    await home.locator("#contact .contact__list").screenshot({ path: OUT + "/contatos.png" }); }
   await home.click('[data-product="pkg_holding"] .shop-card__cta');
   ok(await home.inputValue("#f-assist") === "Operating LLC + Holding", "holding: abre o contato com o tipo já escolhido (vira lead no CRM)");
 
@@ -140,7 +146,7 @@ try {
   const menu = await ad.evaluate(() => window.__nav); ok(menu.includes("servicos") && !menu.includes("addons"), "menu: só Serviços (sem o item Add-ons)");
   ok((await ad.textContent(".subtabs [aria-current]")) === "Meu plano", "abre em Meu plano para quem tem pacote");
   const pl = await ad.textContent("#sv-grid");
-  ok(pl.includes("Pacote Essencial") && pl.includes("$59") && pl.includes("Registered Agent") && pl.includes("No seu pacote") && pl.includes("CRM") && pl.includes("Cancelar"), "Meu plano: pacote com mensalidade, incluídos e o add-on contratado com cancelar");
+  ok(pl.includes("Pacote Essencial") && pl.includes("$59") && pl.includes("Registered agent") && pl.includes("EIN") && !pl.includes("No seu pacote") && await ad.locator("#sv-grid .sv-card").count() === 2 && pl.includes("CRM") && pl.includes("Cancelar"), "Meu plano: pacote com mensalidade, incluídos e o add-on contratado com cancelar");
   ok(await semRolagem(ad) && await cabeTudo(ad), "Meu plano: sem rolagem, cards inteiros na tela");
   await ad.screenshot({ path: OUT + "/servicos-plano.png" });
   await ad.click('.subtabs a[href$="tab=addons"]');
@@ -177,11 +183,11 @@ try {
   await ho.goto(`${BASE}/tests/fixtures/addons.html?plano=holding#/servicos`); await ho.waitForSelector("#sv-grid .sv-card"); await ho.waitForTimeout(300);
   const ht = await ho.textContent("#sv-grid");
   ok((await ho.textContent(".subtabs [aria-current]")) === "Meu plano" && ht.includes("Pacote Operacional + Holding") && ht.includes("$249") && ht.includes("duas empresas"), "Holding: Meu plano mostra o pacote com $249/mês");
-  ok(await ho.locator("#sv-grid .sv-card").count() === 4 && (ht.match(/No seu pacote/g) || []).length === 3 && ht.includes("Bookkeeping") && ht.includes("Registered Agent") && ht.includes("Endereço Virtual") && !ht.includes("Cancelar"), "Holding: bookkeeping, registered agent e endereço como ativos no pacote, sem cancelar avulso");
+  ok(await ho.locator("#sv-grid .sv-card").count() === 1 && !ht.includes("No seu pacote") && ht.includes("Bookkeeping das duas empresas") && ht.includes("Registered agent das duas empresas") && ht.includes("Endereço comercial e de correspondência") && !ht.includes("Cancelar"), "Holding: bookkeeping, registered agent e endereço como ativos no pacote, sem cancelar avulso");
   ok(await semRolagem(ho) && await cabeTudo(ho), "Holding: sem rolagem, cards inteiros");
   await ho.screenshot({ path: OUT + "/servicos-holding.png" });
   await ho.click('.subtabs a[href$="tab=addons"]'); await ho.waitForSelector("#ad-q"); await ho.fill("#ad-q", "book");
-  ok((await ho.textContent("#sv-grid")).includes("No seu pacote") && !(await ho.locator("#sv-grid [data-buy]").count()), "Holding: na aba Add-ons o bookkeeping aparece ativo, sem contratar");
+  ok(!(await ho.textContent("#sv-grid")).includes("No seu pacote") && (await ho.locator("#sv-grid .sv-card", { hasText: "Bookkeeping" }).textContent()).includes("Ativo") && !(await ho.locator("#sv-grid [data-buy]").count()), "Holding: na aba Add-ons o bookkeeping aparece ativo, sem contratar");
   await ho.fill("#ad-q", "crm");
   ok(await ho.locator('#sv-grid [data-buy="crm"]').count() === 1 && (await ho.textContent("#sv-grid")).includes("Preço de cliente"), "Holding: o resto fica aberto para contratar, com preço de cliente");
   const cel = await pagina({ ...devices["iPhone 13"] });

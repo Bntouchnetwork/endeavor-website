@@ -149,7 +149,8 @@
     ((res[3] && res[3].data) || []).forEach(function (p) { prod[p.code] = p; });
     var by = {}; res[1].forEach(function (x) { if (x.status !== 'canceled') by[x.product_code] = x; });
     var member = !!(res[2] && res[2].data), plan = PACOTES.filter(function (c) { return by[c]; })[0];
-    var meus = res[1].filter(function (x) { return x.status !== 'canceled' && PACOTES.indexOf(x.product_code) < 0; });
+    // em Meu plano, só o card do pacote e o que foi contratado à parte (o que é do pacote já está na descrição dele)
+    var meus = res[1].filter(function (x) { return x.status !== 'canceled' && PACOTES.indexOf(x.product_code) < 0 && !x.included_in; });
     var aba = forcarAba || C.param('tab') || (plan || meus.length ? 'plano' : 'addons'); if (aba !== 'addons') aba = 'plano';
     var info = function (code) { return (window.EStore && EStore.info(code, L)) || { name: code, lead: '', feats: [] }; };
     var q = '', cat = '', pag = 0, medida = { cols: 0, rows: 0, n: 0 };
@@ -165,10 +166,13 @@
 
     /* ----- cards ----- */
     function cardPlano() {
-      var p = prod[plan] || {}, inc = res[1].filter(function (x) { return x.included_in === plan && x.status !== 'canceled'; });
-      return '<section class="portal-card tl-card tl-card--on sv-card sv-card--plano' + (medida.cols >= 2 ? ' sv-card--largo' : '') + '"><div class="sv-top"><h2 class="portal-h2">' + esc(svcName(plan)) + '</h2><span class="pill pill--report">' + t(by[plan].status === 'past_due' ? 'past_due' : 'active') + '</span></div>' +
+      var p = prod[plan] || {}, i = info(plan), inc = res[1].filter(function (x) { return x.included_in === plan && x.status !== 'canceled'; });
+      // a lista do que o pacote inclui vem da descrição do pacote; sem ela, os serviços incluídos ligados na conta
+      var itens = (i.feats && i.feats.length ? i.feats : inc.map(function (x) { return svcName(x.product_code); }));
+      return '<section class="portal-card tl-card tl-card--on sv-card sv-card--plano' + (medida.cols >= 2 ? ' sv-card--largo' : '') + (medida.cols >= 2 && medida.rows >= 2 ? ' sv-card--alto' : '') + '"><div class="sv-top"><h2 class="portal-h2">' + esc(svcName(plan)) + '</h2><span class="pill pill--report">' + t(by[plan].status === 'past_due' ? 'past_due' : 'active') + '</span></div>' +
         '<p class="ad-cat portal-muted">' + t('ad_plan') + '</p>' + (p.price_cents != null ? '<p class="tl-price"><strong>' + EStore.money(p.price_cents) + '</strong> <span class="portal-muted">' + esc(EStore.interval(p.interval, L)) + '</span></p>' : '') +
-        (info(plan).lead ? '<p class="sv-lead">' + esc(info(plan).lead) + '</p>' : '') + '<p class="sv-lead"><strong>' + t('ad_included') + ':</strong> ' + inc.map(function (x) { return esc(svcName(x.product_code)); }).join(', ') + '</p></section>';
+        (i.lead ? '<p class="sv-lead">' + esc(i.lead) + '</p>' : '') +
+        (itens.length ? '<h3 class="sv-inc-t">' + t('ad_included') + '</h3><ul class="sv-inc" role="list">' + itens.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : '') + '</section>';
     }
     function cardMeu(s) {
       var code = s.product_code, p = prod[code] || {}, i = info(code);
@@ -181,7 +185,7 @@
       var on = !!x.mine || x.lib, soon = x.p.status === 'coming_soon', tela = x.lib ? x.code : TOOL_VIEW[x.code];
       var btn = on ? (tela ? '<a class="btn btn--navy btn--sm" href="#/' + tela + '">' + t('open') + '</a>' : '')
         : soon ? '' : '<button class="btn btn--gold btn--sm" type="button" data-buy="' + x.code + '">' + t('buy') + '</button>';
-      var pill = on ? '<span class="pill pill--report">' + (x.mine && x.mine.included_in ? t('inPackage') : t('active')) + '</span>' : soon ? '<span class="pill">' + t('soon') + '</span>' : '';
+      var pill = on ? '<span class="pill pill--report">' + t('active') + '</span>' : soon ? '<span class="pill">' + t('soon') + '</span>' : '';
       var price = (x.mine && x.mine.included_in) ? '' :
         '<p class="tl-price">' + (x.full ? '<s class="portal-muted">' + EStore.money(x.full) + '</s> ' : '') + '<strong>' + EStore.money(x.price) + '</strong> <span class="portal-muted">' + esc(EStore.interval(x.p.interval, L)) + '</span>' + (x.full ? ' <span class="pill pill--report">' + t('ad_member') + '</span>' : '') + '</p>';
       return '<section class="portal-card tl-card sv-card' + (on ? ' tl-card--on' : '') + '"><div class="sv-top"><h2 class="portal-h2">' + esc(x.name) + '</h2>' + pill + '</div>' +
@@ -194,7 +198,7 @@
     var semAc = function (v) { return String(v).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); };
     function lista() {
       // o card do plano ocupa duas colunas quando há espaço (o item vazio guarda o lugar na conta da página)
-      if (aba === 'plano') return (plan ? (medida.cols >= 2 ? [cardPlano(), ''] : [cardPlano()]) : []).concat(meus.map(cardMeu));
+      if (aba === 'plano') return (plan ? [cardPlano()].concat(medida.cols >= 2 ? (medida.rows >= 2 ? ['', '', ''] : ['']) : []) : []).concat(meus.map(cardMeu));
       var k = semAc(q.trim());
       return catalogo.filter(function (x) { return (!cat || x.cat === cat) && (!k || semAc(x.name + ' ' + x.lead + ' ' + t('cat_' + x.cat)).indexOf(k) > -1); }).map(cardAddon);
     }

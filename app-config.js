@@ -5,7 +5,9 @@ window.ENDEAVOR_CFG = {
   functionsUrl: 'https://onaewjlozioderwlvgfm.supabase.co/functions/v1',
   formEndpoint: 'https://formsubmit.co/ajax/support@endeavorbiz.com',
   adminEmail: 'support@endeavorbiz.com',
-  companyName: 'Endeavor Business Solutions'
+  companyName: 'Endeavor Business Solutions',
+  /* WhatsApp da Endeavor (só dígitos, com o código do país). Para trocar o número dos ícones do site e do portal, mude só aqui. */
+  whatsapp: '16306898702'
 };
 
 /* Language by the visitor's country (from the device time zone): English in the U.S., Portuguese in Brazil (and Portugal),

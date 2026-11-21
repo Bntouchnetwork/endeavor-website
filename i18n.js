@@ -32,7 +32,7 @@ window.ENDEAVOR_I18N = {
       success: 'Thank you. Your request has been received, and our team will contact you shortly.',
       sending: 'Sending…',
       sendError: 'Sorry, your message could not be sent. Please try again or email us at',
-      waText: "Hello! I'd like to learn more about Endeavor Business Solutions."
+      waText: 'I need information.'
     },
     pt: {
       menu: 'Menu', close: 'Fechar', language: 'Idioma',
@@ -44,7 +44,7 @@ window.ENDEAVOR_I18N = {
       success: 'Obrigado. Recebemos sua solicitação e nossa equipe entrará em contato em breve.',
       sending: 'Enviando…',
       sendError: 'Desculpe, não foi possível enviar sua mensagem. Tente novamente ou escreva para',
-      waText: 'Olá! Gostaria de saber mais sobre a Endeavor Business Solutions.'
+      waText: 'Preciso de informações.'
     },
     es: {
       menu: 'Menú', close: 'Cerrar', language: 'Idioma',
@@ -56,7 +56,7 @@ window.ENDEAVOR_I18N = {
       success: 'Gracias. Hemos recibido su solicitud y nuestro equipo se comunicará con usted en breve.',
       sending: 'Enviando…',
       sendError: 'Lo sentimos, no fue posible enviar su mensaje. Inténtelo de nuevo o escríbanos a',
-      waText: '¡Hola! Me gustaría saber más sobre Endeavor Business Solutions.'
+      waText: 'Necesito información.'
     }
   },
 
@@ -493,6 +493,7 @@ window.ENDEAVOR_I18N = {
       "By submitting, you agree to be contacted about your request and to our": "Ao enviar, você concorda em ser contatado sobre sua solicitação e com a nossa",
       'Start. Structure. Operate. Grow.': 'Abrir. Estruturar. Operar. Crescer.',
       'Phone:': 'Telefone:',
+      'Email:': 'E-mail:',
       'Compliance': 'Compliance',
       'Legal': 'Jurídico',
       'Privacy Policy': 'Política de Privacidade',
@@ -1021,6 +1022,7 @@ window.ENDEAVOR_I18N = {
       "By submitting, you agree to be contacted about your request and to our": "Al enviar, usted acepta ser contactado sobre su solicitud y nuestra",
       'Start. Structure. Operate. Grow.': 'Iniciar. Estructurar. Operar. Crecer.',
       'Phone:': 'Teléfono:',
+      'Email:': 'Correo:',
       'Compliance': 'Cumplimiento',
       'Legal': 'Legal',
       'Privacy Policy': 'Política de Privacidad',
