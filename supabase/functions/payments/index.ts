@@ -10,6 +10,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { accessEmail, accessMailOn, sendAccessMail, sendMail, sendWa, type AccessKind } from "./access-mail.ts";
 import { store, type StoreDeps } from "./store.ts";
 import { achEmail, failedEmail, intakeEmail, invoiceEmail, money as fmtMoney, proposalEmail, receiptEmail, teamEmail } from "./billing-mail.ts";
+import { billingPortal } from "./billing-portal.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -562,16 +563,23 @@ async function handle(req: Request, body: any) {
   const a = String(body.action || "");
 
   // client checkout: the invoice must be visible to the caller under RLS (owner of the client with MFA, or admin)
-  if (a === "invoice_checkout" || a === "invoice_refresh") {
-    const { data: row } = await c.user.from("invoices").select("id, stripe_invoice_id, status").eq("id", String(body.invoice_id || "")).maybeSingle();
+  if (a === "invoice_checkout" || a === "invoice_refresh" || a === "invoice_pay") {
+    const { data: row } = await c.user.from("invoices").select("id, client_id, stripe_invoice_id, status").eq("id", String(body.invoice_id || "")).maybeSingle();
     if (!row?.stripe_invoice_id) throw new Fail("not_found", 404);
     if (a === "invoice_refresh") { const s = await syncInvoice(await stripe("GET", `/invoices/${row.stripe_invoice_id}`)); return { ok: true, status: (s as any)?.status }; }
-    const inv = await stripe("GET", `/invoices/${row.stripe_invoice_id}`, { expand: ["payment_intent"] });
-    await syncInvoice(inv);
-    const base = { status: inv.status, hosted_invoice_url: inv.hosted_invoice_url || null, invoice_pdf: inv.invoice_pdf || null, amount_due: inv.amount_due, currency: inv.currency };
-    const pi = inv.payment_intent;
-    if (inv.status !== "open" || !pi?.client_secret || !PK) return base;
-    return { ...base, client_secret: pi.client_secret, publishable_key: PK };
+    const bp = billingPortal({ admin, stripe, Fail, bell, syncInvoice, PK });
+    if (a === "invoice_checkout") return await bp.checkout(row, String(body.lang || "en"));
+    // pagar: só o dono da conta (ou a equipe); a forma de pagamento é conferida antes de confirmar
+    if (!c.isAdmin) { const { data: role } = await c.user.rpc("my_client_role", { p_client: row.client_id }); if (role !== "owner") throw new Fail("forbidden", 403); }
+    const { data: u } = await c.user.auth.getUser();
+    return await bp.pay(row, body, { email: c.email, userId: u?.user?.id || null }, req);
+  }
+
+  // Portal › Billing: próxima cobrança, forma de pagamento (4 últimos dígitos) e autorização de débito automático
+  if (a === "billing_summary") {
+    const cid = String(body.client_id || "");
+    if (!c.isAdmin) { const { data: role } = await c.user.rpc("my_client_role", { p_client: cid }); if (role !== "owner") throw new Fail("forbidden", 403); }
+    return await billingPortal({ admin, stripe, Fail, bell, syncInvoice, PK }).summary(cid);
   }
 
   // (re)send the portal access e-mail: admin for anyone; a client owner for the people of their own client

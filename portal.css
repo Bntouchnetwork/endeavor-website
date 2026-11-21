@@ -1426,3 +1426,10 @@ tr.is-archived td { opacity: .6; }
 .console__nav-foot .wa-nav:hover { background: #0e7a3f; }
 .console__nav-foot .wa-nav:focus-visible { outline: 3px solid var(--focus, #ffbf47); outline-offset: 2px; }
 .console__nav-foot .wa-nav .icon { width: 1.25rem; height: 1.25rem; }
+
+/* Billing: autorização de débito automático no pagamento */
+.ck-autopay { margin: 1rem 0; padding: .9rem 1rem; border: 1px solid var(--line); border-radius: 10px; background: #f7f8fb; }
+.ck-autopay legend { padding: 0 .4rem; font-weight: 700; color: var(--navy-900, #0b1f3a); font-size: .95rem; }
+.ck-autopay__txt { font-size: .88rem; line-height: 1.55; color: var(--text); margin: 0 0 .75rem; }
+.ck-autopay__ok { display: flex; gap: .6rem; align-items: flex-start; font-size: .92rem; font-weight: 600; margin-bottom: .75rem; cursor: pointer; }
+.ck-autopay__ok input { width: 1.15rem; height: 1.15rem; margin-top: .15rem; flex: none; }

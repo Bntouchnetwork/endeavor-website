@@ -16,7 +16,7 @@
         : o.partner ? (o.invitedBy || o.clientName) + ' convidou você para o Portal do Parceiro da Endeavor Business Hub, para acessar os documentos que compartilhou com você.'
         : o.invitedBy ? o.invitedBy + ' convidou você para o portal do cliente da Endeavor Business Hub' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'A Endeavor Business Hub criou o seu acesso ao portal do cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        o.accepted ? 'O próximo passo é o pagamento pelo portal do cliente: ao entrar, você vai direto para a página de faturas e pode pagar com cartão, Pix ou transferência bancária. Por segurança, o acesso usa senha e um código do celular.'
+        o.accepted ? 'O próximo passo é o pagamento pelo portal do cliente: ao entrar, você vai direto para a página Cobrança e pode pagar com conta bancária americana (ACH) ou cartão de débito. Por segurança, o acesso usa senha e um código do celular.'
         : o.referral ? 'Por segurança, o acesso usa senha e um código do celular.' : 'Lá você encontra os documentos das suas empresas, os prazos fiscais e os relatórios financeiros. Por segurança, o acesso usa senha e um código do celular.',
         '',
         'PRIMEIRO ACESSO (leva uns 5 minutos)',
@@ -47,7 +47,7 @@
         : o.partner ? (o.invitedBy || o.clientName) + ' invited you to the Endeavor Business Hub Partner Portal to access the documents they shared with you.'
         : o.invitedBy ? o.invitedBy + ' invited you to the Endeavor Business Hub client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Hub created your access to the client portal' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        o.accepted ? 'The next step is payment in the client portal: after you sign in you go straight to the invoices page and can pay by card, Pix or bank transfer. For security, access uses a password and a code from your phone.'
+        o.accepted ? 'The next step is payment in the client portal: after you sign in you go straight to the Billing page and can pay with a U.S. bank account (ACH) or a debit card. For security, access uses a password and a code from your phone.'
         : o.referral ? 'For security, access uses a password and a code from your phone.' : 'There you will find your company documents, tax deadlines and financial reports. For security, access uses a password and a code from your phone.',
         '',
         'FIRST ACCESS (about 5 minutes)',
@@ -78,7 +78,7 @@
         : o.partner ? (o.invitedBy || o.clientName) + ' lo invitó al Portal de Socios de Endeavor Business Hub para acceder a los documentos que compartió con usted.'
         : o.invitedBy ? o.invitedBy + ' lo invitó al portal del cliente de Endeavor Business Hub' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.'
                     : 'Endeavor Business Hub creó su acceso al portal del cliente' + (o.clientName ? ' (' + o.clientName + ')' : '') + '.',
-        o.accepted ? 'El siguiente paso es el pago en el portal del cliente: al ingresar irá directo a la página de facturas y podrá pagar con tarjeta, Pix o transferencia bancaria. Por seguridad, el acceso usa contraseña y un código del celular.'
+        o.accepted ? 'El siguiente paso es el pago en el portal del cliente: al ingresar irá directo a la página Facturación y podrá pagar con cuenta bancaria de EE. UU. (ACH) o tarjeta de débito. Por seguridad, el acceso usa contraseña y un código del celular.'
         : o.referral ? 'Por seguridad, el acceso usa contraseña y un código del celular.' : 'Allí encontrará los documentos de sus empresas, los plazos fiscales y los reportes financieros. Por seguridad, el acceso usa contraseña y un código del celular.',
         '',
         'PRIMER ACCESO (unos 5 minutos)',
