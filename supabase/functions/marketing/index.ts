@@ -5,7 +5,7 @@
 // The template is shared with the admin preview (mkt-template.js), pinned to a commit.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
-import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@41877a6e5d76f67c58aee8079b8645ce7c1b057d/mkt-template.js";
+import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@5cdb92524a6bb979a34d7a2f50e4205dbf371a44/mkt-template.js";
 import { HubFail, hubJson, hubOn } from "../_shared/hub-ai.ts"; // AI goes through Endeavor's central HUB AI ("marketing-email" agent)
 
 // deno-lint-ignore no-explicit-any

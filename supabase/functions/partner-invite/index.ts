@@ -8,7 +8,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import nodemailer from "npm:nodemailer@6.9.16";
 import * as PDFLib from "npm:pdf-lib@1.17.1";
-import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@f127635aa2d4f6b62fb5cec9e7b4cb0467ebcfef/supabase/functions/partner-invite/partner-contract.js";
+import "https://cdn.jsdelivr.net/gh/Bntouchnetwork/endeavor-website@5cdb92524a6bb979a34d7a2f50e4205dbf371a44/supabase/functions/partner-invite/partner-contract.js";
 import { FOOT_BRAND } from "../_shared/brand.ts";
 // deno-lint-ignore no-explicit-any
 type Row = Record<string, any>;
